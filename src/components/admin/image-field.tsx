@@ -94,7 +94,7 @@ export function ImageField({
           <button type="button" onClick={() => inputRef.current?.click()} className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone">
             <ImageIcon size={26} />
             <span className="text-sm font-semibold text-ink">Välj bild eller dra hit</span>
-            <span className="text-xs">JPG, PNG, WebP, HEIC · max 25 MB</span>
+            <span className="text-xs">JPG, PNG, WebP · max 25 MB</span>
           </button>
         )}
         {progress !== null && (

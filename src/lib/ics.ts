@@ -25,7 +25,9 @@ const VTIMEZONE = [
   "END:VTIMEZONE",
 ];
 
-const escape = (s: string) => s.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, (m) => `\\${m}`);
+// Formulär skickar radbrytningar som CRLF – ett ensamt CR mitt i en rad bryter filen i vissa kalenderappar.
+const escape = (s: string) =>
+  s.replace(/\r\n?/g, "\n").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, (m) => `\\${m}`);
 
 /** Radbryt vid 75 oktetter enligt RFC 5545. */
 function fold(line: string): string {

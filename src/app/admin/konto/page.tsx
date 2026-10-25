@@ -19,7 +19,7 @@ export default function AccountPage(props: PageProps<"/admin/konto">) {
 }
 
 async function Account({ searchParams }: { searchParams: PageProps<"/admin/konto">["searchParams"] }) {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   const [sp, sessions] = await Promise.all([searchParams, sessionCount(user.id)]);
   return (
     <>

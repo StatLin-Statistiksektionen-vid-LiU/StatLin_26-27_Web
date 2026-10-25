@@ -14,7 +14,7 @@ import {
   zText,
   zUrl,
 } from "@/lib/admin/form";
-import { audit, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
+import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -40,10 +40,12 @@ const schema = z
   })
   .refine((d) => !d.ends_at || d.ends_at >= d.starts_at, { message: "Sluttiden måste vara efter starttiden.", path: ["ends_at"] });
 
-type EventOwner = { id: number; committee_id: number | null; title: string };
+const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };
+
+type EventOwner = { id: number; committee_id: number | null; title: string; cover_media_id: number | null };
 
 function loadEvent(id: number): EventOwner | undefined {
-  return getDb().prepare("SELECT id, committee_id, title FROM events WHERE id = ?").get(id) as EventOwner | undefined;
+  return getDb().prepare("SELECT id, committee_id, title, cover_media_id FROM events WHERE id = ?").get(id) as EventOwner | undefined;
 }
 
 /** Utskottskonton får bara skapa/flytta evenemang till sitt eget utskott. */
@@ -67,21 +69,21 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ändra det här evenemanget." };
     const slug = uniqueSlug("events", d.slug || d.title, id);
     // Omslaget kan också ha valts i galleriet efter att sidan laddades – rör det bara om fältet ändrats.
-    const coverMediaId =
-      fd.get("cover_media_id__changed") === "1"
-        ? d.cover_media_id
-        : (db.prepare("SELECT cover_media_id FROM events WHERE id = ?").get(id) as { cover_media_id: number | null }).cover_media_id;
+    const coverMediaId = fd.get("cover_media_id__changed") === "1" ? d.cover_media_id : existing.cover_media_id;
+    if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId, id)) return badCover;
     db.prepare(
       `UPDATE events SET title=@title, slug=@slug, summary=@summary, body_md=@body_md, starts_at=@starts_at, ends_at=@ends_at,
         all_day=@all_day, location=@location, location_url=@location_url, committee_id=@committee_id, cover_media_id=@cover_media_id,
         signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at WHERE id=@id`,
     ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: nowIso(), id });
+    if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "event", id, d.title);
     revalidateSite();
     return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast." };
   }
 
   if (!isEditor(user) && !user.committee_id) return { error: "Ditt konto är inte kopplat till något utskott." };
+  if (!canUseImage(user, d.cover_media_id)) return badCover;
   const slug = uniqueSlug("events", d.slug || d.title);
   const res = db
     .prepare(
@@ -152,7 +154,7 @@ export async function reorderEventImages(eventId: number, imageIds: number[]) {
 export async function setEventCover(eventId: number, mediaId: number | null) {
   const user = await requireUser();
   const event = loadEvent(eventId);
-  if (!event || !canEditOwned(user, event)) throw new Error("Saknar behörighet.");
+  if (!event || !canEditOwned(user, event) || !canUseImage(user, mediaId, eventId)) throw new Error("Saknar behörighet.");
   getDb().prepare("UPDATE events SET cover_media_id = ?, updated_at = ? WHERE id = ?").run(mediaId, nowIso(), eventId);
   revalidateSite();
 }

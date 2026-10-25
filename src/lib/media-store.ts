@@ -43,6 +43,10 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
   } catch {
     throw new MediaError("Filen kunde inte läsas som en bild.");
   }
+  // sharps förbyggda binär saknar HEVC-avkodare: HEIC (iPhones standardformat) går att läsa mått från men inte avkoda.
+  if (meta.format === "heif" && meta.compression === "hevc") {
+    throw new MediaError("HEIC-bilder (iPhones standardformat) stöds inte. Spara bilden som JPG och försök igen.");
+  }
   const rotated = (meta.orientation ?? 1) >= 5;
   const srcWidth = (rotated ? meta.height : meta.width) ?? 0;
   const srcHeight = (rotated ? meta.width : meta.height) ?? 0;

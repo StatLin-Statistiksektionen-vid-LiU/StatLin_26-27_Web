@@ -86,9 +86,14 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   return { ...row, must_change_password: row.must_change_password === 1 };
 });
 
-export async function requireUser(): Promise<SessionUser> {
+/**
+ * Kräver inloggning. Den som loggat in med ett tillfälligt lösenord skickas till kontosidan
+ * tills lösenordet är bytt – utom där bytet görs (allowTemporaryPassword).
+ */
+export async function requireUser(opts: { allowTemporaryPassword?: boolean } = {}): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/logga-in");
+  if (user.must_change_password && !opts.allowTemporaryPassword) redirect("/admin/konto?byt=1");
   return user;
 }
 

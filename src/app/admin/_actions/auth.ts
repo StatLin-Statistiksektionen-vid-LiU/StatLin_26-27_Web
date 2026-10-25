@@ -69,7 +69,7 @@ export async function logout() {
 }
 
 export async function changePassword(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   const current = String(fd.get("current") ?? "");
   const next = String(fd.get("password") ?? "");
   const confirm = String(fd.get("confirm") ?? "");
@@ -90,7 +90,7 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
 }
 
 export async function updateProfile(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   const parsed = z
     .object({
       name: z.string().trim().min(1, "Fyll i ditt namn.").max(120),
@@ -103,7 +103,7 @@ export async function updateProfile(_prev: FormState, fd: FormData): Promise<For
 }
 
 export async function logoutOtherSessions(): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   destroyAllSessionsForUser(user.id, await currentToken());
   return { ok: true, message: "Alla andra enheter har loggats ut." };
 }

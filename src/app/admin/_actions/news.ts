@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
-import { audit, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
+import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -20,6 +20,8 @@ const schema = z.object({
   pinned: zCheckbox,
   published_at: zOptionalLocalDateTime,
 });
+
+const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };
 
 /** Lokal Stockholmstid "YYYY-MM-DDTHH:mm" → ISO (UTC). */
 function stockholmToIso(local: string): string {
@@ -54,22 +56,25 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
   const db = getDb();
 
   if (id) {
-    const existing = db.prepare("SELECT id, committee_id, pinned FROM news WHERE id = ?").get(id) as
-      | { id: number; committee_id: number | null; pinned: number }
+    const existing = db.prepare("SELECT id, committee_id, pinned, cover_media_id FROM news WHERE id = ?").get(id) as
+      | { id: number; committee_id: number | null; pinned: number; cover_media_id: number | null }
       | undefined;
     if (!existing) return { error: "Nyheten finns inte längre." };
     if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ändra den här nyheten." };
+    if (d.cover_media_id !== existing.cover_media_id && !canUseImage(user, d.cover_media_id)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
     db.prepare(
       `UPDATE news SET title=@title, slug=@slug, excerpt=@excerpt, body_md=@body_md, committee_id=@committee_id,
         cover_media_id=@cover_media_id, published=@published, pinned=@pinned, published_at=@published_at, updated_at=@updated_at WHERE id=@id`,
     ).run({ ...d, slug, committee_id: committeeId, pinned: isEditor(user) ? pinned : existing.pinned, published_at: publishedAt, updated_at: nowIso(), id });
+    if (existing.cover_media_id !== d.cover_media_id) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "news", id, d.title);
     revalidateSite();
     return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast." };
   }
 
   if (!isEditor(user) && !user.committee_id) return { error: "Ditt konto är inte kopplat till något utskott." };
+  if (!canUseImage(user, d.cover_media_id)) return badCover;
   const slug = uniqueSlug("news", d.slug || d.title);
   const res = db
     .prepare(

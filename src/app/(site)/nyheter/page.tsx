@@ -28,7 +28,9 @@ export default function NewsPage(props: PageProps<"/nyheter">) {
 
 async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">["searchParams"] }) {
   const sp = await searchParams;
-  const page = Math.max(1, Number(sp.sida) || 1);
+  // Bara heltal: SQLite vägrar OFFSET med decimaler (t.ex. ?sida=1.5 eller ?sida=Infinity).
+  const requested = Number(sp.sida);
+  const page = Number.isSafeInteger(requested) && requested > 1 ? requested : 1;
   const [items, total] = await Promise.all([listNews(PER_PAGE, (page - 1) * PER_PAGE), countNews()]);
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
