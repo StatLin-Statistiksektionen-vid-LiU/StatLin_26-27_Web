@@ -1,23 +1,20 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { login } from "@/app/admin/_actions/auth";
 import { Eye } from "@/components/icons";
 
-export function LoginForm({ next }: { next: string }) {
+/**
+ * Använder en riktig server action som form-action: formuläret fungerar då även innan
+ * sidans JavaScript laddats (eller helt utan), och lösenordet skickas alltid som POST.
+ * E-postadressen skickas tillbaka vid fel så att fältet står kvar efter återställningen.
+ */
+export function LoginForm({ children }: { children?: ReactNode }) {
   const [state, action, pending] = useActionState(login, {});
   const [show, setShow] = useState(false);
   return (
-    <form
-      className="mt-8 space-y-4"
-      onSubmit={(e) => {
-        // Skicka utan React-formuläråterställning så att e-postadressen står kvar vid fel lösenord.
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        startTransition(() => action(fd));
-      }}
-    >
-      <input type="hidden" name="next" value={next} />
+    <form action={action} className="mt-8 space-y-4">
+      {children}
       {state.error && (
         <p role="alert" className="rounded-xl border border-red/30 bg-red/[0.06] px-4 py-3 text-sm font-semibold text-red-dark">
           {state.error}
@@ -34,6 +31,7 @@ export function LoginForm({ next }: { next: string }) {
           autoComplete="username"
           required
           autoFocus
+          defaultValue={state.data?.email ?? ""}
           placeholder="info@statlin.se"
           className="w-full rounded-xl border border-ink/15 bg-white px-4 py-3 outline-none transition focus:border-ink focus:ring-4 focus:ring-ink/[0.06]"
         />

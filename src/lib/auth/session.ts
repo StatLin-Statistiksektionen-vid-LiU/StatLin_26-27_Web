@@ -12,9 +12,16 @@ const SESSION_DAYS = 30;
 
 const hashToken = (token: string) => crypto.createHash("sha256").update(token).digest("hex");
 
-function cookieSecure(): boolean {
+/**
+ * Secure-flaggan följer anslutningen. En Secure-kaka över vanlig HTTP slängs tyst av
+ * webbläsaren – inloggningen ser då ut att lyckas men man är utloggad vid nästa klick.
+ * Bakom en proxy med HTTPS (Caddy, nginx, Codespaces) avgör X-Forwarded-Proto.
+ */
+async function cookieSecure(): Promise<boolean> {
+  if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
-  return process.env.NODE_ENV === "production";
+  const proto = (await headers()).get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  return proto === "https";
 }
 
 export async function createSession(userId: number) {
@@ -32,7 +39,7 @@ export async function createSession(userId: number) {
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: cookieSecure(),
+    secure: await cookieSecure(),
     path: "/",
     expires,
   });

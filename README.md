@@ -105,7 +105,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
-| `COOKIE_SECURE` | Sätt `false` om sajten körs utan HTTPS. |
+| `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 
 ### Säkerhetskopiering
