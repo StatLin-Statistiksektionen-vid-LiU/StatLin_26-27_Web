@@ -1,0 +1,593 @@
+@import "tailwindcss";
+
+/*
+ * StatLin – designsystem
+ * Färger från grafiskt styrdokument (kap. 4): Röd 255/7/7, Svart, Vit.
+ * Text på sektionshemsidan är undantagen från typsnittsregleringen (kap. 5),
+ * så webben använder Archivo (rubriker/bröd), Instrument Serif (accent) och JetBrains Mono (data).
+ */
+
+@theme {
+  --color-ink: #0a0a0a;
+  --color-ink-2: #121212;
+  --color-ink-3: #1b1b1b;
+  --color-ink-4: #262626;
+  --color-paper: #f4f2ee;
+  --color-paper-2: #ebe8e2;
+  --color-paper-3: #dcd8cf;
+  --color-stone: #6a665f;
+  --color-stone-light: #a19d95;
+  --color-red: #ff0707;
+  --color-red-deep: #d40000;
+  --color-red-dark: #8f0000;
+  --color-scb-red: #d5252b;
+  --color-scb-yellow: #eee242;
+  --color-star-navy: #0b1530;
+
+  --font-sans: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-shadow: float-shadow 7s ease-in-out infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-fade-up: fade-up 0.9s var(--ease-out-expo) both;
+  --animate-spin-slow: spin 30s linear infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate3d(0, -1.2%, 0) rotate(-1.2deg);
+    }
+    50% {
+      transform: translate3d(0, 1.8%, 0) rotate(1.2deg);
+    }
+  }
+  @keyframes float-shadow {
+    0%,
+    100% {
+      transform: scale(0.82);
+      opacity: 0.42;
+    }
+    50% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 24px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --header-h: 4.25rem;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "tnum" 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--color-red);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-red);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------- Typografi ---------- */
+
+@utility display {
+  font-family: var(--font-sans);
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+}
+
+@utility display-tight {
+  font-family: var(--font-sans);
+  font-stretch: 112%;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+@utility serif-accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-stretch: 100%;
+}
+
+@utility kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Layout ---------- */
+
+@utility container-site {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 3rem);
+}
+
+@utility container-prose {
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+/* Rutnätet från sektionsloggans bakgrund som ytmönster. */
+@utility grid-paper {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, currentColor 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, currentColor 9%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+@utility grid-paper-fine {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, currentColor 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, currentColor 6%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@utility noise {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* ---------- Komponenter ---------- */
+
+@layer components {
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1.5px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: background-size 0.45s var(--ease-out-expo);
+  }
+  .link-underline:hover,
+  .link-underline:focus-visible {
+    background-size: 100% 1.5px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    height: 3rem;
+    padding-inline: 1.4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.005em;
+    transition:
+      transform 0.35s var(--ease-out-expo),
+      background-color 0.25s,
+      color 0.25s,
+      border-color 0.25s,
+      box-shadow 0.35s;
+    white-space: nowrap;
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn-red {
+    background: var(--color-red);
+    color: #fff;
+    box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--color-red) 80%, transparent);
+  }
+  .btn-red:hover {
+    background: var(--color-red-deep);
+    box-shadow: 0 16px 40px -14px color-mix(in oklab, var(--color-red) 90%, transparent);
+  }
+  .btn-light {
+    background: #fff;
+    color: var(--color-ink);
+  }
+  .btn-light:hover {
+    background: var(--color-paper-2);
+  }
+  .btn-ghost-dark {
+    border: 1px solid rgb(255 255 255 / 0.22);
+    color: #fff;
+  }
+  .btn-ghost-dark:hover {
+    border-color: #fff;
+    background: rgb(255 255 255 / 0.06);
+  }
+  .btn-ghost {
+    border: 1px solid color-mix(in oklab, var(--color-ink) 20%, transparent);
+    color: var(--color-ink);
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-ink);
+  }
+  .btn-ink {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .btn-ink:hover {
+    background: var(--color-ink-4);
+  }
+  .btn-sm {
+    height: 2.4rem;
+    padding-inline: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 1.7rem;
+    padding-inline: 0.65rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Reveal-animation som triggas av <Reveal> (IntersectionObserver). */
+  .js .reveal {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+    transition:
+      opacity 0.9s var(--ease-out-expo),
+      transform 1.1s var(--ease-out-expo);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .js .reveal[data-shown="true"] {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* ---------- Markdown-innehåll ---------- */
+
+.prose-statlin {
+  font-size: 1.075rem;
+  line-height: 1.75;
+  color: color-mix(in oklab, var(--color-ink) 88%, transparent);
+}
+.prose-statlin > * + * {
+  margin-top: 1.1em;
+}
+.prose-statlin h2 {
+  font-stretch: 112%;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  margin-top: 2.2em;
+  color: var(--color-ink);
+}
+.prose-statlin h3 {
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-top: 1.8em;
+  color: var(--color-ink);
+}
+.prose-statlin a {
+  color: var(--color-red-deep);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.prose-statlin a:hover {
+  color: var(--color-ink);
+}
+.prose-statlin ul,
+.prose-statlin ol {
+  padding-left: 1.3em;
+}
+.prose-statlin ul {
+  list-style: none;
+}
+.prose-statlin ul > li {
+  position: relative;
+}
+.prose-statlin ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.1em;
+  top: 0.72em;
+  width: 0.5em;
+  height: 2px;
+  background: var(--color-red);
+}
+.prose-statlin ol {
+  list-style: decimal;
+}
+.prose-statlin li + li {
+  margin-top: 0.35em;
+}
+.prose-statlin blockquote {
+  border-left: 3px solid var(--color-red);
+  padding: 0.2em 0 0.2em 1.2em;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.35em;
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+.prose-statlin img {
+  border-radius: 1rem;
+  width: 100%;
+  height: auto;
+}
+.prose-statlin hr {
+  border: 0;
+  height: 1px;
+  background: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  margin-block: 2.5em;
+}
+.prose-statlin code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--color-paper-2);
+  padding: 0.15em 0.4em;
+  border-radius: 0.35em;
+}
+.prose-statlin table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.prose-statlin th,
+.prose-statlin td {
+  text-align: left;
+  padding: 0.6em 0.8em;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+.prose-statlin th {
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.prose-statlin details {
+  border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+.prose-statlin details + details {
+  margin-top: 0.75rem;
+}
+.prose-statlin summary {
+  cursor: pointer;
+  font-weight: 650;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-ink);
+}
+.prose-statlin summary::-webkit-details-marker {
+  display: none;
+}
+.prose-statlin summary::after {
+  content: "+";
+  font-family: var(--font-mono);
+  color: var(--color-red-deep);
+  transition: transform 0.3s var(--ease-out-expo);
+}
+.prose-statlin details[open] summary::after {
+  transform: rotate(45deg);
+}
+.prose-statlin details > *:not(summary) {
+  margin-top: 0.75rem;
+}
+
+.prose-dark {
+  color: rgb(255 255 255 / 0.78);
+}
+.prose-dark h2,
+.prose-dark h3 {
+  color: #fff;
+}
+.prose-dark a {
+  color: #ff5a5a;
+}
+.prose-dark code {
+  background: var(--color-ink-3);
+}
+
+/* ---------- Svävande logga: intro ---------- */
+
+.floating-logo .sig-wipe {
+  transform: translate(760px, -760px);
+}
+.floating-logo .logo-ring-group {
+  transform-origin: 520.5px 520.5px;
+}
+.floating-logo .grid-wipe {
+  transform-origin: 0 1042px;
+}
+.floating-logo .logo-glow {
+  animation: glow-breathe 7s ease-in-out infinite;
+}
+.floating-logo.is-intro .logo-ring-group {
+  animation: logo-ring-in 1.6s var(--ease-out-expo) both;
+}
+.floating-logo.is-intro .grid-wipe {
+  animation: grid-wipe 1.8s 0.35s var(--ease-out-expo) both;
+}
+.floating-logo.is-intro .logo-text {
+  animation: logo-fade 1.2s 0.55s ease-out both;
+}
+.floating-logo.is-intro .sig-wipe {
+  animation: sig-wipe 1.6s 0.85s var(--ease-in-out-quart) both;
+}
+.floating-logo.is-intro .logo-signature {
+  animation: sig-glow 2.8s 0.85s ease-out both;
+}
+.floating-logo.is-intro .logo-glow {
+  animation:
+    logo-fade 2s 0.9s ease-out both,
+    glow-breathe 7s 2.9s ease-in-out infinite;
+}
+
+@keyframes logo-ring-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8) rotate(-32deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes grid-wipe {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes sig-wipe {
+  from {
+    transform: translate(-760px, 760px);
+  }
+  to {
+    transform: translate(760px, -760px);
+  }
+}
+@keyframes sig-glow {
+  0% {
+    filter: drop-shadow(0 0 0 rgb(255 7 7 / 0));
+  }
+  35% {
+    filter: drop-shadow(0 0 28px rgb(255 7 7 / 0.9));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgb(255 7 7 / 0));
+  }
+}
+@keyframes logo-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(220%);
+  }
+}
+
+/* ---------- Admin ---------- */
+.field-invalid :is(input, select, textarea) {
+  border-color: var(--color-red-deep);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-red) 10%, transparent);
+}
+
+@keyframes wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+}

@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    image: statlin-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      # Databas och uppladdade bilder/dokument – säkerhetskopiera den här volymen.
+      - statlin-data:/data
+
+volumes:
+  statlin-data:

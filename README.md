@@ -1,0 +1,151 @@
+# StatLin – webbplats och adminpanel
+
+Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sektionens [grafiska styrdokument](public/brand/download/grafiskt-styrdokument.pdf). Besökare möts av sektionsloggan som svävar i 3D över en levande tidsserie, och sektionens poster kan logga in och själva lägga upp evenemang, nyheter och bilder.
+
+![Startsidan](public/og.png)
+
+## Innehåll
+
+**Publik webbplats**
+
+- **Startsida** med den svävande sektionsloggan. Den röda StatLin-grafiken ritas fram som en stigande graf, och loggan lutar efter muspekaren. Under heron finns ett löpband med kommande evenemang, nyckeltal, utskott, nyheter och genvägar för nya studenter och företag.
+- **Evenemang**: listvy, månadskalender, filter per utskott, detaljsidor med bildgalleri och lightbox. Det går att lägga till ett enskilt evenemang i kalendern (iCal eller Google), och hela kalendern finns som prenumererbart flöde (`/kalender.ics`).
+- **Nyheter** med fästa inlägg, schemalagd publicering och avsändande utskott.
+- **Sektionen**: om StatLin, styrelsen, utskott (en egen sida per utskott med deras evenemang och nyheter), galleri, dokument och **grafisk profil**. Den sista är en interaktiv version av styrdokumentet med loggvarianter, färgkoder som kopieras med ett klick och nedladdningar.
+- **Utbildning**, **Ny student** (med overallen ritad enligt styrdokumentet) och **För företag** (med STAR), plus **Kontakt**.
+- SEO: metadata, Open Graph-bild, sitemap, robots och strukturerad data (schema.org/Event) för evenemang.
+- Fungerar på mobil, med tangentbord och skärmläsare, respekterar "minska rörelse" och visar allt innehåll även utan JavaScript.
+
+**Adminpanel för poster (`/admin`)**
+
+- Inloggning per post med roller (se nedan). Kontot spärras tillfälligt efter upprepade felförsök.
+- **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
+- **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
+- Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
+- **Konton** (endast admin). Nya konton får ett läsbart engångslösenord, till exempel `kvartil-median-4821`, som måste bytas vid första inloggningen.
+- **Revisionslogg**: översikten visar vem som ändrade vad.
+
+## Roller
+
+| Roll | Typiskt för | Får göra |
+| --- | --- | --- |
+| **Administratör** | Webbansvarig, ordförande | Allt, inklusive konton och inställningar |
+| **Redaktör** | Informationsansvarig, styrelsen | Allt innehåll: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners |
+| **Utskott** | SCB, UBU, SASU, StatPub, STIG, eSTIG … | Det egna utskottets evenemang, nyheter, bilder och utskottssida |
+
+Behörigheten kontrolleras på servern i varje sida, server action och uppladdning, inte bara i gränssnittet.
+
+## Kom igång lokalt
+
+Kräver Node.js 20.9 eller senare.
+
+```bash
+npm install
+npm run seed -- --demo   # grunddata + exempelevenemang, exempelnyheter och demokonton
+npm run dev              # http://localhost:3000
+```
+
+Seed-skriptet skriver ut inloggningsuppgifterna. Vill du välja lösenorden själv:
+
+```bash
+ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
+```
+
+Utan `--demo` läggs bara grunddatan in: utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF. All grunddata läggs också in automatiskt första gången sajten startar.
+
+## Driftsättning
+
+All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker, eller Fly.io/Railway/Render med volym.
+
+### Docker (rekommenderat)
+
+```bash
+cp .env.example .env     # fyll i SITE_URL, ADMIN_EMAIL och ADMIN_PASSWORD
+docker compose up -d --build
+```
+
+Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
+
+Skapa en ny administratör eller återställ lösenordet för en befintlig:
+
+```bash
+docker compose exec web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
+```
+
+### Utan Docker
+
+```bash
+npm ci && npm run build
+cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/server.js
+```
+
+### Miljövariabler
+
+| Variabel | Beskrivning |
+| --- | --- |
+| `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. |
+| `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
+| `COOKIE_SECURE` | Sätt `false` om sajten körs utan HTTPS. |
+
+### Säkerhetskopiering
+
+Kopiera `DATA_DIR`. För en säker kopia av databasen medan sajten kör:
+
+```bash
+sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
+```
+
+## Guide för poster
+
+1. Logga in på **/logga-in** med postens e-postadress.
+2. **Nytt evenemang**: fyll i titel, tid och plats. Utan omslagsbild genereras ett omslag i utskottets färger med utskottets logga.
+3. **Efter evenemanget**: öppna det under *Evenemang*, scrolla till *Bildgalleri* och dra in bilderna. De dyker upp direkt på sajten och i galleriet. Klicka på ★ för att välja omslag.
+4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
+
+Översikten visar evenemang som har varit men saknar bilder.
+
+## Teknik
+
+- **Next.js 16** (App Router, Cache Components, Partial Prerendering, server actions) och **React 19**.
+- **SQLite** via `better-sqlite3`, med versionerade migreringar i `src/lib/db/migrations.ts`.
+- **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen).
+- **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`).
+- Sessioner i databasen (slumpad token, endast SHA-256-hashen lagras), lösenord med bcrypt, CSRF-skydd via SameSite-cookies och kontroll av ursprung.
+- Typsnitt (Archivo, Instrument Serif, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs.
+
+```
+src/
+  app/(site)/        publika sidor
+  app/admin/         adminpanelen (+ _actions/ med server actions)
+  app/api/           uppladdning och hälsokontroll
+  app/media/         serverar uppladdade filer från DATA_DIR
+  components/        UI (brand/, content/, home/, layout/, admin/)
+  lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
+scripts/             seed och create-admin
+public/brand/        loggor (SVG-varianter, utskottsloggor, nedladdningar)
+```
+
+### Loggan
+
+Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en ren cirkel, medan texten, rutnätet och den röda signaturen är spårade banor. Lagren ligger var för sig i `src/lib/brand/logo-paths.ts`. Det gör att varianterna från styrdokumentet (standard, inverterad, svart, vit, röd) genereras exakt, och att heron kan animera lagren utan att formen ändras. Slutläget är alltid den oförändrade loggan.
+
+## Kommandon
+
+| Kommando | Gör |
+| --- | --- |
+| `npm run dev` | Utvecklingsserver |
+| `npm run build` / `npm start` | Produktionsbygge / kör bygget |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
+| `npm run seed [-- --demo]` | Grunddata (och demodata) |
+| `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
+| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri) mot en nyseedad server – se kommentaren i filen |
+
+## Att göra
+
+- E-post för "glömt lösenord" (i dag återställer en administratör lösenordet).
+- Engelsk version av de viktigaste sidorna.
+- Anmälningar direkt på sajten i stället för externa formulär.
+
+Exempelinnehållet (evenemang, nyheter, styrelsenamn, e-postadresser på `@statlin.se` och exempelbilder i galleriet) är platshållare. Byt ut det i adminpanelen innan sajten publiceras.
