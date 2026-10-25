@@ -54,6 +54,8 @@ export function ActionForm({
     <FormCtx value={{ state, pending }}>
       <form
         ref={formRef}
+        // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
+        method="post"
         className={cn("space-y-6", className)}
         onChange={() => (dirty.current = true)}
         onSubmit={(e) => {

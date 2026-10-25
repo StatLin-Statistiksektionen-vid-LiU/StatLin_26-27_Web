@@ -1,0 +1,17 @@
+{
+  // Öppna repot i GitHub Codespaces så installeras allt, demodata läggs in
+  // och sajten startar automatiskt i en ny flik. Se README → "Testa i webbläsaren".
+  "name": "StatLin",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "containerEnv": {
+    "ADMIN_PASSWORD": "admin-statlin-2026",
+    "DEMO_PASSWORD": "demo-statlin-2026",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "npm ci && npm run seed -- --demo && npm run build",
+  "postAttachCommand": "npm start",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "StatLin", "onAutoForward": "openBrowser" }
+  }
+}

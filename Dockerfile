@@ -29,8 +29,10 @@ COPY --from=build --chown=statlin:statlin /app/.next/standalone ./
 COPY --from=build --chown=statlin:statlin /app/.next/static ./.next/static
 COPY --from=build --chown=statlin:statlin /app/public ./public
 COPY --from=build --chown=statlin:statlin /app/scripts/create-admin.mjs ./scripts/create-admin.mjs
-USER statlin
-VOLUME ["/data"]
+COPY --from=build --chown=statlin:statlin /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+# Ingen USER/VOLUME här: startskriptet körs som root, rättar ägarskapet på den monterade
+# volymen (Railway/Fly monterar den som root) och släpper sedan till användaren statlin.
+# Volymen monteras av docker-compose eller värdens inställningar (Railway tillåter inte VOLUME).
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "scripts/docker-entrypoint.mjs"]

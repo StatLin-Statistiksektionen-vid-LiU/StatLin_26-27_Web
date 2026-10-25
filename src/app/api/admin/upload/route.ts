@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
+import { isAllowedOrigin } from "@/lib/allowed-origins";
 import { canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -7,6 +8,14 @@ import { MediaError, isImageUpload, storeFile, storeImage } from "@/lib/media-st
 import { fileHref, toImageRef } from "@/lib/media-url";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
+
+function originHost(origin: string): string {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return "";
+  }
+}
 
 /**
  * Uppladdning från adminpanelen (bilder och dokument).
@@ -18,10 +27,12 @@ export async function POST(request: Request) {
   // CSRF-skydd utöver SameSite-cookien: kräv samma ursprung.
   const origin = request.headers.get("origin");
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  if (origin && host && new URL(origin).host !== host) return json({ error: "Otillåtet ursprung." }, 403);
+  // Ett ogiltigt ursprung (t.ex. "null" från en sandlådad sida) nekas, i stället för att krascha URL-tolkningen.
+  if (origin && !isAllowedOrigin(originHost(origin), host)) return json({ error: "Otillåtet ursprung." }, 403);
 
   const user = await getSessionUser();
   if (!user) return json({ error: "Du är inte inloggad." }, 401);
+  if (user.must_change_password) return json({ error: "Byt ditt tillfälliga lösenord innan du laddar upp filer." }, 403);
 
   let fd: FormData;
   try {
@@ -40,7 +51,7 @@ export async function POST(request: Request) {
       return json({ id: media.id, href: fileHref(media), name: media.original_name, size: media.size });
     }
 
-    if (!isImageUpload(file)) return json({ error: "Filen måste vara en bild (JPG, PNG, WebP, GIF, AVIF eller HEIC)." }, 415);
+    if (!isImageUpload(file)) return json({ error: "Filen måste vara en bild (JPG, PNG, WebP, GIF eller AVIF)." }, 415);
 
     if (purpose === "gallery") {
       const eventId = Number(fd.get("eventId"));

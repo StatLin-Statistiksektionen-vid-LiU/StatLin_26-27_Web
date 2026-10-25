@@ -12,9 +12,16 @@ const SESSION_DAYS = 30;
 
 const hashToken = (token: string) => crypto.createHash("sha256").update(token).digest("hex");
 
-function cookieSecure(): boolean {
+/**
+ * Secure-flaggan följer anslutningen. En Secure-kaka över vanlig HTTP slängs tyst av
+ * webbläsaren – inloggningen ser då ut att lyckas men man är utloggad vid nästa klick.
+ * Bakom en proxy med HTTPS (Caddy, nginx, Codespaces) avgör X-Forwarded-Proto.
+ */
+async function cookieSecure(): Promise<boolean> {
+  if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
-  return process.env.NODE_ENV === "production";
+  const proto = (await headers()).get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  return proto === "https";
 }
 
 export async function createSession(userId: number) {
@@ -32,7 +39,7 @@ export async function createSession(userId: number) {
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: cookieSecure(),
+    secure: await cookieSecure(),
     path: "/",
     expires,
   });
@@ -79,9 +86,14 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   return { ...row, must_change_password: row.must_change_password === 1 };
 });
 
-export async function requireUser(): Promise<SessionUser> {
+/**
+ * Kräver inloggning. Den som loggat in med ett tillfälligt lösenord skickas till kontosidan
+ * tills lösenordet är bytt – utom där bytet görs (allowTemporaryPassword).
+ */
+export async function requireUser(opts: { allowTemporaryPassword?: boolean } = {}): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/logga-in");
+  if (user.must_change_password && !opts.allowTemporaryPassword) redirect("/admin/konto?byt=1");
   return user;
 }
 

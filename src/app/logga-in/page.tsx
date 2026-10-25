@@ -38,9 +38,15 @@ export default function LoginPage(props: PageProps<"/logga-in">) {
           <p className="kicker text-red-deep">StatLin · Poster</p>
           <h1 className="display mt-3 text-[2.6rem]">Logga in</h1>
           <p className="mt-3 text-stone">Använd e-postadressen för din post. Saknar du konto? Fråga sektionens webbansvariga.</p>
-          <Suspense fallback={<div className="mt-8 h-64" />}>
+          <Suspense fallback={null}>
             <LoginGate searchParams={props.searchParams} />
           </Suspense>
+          {/* Formuläret ligger i det statiska skalet så att det syns och fungerar direkt, även utan JavaScript. */}
+          <LoginForm>
+            <Suspense fallback={null}>
+              <NextField searchParams={props.searchParams} />
+            </Suspense>
+          </LoginForm>
         </div>
         <p className="text-center text-xs text-stone">Glömt lösenordet? En administratör kan återställa det åt dig.</p>
       </section>
@@ -48,14 +54,16 @@ export default function LoginPage(props: PageProps<"/logga-in">) {
   );
 }
 
+/** Redan inloggad → vidare till adminpanelen. Visar också "Du är utloggad". */
 async function LoginGate({ searchParams }: { searchParams: PageProps<"/logga-in">["searchParams"] }) {
   const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
   if (user) redirect("/admin");
-  const next = typeof sp.next === "string" ? sp.next : "";
-  return (
-    <>
-      {sp.utloggad && <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
-      <LoginForm next={next} />
-    </>
-  );
+  if (!sp.utloggad) return null;
+  return <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>;
+}
+
+/** Sidan man skickades från, så att man hamnar rätt efter inloggningen. */
+async function NextField({ searchParams }: { searchParams: PageProps<"/logga-in">["searchParams"] }) {
+  const { next } = await searchParams;
+  return typeof next === "string" ? <input type="hidden" name="next" value={next} /> : null;
 }

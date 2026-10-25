@@ -35,6 +35,24 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 
 Behörigheten kontrolleras på servern i varje sida, server action och uppladdning, inte bara i gränssnittet.
 
+## Testa i webbläsaren (utan att installera något)
+
+Med ett GitHub-konto kan du köra hela sajten, inklusive inloggningen, i GitHub Codespaces:
+
+1. Gå till repot på GitHub och byt till grenen du vill testa.
+2. Klicka på **Code → Codespaces → Create codespace on …**.
+3. Vänta några minuter medan allt installeras och byggs. Sajten öppnas sedan i en ny flik (annars: fliken **Ports** → port 3000 → klotikonen).
+
+Demokonton i Codespaces:
+
+| Konto | Lösenord | Roll |
+| --- | --- | --- |
+| `admin@statlin.se` | `admin-statlin-2026` | Administratör |
+| `info@statlin.se` | `demo-statlin-2026` | Redaktör |
+| `scb@statlin.se` | `demo-statlin-2026` | Utskott (SCB) |
+
+Logga in på `/logga-in`. Codespaces är privat för ditt konto, och lösenorden gäller bara där. Stäng av eller ta bort codespacet när du är klar (*Code → Codespaces → … → Delete*) så att du inte förbrukar din gratiskvot.
+
 ## Kom igång lokalt
 
 Kräver Node.js 20.9 eller senare.
@@ -69,7 +87,7 @@ Vid första start skapas grunddata och administratören från `.env`. Logga in p
 Skapa en ny administratör eller återställ lösenordet för en befintlig:
 
 ```bash
-docker compose exec web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
+docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
 ```
 
 ### Utan Docker
@@ -87,7 +105,8 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
-| `COOKIE_SECURE` | Sätt `false` om sajten körs utan HTTPS. |
+| `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
+| `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 
 ### Säkerhetskopiering
 

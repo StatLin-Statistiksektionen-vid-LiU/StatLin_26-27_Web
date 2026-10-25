@@ -19,6 +19,8 @@ let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= hashPassword("statlin-dummy-password"));
 
 export async function login(_prev: FormState, fd: FormData): Promise<FormState> {
+  const typedEmail = String(fd.get("email") ?? "").slice(0, 200);
+  const fail = (state: FormState): FormState => ({ ...state, data: { email: typedEmail } });
   const parsed = z
     .object({
       email: z.string().trim().toLowerCase().min(1, "Fyll i din e-postadress."),
@@ -26,13 +28,13 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
       next: z.string().optional(),
     })
     .safeParse({ email: fd.get("email"), password: fd.get("password"), next: fd.get("next") ?? undefined });
-  if (!parsed.success) return invalid(parsed.error);
+  if (!parsed.success) return fail(invalid(parsed.error));
   const { email, password, next } = parsed.data;
 
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "okänd";
   if (rateLimitHit(`login:${ip}`)) {
-    return { error: "För många inloggningsförsök. Vänta en stund och försök igen." };
+    return fail({ error: "För många inloggningsförsök. Vänta en stund och försök igen." });
   }
 
   const db = getDb();
@@ -40,7 +42,7 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   const now = new Date();
 
   if (user?.locked_until && new Date(user.locked_until) > now) {
-    return { error: `Kontot är tillfälligt låst efter för många felaktiga försök. Försök igen om en stund.` };
+    return fail({ error: "Kontot är tillfälligt låst efter för många felaktiga försök. Försök igen om en stund." });
   }
 
   const ok = await verifyPassword(password, user?.password_hash ?? (await getDummyHash()));
@@ -50,7 +52,7 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
       const lock = failed >= MAX_FAILED ? new Date(now.getTime() + LOCK_MINUTES * 60_000).toISOString() : null;
       db.prepare("UPDATE users SET failed_logins = ?, locked_until = ? WHERE id = ?").run(lock ? 0 : failed, lock, user.id);
     }
-    return { error: "Fel e-postadress eller lösenord." };
+    return fail({ error: "Fel e-postadress eller lösenord." });
   }
 
   db.prepare("UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?").run(now.toISOString(), user.id);
@@ -67,7 +69,7 @@ export async function logout() {
 }
 
 export async function changePassword(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   const current = String(fd.get("current") ?? "");
   const next = String(fd.get("password") ?? "");
   const confirm = String(fd.get("confirm") ?? "");
@@ -88,7 +90,7 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
 }
 
 export async function updateProfile(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   const parsed = z
     .object({
       name: z.string().trim().min(1, "Fyll i ditt namn.").max(120),
@@ -101,7 +103,7 @@ export async function updateProfile(_prev: FormState, fd: FormData): Promise<For
 }
 
 export async function logoutOtherSessions(): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowTemporaryPassword: true });
   destroyAllSessionsForUser(user.id, await currentToken());
   return { ok: true, message: "Alla andra enheter har loggats ut." };
 }
