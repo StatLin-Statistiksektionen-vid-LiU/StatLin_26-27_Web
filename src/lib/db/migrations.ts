@@ -1,0 +1,190 @@
+import type Database from "better-sqlite3";
+
+/**
+ * Migreringar körs i ordning och spåras med PRAGMA user_version.
+ * Lägg alltid till nya steg sist – ändra aldrig ett steg som redan körts i drift.
+ */
+const steps: string[] = [
+  /* 1: grundschema */ `
+  CREATE TABLE media (
+    id            INTEGER PRIMARY KEY,
+    kind          TEXT NOT NULL CHECK (kind IN ('image','file')),
+    path_base     TEXT NOT NULL,
+    ext           TEXT NOT NULL,
+    variants      TEXT NOT NULL DEFAULT '',
+    original_name TEXT NOT NULL,
+    mime          TEXT NOT NULL,
+    size          INTEGER NOT NULL,
+    width         INTEGER,
+    height        INTEGER,
+    color         TEXT,
+    alt           TEXT NOT NULL DEFAULT '',
+    uploaded_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE committees (
+    id             INTEGER PRIMARY KEY,
+    slug           TEXT NOT NULL UNIQUE,
+    name           TEXT NOT NULL,
+    short_name     TEXT NOT NULL,
+    tagline        TEXT NOT NULL DEFAULT '',
+    description_md TEXT NOT NULL DEFAULT '',
+    logo_url       TEXT,
+    accent         TEXT NOT NULL DEFAULT '#ff0707',
+    email          TEXT NOT NULL DEFAULT '',
+    instagram      TEXT NOT NULL DEFAULT '',
+    kind           TEXT NOT NULL DEFAULT 'utskott' CHECK (kind IN ('styrelse','utskott','ovrigt')),
+    sort_order     INTEGER NOT NULL DEFAULT 0,
+    visible        INTEGER NOT NULL DEFAULT 1,
+    updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE users (
+    id                   INTEGER PRIMARY KEY,
+    email                TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    name                 TEXT NOT NULL,
+    post                 TEXT NOT NULL DEFAULT '',
+    role                 TEXT NOT NULL CHECK (role IN ('admin','editor','committee')),
+    committee_id         INTEGER REFERENCES committees(id) ON DELETE SET NULL,
+    password_hash        TEXT NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 0,
+    active               INTEGER NOT NULL DEFAULT 1,
+    failed_logins        INTEGER NOT NULL DEFAULT 0,
+    locked_until         TEXT,
+    last_login_at        TEXT,
+    created_at           TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE sessions (
+    id           TEXT PRIMARY KEY,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    expires_at   TEXT NOT NULL,
+    user_agent   TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX sessions_user ON sessions(user_id);
+
+  CREATE TABLE board_members (
+    id             INTEGER PRIMARY KEY,
+    post           TEXT NOT NULL,
+    name           TEXT NOT NULL DEFAULT '',
+    email          TEXT NOT NULL DEFAULT '',
+    bio            TEXT NOT NULL DEFAULT '',
+    photo_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    committee_id   INTEGER REFERENCES committees(id) ON DELETE SET NULL,
+    sort_order     INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE events (
+    id             INTEGER PRIMARY KEY,
+    slug           TEXT NOT NULL UNIQUE,
+    title          TEXT NOT NULL,
+    summary        TEXT NOT NULL DEFAULT '',
+    body_md        TEXT NOT NULL DEFAULT '',
+    starts_at      TEXT NOT NULL,
+    ends_at        TEXT,
+    all_day        INTEGER NOT NULL DEFAULT 0,
+    location       TEXT NOT NULL DEFAULT '',
+    location_url   TEXT NOT NULL DEFAULT '',
+    committee_id   INTEGER REFERENCES committees(id) ON DELETE SET NULL,
+    cover_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    signup_url     TEXT NOT NULL DEFAULT '',
+    price          TEXT NOT NULL DEFAULT '',
+    published      INTEGER NOT NULL DEFAULT 1,
+    created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX events_starts ON events(starts_at);
+
+  CREATE TABLE event_images (
+    id          INTEGER PRIMARY KEY,
+    event_id    INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    media_id    INTEGER NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+    caption     TEXT NOT NULL DEFAULT '',
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX event_images_event ON event_images(event_id, sort_order);
+
+  CREATE TABLE news (
+    id             INTEGER PRIMARY KEY,
+    slug           TEXT NOT NULL UNIQUE,
+    title          TEXT NOT NULL,
+    excerpt        TEXT NOT NULL DEFAULT '',
+    body_md        TEXT NOT NULL DEFAULT '',
+    cover_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    committee_id   INTEGER REFERENCES committees(id) ON DELETE SET NULL,
+    published      INTEGER NOT NULL DEFAULT 1,
+    pinned         INTEGER NOT NULL DEFAULT 0,
+    published_at   TEXT NOT NULL,
+    author_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX news_published ON news(published_at);
+
+  CREATE TABLE documents (
+    id          INTEGER PRIMARY KEY,
+    title       TEXT NOT NULL,
+    category    TEXT NOT NULL CHECK (category IN ('styrdokument','protokoll','grafiskt','ovrigt')),
+    description TEXT NOT NULL DEFAULT '',
+    media_id    INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    url         TEXT NOT NULL DEFAULT '',
+    doc_date    TEXT,
+    published   INTEGER NOT NULL DEFAULT 1,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE pages (
+    slug       TEXT PRIMARY KEY,
+    title      TEXT NOT NULL,
+    lead       TEXT NOT NULL DEFAULT '',
+    body_md    TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE partners (
+    id            INTEGER PRIMARY KEY,
+    name          TEXT NOT NULL,
+    url           TEXT NOT NULL DEFAULT '',
+    description   TEXT NOT NULL DEFAULT '',
+    logo_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    tier          TEXT NOT NULL DEFAULT 'partner' CHECK (tier IN ('huvudpartner','partner')),
+    sort_order    INTEGER NOT NULL DEFAULT 0,
+    active        INTEGER NOT NULL DEFAULT 1
+  );
+
+  CREATE TABLE settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  CREATE TABLE audit_log (
+    id         INTEGER PRIMARY KEY,
+    user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action     TEXT NOT NULL,
+    entity     TEXT NOT NULL,
+    entity_id  TEXT,
+    summary    TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX audit_created ON audit_log(created_at);
+  `,
+];
+
+export function migrate(db: Database.Database) {
+  const current = db.pragma("user_version", { simple: true }) as number;
+  if (current >= steps.length) return;
+  const run = db.transaction(() => {
+    for (let v = current; v < steps.length; v++) {
+      db.exec(steps[v]);
+    }
+    db.pragma(`user_version = ${steps.length}`);
+  });
+  run();
+}
