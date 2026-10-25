@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
+import { isAllowedOrigin } from "@/lib/allowed-origins";
 import { canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
   // CSRF-skydd utöver SameSite-cookien: kräv samma ursprung.
   const origin = request.headers.get("origin");
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  if (origin && host && new URL(origin).host !== host) return json({ error: "Otillåtet ursprung." }, 403);
+  if (origin && !isAllowedOrigin(new URL(origin).host, host)) return json({ error: "Otillåtet ursprung." }, 403);
 
   const user = await getSessionUser();
   if (!user) return json({ error: "Du är inte inloggad." }, 401);

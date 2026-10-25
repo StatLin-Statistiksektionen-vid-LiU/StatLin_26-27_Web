@@ -7,6 +7,15 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+// Extra värdar som får anropa server actions – se src/lib/allowed-origins.ts.
+const allowedOrigins = [
+  ...(process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  ...(process.env.CODESPACES === "true" ? ["*.app.github.dev"] : []),
+];
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
@@ -21,6 +30,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       // Formulär i admin kan skicka med dokument och bilder.
       bodySizeLimit: "25mb",
+      allowedOrigins,
     },
   },
   async headers() {
