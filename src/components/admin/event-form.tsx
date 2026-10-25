@@ -23,7 +23,7 @@ export function EventForm({
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <FormSection title="Grunduppgifter">
-            <TitleSlugFields defaultTitle={event?.title} defaultSlug={event?.slug} basePath="/evenemang" />
+            <TitleSlugFields defaultTitle={event?.title} defaultSlug={event?.slug} basePath="/evenemang" titleMaxLength={140} />
             <Field label="Kort sammanfattning" name="summary" hint="Visas på evenemangskort och i delningar. 1–2 meningar.">
               <TextArea name="summary" defaultValue={event?.summary} rows={2} maxLength={300} />
             </Field>
