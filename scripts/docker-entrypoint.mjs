@@ -23,6 +23,8 @@ fs.mkdirSync(dataDir, { recursive: true });
 
 if (process.getuid?.() === 0) {
   chownRecursive(dataDir);
+  // Ordningen spelar roll: tilläggsgrupperna (t.ex. root) måste bort innan gid/uid byts.
+  process.setgroups([gid]);
   process.setgid(gid);
   process.setuid(uid);
 }

@@ -48,7 +48,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
   await connection();
   const view = sp.vy === "kalender" ? "kalender" : "lista";
   const filter = typeof sp.utskott === "string" ? sp.utskott : undefined;
-  const month = typeof sp.manad === "string" && /^\d{4}-\d{2}$/.test(sp.manad) ? sp.manad : todayLocal().slice(0, 7);
+  const month = typeof sp.manad === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.manad) ? sp.manad : todayLocal().slice(0, 7);
 
   const committees = (await listCommittees({ visibleOnly: true })).filter((c) => c.kind !== "ovrigt");
   const active = committees.find((c) => c.slug === filter);
