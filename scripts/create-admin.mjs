@@ -4,7 +4,7 @@
  * Ren JavaScript så att det går att köra både lokalt och i Docker-containern.
  *
  *   npm run create-admin -- ordforande@statlin.se "Förnamn Efternamn"
- *   docker compose exec web node scripts/create-admin.mjs ordforande@statlin.se
+ *   docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se
  *
  * Starta webbplatsen minst en gång först så att databasen finns.
  */

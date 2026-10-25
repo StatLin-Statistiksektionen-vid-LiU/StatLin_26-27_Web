@@ -87,7 +87,7 @@ Vid första start skapas grunddata och administratören från `.env`. Logga in p
 Skapa en ny administratör eller återställ lösenordet för en befintlig:
 
 ```bash
-docker compose exec web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
+docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
 ```
 
 ### Utan Docker
