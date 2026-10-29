@@ -1,6 +1,11 @@
 export { clsx as cn } from "clsx";
 
 export function slugify(input: string): string {
+  return slugifyWhileTyping(input).replace(/-+$/, "");
+}
+
+/** Som slugify men behåller ett avslutande bindestreck, så att "a-b" går att skriva tecken för tecken. */
+export function slugifyWhileTyping(input: string): string {
   return input
     .toLowerCase()
     .replace(/å|ä/g, "a")
@@ -8,7 +13,7 @@ export function slugify(input: string): string {
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replace(/^-+/, "")
     .slice(0, 80);
 }
 

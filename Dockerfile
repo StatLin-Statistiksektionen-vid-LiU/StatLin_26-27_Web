@@ -4,7 +4,8 @@
 
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app
-# Byggverktyg behövs bara om better-sqlite3 saknar förbyggd binär för plattformen.
+# Byggverktygen krävs: npm kör node-gyp för better-sqlite3 vid installationen (paketet har en
+# binding.gyp), och utan python3/make/g++ misslyckas npm ci – även om förbyggda binären används sedan.
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -12,6 +13,9 @@ RUN npm ci
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# Adressen bakas in i förrenderade sidor (delningsbilder, robots.txt) och måste finnas vid bygget.
+# Railway skickar tjänstens variabler som byggargument när de deklareras här.
+ARG SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

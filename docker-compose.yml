@@ -1,6 +1,10 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        # Bakas in i förrenderade sidor (delningsbilder, robots.txt) – läses från .env.
+        SITE_URL: ${SITE_URL:-}
     image: statlin-web
     restart: unless-stopped
     ports:

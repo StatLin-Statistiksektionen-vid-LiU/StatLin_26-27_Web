@@ -222,6 +222,43 @@ Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg s
     lead: "Frågor, idéer eller samarbeten? Vi svarar så snabbt vi kan.",
     body_md: `Skriv till rätt person i styrelsen nedan, eller använd den allmänna adressen om du är osäker på vem du ska vända dig till.`,
   },
+  // Engelska sidor för masterprogrammet (som ges på engelska) och andra som inte läser svenska.
+  {
+    slug: "en",
+    title: "StatLin in English",
+    lead: "StatLin is the student association for everyone who studies statistics at Linköping University – on the bachelor's programme Statistik och dataanalys and the master's programme Statistics and Machine Learning.",
+    body_md: `## What we do
+
+StatLin – *Statistiksektionen i Linköping* – is run entirely by students, on a voluntary basis. We take care of the social side of student life, from sittnings (formal student dinners) and pubs to sports and game nights. We also work on the education itself: following up on course quality, passing on student feedback and connecting students with future employers.
+
+## Everyone is welcome
+
+You are part of StatLin whether you speak Swedish or not. Most of our events are open to everyone in the section. If an event description is in Swedish, just ask the organisers – most of us are happy to switch to English.
+
+## Get involved
+
+The easiest way to get involved is to turn up at an event. If you want to do more, every committee welcomes new members, and a new board is elected at the section meeting every year. No experience needed.`,
+  },
+  {
+    slug: "en-masters",
+    title: "Master's students",
+    lead: "Studying Statistics and Machine Learning at LiU? StatLin is your student association too – here is how to get started.",
+    body_md: `## Welcome
+
+The master's programme Statistics and Machine Learning is a two-year programme taught in English. Whether you did your bachelor's here or are new to Linköping, StatLin is a good way to meet people from both programmes.
+
+## Your first weeks
+
+- **Come to an event.** Everything we organise is in the calendar, and you can add it to your phone so you never miss anything.
+- **Say hi to the board.** You will find everyone's e-mail address on the contact page.
+- **Join a committee** if you want to organise things yourself – parties, sports, gaming, careers or education.
+
+## Questions about your studies?
+
+UBU, our education committee, works for the quality of both programmes. Contact them about courses, exams or your study environment – anonymously if you prefer.
+
+For housing, residence permits and other practical matters, Linköping University's support for international students is the best place to start.`,
+  },
 ];
 
 export const STAR_COPY = {

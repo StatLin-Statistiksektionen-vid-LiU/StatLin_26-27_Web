@@ -2,7 +2,7 @@
 
 import { useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { FieldError, useFormCtx } from "./action-form";
-import { cn, slugify } from "@/lib/utils";
+import { cn, slugify, slugifyWhileTyping } from "@/lib/utils";
 
 const inputBase =
   "w-full rounded-xl border border-ink/15 bg-white px-3.5 py-2.5 text-[0.95rem] text-ink shadow-[0_1px_0_rgba(0,0,0,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-ink/35 focus:border-ink focus:ring-4 focus:ring-ink/[0.06] disabled:bg-paper-2 disabled:text-ink/50";
@@ -85,11 +85,13 @@ export function TitleSlugFields({
   defaultSlug = "",
   basePath,
   titleLabel = "Titel",
+  titleMaxLength = 160,
 }: {
   defaultTitle?: string;
   defaultSlug?: string;
   basePath: string;
   titleLabel?: string;
+  titleMaxLength?: number;
 }) {
   const [title, setTitle] = useState(defaultTitle);
   const [slug, setSlug] = useState(defaultSlug);
@@ -103,7 +105,7 @@ export function TitleSlugFields({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="py-3 text-lg font-semibold"
-          maxLength={160}
+          maxLength={titleMaxLength}
           autoComplete="off"
           required
         />
@@ -115,8 +117,9 @@ export function TitleSlugFields({
           value={shown}
           onChange={(e) => {
             setTouched(true);
-            setSlug(slugify(e.target.value) || e.target.value.toLowerCase());
+            setSlug(slugifyWhileTyping(e.target.value));
           }}
+          onBlur={() => setSlug((s) => slugify(s))}
           aria-label="Adress (slug)"
           className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 font-mono text-ink outline-none hover:bg-white focus:bg-white focus:ring-2 focus:ring-ink/10"
         />

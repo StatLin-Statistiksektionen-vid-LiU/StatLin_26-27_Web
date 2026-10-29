@@ -111,6 +111,11 @@ export function SiteFooter() {
                   Kalenderflöde <Rss size={14} className="text-red" />
                 </a>
               </li>
+              <li>
+                <Link href="/en" hrefLang="en" lang="en" className="group inline-flex items-center gap-1.5 text-white/75 hover:text-white">
+                  In English <ArrowUpRight size={14} className="text-red" />
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -130,6 +135,7 @@ export function SiteFooter() {
 
         <div
           aria-hidden
+          translate="no"
           className="display pointer-events-none mt-10 select-none whitespace-nowrap text-center text-[17.5vw] leading-[0.78] text-transparent [-webkit-text-stroke:1px_rgb(255_255_255/0.14)] md:text-[16.5vw]"
         >
           StatLin

@@ -16,3 +16,16 @@ export function rateLimitHit(key: string): boolean {
   }
   return entry.count > MAX_ATTEMPTS;
 }
+
+/**
+ * Besökarens IP-adress. X-Forwarded-For kan besökaren fylla i själv, så bara det sista värdet –
+ * det som den närmaste proxyn lade till – går att lita på. Sätter värden en egen rubrik som
+ * besökaren inte kan påverka anges den i CLIENT_IP_HEADER (t.ex. x-real-ip eller fly-client-ip).
+ */
+export function clientIp(h: Pick<Headers, "get">): string {
+  const header = process.env.CLIENT_IP_HEADER?.trim().toLowerCase();
+  const fromHeader = header ? h.get(header)?.split(",")[0]?.trim() : undefined;
+  if (fromHeader) return fromHeader;
+  const forwarded = (h.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return forwarded.at(-1) || h.get("x-real-ip")?.trim() || "okänd";
+}

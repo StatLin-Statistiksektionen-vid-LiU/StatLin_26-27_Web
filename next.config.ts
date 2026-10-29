@@ -21,17 +21,21 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["better-sqlite3", "sharp"],
+  // bcryptjs måste ligga som eget paket i standalone-bygget: scripts/create-admin.mjs importerar det i Docker.
+  serverExternalPackages: ["better-sqlite3", "sharp", "bcryptjs"],
   // Databasen och uppladdningar läses från DATA_DIR vid körning – de ska aldrig följa med i bygget.
   outputFileTracingExcludes: {
     "/*": ["./data/**/*", "./scripts/**/*", "./.git/**/*", "./README.md", "./AGENTS.md"],
   },
   experimental: {
     serverActions: {
-      // Formulär i admin kan skicka med dokument och bilder.
-      bodySizeLimit: "25mb",
+      // Dokumentformuläret skickar med filen (max 30 MB, se MAX_FILE_BYTES) plus övriga fält.
+      bodySizeLimit: "32mb",
       allowedOrigins,
     },
+    // src/proxy.ts körs för /admin och buffrar då request-kroppen – standard är bara 10 MB,
+    // och en längre kropp kapas så att dokumentuppladdningen kraschar.
+    proxyClientMaxBodySize: "32mb",
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

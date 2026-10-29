@@ -29,4 +29,9 @@ export const PAGE_PATHS: Record<string, string> = {
   utbildning: "/utbildning",
   foretag: "/foretag",
   kontakt: "/kontakt",
+  en: "/en",
+  "en-masters": "/en/masters",
 };
+
+/** Engelska sidor ligger under /en – resten av sajten är på svenska. */
+export const isEnglishPath = (pathname: string) => pathname === "/en" || pathname.startsWith("/en/");
