@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { NAV } from "@/lib/navigation";
+import { isEnglishPath, NAV } from "@/lib/navigation";
 import { ArrowUpRight, ChevronDown, Close, Menu } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,11 @@ function HeaderView({ pathname }: { pathname: string | null }) {
   const [dropdown, setDropdown] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isHome = pathname === "/";
+  // Språkväxlaren leder till de engelska sidorna – eller tillbaka till startsidan från dem.
+  const language =
+    pathname !== null && isEnglishPath(pathname)
+      ? { href: "/", short: "SV", label: "På svenska", lang: "sv" }
+      : { href: "/en", short: "EN", label: "In English", lang: "en" };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > (isHome ? window.innerHeight * 0.55 : 24));
@@ -85,7 +90,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                 className="size-9 transition-transform duration-700 group-hover:rotate-[-12deg]"
               />
             </span>
-            <span className="display-tight text-[1.05rem] tracking-tight">
+            <span className="display-tight text-[1.05rem] tracking-tight" translate="no">
               Stat<span className="text-red">Lin</span>
             </span>
           </Link>
@@ -166,6 +171,16 @@ function HeaderView({ pathname }: { pathname: string | null }) {
 
           <div className="flex items-center gap-2">
             <Link
+              href={language.href}
+              hrefLang={language.lang}
+              lang={language.lang}
+              aria-label={language.label}
+              title={language.label}
+              className="inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-white/15 px-3 text-[0.82rem] font-semibold text-white/80 transition-colors hover:border-white/40 hover:text-white lg:h-9"
+            >
+              {language.short}
+            </Link>
+            <Link
               href="/admin"
               className="hidden rounded-full border border-white/15 px-4 py-2 text-[0.82rem] font-medium text-white/80 transition-colors hover:border-white/40 hover:text-white sm:inline-flex"
             >
@@ -213,7 +228,10 @@ function HeaderView({ pathname }: { pathname: string | null }) {
               </li>
             ))}
           </ul>
-          <Link href="/admin" className="btn btn-ghost-dark mt-10 w-full">
+          <Link href={language.href} hrefLang={language.lang} lang={language.lang} className="btn btn-ghost-dark mt-10 w-full">
+            {language.label}
+          </Link>
+          <Link href="/admin" className="btn btn-ghost-dark mt-3 w-full">
             Logga in som post
           </Link>
         </nav>

@@ -13,6 +13,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Nyheter** med fästa inlägg, schemalagd publicering och avsändande utskott.
 - **Sektionen**: om StatLin, styrelsen, utskott (en egen sida per utskott med deras evenemang och nyheter), galleri, dokument och **grafisk profil**. Den sista är en interaktiv version av styrdokumentet med loggvarianter, färgkoder som kopieras med ett klick och nedladdningar.
 - **Utbildning**, **Ny student** (med overallen ritad enligt styrdokumentet) och **För företag** (med STAR), plus **Kontakt**.
+- **In English** (`/en` och `/en/masters`) för masterprogrammet, som ges på engelska. Texterna redigeras under *Sidor*, och knappen EN/SV i sidhuvudet växlar språk. Övriga sidor är på svenska; inget på sajten blockerar webbläsarens inbyggda översättning.
 - SEO: metadata, Open Graph-bild, sitemap, robots och strukturerad data (schema.org/Event) för evenemang.
 - Fungerar på mobil, med tangentbord och skärmläsare, respekterar "minska rörelse" och visar allt innehåll även utan JavaScript.
 
@@ -84,6 +85,14 @@ docker compose up -d --build
 
 Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
 
+### Railway (eller annan värd med Docker och volym)
+
+1. Skapa ett projekt från GitHub-repot (gren `main`). Dockerfilen används automatiskt, och varje merge till `main` driftsätts.
+2. Lägg till en volym med monteringssökvägen `/data`. Utan den försvinner databasen och alla uppladdningar vid nästa driftsättning.
+3. Sätt variablerna `ADMIN_EMAIL`, `ADMIN_PASSWORD` och `SITE_URL`. Railway skickar dem även till bygget, där `SITE_URL` behövs.
+4. Slå på schemalagda säkerhetskopior av volymen och, om värden har det, hälsokontroll på `/api/health`.
+5. Kontrollera driftsättningen med `node tests/smoke.mjs https://din-adress`.
+
 Skapa en ny administratör eller återställ lösenordet för en befintlig:
 
 ```bash
@@ -102,11 +111,12 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 
 | Variabel | Beskrivning |
 | --- | --- |
-| `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. |
+| `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), och Railway skickar tjänstens variabler dit automatiskt. Bygg om efter att du ändrat den. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
+| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `x-real-ip` (Railway) eller `fly-client-ip` (Fly.io). |
 
 ### Säkerhetskopiering
 
@@ -160,11 +170,12 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
 | `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri) mot en nyseedad server – se kommentaren i filen |
+| `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra
 
 - E-post för "glömt lösenord" (i dag återställer en administratör lösenordet).
-- Engelsk version av de viktigaste sidorna.
+- Hela sajten på engelska under samma `/en/...`-adresser (i dag finns `/en` och `/en/masters`), gärna med automatisk översättning när en post sparar en text.
 - Anmälningar direkt på sajten i stället för externa formulär.
 
 Exempelinnehållet (evenemang, nyheter, styrelsenamn, e-postadresser på `@statlin.se` och exempelbilder i galleriet) är platshållare. Byt ut det i adminpanelen innan sajten publiceras.

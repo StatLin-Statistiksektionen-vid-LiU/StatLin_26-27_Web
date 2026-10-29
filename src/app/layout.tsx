@@ -5,7 +5,8 @@ import "@fontsource/instrument-serif/400-italic.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
 
-const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+// Läses vid bygget för förrenderade sidor – se Dockerfile (ARG SITE_URL).
+const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

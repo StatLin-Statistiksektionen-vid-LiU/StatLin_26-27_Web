@@ -6,7 +6,7 @@ import { z } from "zod";
 import { audit } from "@/lib/admin/helpers";
 import { type FormState, invalid } from "@/lib/admin/form";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
-import { rateLimitHit } from "@/lib/auth/rate-limit";
+import { clientIp, rateLimitHit } from "@/lib/auth/rate-limit";
 import { createSession, currentToken, destroyAllSessionsForUser, destroySession, requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import type { UserRow } from "@/lib/types";
@@ -31,9 +31,7 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   if (!parsed.success) return fail(invalid(parsed.error));
   const { email, password, next } = parsed.data;
 
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "okänd";
-  if (rateLimitHit(`login:${ip}`)) {
+  if (rateLimitHit(`login:${clientIp(await headers())}`)) {
     return fail({ error: "För många inloggningsförsök. Vänta en stund och försök igen." });
   }
 
