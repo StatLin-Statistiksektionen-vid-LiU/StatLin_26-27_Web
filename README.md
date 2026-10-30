@@ -37,6 +37,18 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 
 Behörigheten kontrolleras på servern i varje sida, server action och uppladdning, inte bara i gränssnittet.
 
+### Konton på sajten
+
+| Konto | Roll | Används av |
+| --- | --- | --- |
+| `webb@statlin.se` | Administratör | Webbansvarig |
+| `ordforande@statlin.se` | Administratör | Ordförande |
+| `vice@statlin.se` | Administratör | Vice ordförande |
+| `info@statlin.se` | Redaktör | Informationsansvarig |
+| `ubu@`, `sasu@`, `scb@`, `statpub@`, `stig@`, `estig@` och `amo@statlin.se` | Utskott | Respektive utskott |
+
+Lösenord skrivs aldrig in här eller någon annanstans i repot, eftersom alla som kan läsa repot då kan logga in. Kontona skapas med `create-accounts` (se [Fly.io](#flyio)), som visar ett engångslösenord per konto en gång. Lämna över lösenorden personligen eller via en lösenordshanterare. Varje konto måste byta lösenord vid första inloggningen, och en administratör återställer glömda lösenord under *Konton*.
+
 ## Testa i webbläsaren (utan att installera något)
 
 Med ett GitHub-konto kan du köra hela sajten, inklusive inloggningen, i GitHub Codespaces:
