@@ -4,8 +4,8 @@
 //   node tests/smoke.mjs https://statlin.se
 //
 // Kontrollerar att de publika sidorna svarar utan fel, att hälsokontrollen, kalenderflödet,
-// sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, och att delningsbilder
-// inte pekar på localhost (då saknades SITE_URL när sajten byggdes – se README).
+// sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att fliken har en ikon,
+// och att delningsbilder inte pekar på localhost (då saknades SITE_URL när sajten byggdes – se README).
 
 const BASE = (process.argv[2] ?? "http://localhost:3000").replace(/\/$/, "");
 const IS_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE);
@@ -76,6 +76,18 @@ await check("Delningsbild (og:image)", async () => {
   expect(og, "og:image saknas");
   expect(IS_LOCAL || !og.includes("localhost"), `pekar på ${og} – sätt SITE_URL och bygg om`);
   return og;
+});
+
+await check("Flikikon (rel=icon)", async () => {
+  const { body } = await get("/");
+  const link = body.match(/<link[^>]*\srel="(?:shortcut )?icon"[^>]*>/)?.[0];
+  expect(link, 'länk med rel="icon" saknas – webbläsarfliken visar ingen ikon');
+  const href = link.match(/\shref="([^"]+)"/)?.[1] ?? "";
+  const { pathname, search } = new URL(href, BASE);
+  const { res } = await get(pathname + search);
+  expect(res.status === 200, `${href} gav status ${res.status}`);
+  expect((res.headers.get("content-type") ?? "").startsWith("image/"), `${href} har content-type ${res.headers.get("content-type")}`);
+  return href;
 });
 
 await check("Kalenderflöde /kalender.ics", async () => {
