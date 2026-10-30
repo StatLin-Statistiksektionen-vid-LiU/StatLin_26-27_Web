@@ -24,7 +24,8 @@ export const metadata: Metadata = {
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "StatLin – Statistiksektionen i Linköping" }],
   },
   twitter: { card: "summary_large_image" },
-  icons: { apple: "/apple-touch-icon.png" },
+  // När icons sätts här lägger Next inte till src/app/icon.svg själv – därför står den med.
+  icons: { icon: { url: "/icon.svg", type: "image/svg+xml" }, apple: "/apple-touch-icon.png" },
   alternates: { types: { "text/calendar": "/kalender.ics" } },
 };
 
