@@ -64,6 +64,15 @@ npm run seed -- --demo   # grunddata + exempelevenemang, exempelnyheter och demo
 npm run dev              # http://localhost:3000
 ```
 
+**Windows utan C++-byggverktyg:** `npm install` avbryts med `gyp ERR! find VS`. npm försöker kompilera better-sqlite3 eftersom paketet har en `binding.gyp`, trots att den förbyggda binären följer med och är den som används (därför installerar `Dockerfile` python3, make och g++). Hoppa över installationsskripten och kör sedan bara de två som behövs:
+
+```bash
+npm ci --ignore-scripts
+npm rebuild esbuild unrs-resolver
+```
+
+Kör inte ett vanligt `npm rebuild` efteråt – det försöker kompilera better-sqlite3 igen. Alternativt installerar du det node-gyp kräver på Windows (Visual Studio Build Tools med *Desktop development with C++* samt Python 3), så fungerar `npm install` som vanligt.
+
 Seed-skriptet skriver ut inloggningsuppgifterna. Vill du välja lösenorden själv:
 
 ```bash
