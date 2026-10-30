@@ -214,6 +214,90 @@ async function login(page, email, password) {
       await page.goto(`${BASE}/ny-student`);
       await page.getByText("Välkommen till StatLin – testad ingress!").waitFor();
     });
+
+    await step("Redaktör (info) kan ändra inställningarna", async () => {
+      await page.context().clearCookies();
+      await login(page, "info@statlin.se", "demo-statlin-2026");
+      await page.goto(`${BASE}/admin/installningar`);
+      // Nekas man skickas man vidare först efter att sidan laddats, så vänta på själva formuläret.
+      await page.getByRole("heading", { name: "Inställningar", exact: true }).waitFor({ timeout: 15000 });
+      await page.fill('input[name="address"]', "Testgatan 1, 583 30 Linköping");
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText("Inställningarna är sparade.").waitFor();
+      await page.goto(BASE);
+      await page.locator("footer").getByText("Testgatan 1, 583 30 Linköping").waitFor();
+    });
+
+    await step("Utskottskonto nekas inställningarna", async () => {
+      await page.context().clearCookies();
+      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await page.goto(`${BASE}/admin/installningar`);
+      await page.waitForURL(/\/admin\?nekad=1/);
+    });
+
+    // Granskning: styrelsens bock påverkar aldrig om evenemanget är publicerat.
+    let reviewId;
+    const reviewRow = (title) => page.locator("tbody tr", { hasText: title });
+    const toReview = () => page.getByRole("region", { name: "Att granska" });
+
+    await step("Utskottets nya evenemang är ogranskat", async () => {
+      await page.goto(`${BASE}/admin/evenemang/ny`);
+      await page.fill('input[name="title"]', "Pubkväll att granska");
+      await page.fill('input[name="location"]', "Kårallen");
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
+      reviewId = page.url().match(/evenemang\/(\d+)/)[1];
+      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
+      assert.equal(await page.getByRole("button", { name: "Markera som granskad" }).count(), 0, "utskottet ska inte kunna granska");
+    });
+
+    await step("Admin ser ogranskade evenemang i översikten och listan", async () => {
+      await page.context().clearCookies();
+      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await toReview().getByText("Pubkväll att granska").waitFor();
+      await page.goto(`${BASE}/admin/evenemang?visa=ogranskade`);
+      await reviewRow("Pubkväll att granska").getByText("Ej granskad", { exact: true }).waitFor();
+    });
+
+    await step("Admin markerar evenemanget som granskat", async () => {
+      await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
+      await page.getByRole("button", { name: "Markera som granskad" }).click();
+      await page.getByText("Granskad", { exact: true }).first().waitFor();
+      await page.goto(`${BASE}/admin/evenemang?visa=ogranskade`);
+      await page.getByRole("heading", { name: "Evenemang", exact: true }).waitFor();
+      assert.equal(await reviewRow("Pubkväll att granska").count(), 0, "granskat evenemang ska inte listas som ogranskat");
+      await page.goto(`${BASE}/admin`);
+      await page.getByRole("heading", { name: "Kommande evenemang" }).waitFor();
+      assert.equal(await toReview().getByText("Pubkväll att granska").count(), 0, "granskat evenemang ska lämna Att granska");
+    });
+
+    await step("Admin kan ångra en granskning", async () => {
+      await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
+      await page.getByRole("button", { name: "Ångra granskning" }).click();
+      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
+      await page.getByRole("button", { name: "Markera som granskad" }).click();
+      await page.getByText("Granskad", { exact: true }).first().waitFor();
+    });
+
+    await step("Utskottets ändring tar bort granskningen", async () => {
+      await page.context().clearCookies();
+      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
+      await page.getByText("Granskad", { exact: true }).first().waitFor();
+      await page.fill('textarea[name="summary"]', "Ändrad efter granskningen.");
+      await page.getByRole("button", { name: "Spara ändringar" }).click();
+      await page.getByText("Sparat och publicerat.").waitFor();
+      await page.reload();
+      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
+    });
+
+    await step("Admin-skapat evenemang är granskat direkt", async () => {
+      await page.context().clearCookies();
+      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await page.goto(`${BASE}/admin/evenemang/ny`);
+      await page.fill('input[name="title"]', "Styrelsemöte i testet");
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
+      await page.getByText("Granskad", { exact: true }).first().waitFor();
+    });
   } catch {
     /* resultatet skrivs ut nedan */
   } finally {

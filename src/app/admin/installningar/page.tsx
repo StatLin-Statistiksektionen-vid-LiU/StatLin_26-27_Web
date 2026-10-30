@@ -4,7 +4,7 @@ import { saveSettings } from "@/app/admin/_actions/content";
 import { ActionForm } from "@/components/admin/action-form";
 import { Field, FormSection, TextInput } from "@/components/admin/fields";
 import { AdminHeader } from "@/components/admin/ui";
-import { isAdmin } from "@/lib/auth/permissions";
+import { canManageSettings } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getSettings } from "@/lib/data/content";
 
@@ -20,7 +20,7 @@ export default function SettingsPage() {
 
 async function Settings() {
   const user = await requireUser();
-  if (!isAdmin(user)) redirect("/admin?nekad=1");
+  if (!canManageSettings(user)) redirect("/admin?nekad=1");
   const s = await getSettings();
   return (
     <>

@@ -24,14 +24,15 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
 - Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
 - **Konton** (endast admin). Nya konton får ett läsbart engångslösenord, till exempel `kvartil-median-4821`, som måste bytas vid första inloggningen.
+- **Granskning**: administratörerna bockar av evenemang som granskade. Nya och ändrade evenemang från utskotten och info samlas under *Att granska* i översikten. Bocken påverkar aldrig om ett evenemang visas på sajten.
 - **Revisionslogg**: översikten visar vem som ändrade vad.
 
 ## Roller
 
 | Roll | Typiskt för | Får göra |
 | --- | --- | --- |
-| **Administratör** | Webbansvarig, ordförande | Allt, inklusive konton och inställningar |
-| **Redaktör** | Informationsansvarig, styrelsen | Allt innehåll: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners |
+| **Administratör** | Webbansvarig, ordförande, vice ordförande | Allt, inklusive konton och granskning av evenemang |
+| **Redaktör** | Informationsansvarig | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, kontaktuppgifter |
 | **Utskott** | SCB, UBU, SASU, StatPub, STIG, eSTIG … | Det egna utskottets evenemang, nyheter, bilder och utskottssida |
 
 Behörigheten kontrolleras på servern i varje sida, server action och uppladdning, inte bara i gränssnittet.
@@ -123,6 +124,7 @@ Därefter räcker `fly deploy` för att driftsätta en ny version.
 - Appen måste köra på **exakt en maskin**, eftersom SQLite-databasen ligger på volymen. Skala aldrig upp med `fly scale count`.
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Volymen växer automatiskt upp till 10 GB.
+- Skapa sektionens konton (ordförande, vice, info och ett per utskott) med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Skapa en ny administratör eller återställ lösenordet: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`.
 - **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
 
@@ -160,7 +162,7 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 3. **Efter evenemanget**: öppna det under *Evenemang*, scrolla till *Bildgalleri* och dra in bilderna. De dyker upp direkt på sajten och i galleriet. Klicka på ★ för att välja omslag.
 4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
 
-Översikten visar evenemang som har varit men saknar bilder.
+Översikten visar evenemang som har varit men saknar bilder. Ordförande och vice ser också *Att granska*: evenemang som utskotten eller info har skapat eller ändrat sedan de senast granskades.
 
 ## Teknik
 
@@ -179,7 +181,7 @@ src/
   app/media/         serverar uppladdade filer från DATA_DIR
   components/        UI (brand/, content/, home/, layout/, admin/)
   lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
-scripts/             seed och create-admin
+scripts/             seed, create-admin och create-accounts
 public/brand/        loggor (SVG-varianter, utskottsloggor, nedladdningar)
 ```
 
@@ -196,6 +198,7 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
+| `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
 | `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri) mot en nyseedad server – se kommentaren i filen |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 

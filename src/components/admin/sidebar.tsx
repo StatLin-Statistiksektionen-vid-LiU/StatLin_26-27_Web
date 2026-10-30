@@ -56,9 +56,9 @@ export function AdminSidebar({ user }: { user: SidebarUser }) {
     },
     {
       label: "Administration",
-      show: admin,
+      show: editor,
       items: [
-        { href: "/admin/konton", label: "Konton", Icon: Key },
+        admin ? { href: "/admin/konton", label: "Konton", Icon: Key } : null,
         { href: "/admin/installningar", label: "Inställningar", Icon: Settings },
       ],
     },

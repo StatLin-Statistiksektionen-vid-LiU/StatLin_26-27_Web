@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { deleteEvent } from "@/app/admin/_actions/events";
+import { deleteEvent, setEventChecked } from "@/app/admin/_actions/events";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { EventForm } from "@/components/admin/event-form";
 import { GalleryManager } from "@/components/admin/gallery-manager";
-import { AdminHeader, Card, Notice, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Image as ImageIcon, Trash } from "@/components/icons";
-import { canEditOwned } from "@/lib/auth/permissions";
+import { AdminHeader, Card, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
+import { ArrowUpRight, Check, Image as ImageIcon, Trash } from "@/components/icons";
+import { canEditOwned, canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
+import { getUser } from "@/lib/data/admin";
 import { listCommittees } from "@/lib/data/content";
 import { getEventById, listEventImages } from "@/lib/data/events";
+import { formatTimestamp } from "@/lib/dates";
+import type { EventItem } from "@/lib/types";
 
 export const metadata = { title: "Redigera evenemang" };
 
@@ -39,8 +42,9 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
         back={{ href: "/admin/evenemang", label: "Evenemang" }}
         title={event.title}
         description={
-          <span className="inline-flex items-center gap-3">
+          <span className="inline-flex flex-wrap items-center gap-3">
             <StatusBadge published={!!event.published} />
+            <ReviewBadge checked={!!event.checked_at} />
             {event.committee && <span>{event.committee.name}</span>}
           </span>
         }
@@ -56,6 +60,8 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
         }
       />
 
+      {canReviewEvents(user) && <ReviewPanel event={event} />}
+
       <EventForm event={event} committees={visible} user={user} defaultStart={event.starts_at} />
 
       <Card className="mt-10 scroll-mt-24 p-5 md:p-7">
@@ -68,5 +74,35 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
         <GalleryManager eventId={event.id} initial={images.map((i) => ({ id: i.id, caption: i.caption, image: i.image }))} coverMediaId={event.cover_media_id} />
       </Card>
     </>
+  );
+}
+
+/** Bara för administratörer: markera evenemanget som granskat, eller ångra. */
+async function ReviewPanel({ event }: { event: EventItem }) {
+  const checker = event.checked_by ? await getUser(event.checked_by) : null;
+  return (
+    <div className="mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-stone">
+        <span className="block font-semibold text-ink">
+          {event.checked_at
+            ? `Granskad ${formatTimestamp(event.checked_at)}${checker ? ` av ${checker.name}` : ""}`
+            : "Ingen administratör har granskat evenemanget än"}
+        </span>
+        Granskningen syns bara här i adminpanelen och påverkar inte om evenemanget visas på sajten.
+      </p>
+      <form action={setEventChecked} className="shrink-0">
+        <input type="hidden" name="id" value={event.id} />
+        <input type="hidden" name="checked" value={event.checked_at ? "0" : "1"} />
+        {event.checked_at ? (
+          <button type="submit" className="btn btn-ghost btn-sm bg-white">
+            Ångra granskning
+          </button>
+        ) : (
+          <button type="submit" className="btn btn-ink btn-sm">
+            <Check size={15} /> Markera som granskad
+          </button>
+        )}
+      </form>
+    </div>
   );
 }

@@ -17,5 +17,6 @@ export function canEditCommittee(u: SessionUser, committeeId: number): boolean {
 }
 
 export const canManageUsers = isAdmin;
-export const canManageSettings = isAdmin;
+export const canReviewEvents = isAdmin;
+export const canManageSettings = isEditor;
 export const canManageSiteContent = isEditor;

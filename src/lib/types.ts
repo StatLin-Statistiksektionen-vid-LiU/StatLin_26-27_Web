@@ -7,8 +7,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  admin: "Allt, inklusive konton och inställningar.",
-  editor: "Allt innehåll: evenemang, nyheter, bilder, sidor, styrelse och dokument.",
+  admin: "Allt, inklusive konton och granskning av evenemang.",
+  editor: "Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse och dokument.",
   committee: "Det egna utskottets evenemang, nyheter, bilder och utskottssida.",
 };
 
@@ -110,6 +110,9 @@ export interface EventItem {
   created_by: number | null;
   created_at: string;
   updated_at: string;
+  /** Satt när en administratör granskat evenemanget. Styr aldrig om det visas på sajten. */
+  checked_at: string | null;
+  checked_by: number | null;
   committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent"> | null;
   cover: ImageRef | null;
   image_count: number;

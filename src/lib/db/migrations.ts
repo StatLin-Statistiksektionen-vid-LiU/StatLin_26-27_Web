@@ -175,6 +175,11 @@ const steps: string[] = [
   );
   CREATE INDEX audit_created ON audit_log(created_at);
   `,
+  /* 2: styrelsens granskning av evenemang – det som redan finns räknas som granskat */ `
+  ALTER TABLE events ADD COLUMN checked_at TEXT;
+  ALTER TABLE events ADD COLUMN checked_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  UPDATE events SET checked_at = strftime('%Y-%m-%dT%H:%M:%fZ','now');
+  `,
 ];
 
 export function migrate(db: Database.Database) {

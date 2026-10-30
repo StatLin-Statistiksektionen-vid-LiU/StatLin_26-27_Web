@@ -29,7 +29,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
   return (
     <>
       {sp.raderad && <Notice>Kontot är borttaget.</Notice>}
-      <AdminHeader title="Konton" description="Ett konto per post. Utskottskonton når bara sitt eget utskott; redaktörer (t.ex. info) når allt innehåll." />
+      <AdminHeader title="Konton" description="Ett konto per post. Utskottskonton når bara sitt eget utskott, redaktörer (t.ex. info) allt innehåll och inställningarna, och administratörer (t.ex. ordförande och vice) dessutom konton och granskning." />
       <div className="grid gap-8 lg:grid-cols-5">
         <ul className="divide-y divide-ink/10 self-start overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white lg:col-span-3">
           {users.map((u) => (

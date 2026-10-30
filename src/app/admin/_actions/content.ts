@@ -14,7 +14,7 @@ import {
   zUrl,
 } from "@/lib/admin/form";
 import { audit, nowIso, revalidateSite } from "@/lib/admin/helpers";
-import { canEditCommittee, isAdmin, isEditor } from "@/lib/auth/permissions";
+import { canEditCommittee, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
@@ -288,7 +288,7 @@ export async function deletePartner(fd: FormData) {
 
 export async function saveSettings(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();
-  if (!isAdmin(user)) return forbidden;
+  if (!canManageSettings(user)) return forbidden;
   const parsed = z
     .object({
       contact_email: z.string().trim().toLowerCase().email("Ange en giltig e-postadress."),

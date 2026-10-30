@@ -15,7 +15,7 @@ import {
   zUrl,
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
-import { canEditOwned, isEditor } from "@/lib/auth/permissions";
+import { canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
@@ -71,10 +71,12 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     // Omslaget kan också ha valts i galleriet efter att sidan laddades – rör det bara om fältet ändrats.
     const coverMediaId = fd.get("cover_media_id__changed") === "1" ? d.cover_media_id : existing.cover_media_id;
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId, id)) return badCover;
+    // Ändringar från andra än administratörer ska granskas på nytt.
+    const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";
     db.prepare(
       `UPDATE events SET title=@title, slug=@slug, summary=@summary, body_md=@body_md, starts_at=@starts_at, ends_at=@ends_at,
         all_day=@all_day, location=@location, location_url=@location_url, committee_id=@committee_id, cover_media_id=@cover_media_id,
-        signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at WHERE id=@id`,
+        signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at${uncheck} WHERE id=@id`,
     ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: nowIso(), id });
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "event", id, d.title);
@@ -85,14 +87,23 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
   if (!isEditor(user) && !user.committee_id) return { error: "Ditt konto är inte kopplat till något utskott." };
   if (!canUseImage(user, d.cover_media_id)) return badCover;
   const slug = uniqueSlug("events", d.slug || d.title);
+  // Det en administratör skapar räknas som granskat direkt.
+  const reviewed = canReviewEvents(user);
   const res = db
     .prepare(
       `INSERT INTO events (title, slug, summary, body_md, starts_at, ends_at, all_day, location, location_url, committee_id,
-        cover_media_id, signup_url, price, published, created_by)
+        cover_media_id, signup_url, price, published, created_by, checked_at, checked_by)
        VALUES (@title, @slug, @summary, @body_md, @starts_at, @ends_at, @all_day, @location, @location_url, @committee_id,
-        @cover_media_id, @signup_url, @price, @published, @created_by)`,
+        @cover_media_id, @signup_url, @price, @published, @created_by, @checked_at, @checked_by)`,
     )
-    .run({ ...d, slug, committee_id: committeeId, created_by: user.id });
+    .run({
+      ...d,
+      slug,
+      committee_id: committeeId,
+      created_by: user.id,
+      checked_at: reviewed ? nowIso() : null,
+      checked_by: reviewed ? user.id : null,
+    });
   audit(user.id, "create", "event", Number(res.lastInsertRowid), d.title);
   revalidateSite();
   redirect(`/admin/evenemang/${res.lastInsertRowid}?skapad=1`);
@@ -112,6 +123,20 @@ export async function deleteEvent(fd: FormData) {
   audit(user.id, "delete", "event", id, existing.title);
   revalidateSite();
   redirect("/admin/evenemang?raderad=1");
+}
+
+/** Administratörernas granskningsbock. Rör aldrig om evenemanget är publicerat. */
+export async function setEventChecked(fd: FormData) {
+  const user = await requireUser();
+  const id = Number(fd.get("id"));
+  const existing = loadEvent(id);
+  if (!existing || !canReviewEvents(user)) redirect("/admin/evenemang");
+  const checked = fd.get("checked") === "1";
+  getDb()
+    .prepare("UPDATE events SET checked_at = ?, checked_by = ? WHERE id = ?")
+    .run(checked ? nowIso() : null, checked ? user.id : null, id);
+  audit(user.id, checked ? "check" : "uncheck", "event", id, existing.title);
+  revalidateSite();
 }
 
 /* ---------- Galleri ---------- */

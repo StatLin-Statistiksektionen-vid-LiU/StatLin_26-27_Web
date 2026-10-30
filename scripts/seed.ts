@@ -107,9 +107,11 @@ async function seedDemo(created: { email: string; password: string; role: string
       summary: "Sektionsfotboll i strålande höstsol.", body: "Grattis till vinnarlaget!" },
   ];
 
+  // Exemplen skapas av administratören och räknas därför som granskade, precis som i adminpanelen.
   const insertEvent = db.prepare(
-    `INSERT INTO events (slug, title, summary, body_md, starts_at, ends_at, location, committee_id, signup_url, price, created_by)
-     VALUES (@slug, @title, @summary, @body, @start, @end, @location, @committee_id, @signup, @price, @created_by)`,
+    `INSERT INTO events (slug, title, summary, body_md, starts_at, ends_at, location, committee_id, signup_url, price, created_by, checked_at, checked_by)
+     VALUES (@slug, @title, @summary, @body, @start, @end, @location, @committee_id, @signup, @price, @created_by,
+       strftime('%Y-%m-%dT%H:%M:%fZ','now'), @created_by)`,
   );
   for (const e of events) {
     insertEvent.run({ ...e, signup: e.signup ?? "", committee_id: committeeId(e.committee), created_by: adminId });

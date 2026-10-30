@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { AdminHeader, EmptyState, Notice, StatusBadge } from "@/components/admin/ui";
+import { AdminHeader, EmptyState, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Edit, Image as ImageIcon, Plus } from "@/components/icons";
+import { canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listEventsForAdmin } from "@/lib/data/events";
 import { formatDate, nowLocal } from "@/lib/dates";
@@ -20,11 +21,22 @@ export default function AdminEvents(props: PageProps<"/admin/evenemang">) {
 async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenemang">["searchParams"] }) {
   const user = await requireUser();
   const sp = await searchParams;
-  const tab = sp.visa === "tidigare" ? "tidigare" : "kommande";
+  const reviewer = canReviewEvents(user);
+  const tab = sp.visa === "tidigare" ? "tidigare" : sp.visa === "ogranskade" && reviewer ? "ogranskade" : "kommande";
   const events = await listEventsForAdmin(user.role === "committee" ? user.committee_id : null);
   const now = nowLocal();
   const isUpcoming = (e: (typeof events)[number]) => (e.ends_at ?? `${e.starts_at.slice(0, 10)}T23:59`) >= now;
-  const list = tab === "kommande" ? events.filter(isUpcoming).reverse() : events.filter((e) => !isUpcoming(e));
+  const list =
+    tab === "kommande"
+      ? events.filter(isUpcoming).reverse()
+      : tab === "tidigare"
+        ? events.filter((e) => !isUpcoming(e))
+        : events.filter((e) => !e.checked_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const tabs = [
+    { key: "kommande", href: "/admin/evenemang" },
+    { key: "tidigare", href: "/admin/evenemang?visa=tidigare" },
+    ...(reviewer ? [{ key: "ogranskade", href: "/admin/evenemang?visa=ogranskade" }] : []),
+  ];
 
   return (
     <>
@@ -39,26 +51,33 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
         }
       />
       <div className="mb-5 inline-flex rounded-full border border-ink/15 bg-white p-1">
-        {(["kommande", "tidigare"] as const).map((t) => (
+        {tabs.map((t) => (
           <Link
-            key={t}
-            href={t === "kommande" ? "/admin/evenemang" : "/admin/evenemang?visa=tidigare"}
-            className={cn("rounded-full px-5 py-2 text-sm font-semibold capitalize", tab === t ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
+            key={t.key}
+            href={t.href}
+            className={cn("rounded-full px-5 py-2 text-sm font-semibold capitalize", tab === t.key ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
-            {t}
+            {t.key}
           </Link>
         ))}
       </div>
+      {tab === "ogranskade" && (
+        <p className="-mt-2 mb-5 text-sm text-stone">Senast ändrade först. Granskningen påverkar inte vad som visas på sajten.</p>
+      )}
 
       {list.length === 0 ? (
-        <EmptyState
-          title={tab === "kommande" ? "Inga kommande evenemang" : "Inga tidigare evenemang"}
-          action={
-            <Link href="/admin/evenemang/ny" className="btn btn-ink">
-              <Plus size={18} /> Skapa ett
-            </Link>
-          }
-        />
+        tab === "ogranskade" ? (
+          <EmptyState title="Allt är granskat">Nya evenemang från utskotten och info hamnar här.</EmptyState>
+        ) : (
+          <EmptyState
+            title={tab === "kommande" ? "Inga kommande evenemang" : "Inga tidigare evenemang"}
+            action={
+              <Link href="/admin/evenemang/ny" className="btn btn-ink">
+                <Plus size={18} /> Skapa ett
+              </Link>
+            }
+          />
+        )
       ) : (
         <div className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
           <table className="w-full text-left text-sm">
@@ -92,7 +111,10 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
                     {formatDate(e.starts_at, true)} <span className="text-stone">{e.all_day ? "" : e.starts_at.slice(11)}</span>
                   </td>
                   <td className="hidden px-3 py-4 sm:table-cell">
-                    <StatusBadge published={!!e.published} />
+                    <span className="flex flex-wrap gap-1.5">
+                      <StatusBadge published={!!e.published} />
+                      <ReviewBadge checked={!!e.checked_at} />
+                    </span>
                   </td>
                   <td className="hidden px-3 py-4 lg:table-cell">
                     <span className="inline-flex items-center gap-1.5 text-stone">

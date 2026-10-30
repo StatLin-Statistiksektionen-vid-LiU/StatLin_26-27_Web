@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminHeader, Card, Notice } from "@/components/admin/ui";
-import { ArrowUpRight, Calendar, Image as ImageIcon, Newspaper, Plus } from "@/components/icons";
+import { ArrowUpRight, Calendar, Check, Image as ImageIcon, Newspaper, Plus } from "@/components/icons";
+import { canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { dashboardStats, listAudit } from "@/lib/data/admin";
 import { listEventsForAdmin } from "@/lib/data/events";
@@ -20,7 +21,14 @@ const ENTITY_LABELS: Record<string, string> = {
   user: "konto",
   settings: "inställningar",
 };
-const ACTION_LABELS: Record<string, string> = { create: "skapade", update: "uppdaterade", delete: "tog bort", upload: "laddade upp" };
+const ACTION_LABELS: Record<string, string> = {
+  create: "skapade",
+  update: "uppdaterade",
+  delete: "tog bort",
+  upload: "laddade upp",
+  check: "granskade",
+  uncheck: "ångrade granskningen av",
+};
 
 export default function Dashboard(props: PageProps<"/admin">) {
   return (
@@ -38,6 +46,7 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
   const now = nowLocal();
   const upcoming = events.filter((e) => e.starts_at >= now.slice(0, 10)).reverse().slice(0, 5);
   const needsImages = events.filter((e) => e.starts_at < now && e.image_count === 0 && e.published).slice(0, 4);
+  const toReview = canReviewEvents(user) ? events.filter((e) => !e.checked_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at)) : null;
   const first = user.name.split(" ")[0];
 
   const cards = [
@@ -81,6 +90,45 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
           </Link>
         ))}
       </div>
+
+      {toReview && (
+        <section aria-labelledby="att-granska" className="mt-8 rounded-[1.5rem] border border-ink/10 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <h2 id="att-granska" className="font-bold">
+              Att granska
+            </h2>
+            {toReview.length > 0 && (
+              <Link href="/admin/evenemang?visa=ogranskade" className="text-sm font-semibold text-red-deep hover:underline">
+                Alla {toReview.length}
+              </Link>
+            )}
+          </div>
+          {toReview.length === 0 ? (
+            <p className="mt-3 flex items-center gap-2 text-sm text-stone">
+              <Check size={16} className="text-emerald-700" /> Allt är granskat.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-stone">Nya och ändrade evenemang från utskotten och info. Granskningen påverkar inte vad som visas på sajten.</p>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {toReview.slice(0, 6).map((e) => (
+                  <li key={e.id}>
+                    <Link href={`/admin/evenemang/${e.id}`} className="flex items-center gap-3 rounded-2xl border border-ink/10 p-4 hover:border-ink/30">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{e.title}</span>
+                        <span className="block text-xs text-stone">
+                          {e.committee?.short_name ?? "Hela sektionen"} · {formatDate(e.starts_at)} {!e.published && "· Utkast"}
+                        </span>
+                      </span>
+                      <ArrowUpRight size={16} className="shrink-0 text-stone" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-5">
         <Card className="p-6 lg:col-span-3">
