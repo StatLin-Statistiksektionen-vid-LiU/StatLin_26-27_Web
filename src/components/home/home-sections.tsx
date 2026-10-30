@@ -184,8 +184,8 @@ export async function HomeSections() {
         </section>
       )}
 
-      {/* 05 Vägar in */}
-      <section className="pb-24 md:pb-32">
+      {/* 05 Vägar in – luften ovanför kommer annars från nyheterna, som bara visas när det finns några. */}
+      <section className={news.length > 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}>
         <div className="container-site grid gap-6 lg:grid-cols-2">
           <Reveal>
             <Link href="/ny-student" className="noise group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-red p-8 text-white md:p-12">
