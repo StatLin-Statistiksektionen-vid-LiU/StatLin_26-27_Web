@@ -1,0 +1,51 @@
+# StatLin på Fly.io – driftsätt med `fly deploy` (se README → Driftsättning → Fly.io).
+# Databasen (SQLite) och uppladdningarna ligger på volymen, så appen måste köra på exakt
+# en maskin: skala aldrig upp med `fly scale count`.
+
+app = "statlin-web"
+primary_region = "arn"
+# Reserv om bildbehandlingen (sharp) tillfälligt behöver mer minne än maskinen har.
+swap_size_mb = 512
+
+[build]
+  [build.args]
+    # Bakas in i förrenderade sidor – bygg om (fly deploy) efter att adressen ändrats.
+    SITE_URL = "https://statlin-web.fly.dev"
+
+[env]
+  SITE_URL = "https://statlin-web.fly.dev"
+  # Fly sätter besökarens IP i Fly-Client-IP, som besökaren inte kan förfalska.
+  CLIENT_IP_HEADER = "fly-client-ip"
+
+[[mounts]]
+  source = "statlin_data"
+  destination = "/data"
+  initial_size = "3gb"
+  auto_extend_size_threshold = 80
+  auto_extend_size_increment = "1gb"
+  auto_extend_size_limit = "10gb"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Maskinen stängs av när ingen besöker sajten och startar vid nästa besök (några sekunder).
+  # Sätt min_machines_running = 1 för att alltid ha den igång.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

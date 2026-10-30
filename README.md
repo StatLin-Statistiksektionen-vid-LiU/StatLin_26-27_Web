@@ -108,6 +108,24 @@ Skapa en ny administratör eller återställ lösenordet för en befintlig:
 docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
 ```
 
+### Fly.io
+
+Inställningarna finns i `fly.toml`: appen `statlin-web` i region `arn` (Stockholm), en maskin med 1 GB minne och volymen `statlin_data` monterad på `/data`. Första gången:
+
+```bash
+fly apps create statlin-web
+fly volumes create statlin_data --region arn --size 3
+fly deploy --ha=false
+```
+
+Därefter räcker `fly deploy` för att driftsätta en ny version.
+
+- Appen måste köra på **exakt en maskin**, eftersom SQLite-databasen ligger på volymen. Skala aldrig upp med `fly scale count`.
+- Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
+- Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Volymen växer automatiskt upp till 10 GB.
+- Skapa en ny administratör eller återställ lösenordet: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`.
+- **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
+
 ### Utan Docker
 
 ```bash
