@@ -4,7 +4,8 @@
  * StatLin – designsystem
  * Färger från grafiskt styrdokument (kap. 4): Röd 255/7/7, Svart, Vit.
  * Text på sektionshemsidan är undantagen från typsnittsregleringen (kap. 5),
- * så webben använder Archivo (rubriker/bröd), Instrument Serif (accent) och JetBrains Mono (data).
+ * så webben använder Archivo (rubriker/bröd) och JetBrains Mono (data och accentord i rubriker).
+ * Citat och formler sätts i Georgia, styrdokumentets brödtypsnitt, som är ett systemtypsnitt.
  */
 
 @theme {
@@ -25,7 +26,7 @@
   --color-star-navy: #0b1530;
 
   --font-sans: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -141,12 +142,11 @@
   line-height: 1;
 }
 
-@utility serif-accent {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: -0.01em;
+/* Accentord i rubriker: ärver vikt och versaler från rubriken, bara typsnittet byts. */
+@utility mono-accent {
+  font-family: var(--font-mono);
+  font-style: normal;
+  letter-spacing: -0.04em;
   font-stretch: 100%;
 }
 

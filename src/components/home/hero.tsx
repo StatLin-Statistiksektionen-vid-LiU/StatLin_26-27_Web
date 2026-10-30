@@ -49,7 +49,7 @@ export function Hero() {
         <div className="grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
           <div className="md:col-span-7 [animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both]">
             <h1 className="display-tight text-[clamp(1.7rem,3.1vw,2.7rem)] leading-[1.02]">
-              Sektionen för <span className="serif-accent text-red">statistik</span>
+              Sektionen för <span className="mono-accent text-red">statistik</span>
               <br /> och dataanalys vid LiU
             </h1>
             <p className="mt-4 max-w-lg text-[1rem] leading-relaxed text-white/60">

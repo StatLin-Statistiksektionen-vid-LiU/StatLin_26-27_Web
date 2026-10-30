@@ -78,7 +78,7 @@ export function SiteFooter() {
           <div className="md:col-span-5">
             <p className="kicker text-red">Statistiksektionen i Linköping</p>
             <p className="display-tight mt-5 max-w-md text-[clamp(1.8rem,3.4vw,2.8rem)]">
-              Allt blir mer <span className="serif-accent text-red">signifikant</span> tillsammans.
+              Allt blir mer <span className="mono-accent text-red">signifikant</span> tillsammans.
             </p>
             <div className="mt-8">
               <Suspense fallback={<div className="h-24" />}>

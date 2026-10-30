@@ -100,7 +100,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
       <section className="border-t border-ink/10 bg-paper-2/50 py-16 md:py-24">
         <div className="container-site">
           <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">
-            Kommande med <span className="serif-accent normal-case text-red-deep">{c.short_name}</span>
+            Kommande med <span className="mono-accent normal-case text-red-deep">{c.short_name}</span>
           </h2>
           {upcoming.length > 0 ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -22,7 +22,7 @@ export default function LoginPage(props: PageProps<"/logga-in">) {
         </div>
         <div className="relative p-10">
           <p className="display-tight max-w-md text-3xl">
-            För sektionens <span className="serif-accent text-red">poster</span>
+            För sektionens <span className="mono-accent text-red">poster</span>
           </p>
           <p className="mt-3 max-w-md text-white/55">Lägg upp evenemang, nyheter och bilder för ditt utskott – direkt på sajten.</p>
         </div>

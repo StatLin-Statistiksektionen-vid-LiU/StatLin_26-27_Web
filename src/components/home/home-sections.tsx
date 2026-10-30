@@ -37,9 +37,9 @@ export async function HomeSections() {
               Om sektionen
             </p>
             <p className="mt-7 text-[clamp(1.75rem,3.6vw,3.15rem)] font-semibold leading-[1.12] tracking-tight [font-stretch:104%]">
-              Vi är statistikstudenternas sektion i Linköping. Här möts <span className="serif-accent text-red-deep">gemenskap</span>,{" "}
-              <span className="serif-accent text-red-deep">utbildning</span> och vägen ut i{" "}
-              <span className="serif-accent text-red-deep">arbetslivet</span>.
+              Vi är statistikstudenternas sektion i Linköping. Här möts <span className="mono-accent text-red-deep">gemenskap</span>,{" "}
+              <span className="mono-accent text-red-deep">utbildning</span> och vägen ut i{" "}
+              <span className="mono-accent text-red-deep">arbetslivet</span>.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link href="/sektionen" className="btn btn-ink group">
@@ -76,7 +76,7 @@ export async function HomeSections() {
       <section className="relative bg-paper-2/60 py-24 md:py-32">
         <div className="container-site">
           <Reveal>
-            <SectionHeading index="02" kicker="Kalender" title={<>Kommande <span className="serif-accent text-red-deep">evenemang</span></>} href="/evenemang" linkLabel="Hela kalendern" />
+            <SectionHeading index="02" kicker="Kalender" title={<>Kommande <span className="mono-accent text-red-deep">evenemang</span></>} href="/evenemang" linkLabel="Hela kalendern" />
           </Reveal>
           {events.length > 0 ? (
             <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -118,7 +118,7 @@ export async function HomeSections() {
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
         <div className="container-site relative">
           <Reveal>
-            <SectionHeading dark index="03" kicker="Utskott" title={<>Hitta ditt <span className="serif-accent text-red">sammanhang</span></>} href="/utskott" linkLabel="Alla utskott" />
+            <SectionHeading dark index="03" kicker="Utskott" title={<>Hitta ditt <span className="mono-accent text-red">sammanhang</span></>} href="/utskott" linkLabel="Alla utskott" />
           </Reveal>
           <ul className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/10 md:grid-cols-4">
             {utskott.map((c, i) => (
@@ -166,7 +166,7 @@ export async function HomeSections() {
         <section className="py-24 md:py-32">
           <div className="container-site">
             <Reveal>
-              <SectionHeading index="04" kicker="Nyheter" title={<>Senaste <span className="serif-accent text-red-deep">nytt</span></>} href="/nyheter" linkLabel="Alla nyheter" />
+              <SectionHeading index="04" kicker="Nyheter" title={<>Senaste <span className="mono-accent text-red-deep">nytt</span></>} href="/nyheter" linkLabel="Alla nyheter" />
             </Reveal>
             <Reveal className="mt-14">
               <NewsCard item={news[0]} featured />

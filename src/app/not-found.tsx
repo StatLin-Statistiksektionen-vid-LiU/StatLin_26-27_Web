@@ -24,8 +24,9 @@ export default function NotFound() {
           </text>
         </svg>
         <p className="kicker mt-10 text-red">Fel 404 · p = 0,0004</p>
-        <h1 className="display mt-5 text-[clamp(2.4rem,7vw,5rem)]">
-          Utanför <span className="serif-accent normal-case text-red">konfidens</span>intervallet
+        {/* Mjukt bindestreck: ordet är bredare än spalten och får brytas i sammansättningen. */}
+        <h1 className="display mt-5 text-[clamp(1.9rem,7vw,4.5rem)]">
+          Utanför <span className="mono-accent text-red">konfidens&shy;</span>intervallet
         </h1>
         <p className="mx-auto mt-6 max-w-md text-lg text-white/65">
           Sidan du letar efter finns inte – eller så har den flyttats. Vi förkastar nollhypotesen att du hamnade rätt.

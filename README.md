@@ -169,7 +169,7 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 - **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen).
 - **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`).
 - Sessioner i databasen (slumpad token, endast SHA-256-hashen lagras), lösenord med bcrypt, CSRF-skydd via SameSite-cookies och kontroll av ursprung.
-- Typsnitt (Archivo, Instrument Serif, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs.
+- Typsnitt (Archivo, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs. Citat och formler använder systemtypsnittet Georgia.
 
 ```
 src/

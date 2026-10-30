@@ -237,8 +237,8 @@ export default function BrandPage() {
         <div className="container-site">
           <BrandHeading index="5" title="Typsnitt" />
           <p className="mt-5 max-w-2xl text-ink/70">
-            Typsnitten gäller dokument, protokoll och tryck. Text på sektionshemsidan är undantagen – webben använder Archivo, Instrument Serif och
-            JetBrains Mono.
+            Typsnitten gäller dokument, protokoll och tryck. Text på sektionshemsidan är undantagen – webben använder Archivo och JetBrains Mono,
+            och Georgia för citat.
           </p>
           <ul className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
             {FONTS.map((f) => (
