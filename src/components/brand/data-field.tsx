@@ -21,21 +21,46 @@ export function DataField({ className }: { className?: string }) {
     let dpr = 1;
     let raf = 0;
     let running = true;
+    let last = 0;
     let pointer = { x: -9999, y: -9999 };
 
-    // Slumpvandring med positiv drift – "StatLin-grafiken" pekar alltid uppåt höger.
+    // Tidsserie runt en stigande diagonal – "StatLin-grafiken" pekar alltid uppåt höger.
+    // Avvikelsen från diagonalen dras tillbaka mot noll av sig själv, så linjen behöver
+    // aldrig skalas om och kan glida mjukt. Avstånd anges i px vid 800 px höjd.
     const STEP = 14;
-    let series: number[] = [];
-    let drift = 0;
+    const SPEED = 21; // px per sekund
+    const LIMIT = 140; // mjukt tak för avvikelsen
+    type Point = { dev: number; vol: number };
+    const series: Point[] = [];
     let offset = 0;
+    let level = 0;
+    let velocity = 0;
+    let logVol = 0;
+    let shock = 0;
+    let volSmooth = 1;
 
     type Dot = { x: number; y: number; vx: number; vy: number; r: number; a: number; red: boolean };
     let dots: Dot[] = [];
 
-    const nextValue = (prev: number) => {
-      drift += (Math.random() - 0.5) * 0.9;
-      drift *= 0.92;
-      return prev + drift + (Math.random() - 0.48) * 3.2;
+    const gauss = () => {
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    };
+
+    // Volatiliteten vandrar långsamt (lugna och oroliga perioder), ibland kommer en chock
+    // som klingar av, och nivån dras med tröghet tillbaka mot diagonalen.
+    const nextPoint = (): Point => {
+      logVol += -0.03 * logVol + 0.1 * gauss();
+      const vol = Math.exp(logVol);
+      if (Math.random() < 0.012) shock += (Math.random() < 0.5 ? -1 : 1) * (24 + Math.random() * 36);
+      shock *= 0.93;
+      velocity += -0.1 * velocity - 0.015 * level + 2.6 * vol * gauss();
+      level += velocity;
+      volSmooth += (vol - volSmooth) * 0.15;
+      return { dev: LIMIT * Math.tanh((level + shock + 3.6 * vol * gauss()) / LIMIT), vol: volSmooth };
     };
 
     const resize = () => {
@@ -47,9 +72,12 @@ export function DataField({ className }: { className?: string }) {
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // Första gången: kör serien en stund så att den börjar mitt i ett förlopp.
+      // Vid ändrad bredd behålls punkterna, så linjen hoppar inte.
+      if (series.length === 0) for (let i = 0; i < 300; i++) nextPoint();
       const n = Math.ceil(w / STEP) + 3;
-      series = [0];
-      for (let i = 1; i < n; i++) series.push(nextValue(series[i - 1]));
+      while (series.length < n) series.push(nextPoint());
+      series.length = n;
 
       const count = Math.round(Math.min(90, (w * h) / 16000));
       dots = Array.from({ length: count }, () => ({
@@ -63,18 +91,20 @@ export function DataField({ className }: { className?: string }) {
       }));
     };
 
-    const draw = () => {
+    const draw = (dt: number) => {
       ctx.clearRect(0, 0, w, h);
+      // Punkternas hastigheter är angivna per bildruta vid 60 Hz.
+      const frames = dt * 60;
 
       // Spridningsdiagram + svaga kopplingar mellan närliggande punkter
       for (const d of dots) {
-        d.x += d.vx;
-        d.y += d.vy;
+        d.x += d.vx * frames;
+        d.y += d.vy * frames;
         const dx = d.x - pointer.x;
         const dy = d.y - pointer.y;
         const dist2 = dx * dx + dy * dy;
         if (dist2 < 140 * 140) {
-          const f = (1 - Math.sqrt(dist2) / 140) * 0.6;
+          const f = (1 - Math.sqrt(dist2) / 140) * 0.6 * frames;
           d.x += (dx / Math.sqrt(dist2 + 0.01)) * f;
           d.y += (dy / Math.sqrt(dist2 + 0.01)) * f;
         }
@@ -107,22 +137,20 @@ export function DataField({ className }: { className?: string }) {
         ctx.fill();
       }
 
-      // Tidsserie: normalisera så att den stiger diagonalt genom bilden
-      const min = Math.min(...series);
-      const max = Math.max(...series);
-      const span = Math.max(40, max - min);
-      const baseY = (i: number) => h * 0.86 - (i / series.length) * h * 0.38;
-      const y = (i: number) => baseY(i) - ((series[i] - min) / span - 0.5) * h * 0.22;
-      const x = (i: number) => i * STEP - offset;
+      // Tidsserie: diagonalen följer x-led på skärmen, inte punktens index, så inget
+      // flyttar sig i höjdled när en ny punkt kommer in.
+      const unit = h / 800;
+      const xs = series.map((_, i) => i * STEP - offset);
+      const ys = series.map((p, i) => h * 0.8 - (xs[i] / w) * h * 0.26 - p.dev * unit);
 
-      // Konfidensband
+      // Konfidensband – bredare när serien är orolig
       const band = ctx.createLinearGradient(0, h * 0.4, 0, h);
       band.addColorStop(0, "rgba(255,7,7,0.10)");
       band.addColorStop(1, "rgba(255,7,7,0)");
       ctx.fillStyle = band;
       ctx.beginPath();
-      for (let i = 0; i < series.length; i++) ctx.lineTo(x(i), y(i) - 26 - Math.sin(i / 7) * 6);
-      for (let i = series.length - 1; i >= 0; i--) ctx.lineTo(x(i), y(i) + 34 + Math.cos(i / 9) * 6);
+      for (let i = 0; i < series.length; i++) ctx.lineTo(xs[i], ys[i] - (20 + 10 * series[i].vol) * unit);
+      for (let i = series.length - 1; i >= 0; i--) ctx.lineTo(xs[i], ys[i] + (26 + 12 * series[i].vol) * unit);
       ctx.closePath();
       ctx.fill();
 
@@ -135,35 +163,38 @@ export function DataField({ className }: { className?: string }) {
       ctx.lineJoin = "round";
       ctx.beginPath();
       for (let i = 0; i < series.length; i++) {
-        if (i === 0) ctx.moveTo(x(i), y(i));
-        else ctx.lineTo(x(i), y(i));
+        if (i === 0) ctx.moveTo(xs[i], ys[i]);
+        else ctx.lineTo(xs[i], ys[i]);
       }
       ctx.stroke();
       ctx.restore();
 
-      // Senaste mätpunkt
-      const li = series.length - 3;
-      const lx = x(li);
-      const ly = y(li);
-      if (lx < w) {
+      // Senaste mätpunkt: glider längs linjen nära högerkanten
+      const mx = w - 2 * STEP;
+      const pos = (mx + offset) / STEP;
+      const li = Math.floor(pos);
+      if (li >= 0 && li + 1 < series.length) {
         ctx.fillStyle = "#ff0707";
         ctx.beginPath();
-        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+        ctx.arc(mx, ys[li] + (ys[li + 1] - ys[li]) * (pos - li), 3.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
       if (!reduced) {
-        offset += 0.35;
-        if (offset >= STEP) {
+        offset += SPEED * dt;
+        while (offset >= STEP) {
           offset -= STEP;
           series.shift();
-          series.push(nextValue(series[series.length - 1]));
+          series.push(nextPoint());
         }
       }
     };
 
-    const loop = () => {
-      draw();
+    // Rörelsen följer klockan, inte antalet bildrutor: samma fart på 60 och 144 Hz.
+    const loop = (now: number) => {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
+      last = now;
+      draw(dt);
       if (running && !reduced) raf = requestAnimationFrame(loop);
     };
 
@@ -175,6 +206,7 @@ export function DataField({ className }: { className?: string }) {
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !running) {
         running = true;
+        last = 0;
         raf = requestAnimationFrame(loop);
       } else if (!entry.isIntersecting) {
         running = false;
@@ -183,11 +215,11 @@ export function DataField({ className }: { className?: string }) {
     });
 
     resize();
-    loop();
+    loop(performance.now());
     io.observe(canvas);
     const ro = new ResizeObserver(() => {
       resize();
-      if (reduced) draw();
+      if (reduced) draw(0);
     });
     ro.observe(canvas);
     window.addEventListener("pointermove", onMove, { passive: true });
