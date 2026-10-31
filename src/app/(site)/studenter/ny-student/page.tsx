@@ -5,8 +5,10 @@ import { ContentPage } from "@/components/content/content-page";
 import { EventRow } from "@/components/content/event-card";
 import { Overall } from "@/components/content/overall";
 import { ArrowRight } from "@/components/icons";
+import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { listUpcomingEvents } from "@/lib/data/events";
+import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
   title: "Nya studenter",
@@ -22,7 +24,7 @@ export default function NewStudentPage() {
 }
 
 async function NewStudent() {
-  const events = await listUpcomingEvents(4);
+  const [events, shortcuts] = await Promise.all([listUpcomingEvents(4), listFeaturedLinks()]);
   return (
     <ContentPage
       slug="ny-student"
@@ -52,6 +54,7 @@ async function NewStudent() {
               Hela kalendern <ArrowRight size={18} />
             </Link>
           </div>
+          <QuickLinksCard links={shortcuts} />
           <div className="grid grid-cols-2 gap-3 rounded-[1.75rem] bg-ink p-6 md:hidden">
             <Overall side="fram" />
             <Overall side="bak" />

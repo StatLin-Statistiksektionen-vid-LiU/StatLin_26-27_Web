@@ -13,6 +13,8 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Nyheter** med fästa inlägg, schemalagd publicering och avsändande utskott.
 - **Sektionen**: om StatLin, styrelsen, utskott (en egen sida per utskott med deras evenemang och nyheter), galleri, dokument och **grafisk profil**. Den sista är en interaktiv version av styrdokumentet med loggvarianter, färgkoder som kopieras med ett klick och nedladdningar.
 - **Studenter** med **Kandidat**, **Master** och **Nya studenter** (med overallen ritad enligt styrdokumentet), **För företag** (med STAR) och **Kontakt**. De gamla adresserna /utbildning och /ny-student skickas vidare.
+- **Länkar** (`/studenter/lankar`): de vanligaste LiU-länkarna – schema, boka rum, karta, skriva ut, tentamensanmälan och e-post, som på Tenuil – och fler i grupper. Sökningen bryr sig inte om å/ä/ö, stjärnan fäster favoriter överst (sparas i webbläsaren), och sidan visar veckonumret. Programmens kurser listas per termin med andel godkända tentor. Genvägarna finns också på startsidan och på Kandidat, Master och Nya studenter.
+- **Tentastatistik** (`/tentastatistik`): sök på kurskoden för vilken LiU-kurs som helst och se betygen på varje tentatillfälle som diagram eller tabell, med andel godkända de senaste tre åren. Statistiken kommer från samma öppna källa som liustats.se, sparas i databasen och hämtas om högst en gång per dygn. Tillfällen med färre än fem resultat visas inte.
 - **In English** (`/en` och `/en/masters`) för masterprogrammet, som ges på engelska. Texterna redigeras under *Sidor*, och knappen EN/SV i sidhuvudet växlar språk. Övriga sidor är på svenska; inget på sajten blockerar webbläsarens inbyggda översättning.
 - SEO: metadata, Open Graph-bild, sitemap, robots och strukturerad data (schema.org/Event) för evenemang.
 - Fungerar på mobil, med tangentbord och skärmläsare, respekterar "minska rörelse" och visar allt innehåll även utan JavaScript.
@@ -24,6 +26,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
 - **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
 - **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
+- **Länkar** och **kurser**: redaktörerna sköter länksidan och väljer vilka länkar som är genvägar. Programmens kurslista sköts av redaktörerna och UBU, och tentastatistiken hämtas automatiskt från kurskoden.
 - Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
 - **Konton** (endast admin). Nya konton får ett läsbart engångslösenord, till exempel `kvartil-median-4821`, som måste bytas vid första inloggningen.
 - **Uppdragstavla** för styrelsen: posterna skickar uppdrag till varandra, till exempel från SASU till grafiskt ansvarig om en affisch. Uppdragen sorteras i Planerat, Pågår, Behöver hjälp och Klart och har kommentarer, deadline och koppling till evenemang. Avsändaren väljer om uppdraget syns för hela styrelsen eller bara för mottagaren. Ordförande, vice och info ser alltid allt. Uppdrag utan mottagare kan vem som helst ta, och nya uppdrag till dig syns som en siffra i menyn.
@@ -35,8 +38,8 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 | Roll | Typiskt för | Får göra |
 | --- | --- | --- |
 | **Administratör** | Ordförande, vice ordförande, informationsansvarig (webbansvarig) | Allt, inklusive konton och granskning av evenemang |
-| **Redaktör** | Den som ska sköta innehållet utan att hantera konton | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, kontaktuppgifter |
-| **Utskott** | Övriga poster: SCB, UBU, SASU, StatPub, STIG, eSTIG, kassör, grafiskt ansvarig … | Det egna utskottets evenemang, nyheter, bilder och utskottssida |
+| **Redaktör** | Den som ska sköta innehållet utan att hantera konton | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, länkar, kurser, kontaktuppgifter |
+| **Utskott** | Övriga poster: SCB, UBU, SASU, StatPub, STIG, eSTIG, kassör, grafiskt ansvarig … | Det egna utskottets evenemang, nyheter, bilder och utskottssida. UBU sköter dessutom programmens kurslista. |
 
 Alla roller når uppdragstavlan. Administratörer och redaktörer ser alla uppdrag, övriga ser det som delats med hela styrelsen och det som rör dem själva.
 
@@ -83,6 +86,7 @@ Demokonton i Codespaces:
 | `admin@statlin.se` | `admin-statlin-2026` | Administratör |
 | `info@statlin.se` | `demo-statlin-2026` | Redaktör |
 | `scb@statlin.se` | `demo-statlin-2026` | Utskott (SCB) |
+| `ubu@statlin.se` | `demo-statlin-2026` | Utskott (UBU) |
 
 Logga in på `/logga-in`. Codespaces är privat för ditt konto, och lösenorden gäller bara där. Stäng av eller ta bort codespacet när du är klar (*Code → Codespaces → … → Delete*) så att du inte förbrukar din gratiskvot.
 
@@ -176,6 +180,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
+| `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
 | `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `x-real-ip` (Railway) eller `fly-client-ip` (Fly.io). |
 
 ### Säkerhetskopiering
@@ -193,7 +198,8 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 3. **Efter evenemanget**: öppna det under *Evenemang*, scrolla till *Bildgalleri* och dra in bilderna. De dyker upp direkt på sajten och i galleriet. Klicka på ★ för att välja omslag.
 4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
 5. **Uppdragstavlan**: *Nytt uppdrag* skickar ett uppdrag till en annan post, eller lägger upp det öppet så att vem som helst kan ta det. Mottagaren flyttar det mellan Planerat, Pågår, Behöver hjälp och Klart, och båda kan skriva kommentarer, till exempel med en länk till utkastet i Canva.
-6. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. Bilder, gallerier och partners ändras fortfarande i adminpanelen, och panelen har en länk dit.
+6. **Länkar och kurser**: under *Länkar* (redaktörer) styrs länksidan – slå på *Genväg* för att länken ska visas överst och på startsidan. Under *Kurser* (redaktörer och UBU) finns programmens kurslista. Skriv kurskoden, så hämtas tentastatistiken automatiskt inom någon minut.
+7. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. Bilder, gallerier och partners ändras fortfarande i adminpanelen, och panelen har en länk dit.
 
 Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
 
@@ -210,7 +216,7 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 src/
   app/(site)/        publika sidor
   app/admin/         adminpanelen (+ _actions/ med server actions)
-  app/api/           uppladdning och hälsokontroll
+  app/api/           uppladdning, hälsokontroll och kurskoder till tentastatistiken
   app/media/         serverar uppladdade filer från DATA_DIR
   components/        UI (brand/, content/, home/, layout/, admin/)
   lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
@@ -232,7 +238,7 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
 | `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
-| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla) mot en nyseedad server – se kommentaren i filen |
+| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik) mot en nyseedad server – se kommentaren i filen |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra

@@ -78,6 +78,7 @@ export type SessionUser = Pick<UserRow, "id" | "email" | "name" | "post" | "role
   must_change_password: boolean;
   committee_name: string | null;
   committee_kind: Committee["kind"] | null;
+  committee_slug: string | null;
 };
 
 export interface BoardMember {
@@ -233,6 +234,37 @@ export interface Partner {
   sort_order: number;
   active: number;
   logo: ImageRef | null;
+}
+
+export type LinkCategory = "studier" | "tentor" | "it" | "campus" | "stod" | "statlin";
+
+export interface LinkItem {
+  id: number;
+  label: string;
+  description: string;
+  url: string;
+  keywords: string;
+  category: LinkCategory;
+  icon: string;
+  featured: number;
+  sort_order: number;
+  active: number;
+}
+
+export type Program = "kandidat" | "master";
+
+export interface Course {
+  id: number;
+  code: string;
+  name: string;
+  credits: number;
+  program: Program;
+  term: number;
+  period: string;
+  elective: number;
+  url: string;
+  sort_order: number;
+  active: number;
 }
 
 export interface SiteSettings {

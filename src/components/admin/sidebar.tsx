@@ -6,8 +6,10 @@ import { useState } from "react";
 import { logout } from "@/app/admin/_actions/auth";
 import {
   ArrowUpRight,
+  BarChart,
   Board,
   Calendar,
+  Chain,
   Close,
   FileText,
   Handshake,
@@ -20,10 +22,11 @@ import {
   Settings,
   Users,
 } from "@/components/icons";
+import { canManageCourses } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
-type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind">;
+type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "committee_slug">;
 
 export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
   const pathname = usePathname();
@@ -34,6 +37,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const tasks = { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks };
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
+  const courses = { href: "/admin/kurser", label: "Kurser", Icon: BarChart };
   const groups = [
     {
       label: "Innehåll",
@@ -50,6 +54,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             ownPage,
+            canManageCourses(user) ? courses : null,
             tasks,
           ],
     },
@@ -60,6 +65,8 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         { href: "/admin/styrelsen", label: "Styrelsen", Icon: Users },
         { href: "/admin/sidor", label: "Sidor", Icon: FileText },
         { href: "/admin/dokument", label: "Dokument", Icon: FileText },
+        { href: "/admin/lankar", label: "Länkar", Icon: Chain },
+        courses,
         { href: "/admin/partners", label: "Partners", Icon: Handshake },
       ],
     },

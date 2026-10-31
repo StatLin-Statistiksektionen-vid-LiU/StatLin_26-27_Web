@@ -38,6 +38,9 @@ export function canEditTask(u: SessionUser, t: TaskRef): boolean {
   return seesAllTasks(u) || t.from_user_id === u.id;
 }
 
+/** Programmens kurslista: redaktörer och UBU, som bevakar utbildningen. */
+export const canManageCourses = (u: Who & Pick<SessionUser, "committee_slug">) => isEditor(u) || (u.role === "committee" && u.committee_slug === "ubu");
+
 export const canManageUsers = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;

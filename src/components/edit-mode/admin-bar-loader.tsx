@@ -5,5 +5,5 @@ import { AdminBar } from "./admin-bar";
 export async function AdminBarLoader() {
   const user = await getSessionUser();
   if (!user) return null;
-  return <AdminBar user={{ id: user.id, name: user.name, post: user.post, role: user.role, committee_id: user.committee_id, committee_name: user.committee_name }} />;
+  return <AdminBar user={{ id: user.id, name: user.name, post: user.post, role: user.role, committee_id: user.committee_id, committee_name: user.committee_name, committee_slug: user.committee_slug }} />;
 }

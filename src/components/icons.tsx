@@ -226,6 +226,35 @@ export const Search = (p: IconProps) => (
     <path d="m20 20-3.5-3.5" />
   </svg>
 );
+export const Door = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M5.5 21V4.5A1.5 1.5 0 0 1 7 3h10a1.5 1.5 0 0 1 1.5 1.5V21M3 21h18" />
+    <circle cx="15" cy="12.5" r="0.9" fill="currentColor" />
+  </svg>
+);
+export const MapFold = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M9 4 3.5 6.2v13.6L9 17.6l6 2.4 5.5-2.2V4.2L15 6.4 9 4Z" />
+    <path d="M9 4v13.6M15 6.4V20" />
+  </svg>
+);
+export const Printer = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M7 9V3.5h10V9M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+    <path d="M7 13.5h10v7H7z" />
+  </svg>
+);
+export const BarChart = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 20h16M7.5 16.5v-5M12 16.5V6M16.5 16.5v-8" />
+  </svg>
+);
+export const Chain = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />
+  </svg>
+);
 
 export const Instagram = (p: IconProps) => (
   <svg {...base(p)}>

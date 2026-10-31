@@ -92,6 +92,16 @@ export function relativeDay(local: string): string {
   return `Om ${Math.round(diff / 30)} mån`;
 }
 
+/** ISO-veckonumret för ett datum, "YYYY-MM-DD". Vecka 1 är veckan med årets första torsdag. */
+export function isoWeek(local: string): number {
+  const d = asUtc(local.slice(0, 10));
+  const weekday = d.getUTCDay() || 7;
+  // Torsdagen i samma vecka avgör vilket år veckan hör till.
+  d.setUTCDate(d.getUTCDate() + 4 - weekday);
+  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
+  return Math.ceil(((d.getTime() - yearStart) / 86_400_000 + 1) / 7);
+}
+
 export function addDaysLocal(local: string, days: number): string {
   const d = asUtc(local);
   d.setUTCDate(d.getUTCDate() + days);

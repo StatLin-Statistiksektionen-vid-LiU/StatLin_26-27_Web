@@ -11,6 +11,7 @@ import { getDb } from "../src/lib/db";
 import { hashPassword, generatePassword } from "../src/lib/auth/password";
 import { storeImage } from "../src/lib/media-store";
 import { addDaysLocal, nowLocal } from "../src/lib/dates";
+import type { ExamOccasion, ExamStats } from "../src/lib/exam-stats";
 import { mulberry32 } from "../src/lib/utils";
 
 const demo = process.argv.includes("--demo");
@@ -56,6 +57,7 @@ async function seedDemo(created: { email: string; password: string; role: string
   const demoUsers = [
     { email: "info@statlin.se", name: "Namn Efternamn", post: "Informationsansvarig", role: "editor", committee: "styrelsen" },
     { email: "scb@statlin.se", name: "Namn Efternamn", post: "Ordförande SCB", role: "committee", committee: "scb" },
+    { email: "ubu@statlin.se", name: "Namn Efternamn", post: "Utbildningsansvarig", role: "committee", committee: "ubu" },
   ];
   for (const u of demoUsers) {
     const exists = db.prepare("SELECT 1 FROM users WHERE email = ?").get(u.email);
@@ -129,6 +131,18 @@ async function seedDemo(created: { email: string; password: string; role: string
     if (i === 0) db.prepare("UPDATE events SET cover_media_id = ? WHERE id = ?").run(media.id, gasqueId);
   }
 
+  // Påhittad tentastatistik för en av våra kurser och en annan LiU-kurs, så att diagrammen syns i demot
+  // och e2e-testet fungerar utan att källan behöver nås. Kodlistan är de koder sajten tror att källan har.
+  const insertStats = db.prepare("INSERT OR REPLACE INTO exam_stats (course_code, data, fetched_at) VALUES (?, ?, ?)");
+  const demoStats = [
+    demoExamStats({ code: "732G33", sv: "Programmering i R", en: "Programming in R", module: "DAT1", grades: ["U", "G", "VG"], pass: 0.55, seed: 1 }),
+    demoExamStats({ code: "TATA24", sv: "Linjär algebra", en: "Linear Algebra", module: "TEN1", grades: ["U", "3", "4", "5"], pass: 0.6, seed: 2 }),
+  ];
+  for (const stats of demoStats) insertStats.run(stats.code, JSON.stringify(stats), new Date().toISOString());
+  const setSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  setSetting.run("exam_stats_codes", JSON.stringify(demoStats.map((s) => s.code)));
+  setSetting.run("exam_stats_codes_at", new Date().toISOString());
+
   const news = [
     { slug: "valkommen-till-nya-statlin-se", title: "Välkommen till nya statlin.se", committee: "styrelsen", pinned: 1, days: 0,
       excerpt: "Ny webb med kalender, galleri och inloggning för sektionens poster.",
@@ -155,6 +169,36 @@ async function seedDemo(created: { email: string; password: string; role: string
       author_id: adminId,
     });
   }
+}
+
+/** Fyra tentatillfällen om året de senaste åren: två ordinarie med många skrivande och två omtentor. */
+function demoExamStats(o: { code: string; sv: string; en: string; module: string; grades: string[]; pass: number; seed: number }): ExamStats {
+  const rnd = mulberry32(o.seed * 104729 + 7);
+  const today = nowLocal().slice(0, 10);
+  const year = Number(today.slice(0, 4));
+  const [fail, ...passes] = o.grades;
+  const occasions: ExamOccasion[] = [];
+  for (let y = year - 3; y <= year; y++) {
+    for (const [monthDay, size] of [["01-12", 22], ["06-02", 90], ["08-20", 18], ["10-29", 70]] as const) {
+      const date = `${y}-${monthDay}`;
+      if (date >= today) continue;
+      const total = Math.round(size * (0.7 + rnd() * 0.6));
+      const passed = Math.round(total * Math.min(0.95, Math.max(0.1, o.pass + (rnd() - 0.5) * 0.35)));
+      // Fler av de lägre godkända betygen än av det högsta.
+      const weights = passes.map((_, i) => passes.length - i * 0.6 + rnd());
+      const sum = weights.reduce((a, b) => a + b, 0);
+      const counts = weights.map((w) => Math.floor((passed * w) / sum));
+      counts[0] += passed - counts.reduce((a, b) => a + b, 0);
+      occasions.push({
+        date,
+        total,
+        passed,
+        grades: [{ grade: fail, count: total - passed }, ...passes.map((grade, i) => ({ grade, count: counts[i] }))],
+      });
+    }
+  }
+  occasions.sort((a, b) => b.date.localeCompare(a.date));
+  return { code: o.code, title: { sv: o.sv, en: o.en }, modules: [{ code: o.module, title: "Tentamen", occasions }], sourceUpdatedAt: null };
 }
 
 /** Abstrakt "datakonst": spridningsdiagram, kurvor och rutnät i rött/svart/vitt. */

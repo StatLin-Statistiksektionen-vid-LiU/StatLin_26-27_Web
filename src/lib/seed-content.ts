@@ -2,6 +2,7 @@
  * Standardinnehåll som läggs in vid första start. Allt går att redigera i adminpanelen.
  * Utskott, förkortningar och loggor kommer från StatLins grafiska styrdokument.
  */
+import type { LinkCategory, Program } from "./types";
 
 export const SEED_COMMITTEES = [
   {
@@ -142,6 +143,12 @@ Det enklaste sättet att engagera sig är att dyka upp på ett evenemang. Vill d
 StatLin står för *Statistiksektionen i Linköping* och skrivs med versalt S och L. Förkortningarna StLn, StL, SL och S förekommer också.`,
   },
   {
+    slug: "lankar",
+    title: "Länkar",
+    lead: "Schema, tentor, Lisam och allt annat du behöver under studietiden – samlat på ett ställe. Fäst dina favoriter med stjärnan så hamnar de överst.",
+    body_md: "",
+  },
+  {
     slug: "ny-student",
     title: "Ny student",
     lead: "Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.",
@@ -279,6 +286,114 @@ UBU, our education committee, works for the quality of both programmes. Contact 
 
 For housing, residence permits and other practical matters, Linköping University's support for international students is the best place to start.`,
   },
+];
+
+/* ---------- Länksidan (/studenter/lankar) ---------- */
+
+type SeedLink = { label: string; description: string; url: string; category: LinkCategory; keywords?: string; icon?: string; featured?: boolean };
+
+/**
+ * Grundlänkar för studenterna. Genvägarna (featured) är samma vanliga länkar som Tenuil har överst.
+ * Läggs in en gång – sedan ändras de under Admin → Länkar.
+ */
+export const SEED_LINKS: SeedLink[] = [
+  // Genvägar
+  { label: "Schema", description: "TimeEdit för kurser och program", url: "https://cloud.timeedit.net/liu/web/schema/ri1Q7.html", category: "studier", keywords: "timeedit kalender schema", icon: "calendar", featured: true },
+  { label: "Boka rum", description: "Grupprum och lokaler i TimeEdit", url: "https://cloud.timeedit.net/liu/web/wr_stud/", category: "campus", keywords: "grupprum lokal boka", icon: "door", featured: true },
+  { label: "Karta", description: "Hitta salen på campus i MazeMap", url: "https://use.mazemap.com/#v=1&config=liu&zlevel=2&center=15.576769,58.398512&zoom=15.1&campusid=742", category: "campus", keywords: "mazemap campus sal lokal hitta", icon: "map", featured: true },
+  { label: "Skriva ut", description: "Utskrift, kopiering och skanning", url: "https://print.liu.se/", category: "it", keywords: "papercut skanna kopiera skrivare", icon: "printer", featured: true },
+  { label: "Tentamensanmälan", description: "Anmäl dig till tentor i Lisam", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Tentamensanm%C3%A4lan.aspx", category: "tentor", keywords: "tentaanmälan anmälan tenta", icon: "pen", featured: true },
+  { label: "E-post", description: "LiU-mejlen i Outlook", url: "https://outlook.office.com/mail/", category: "it", keywords: "outlook epost mejl mail", icon: "mail", featured: true },
+  { label: "Tentastatistik", description: "Betyg per tentatillfälle – sök på kurskod", url: "/tentastatistik", category: "tentor", keywords: "betyg statistik godkända underkända", icon: "chart", featured: true },
+  // Studier
+  { label: "Kursrum (Lisam)", description: "Material och inlämningar för dina kurser", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Kurser-och-program.aspx", category: "studier", keywords: "lisam kurssida kursrum inlämning" },
+  { label: "Kursregistrering (Ladok)", description: "Registrera dig på terminens kurser", url: "https://www.student.ladok.se/student/app/studentwebb/", category: "studier", keywords: "ladok registrera kurs" },
+  { label: "Studieresultat (Ladok)", description: "Betyg och avklarade poäng", url: "https://www.student.ladok.se/student/app/studentwebb/min-utbildning/alla", category: "studier", keywords: "resultat poäng betyg hp" },
+  { label: "Intyg (Ladok)", description: "Registrerings- och resultatintyg", url: "https://www.student.ladok.se/student/app/studentwebb/intyg", category: "studier", keywords: "registreringsintyg resultatintyg csn" },
+  { label: "Kurs- och programinfo", description: "Kursplaner och programplaner i Studieinfo", url: "https://studieinfo.liu.se/", category: "studier", keywords: "kursplan programplan studieinfo" },
+  { label: "Terminstider", description: "När terminer och läsperioder börjar och slutar", url: "https://liu.se/artikel/terminstider", category: "studier", keywords: "läsperiod terminstart ledighet" },
+  { label: "Teams", description: "Möten och kurskanaler", url: "https://teams.microsoft.com/", category: "studier", keywords: "microsoft teams möte" },
+  // Tentor
+  { label: "Tentamenstillfällen", description: "När och var går tentan?", url: "https://talprod2.it.liu.se/tentasearch/", category: "tentor", keywords: "tentaschema tentadatum sal" },
+  { label: "Hämta rättad tenta", description: "Så får du tillbaka din tenta", url: "https://liuonline.sharepoint.com/sites/student-under-studietiden/SitePages/hamta-rattad-tenta.aspx", category: "tentor", keywords: "rättad tenta hämta" },
+  { label: "Tentastatistik hos Y-sektionen", description: "Betygsfördelning för alla LiU-kurser", url: "https://ysektionen.se/student/tentastatistik/", category: "tentor", keywords: "statistik betyg" },
+  { label: "Tentastatistik hos liustats", description: "Studentdriven statistik över tentaresultat", url: "https://liustats.se/", category: "tentor", keywords: "statistik betyg" },
+  { label: "Tentastatistik (LiU, officiell)", description: "LiU:s egen sammanställning i Lisam", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Tentamenstatistik.aspx", category: "tentor", keywords: "statistik betyg officiell" },
+  { label: "Tentaarkiv (IDA)", description: "Gamla tentor, kräver LiU-inloggning", url: "https://www.ida.liu.se/edu/ugrad/office/old_exams/", category: "tentor", keywords: "gamla tentor arkiv" },
+  { label: "Tentaarkiv (liutentor)", description: "Studentdrivet arkiv med gamla tentor", url: "https://liutentor.se/", category: "tentor", keywords: "gamla tentor arkiv" },
+  { label: "Omprövning av betyg", description: "Rättelse eller omprövning av ett betygsbeslut", url: "https://liuonline.sharepoint.com/sites/student-rattigheter-och-skyldigheter/SitePages/Rattelse-eller-omprovning-av-betygsbeslut.aspx", category: "tentor", keywords: "överklaga rättelse ompröva" },
+  { label: "Kursutvärderingar (Evaliuate)", description: "Vad tyckte tidigare studenter om kursen?", url: "https://admin.evaliuate.liu.se/search?lang=sv", category: "tentor", keywords: "evaliuate utvärdering" },
+  // IT
+  { label: "Min IT", description: "Ditt LiU-konto och lösenord", url: "https://minit.liu.se/", category: "it", keywords: "konto lösenord liu-id" },
+  { label: "Eduroam", description: "Wifi på campus", url: "https://minit.liu.se/myaccounts/Eduroam", category: "it", keywords: "wifi nätverk internet" },
+  { label: "Mjukvara", description: "Program du kan installera, t.ex. R och Office", url: "https://minit.liu.se/applications", category: "it", keywords: "program installera r rstudio office matlab" },
+  { label: "Overleaf (LaTeX)", description: "LiU:s Overleaf för rapporter och uppsatser", url: "https://latex-online.liu.se/", category: "it", keywords: "latex rapport uppsats overleaf" },
+  { label: "Driftinfo", description: "Störningar i LiU:s IT-system", url: "https://status.liu.se/", category: "it", keywords: "driftstörning status nere" },
+  { label: "Fjärranslutning", description: "Logga in på LiU:s datorer hemifrån", url: "https://liuonline.sharepoint.com/sites/student-under-studietiden/SitePages/Fjarrinloggning.aspx", category: "it", keywords: "remote rdp thinlinc vpn" },
+  // Campus
+  { label: "Biblioteket", description: "Lån, studieplatser och hjälp med sökning", url: "https://liuonline.sharepoint.com/sites/student-under-studietiden/SitePages/Biblioteket.aspx", category: "campus", keywords: "bibliotek låna böcker" },
+  { label: "Databaser", description: "Artiklar och e-böcker via biblioteket", url: "https://liu.se/biblioteket/databaser", category: "campus", keywords: "artiklar e-böcker vetenskapliga" },
+  { label: "Öppettider", description: "När lokalerna på campus är öppna", url: "https://liuonline.sharepoint.com/sites/student-campus-och-lokaler/SitePages/oppettider.aspx", category: "campus", keywords: "öppet lokaler kväll helg" },
+  { label: "Felanmälan", description: "Något trasigt i en lokal?", url: "https://felanmalan.liu.se/", category: "campus", keywords: "trasig fel lokal" },
+  { label: "Campusbussen", description: "Tidtabell och biljett mellan campus", url: "https://bussen.it.liu.se/ticketing/", category: "campus", keywords: "buss norrköping campus" },
+  // Stöd
+  { label: "Infocenter och helpdesk", description: "Frågor om studier, konton och lokaler", url: "https://liuonline.sharepoint.com/sites/student-stod-och-kontakt/SitePages/Home.aspx", category: "stod", keywords: "hjälp kontakt support" },
+  { label: "Studievägledning", description: "Hjälp att planera dina studier", url: "https://liuonline.sharepoint.com/sites/student-stod-och-kontakt/SitePages/studievagledning.aspx", category: "stod", keywords: "vägledning studieplan" },
+  { label: "Studenthälsan", description: "Stöd för hälsa och mående", url: "https://liuonline.sharepoint.com/sites/student-stod-och-kontakt/SitePages/Studenthalsan.aspx", category: "stod", keywords: "hälsa stress kurator" },
+  { label: "Språkverkstaden", description: "Hjälp med att skriva rapporter och uppsatser", url: "https://liuonline.sharepoint.com/sites/student-stod-och-kontakt/SitePages/Sprakstod-svenska.aspx", category: "stod", keywords: "skriva språk handledning" },
+  { label: "StuFF", description: "Studentkåren för filosofiska fakulteten", url: "https://stuff.liu.se/", category: "stod", keywords: "studentkår kår" },
+  // StatLin
+  { label: "UBU – studiebevakning", description: "Problem med en kurs? Säg till, gärna anonymt", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
+  { label: "Evenemang", description: "Allt StatLin ordnar", url: "/evenemang", category: "statlin", keywords: "event sittning pub" },
+  { label: "Kalenderflöde", description: "Prenumerera på evenemangen i din kalender", url: "/kalender.ics", category: "statlin", keywords: "ical ics kalender prenumerera" },
+  { label: "Dokument", description: "Stadgar, protokoll och styrdokument", url: "/dokument", category: "statlin", keywords: "stadgar protokoll" },
+  { label: "Ännu fler LiU-länkar", description: "Tenuil samlar nästan allt för LiU-studenter", url: "https://tenuil.com/", category: "statlin", keywords: "tenuil länkar" },
+];
+
+type SeedCourse = { code: string; name: string; credits: number; program: Program; term: number; period: string; elective: number };
+
+/** Programplanerna för antagning HT 2026 (F7KSA och F7MML) enligt Studieinfo. UBU håller listan aktuell under Admin → Kurser. */
+export const SEED_COURSES: SeedCourse[] = [
+  { code: "732G48", name: "Introduktion till statistik och dataanalys", credits: 20, program: "kandidat", term: 1, period: "1–2", elective: 0 },
+  { code: "764G09", name: "Grundläggande matematik, linjär algebra och logik för statistiker", credits: 10, program: "kandidat", term: 1, period: "1–2", elective: 0 },
+  { code: "732G49", name: "Grundläggande statistik: Inferens", credits: 7.5, program: "kandidat", term: 2, period: "1", elective: 0 },
+  { code: "764G07", name: "Matematisk analys", credits: 15, program: "kandidat", term: 2, period: "1–2", elective: 0 },
+  { code: "732G33", name: "Programmering i R", credits: 7.5, program: "kandidat", term: 2, period: "2", elective: 0 },
+  { code: "732G51", name: "Statistiska undersökningar: Urval och design", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
+  { code: "732G52", name: "Tidsserieanalys", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
+  { code: "732G53", name: "Linjära modeller 1", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
+  { code: "732G54", name: "Linjära modeller 2", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
+  { code: "732G16", name: "Databaser: design och programmering", credits: 7.5, program: "kandidat", term: 4, period: "", elective: 0 },
+  { code: "732G20", name: "Statistisk teori", credits: 7.5, program: "kandidat", term: 4, period: "", elective: 0 },
+  { code: "732G55", name: "Grundläggande SAS-programmering", credits: 6, program: "kandidat", term: 4, period: "", elective: 0 },
+  { code: "732G56", name: "Statistisk undersökning", credits: 9, program: "kandidat", term: 4, period: "", elective: 0 },
+  { code: "732G08", name: "Multivariata metoder", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
+  { code: "732G34", name: "Statistiska metoder för komplexa data", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
+  { code: "732G43", name: "Bayesiansk statistik", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
+  { code: "732G57", name: "Maskininlärning för statistiker", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
+  { code: "732G47", name: "Kandidatuppsats i statistik", credits: 15, program: "kandidat", term: 6, period: "", elective: 0 },
+  { code: "732G96", name: "Programmering i Python", credits: 7.5, program: "kandidat", term: 6, period: "", elective: 1 },
+  { code: "764G03", name: "Flervariabelanalys", credits: 7.5, program: "kandidat", term: 6, period: "", elective: 1 },
+  { code: "732A60", name: "Akademiska studier på avancerad nivå", credits: 3, program: "master", term: 1, period: "1", elective: 0 },
+  { code: "732A94", name: "Avancerad programmering i R", credits: 6, program: "master", term: 1, period: "1", elective: 0 },
+  { code: "732A83", name: "Statistiska metoder", credits: 9, program: "master", term: 1, period: "1–2", elective: 0 },
+  { code: "732A99", name: "Maskininlärning", credits: 9, program: "master", term: 1, period: "2", elective: 0 },
+  { code: "732A70", name: "Introduktion till Python", credits: 3, program: "master", term: 1, period: "2", elective: 0 },
+  { code: "732A75", name: "Avancerad Data Mining", credits: 6, program: "master", term: 2, period: "1", elective: 0 },
+  { code: "732A89", name: "Datorintensiva statistiska metoder", credits: 6, program: "master", term: 2, period: "1", elective: 0 },
+  { code: "732A82", name: "Deep Learning", credits: 6, program: "master", term: 2, period: "1–2", elective: 0 },
+  { code: "732A54", name: "Analys av Big Data", credits: 6, program: "master", term: 2, period: "2", elective: 0 },
+  { code: "732A91", name: "Bayesianska metoder", credits: 6, program: "master", term: 2, period: "2", elective: 0 },
+  { code: "732A51", name: "Bioinformatik", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A57", name: "Databasteknik", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A63", name: "Sannolikhetsteori", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A76", name: "Forskningsprojekt", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A80", name: "Tidsserier och sekvensinlärning", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A81", name: "Text Mining", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A88", name: "Multivariata statistiska metoder", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A96", name: "Avancerad maskininlärning", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A98", name: "Visualisering", credits: 6, program: "master", term: 3, period: "", elective: 1 },
+  { code: "732A67", name: "Masteruppsats i statistik", credits: 30, program: "master", term: 4, period: "", elective: 0 },
 ];
 
 export const STAR_COPY = {

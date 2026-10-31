@@ -3,7 +3,7 @@
 //
 //   node tests/smoke.mjs https://statlin.se
 //
-// Kontrollerar att de publika sidorna svarar utan fel, att hälsokontrollen, kalenderflödet,
+// Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att fliken har en ikon,
 // och att delningsbilder inte pekar på localhost (då saknades SITE_URL när sajten byggdes – se README).
 
@@ -23,6 +23,9 @@ const PAGES = [
   "/studenter/kandidat",
   "/studenter/master",
   "/studenter/ny-student",
+  "/studenter/lankar",
+  "/tentastatistik",
+  "/tentastatistik/732G33",
   "/foretag",
   "/kontakt",
   "/en",
@@ -65,6 +68,20 @@ for (const path of PAGES) {
     if (path.startsWith("/en")) expect(body.includes('lang="en"'), 'saknar lang="en"');
   });
 }
+
+await check("Kurskoder med gemener skickas till versaler", async () => {
+  const { res } = await get("/tentastatistik/732g33");
+  const location = res.headers.get("location") ?? "";
+  expect(res.status === 308 && location.endsWith("/tentastatistik/732G33"), `status ${res.status} ${location}`);
+});
+
+await check("Kurskoderna till sökrutan /api/tentastatistik/koder", async () => {
+  const { res, body } = await get("/api/tentastatistik/koder");
+  expect(res.status === 200, `status ${res.status}`);
+  const codes = JSON.parse(body);
+  expect(Array.isArray(codes), "svaret är inte en lista");
+  return codes.length ? `${codes.length} koder` : "tom lista – källan svarar inte just nu";
+});
 
 await check("Språkväxlare till /en på startsidan", async () => {
   const { body } = await get("/");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EventCard } from "@/components/content/event-card";
 import { NewsCard } from "@/components/content/news-card";
 import { ArrowRight, ArrowUpRight, Calendar, Handshake } from "@/components/icons";
+import { QuickLinksRow } from "@/components/links/quick-links";
 import { CountUp } from "@/components/ui/count-up";
 import { Reveal } from "@/components/ui/reveal";
 import { Editable } from "@/components/edit-mode/editable";
@@ -9,15 +10,17 @@ import { AccentText } from "@/components/ui/accent-text";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
+import { listFeaturedLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
 
 export async function HomeSections() {
-  const [events, news, committees, board, settings] = await Promise.all([
+  const [events, news, committees, board, settings, shortcuts] = await Promise.all([
     listUpcomingEvents(6),
     listNews(4),
     listCommittees({ visibleOnly: true }),
     listBoard(),
     getSettings(),
+    listFeaturedLinks(),
   ]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
   const stats = [
@@ -29,6 +32,8 @@ export async function HomeSections() {
 
   return (
     <>
+      <QuickLinksRow links={shortcuts} />
+
       {/* 01 Om */}
       <section id="utforska" className="relative overflow-hidden">
         <div className="grid-paper-fine pointer-events-none absolute inset-0 text-ink [mask-image:linear-gradient(to_bottom,black,transparent)]" aria-hidden />

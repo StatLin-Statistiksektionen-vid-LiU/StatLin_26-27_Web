@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
 import { UbuCard } from "@/components/content/ubu-card";
-import { ArrowUpRight } from "@/components/icons";
+import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
+import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
   title: "Kandidatprogrammet",
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 const LINKS = [
+  { href: "/studenter/lankar#kurser", label: "Kurser och tentastatistik" },
   { href: "https://studieinfo.liu.se/program/F7KSA", label: "Programmet i Studieinfo" },
-  { href: "https://liu.se/", label: "Linköpings universitet" },
 ];
 
 export default function BachelorPage() {
@@ -25,7 +26,7 @@ export default function BachelorPage() {
 }
 
 async function Bachelor() {
-  const ubu = await getCommitteeBySlug("ubu");
+  const [ubu, shortcuts] = await Promise.all([getCommitteeBySlug("ubu"), listFeaturedLinks()]);
   return (
     <ContentPage
       slug="utbildning"
@@ -38,16 +39,7 @@ async function Bachelor() {
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
           {ubu && <UbuCard ubu={ubu} />}
-          <ul className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
-            {LINKS.map((l) => (
-              <li key={l.href} className="border-b border-ink/10 last:border-0">
-                <a href={l.href} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between px-5 py-4 font-semibold hover:bg-paper/60">
-                  {l.label}
-                  <ArrowUpRight size={16} className="text-red transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </a>
-              </li>
-            ))}
-          </ul>
+          <QuickLinksCard links={shortcuts} extra={LINKS} />
         </div>
       }
     />

@@ -18,6 +18,7 @@ const TITLES: Record<EditTarget["type"], string> = {
   event: "Evenemanget",
   news: "Nyheten",
   board: "Styrelseposten",
+  courses: "Kurslistan",
 };
 
 function adminHref(t: EditTarget): string {
@@ -35,6 +36,8 @@ function adminHref(t: EditTarget): string {
       return `/admin/nyheter/${t.id}`;
     case "board":
       return `/admin/styrelsen/${t.id}`;
+    case "courses":
+      return "/admin/kurser";
   }
 }
 
@@ -158,5 +161,7 @@ function DrawerBody({ target }: { target: EditTarget }) {
       return d.item && d.committees && d.user ? <NewsForm item={d.item} committees={d.committees} user={d.user} onSaved={onSaved} /> : null;
     case "board":
       return d.member && d.committees ? <BoardMemberForm member={d.member} committees={d.committees} nextOrder={d.member.sort_order} onSaved={onSaved} /> : null;
+    case "courses":
+      return null;
   }
 }

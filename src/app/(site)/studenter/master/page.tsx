@@ -4,10 +4,12 @@ import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
 import { EventRow } from "@/components/content/event-card";
 import { UbuCard } from "@/components/content/ubu-card";
-import { ArrowRight, ArrowUpRight } from "@/components/icons";
+import { ArrowRight } from "@/components/icons";
+import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
+import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
   title: "Masterprogrammet",
@@ -16,8 +18,8 @@ export const metadata: Metadata = {
 };
 
 const LINKS = [
-  { href: "https://studieinfo.liu.se/program/F7MSL", label: "Programmet i Studieinfo" },
-  { href: "https://liu.se/", label: "Linköpings universitet" },
+  { href: "/studenter/lankar?program=master#kurser", label: "Kurser och tentastatistik" },
+  { href: "https://studieinfo.liu.se/program/F7MML", label: "Programmet i Studieinfo" },
 ];
 
 export default function MasterPage() {
@@ -29,7 +31,7 @@ export default function MasterPage() {
 }
 
 async function Master() {
-  const [ubu, events] = await Promise.all([getCommitteeBySlug("ubu"), listUpcomingEvents(3)]);
+  const [ubu, events, shortcuts] = await Promise.all([getCommitteeBySlug("ubu"), listUpcomingEvents(3), listFeaturedLinks()]);
   return (
     <ContentPage
       slug="master"
@@ -59,16 +61,7 @@ async function Master() {
             </Link>
           </div>
           {ubu && <UbuCard ubu={ubu} />}
-          <ul className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
-            {LINKS.map((l) => (
-              <li key={l.href} className="border-b border-ink/10 last:border-0">
-                <a href={l.href} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between px-5 py-4 font-semibold hover:bg-paper/60">
-                  {l.label}
-                  <ArrowUpRight size={16} className="text-red transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </a>
-              </li>
-            ))}
-          </ul>
+          <QuickLinksCard links={shortcuts} extra={LINKS} />
         </div>
       }
     />

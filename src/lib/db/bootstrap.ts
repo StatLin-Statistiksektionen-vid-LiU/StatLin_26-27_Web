@@ -1,9 +1,9 @@
 import type Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
-import { SEED_BOARD, SEED_COMMITTEES, SEED_PAGES } from "../seed-content";
+import { SEED_BOARD, SEED_COMMITTEES, SEED_COURSES, SEED_LINKS, SEED_PAGES } from "../seed-content";
 
 /**
- * Körs första gången databasen öppnas: lägger in grunddata (utskott, poster, sidtexter)
+ * Körs första gången databasen öppnas: lägger in grunddata (utskott, poster, sidtexter, länkar, kurser)
  * om databasen är tom, och skapar ett administratörskonto från ADMIN_EMAIL/ADMIN_PASSWORD
  * om det inte finns några konton. Gör en ny installation körbar utan manuella steg.
  */
@@ -26,6 +26,19 @@ export function bootstrap(db: Database.Database) {
 
     const insertPage = db.prepare("INSERT OR IGNORE INTO pages (slug, title, lead, body_md) VALUES (@slug, @title, @lead, @body_md)");
     SEED_PAGES.forEach((p) => insertPage.run(p));
+
+    // Länkar och kurser läggs in en gång (även i befintliga databaser). Tar någon bort dem kommer de inte tillbaka.
+    if (!db.prepare("SELECT 1 FROM settings WHERE key = 'seeded_links'").get()) {
+      const insertLink = db.prepare(
+        "INSERT INTO links (label, description, url, keywords, category, icon, featured, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      );
+      SEED_LINKS.forEach((l, i) => insertLink.run(l.label, l.description, l.url, l.keywords ?? "", l.category, l.icon ?? "link", l.featured ? 1 : 0, i * 10));
+      const insertCourse = db.prepare(
+        "INSERT OR IGNORE INTO courses (code, name, credits, program, term, period, elective, sort_order) VALUES (@code, @name, @credits, @program, @term, @period, @elective, @sort_order)",
+      );
+      SEED_COURSES.forEach((c, i) => insertCourse.run({ ...c, sort_order: i * 10 }));
+      db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_links', '1')").run();
+    }
 
     if (count("documents") === 0) {
       db.prepare("INSERT INTO documents (title, category, description, url, doc_date, sort_order) VALUES (?, 'grafiskt', ?, ?, ?, 0)").run(

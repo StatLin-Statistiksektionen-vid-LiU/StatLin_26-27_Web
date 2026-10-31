@@ -1,8 +1,11 @@
-// End-to-end-test av inloggning, behörigheter, evenemang och bildgalleri mot en körande server
-// som seedats med demodata och kända lösenord:
+// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan och tentastatistiken
+// mot en körande server som seedats med demodata och kända lösenord:
 //
 //   ADMIN_PASSWORD=admin-statlin-2026 DEMO_PASSWORD=demo-statlin-2026 npm run seed -- --demo
-//   npm run dev
+//   EXAM_STATS_URL=http://127.0.0.1:9 npm run dev
+//
+// EXAM_STATS_URL pekar tentastatistiken på en adress som inte svarar, så att testet bara använder
+// demostatistiken i databasen och aldrig frågar den riktiga källan.
 // Kräver Playwright (npm i -D playwright && npx playwright install chromium).
 //
 //   node tests/e2e.mjs http://localhost:3000
@@ -57,6 +60,55 @@ async function login(page, email, password) {
   let eventSlug;
 
   try {
+    await step("Genvägsraden på startsidan visar genvägarna", async () => {
+      await page.goto(`${BASE}/`);
+      const row = page.locator('section[aria-labelledby="genvagar-start"]');
+      for (const label of ["Schema", "Boka rum", "Karta", "Skriva ut", "Tentamensanmälan", "E-post", "Tentastatistik"]) {
+        await row.getByRole("link", { name: label, exact: true }).waitFor();
+      }
+    });
+
+    await step("Länksidan: sökning, kurskod och fästa länkar", async () => {
+      await page.goto(`${BASE}/studenter/lankar`);
+      const search = page.getByRole("searchbox", { name: "Sök bland länkar och kurser" });
+      await search.fill("tenta");
+      await page.locator("#grupp-tentor").waitFor();
+      await search.fill("732G33");
+      await page.getByRole("link", { name: /Programmering i R/ }).first().waitFor();
+      await search.fill("tata24");
+      await page.getByRole("link", { name: /Visa tentastatistik för TATA24/ }).waitFor();
+      await search.fill("");
+      await page.getByRole("button", { name: "Fäst Kursrum (Lisam)" }).click();
+      await page.reload();
+      await page.locator('section[aria-labelledby="fasta"]').getByText("Kursrum (Lisam)", { exact: true }).waitFor();
+      await page.screenshot({ path: `${SHOTS}/links.png` });
+    });
+
+    await step("Kurssidan visar tentastatistik, tabell och länkar", async () => {
+      await page.goto(`${BASE}/tentastatistik/732g33`);
+      await page.waitForURL(/\/tentastatistik\/732G33$/);
+      await page.getByRole("heading", { level: 1, name: "732G33" }).waitFor();
+      await page.getByText("Programmering i R").first().waitFor();
+      assert.ok((await page.locator('ol > li[tabindex="0"]').count()) > 0, "diagrammet saknar tentatillfällen");
+      await page.getByRole("link", { name: /Y-sektionen/ }).first().waitFor();
+      await page.getByRole("link", { name: /liustats/ }).first().waitFor();
+      await page.getByRole("button", { name: "Tabell" }).click();
+      await page.getByRole("table").waitFor();
+      await page.screenshot({ path: `${SHOTS}/exam-stats.png`, fullPage: true });
+    });
+
+    await step("Tentastatistik för vilken kurs som helst via kurskoden", async () => {
+      await page.goto(`${BASE}/tentastatistik`);
+      const box = page.getByRole("combobox", { name: "Kurskod" });
+      await box.fill("tata24");
+      await box.press("Enter");
+      await page.waitForURL(/\/tentastatistik\/TATA24$/);
+      await page.getByText("Linjär algebra").first().waitFor();
+      await page.getByText("Betyg per tillfälle").waitFor();
+      await page.goto(`${BASE}/tentastatistik/XYZ999`);
+      await page.getByText("Hittade ingen tentastatistik för XYZ999").waitFor();
+    });
+
     await step("Fel lösenord visar fel och behåller e-post", async () => {
       await page.goto(`${BASE}/logga-in`);
       await page.fill("#email", "info@statlin.se");
@@ -71,6 +123,16 @@ async function login(page, email, password) {
       await login(page, "info@statlin.se", "demo-statlin-2026");
       await page.getByText("Hej Namn").waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-dashboard.png` });
+    });
+
+    await step("Redaktör lägger till en genväg som syns på startsidan", async () => {
+      await page.goto(`${BASE}/admin/lankar`);
+      await page.fill('input[name="label"]', "Testgenväg");
+      await page.fill('input[name="url"]', "https://example.com/testgenvag");
+      await page.locator('label:has(input[name="featured"])').click();
+      await Promise.all([page.waitForURL(/\/admin\/lankar\?sparad=1/), page.getByRole("button", { name: "Lägg till länk" }).click()]);
+      await page.goto(`${BASE}/`);
+      await page.locator('section[aria-labelledby="genvagar-start"]').getByRole("link", { name: "Testgenväg" }).waitFor();
     });
 
     await step("Skapa evenemang", async () => {
@@ -198,6 +260,26 @@ async function login(page, email, password) {
       await page.waitForURL(/nekad=1/);
       await page.goto(`${BASE}/admin/konton`);
       await page.waitForURL(/\/admin\?nekad=1/);
+    });
+
+    await step("Utskottskonto nekas kurslistan och länkarna", async () => {
+      await page.goto(`${BASE}/admin/kurser`);
+      await page.waitForURL(/\/admin\?nekad=1/);
+      await page.goto(`${BASE}/admin/lankar`);
+      await page.waitForURL(/\/admin\?nekad=1/);
+    });
+
+    await step("UBU lägger till en kurs som syns på länksidan", async () => {
+      await page.context().clearCookies();
+      await login(page, "ubu@statlin.se", "demo-statlin-2026");
+      await page.goto(`${BASE}/admin/kurser`);
+      await page.fill('input[name="code"]', "tata24");
+      await page.fill('input[name="name"]', "Linjär algebra");
+      await page.selectOption('select[name="program"]', "master");
+      await page.fill('input[name="credits"]', "6");
+      await Promise.all([page.waitForURL(/\/admin\/kurser\?sparad=1/), page.getByRole("button", { name: "Lägg till kurs" }).click()]);
+      await page.goto(`${BASE}/studenter/lankar?program=master`);
+      await page.locator("#kurslista").getByText("TATA24", { exact: true }).waitFor();
     });
 
     await step("Admin skapar konto och får engångslösenord", async () => {

@@ -216,6 +216,39 @@ const steps: string[] = [
   /* 5: /sektionen läser nu sin rubrik från sidan, med StatLin i rött som tidigare – om ingen har ändrat den */ `
   UPDATE pages SET title = 'Om *StatLin*' WHERE slug = 'om' AND title = 'Om StatLin';
   `,
+  /* 6: länksidan för studenter, programmens kurser och en cache för tentastatistiken */ `
+  CREATE TABLE links (
+    id          INTEGER PRIMARY KEY,
+    label       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    url         TEXT NOT NULL,
+    keywords    TEXT NOT NULL DEFAULT '',                         -- extra sökord, t.ex. "timeedit kalender"
+    category    TEXT NOT NULL CHECK (category IN ('studier','tentor','it','campus','stod','statlin')),
+    icon        TEXT NOT NULL DEFAULT 'link',
+    featured    INTEGER NOT NULL DEFAULT 0,                        -- med i genvägsraden
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    active      INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE TABLE courses (
+    id         INTEGER PRIMARY KEY,
+    code       TEXT NOT NULL UNIQUE,
+    name       TEXT NOT NULL,
+    credits    REAL NOT NULL,
+    program    TEXT NOT NULL CHECK (program IN ('kandidat','master')),
+    term       INTEGER NOT NULL,
+    period     TEXT NOT NULL DEFAULT '',
+    elective   INTEGER NOT NULL DEFAULT 0,
+    url        TEXT NOT NULL DEFAULT '',                           -- t.ex. kurshemsidan
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    active     INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE INDEX courses_program ON courses(program, term, sort_order);
+  CREATE TABLE exam_stats (
+    course_code TEXT PRIMARY KEY,
+    data        TEXT NOT NULL,                                     -- källans svar, normaliserat
+    fetched_at  TEXT NOT NULL
+  );
+  `,
 ];
 
 export function migrate(db: Database.Database) {
