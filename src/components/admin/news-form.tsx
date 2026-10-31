@@ -20,15 +20,25 @@ function isoToLocalInput(iso: string) {
     .replace(" ", "T");
 }
 
-export function NewsForm({ item, committees, user }: { item?: NewsItem | null; committees: Committee[]; user: SessionUser }) {
+export function NewsForm({
+  item,
+  committees,
+  user,
+  onSaved,
+}: {
+  item?: NewsItem | null;
+  committees: Committee[];
+  user: Pick<SessionUser, "role" | "committee_id">;
+  onSaved?: () => void;
+}) {
   const locked = user.role === "committee";
   const own = committees.find((c) => c.id === (item?.committee_id ?? user.committee_id));
   const scheduled = !!item && item.published_at > new Date().toISOString();
   return (
-    <ActionForm action={saveNews} {...publishButtons(item)}>
+    <ActionForm action={saveNews} {...publishButtons(item)} onSuccess={onSaved}>
       {item && <input type="hidden" name="id" value={item.id} />}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid gap-6 @2xl:grid-cols-3">
+        <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Nyheten">
             <TitleSlugFields defaultTitle={item?.title} defaultSlug={item?.slug} basePath="/nyheter" titleLabel="Rubrik" />
             <Field label="Ingress" name="excerpt" hint="Kort sammanfattning som visas i listor och delningar.">

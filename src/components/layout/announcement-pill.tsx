@@ -40,7 +40,7 @@ export function AnnouncementPill({ text, href }: { text: string; href: string | 
     </>
   );
   return (
-    <div role="status" className="fixed inset-x-4 bottom-4 z-40 flex justify-center [animation:fade-up_0.7s_var(--ease-out-expo)_both] sm:inset-x-auto sm:left-6">
+    <div role="status" className="fixed inset-x-4 bottom-4 z-40 flex justify-center [animation:fade-up_0.7s_var(--ease-out-expo)_both] max-sm:[body:has(#admin-bar)_&]:bottom-20 sm:inset-x-auto sm:left-6">
       <div className="flex max-w-xl items-center gap-2 rounded-full border border-white/10 bg-ink/95 py-2 pl-5 pr-2 text-white shadow-2xl shadow-black/30 backdrop-blur">
         {href ? (
           <Link href={href} className="flex items-center gap-3 hover:underline" onClick={close}>

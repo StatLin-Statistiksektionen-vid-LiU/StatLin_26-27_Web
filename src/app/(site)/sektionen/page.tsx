@@ -9,6 +9,8 @@ import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { HeroSkeleton, PageSkeleton } from "@/components/ui/skeletons";
 import { getPage, listBoard, listCommittees } from "@/lib/data/content";
+import { Editable } from "@/components/edit-mode/editable";
+import { AccentText, stripAccent } from "@/components/ui/accent-text";
 
 export const metadata: Metadata = {
   title: "Om StatLin",
@@ -33,25 +35,27 @@ export default function AboutPage() {
 async function AboutContent() {
   const [page, board, committees] = await Promise.all([getPage("om"), listBoard(), listCommittees({ visibleOnly: true })]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
+  const title = page?.title.trim() || "Om *StatLin*";
 
   return (
     <>
+      <Editable target={{ type: "page", slug: "om" }} label="Redigera sidan" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <PageHero
         kicker="Sektionen"
-        title={
-          <>
-            Om <span className="text-red">StatLin</span>
-          </>
-        }
+        title={<AccentText text={title} accentClassName="text-red" />}
+        fitTitle={stripAccent(title)}
         lead={page?.lead}
         aside={
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/brand/statlin-inverterad.svg" alt="" className="mx-auto hidden w-64 animate-float drop-shadow-[0_30px_50px_rgba(255,7,7,0.25)] md:block" />
         }
       />
+      </Editable>
 
       <section className="container-site grid gap-14 py-16 md:py-24 lg:grid-cols-12">
-        <div className="lg:col-span-7">{page && <Markdown source={page.body_md} />}</div>
+        <Editable target={{ type: "page", slug: "om" }} label="Redigera texten" className="min-w-0 lg:col-span-7">
+          {page && <Markdown source={page.body_md} />}
+        </Editable>
         <aside className="lg:col-span-4 lg:col-start-9">
           <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
             <div className="rounded-[1.75rem] border border-ink/10 bg-white p-7">

@@ -9,6 +9,7 @@ import { ArrowLeft } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getNewsBySlug, listNews } from "@/lib/data/news";
 import { fitHeading, stripMarkdown } from "@/lib/utils";
+import { Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/nyheter/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -37,6 +38,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
 
   return (
     <article>
+      <Editable target={{ type: "news", id: item.id, committeeId: item.committee_id }} label="Redigera nyheten" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="noise relative overflow-hidden bg-ink text-white">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" aria-hidden />
         <div className="container-prose relative pb-14 pt-[calc(var(--header-h)+3rem)] md:pt-[calc(var(--header-h)+5rem)]">
@@ -66,6 +68,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
           )}
         </div>
       </header>
+      </Editable>
       {item.cover && (
         <div className="container-site -mt-2 pt-10">
           <SmartImage image={item.cover} priority sizes="(min-width: 1400px) 1400px, 100vw" className="aspect-[21/9] w-full rounded-[2rem]" alt="" />

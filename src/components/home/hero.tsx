@@ -6,6 +6,7 @@ import { ArrowRight } from "@/components/icons";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { cn } from "@/lib/utils";
+import { Editable } from "@/components/edit-mode/editable";
 
 /** Texterna kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
 async function HeroKicker() {
@@ -25,7 +26,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
   const size = titleSize(title ?? DEFAULT_SETTINGS.hero_title);
   return (
     <div className="grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
-      <div className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both]")}>
+      <Editable target={{ type: "home" }} label="Redigera texten" className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both]")}>
         {title === null ? (
           <div className="min-h-[9rem]" aria-hidden />
         ) : (
@@ -36,7 +37,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
             {text && <p className="mt-4 max-w-lg text-[1rem] leading-relaxed text-white/60">{text}</p>}
           </>
         )}
-      </div>
+      </Editable>
       <div
         className={cn(
           "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_both]",

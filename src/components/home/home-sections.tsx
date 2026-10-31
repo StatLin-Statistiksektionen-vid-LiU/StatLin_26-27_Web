@@ -4,6 +4,7 @@ import { NewsCard } from "@/components/content/news-card";
 import { ArrowRight, ArrowUpRight, Calendar, Handshake } from "@/components/icons";
 import { CountUp } from "@/components/ui/count-up";
 import { Reveal } from "@/components/ui/reveal";
+import { Editable } from "@/components/edit-mode/editable";
 import { AccentText } from "@/components/ui/accent-text";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/data/content";
@@ -38,9 +39,11 @@ export async function HomeSections() {
               <span className="h-px w-8 bg-ink/20" aria-hidden />
               Om sektionen
             </p>
-            <p className="mt-7 text-[clamp(1.75rem,3.6vw,3.15rem)] font-semibold leading-[1.12] tracking-tight [font-stretch:104%]">
-              <AccentText text={settings.home_intro.trim() || DEFAULT_SETTINGS.home_intro} accentClassName="mono-accent text-red-deep" />
-            </p>
+            <Editable target={{ type: "home" }} label="Redigera texten" className="mt-7">
+              <p className="text-[clamp(1.75rem,3.6vw,3.15rem)] font-semibold leading-[1.12] tracking-tight [font-stretch:104%]">
+                <AccentText text={settings.home_intro.trim() || DEFAULT_SETTINGS.home_intro} accentClassName="mono-accent text-red-deep" />
+              </p>
+            </Editable>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link href="/sektionen" className="btn btn-ink group">
                 Om StatLin

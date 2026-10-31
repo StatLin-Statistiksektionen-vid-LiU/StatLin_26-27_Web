@@ -125,7 +125,7 @@ async function login(page, email, password) {
       const count = await page.locator('#galleri button[aria-label^="Visa bild"]').count();
       assert.equal(count, 3);
       // Omslaget ska vara den andra bilden (vald via stjärnan).
-      const coverSrc = await page.locator("article > header img").first().getAttribute("src");
+      const coverSrc = await page.locator("article header img").first().getAttribute("src");
       assert.ok(coverSrc && coverSrc.startsWith("/media/"), "omslag saknas");
       await page.locator('#galleri button[aria-label^="Visa bild 1"]').click();
       await page.getByRole("dialog").waitFor();
@@ -233,6 +233,18 @@ async function login(page, email, password) {
       await page.getByText("Välkommen till StatLin – testad ingress!").waitFor();
     });
 
+    await step("Redigeringsläget: admin ändrar en sidtext direkt på sajten", async () => {
+      await page.goto(`${BASE}/studenter/kandidat`);
+      await page.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+      await page.locator("button:visible", { hasText: "Redigera texten" }).click();
+      const panel = page.getByRole("dialog");
+      await panel.locator('textarea[name="lead"]').fill("Ingress ändrad direkt på sajten.");
+      await panel.getByRole("button", { name: "Spara och publicera" }).click();
+      await panel.waitFor({ state: "detached" });
+      await page.getByText("Ingress ändrad direkt på sajten.").waitFor();
+      await page.screenshot({ path: `${SHOTS}/edit-mode.png` });
+    });
+
     await step("Redaktör (info) kan ändra inställningarna", async () => {
       await page.context().clearCookies();
       await login(page, "info@statlin.se", "demo-statlin-2026");
@@ -251,6 +263,17 @@ async function login(page, email, password) {
       await login(page, "scb@statlin.se", "demo-statlin-2026");
       await page.goto(`${BASE}/admin/installningar`);
       await page.waitForURL(/\/admin\?nekad=1/);
+    });
+
+    await step("Redigeringsläget: utskottet får pennor bara på sitt eget", async () => {
+      await page.goto(`${BASE}/utskott/scb`);
+      await page.locator("button:visible", { hasText: "Redigera utskottet" }).waitFor();
+      await page.goto(`${BASE}/utskott/estig`);
+      await page.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+      await page.waitForTimeout(800);
+      assert.equal(await page.locator("button:visible", { hasText: "Redigera" }).count(), 0, "inga pennor på andra utskotts sidor");
+      const status = await page.evaluate(async () => (await fetch("/api/admin/redigera?typ=home")).status);
+      assert.equal(status, 403, "API:t ska neka startsidans texter");
     });
 
     // Granskning: styrelsens bock påverkar aldrig om evenemanget är publicerat.

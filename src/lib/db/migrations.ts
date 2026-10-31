@@ -213,6 +213,9 @@ const steps: string[] = [
   CREATE INDEX task_comments_task ON task_comments(task_id, created_at);
   ALTER TABLE users ADD COLUMN tasks_seen_at TEXT;
   `,
+  /* 5: /sektionen läser nu sin rubrik från sidan, med StatLin i rött som tidigare – om ingen har ändrat den */ `
+  UPDATE pages SET title = 'Om *StatLin*' WHERE slug = 'om' AND title = 'Om StatLin';
+  `,
 ];
 
 export function migrate(db: Database.Database) {

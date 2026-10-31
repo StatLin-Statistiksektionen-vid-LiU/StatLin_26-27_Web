@@ -11,23 +11,26 @@ export function EventForm({
   committees,
   user,
   defaultStart,
+  onSaved,
 }: {
   event?: EventItem | null;
   committees: Committee[];
-  user: SessionUser;
+  user: Pick<SessionUser, "role" | "committee_id">;
   defaultStart: string;
+  /** Redigeringspanelen på sajten stänger sig efter en sparning. */
+  onSaved?: () => void;
 }) {
   const lockedCommittee = user.role === "committee";
   const own = committees.find((c) => c.id === (event?.committee_id ?? user.committee_id));
   const hasDetails = !!(event?.ends_at || event?.all_day || event?.location_url || event?.signup_url || event?.price);
   return (
-    <ActionForm action={saveEvent} {...publishButtons(event)}>
+    <ActionForm action={saveEvent} {...publishButtons(event)} onSuccess={onSaved}>
       {event && <input type="hidden" name="id" value={event.id} />}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid gap-6 @2xl:grid-cols-3">
+        <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Evenemanget">
             <TitleSlugFields defaultTitle={event?.title} defaultSlug={event?.slug} basePath="/evenemang" titleMaxLength={140} />
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 @md:grid-cols-2">
               <Field label="Datum och tid" name="starts_at" required>
                 <TextInput type="datetime-local" name="starts_at" defaultValue={event?.starts_at ?? defaultStart} required />
               </Field>
@@ -46,18 +49,18 @@ export function EventForm({
             fields={["ends_at", "all_day", "location_url", "signup_url", "price"]}
             defaultOpen={hasDetails}
           >
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 @md:grid-cols-2">
               <Field label="Slut" name="ends_at" hint="Valfritt.">
                 <TextInput type="datetime-local" name="ends_at" defaultValue={event?.ends_at ?? ""} />
               </Field>
-              <div className="sm:pt-8">
+              <div className="@md:pt-8">
                 <Toggle name="all_day" label="Heldag" defaultChecked={!!event?.all_day} hint="Visar inget klockslag." />
               </div>
             </div>
             <Field label="Kartlänk" name="location_url" hint="Lämna tomt för automatisk Google Maps-länk.">
               <TextInput name="location_url" type="url" defaultValue={event?.location_url} placeholder="https://" />
             </Field>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 @md:grid-cols-2">
               <Field label="Anmälningslänk" name="signup_url" hint="T.ex. ett Google-formulär.">
                 <TextInput name="signup_url" type="url" defaultValue={event?.signup_url} placeholder="https://" />
               </Field>

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getSettings } from "@/lib/data/content";
 import { NAV } from "@/lib/navigation";
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Mail, Rss } from "@/components/icons";
+import { Editable } from "@/components/edit-mode/editable";
 
 /** Normalfördelningens täthetsfunktion som dekor – med medelvärdet markerat i rött. */
 function BellCurve() {
@@ -81,11 +82,11 @@ export function SiteFooter() {
             <p className="display-tight mt-5 max-w-md text-[clamp(1.8rem,3.4vw,2.8rem)]">
               Allt blir mer <span className="mono-accent text-red">signifikant</span> tillsammans.
             </p>
-            <div className="mt-8">
+            <Editable target={{ type: "footer" }} label="Redigera kontakt" className="mt-8">
               <Suspense fallback={<div className="h-24" />}>
                 <FooterContact />
               </Suspense>
-            </div>
+            </Editable>
           </div>
           <nav aria-label="Sidfot" className="md:col-span-4 md:col-start-7">
             <p className="kicker text-white/40">Utforska</p>

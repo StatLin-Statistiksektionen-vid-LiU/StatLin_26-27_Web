@@ -27,6 +27,7 @@ export function ActionForm({
   footer,
   stickyFooter = true,
   resetOnSuccess,
+  onSuccess,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   children: ReactNode;
@@ -39,16 +40,23 @@ export function ActionForm({
   footer?: ReactNode;
   stickyFooter?: boolean;
   resetOnSuccess?: boolean;
+  /** Körs efter en lyckad sparning, t.ex. för att stänga redigeringspanelen. */
+  onSuccess?: (state: FormState) => void;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [submitter, setSubmitter] = useState<SubmitKind>("primary");
   const formRef = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
 
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  });
   useEffect(() => {
     if (state.ok) {
       dirty.current = false;
       if (resetOnSuccess) formRef.current?.reset();
+      onSuccessRef.current?.(state);
     }
   }, [state, resetOnSuccess]);
 
@@ -67,7 +75,8 @@ export function ActionForm({
         ref={formRef}
         // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
         method="post"
-        className={cn("space-y-6", className)}
+        // @container: fälten radas om efter formulärets bredd, så samma formulär fungerar i redigeringspanelen.
+        className={cn("@container space-y-6", className)}
         onChange={() => (dirty.current = true)}
         onSubmit={(e) => {
           e.preventDefault();

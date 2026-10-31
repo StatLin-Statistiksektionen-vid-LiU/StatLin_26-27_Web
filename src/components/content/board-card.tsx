@@ -1,11 +1,12 @@
 import { Avatar } from "./avatar";
 import { Mail } from "@/components/icons";
 import type { BoardMember } from "@/lib/types";
+import { Editable } from "@/components/edit-mode/editable";
 
 export function BoardCard({ member }: { member: BoardMember }) {
   const name = member.name || "Vakant";
   return (
-    <div className="group flex h-full flex-col">
+    <Editable target={{ type: "board", id: member.id }} className="group flex h-full flex-col">
       <div className="relative overflow-hidden rounded-[1.5rem]">
         <Avatar
           name={member.name || member.post}
@@ -25,6 +26,6 @@ export function BoardCard({ member }: { member: BoardMember }) {
           </a>
         )}
       </div>
-    </div>
+    </Editable>
   );
 }

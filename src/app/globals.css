@@ -591,3 +591,10 @@
   40% { transform: rotate(-4deg); }
   50% { transform: rotate(10deg); }
 }
+
+/* Redigeringspanelen glider in från höger. */
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}

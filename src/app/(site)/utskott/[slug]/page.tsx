@@ -12,6 +12,7 @@ import { getCommitteeBySlug, listBoard } from "@/lib/data/content";
 import { listPastEvents, listUpcomingEvents } from "@/lib/data/events";
 import { listNewsForCommittee } from "@/lib/data/news";
 import { safeExternalUrl } from "@/lib/utils";
+import { EditModeLink, Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/utskott/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -44,6 +45,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
 
   return (
     <>
+      <Editable target={{ type: "committee", id: c.id }} label="Redigera utskottet" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="noise relative overflow-hidden bg-ink text-white">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_75%)]" aria-hidden />
         <div aria-hidden className="pointer-events-none absolute right-[-10%] top-[-20%] size-[42rem] rounded-full opacity-50 blur-3xl" style={{ background: `radial-gradient(closest-side, ${c.accent}, transparent)` }} />
@@ -80,6 +82,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
           )}
         </div>
       </header>
+      </Editable>
 
       <section className="container-site grid gap-14 py-16 md:py-24 lg:grid-cols-12">
         <div className="lg:col-span-7">
@@ -99,9 +102,14 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
 
       <section className="border-t border-ink/10 bg-paper-2/50 py-16 md:py-24">
         <div className="container-site">
-          <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">
-            Kommande med <span className="mono-accent normal-case text-red-deep">{c.short_name}</span>
-          </h2>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">
+              Kommande med <span className="mono-accent normal-case text-red-deep">{c.short_name}</span>
+            </h2>
+            <EditModeLink target={{ type: "committee", id: c.id }} href="/admin/evenemang/ny">
+              Nytt evenemang
+            </EditModeLink>
+          </div>
           {upcoming.length > 0 ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((e) => (

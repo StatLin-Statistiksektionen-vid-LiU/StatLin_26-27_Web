@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth/session";
 import { listPages } from "@/lib/data/content";
 import { formatTimestamp } from "@/lib/dates";
 import { PAGE_PATHS } from "@/lib/navigation";
+import { stripAccent } from "@/components/ui/accent-text";
 
 export const metadata = { title: "Sidor" };
 
@@ -31,7 +32,7 @@ async function Pages() {
           <li key={p.slug}>
             <Link href={`/admin/sidor/${p.slug}`} className="group block rounded-[1.5rem] border border-ink/10 bg-white p-5 transition-colors hover:border-ink/30">
               <span className="flex items-center justify-between">
-                <span className="text-lg font-bold">{p.title}</span>
+                <span className="text-lg font-bold">{stripAccent(p.title)}</span>
                 <Edit size={16} className="text-stone group-hover:text-ink" />
               </span>
               <span className="mt-1 block font-mono text-xs text-stone">{PAGE_PATHS[p.slug] ?? `/${p.slug}`}</span>

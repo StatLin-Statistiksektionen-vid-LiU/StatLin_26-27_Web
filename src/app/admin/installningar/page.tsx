@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { saveSettings } from "@/app/admin/_actions/content";
 import { ActionForm } from "@/components/admin/action-form";
-import { Field, FormSection, TextArea, TextInput } from "@/components/admin/fields";
+import { AnnouncementSection, ContactSection, HomeTextsSection, SocialSection, TaglineSection } from "@/components/admin/content-forms";
 import { AdminHeader } from "@/components/admin/ui";
 import { canManageSettings } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -27,62 +27,11 @@ async function Settings() {
       <AdminHeader title="Inställningar" description="Startsidans texter, kontaktuppgifter och länkar som visas i sidfoten och på kontaktsidan." />
       <ActionForm action={saveSettings}>
         <div className="grid gap-6 lg:grid-cols-2">
-          <FormSection
-            title="Startsidan"
-            description="Texterna överst på startsidan. Skriv *ord* med stjärnor för att göra dem röda, och tryck Enter för en ny rad."
-            className="lg:col-span-2"
-          >
-            <Field label="Liten rad ovanför" name="hero_kicker">
-              <TextInput name="hero_kicker" defaultValue={s.hero_kicker} maxLength={80} />
-            </Field>
-            <Field label="Rubrik" name="hero_title" required hint="T.ex. Sektionen för *statistik*, dataanalys och maskininlärning vid LiU">
-              <TextArea name="hero_title" defaultValue={s.hero_title} rows={2} maxLength={140} required />
-            </Field>
-            <Field label="Underrubrik" name="hero_text">
-              <TextArea name="hero_text" defaultValue={s.hero_text} rows={2} maxLength={300} />
-            </Field>
-            <Field label="Om sektionen" name="home_intro" required hint="Den stora texten under ”01 Om sektionen”.">
-              <TextArea name="home_intro" defaultValue={s.home_intro} rows={3} maxLength={400} required />
-            </Field>
-          </FormSection>
-          <FormSection title="Kontakt">
-            <Field label="Allmän e-post" name="contact_email" required>
-              <TextInput name="contact_email" type="email" defaultValue={s.contact_email} />
-            </Field>
-            <Field label="Adress" name="address">
-              <TextInput name="address" defaultValue={s.address} />
-            </Field>
-            <Field label="Sektionsrum" name="sektionsrum" hint="Var hittar man er på campus?">
-              <TextInput name="sektionsrum" defaultValue={s.sektionsrum} />
-            </Field>
-            <Field label="Organisationsnummer" name="org_number">
-              <TextInput name="org_number" defaultValue={s.org_number} />
-            </Field>
-          </FormSection>
-          <FormSection title="Sociala medier" description="Tomma fält döljs på sajten.">
-            <Field label="Instagram" name="instagram">
-              <TextInput name="instagram" type="url" defaultValue={s.instagram} placeholder="https://instagram.com/…" />
-            </Field>
-            <Field label="Facebook" name="facebook">
-              <TextInput name="facebook" type="url" defaultValue={s.facebook} placeholder="https://facebook.com/…" />
-            </Field>
-            <Field label="LinkedIn" name="linkedin">
-              <TextInput name="linkedin" type="url" defaultValue={s.linkedin} placeholder="https://linkedin.com/company/…" />
-            </Field>
-          </FormSection>
-          <FormSection title="Meddelande" description="En kort rad som visas högst upp på alla sidor, t.ex. inför årsmötet. Lämna tomt för att dölja.">
-            <Field label="Text" name="announcement">
-              <TextInput name="announcement" defaultValue={s.announcement} maxLength={200} placeholder="Årsmöte 12 mars – läs handlingarna" />
-            </Field>
-            <Field label="Länk" name="announcement_url">
-              <TextInput name="announcement_url" defaultValue={s.announcement_url} placeholder="/dokument" />
-            </Field>
-          </FormSection>
-          <FormSection title="Beskrivning">
-            <Field label="Slogan" name="tagline" hint="Visas i sidfoten under kontaktuppgifterna.">
-              <TextInput name="tagline" defaultValue={s.tagline} maxLength={200} />
-            </Field>
-          </FormSection>
+          <HomeTextsSection s={s} className="lg:col-span-2" />
+          <ContactSection s={s} />
+          <SocialSection s={s} />
+          <AnnouncementSection s={s} />
+          <TaglineSection s={s} />
         </div>
       </ActionForm>
     </>

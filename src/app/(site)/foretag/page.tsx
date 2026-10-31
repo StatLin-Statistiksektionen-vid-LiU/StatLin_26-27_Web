@@ -11,6 +11,7 @@ import { listUpcomingEvents } from "@/lib/data/events";
 import { STAR_COPY } from "@/lib/seed-content";
 import { formatDateLong } from "@/lib/dates";
 import { safeExternalUrl } from "@/lib/utils";
+import { EditModeLink } from "@/components/edit-mode/editable";
 
 export const metadata: Metadata = {
   title: "För företag",
@@ -74,7 +75,12 @@ async function Companies() {
       {/* Partners */}
       <section className="py-20 md:py-28">
         <div className="container-site">
-          <p className="kicker text-stone">Samarbetspartners</p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="kicker text-stone">Samarbetspartners</p>
+            <EditModeLink target={{ type: "page", slug: "foretag" }} href="/admin/partners" icon="edit">
+              Hantera partners
+            </EditModeLink>
+          </div>
           {partners.length > 0 ? (
             <ul className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-ink/10 bg-ink/10 md:grid-cols-4">
               {partners.map((p) => {

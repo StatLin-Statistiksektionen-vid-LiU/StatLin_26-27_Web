@@ -14,6 +14,7 @@ import { formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/da
 import { googleCalendarUrl } from "@/lib/ics";
 import { siteUrl } from "@/lib/site-url";
 import { fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
+import { Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/evenemang/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -65,6 +66,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
   return (
     <article>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <Editable target={{ type: "event", id: event.id, committeeId: event.committee_id }} label="Redigera evenemanget" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="noise relative overflow-hidden bg-ink text-white">
         <div className="absolute inset-0">
           {event.cover ? (
@@ -92,6 +94,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
           {event.summary && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75 md:text-xl">{event.summary}</p>}
         </div>
       </header>
+      </Editable>
 
       <div className="container-site grid gap-12 py-14 md:py-20 lg:grid-cols-12">
         <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:self-start">

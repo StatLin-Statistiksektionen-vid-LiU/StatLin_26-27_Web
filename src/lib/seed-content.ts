@@ -121,7 +121,7 @@ export const SEED_BOARD = [
 export const SEED_PAGES: { slug: string; title: string; lead: string; body_md: string }[] = [
   {
     slug: "om",
-    title: "Om StatLin",
+    title: "Om *StatLin*",
     lead: "StatLin – Statistiksektionen i Linköping – är sektionen för alla som läser statistik vid Linköpings universitet.",
     body_md: `## Vad gör en sektion?
 
