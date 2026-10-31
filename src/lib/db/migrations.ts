@@ -180,6 +180,11 @@ const steps: string[] = [
   ALTER TABLE events ADD COLUMN checked_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
   UPDATE events SET checked_at = strftime('%Y-%m-%dT%H:%M:%fZ','now');
   `,
+  /* 3: Studenter-fliken – sidtexter som fortfarande är ursprungliga nämner nu även mastern */ `
+  UPDATE pages SET title = 'Kandidat' WHERE slug = 'utbildning' AND title = 'Utbildning';
+  UPDATE pages SET lead = 'Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.'
+    WHERE slug = 'ny-student' AND lead = 'Grattis till platsen! Här är allt du behöver veta inför starten på Statistik och dataanalys.';
+  `,
 ];
 
 export function migrate(db: Database.Database) {

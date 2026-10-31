@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
-import { ArrowUpRight, Mail } from "@/components/icons";
+import { UbuCard } from "@/components/content/ubu-card";
+import { ArrowUpRight } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 
 export const metadata: Metadata = {
-  title: "Utbildning",
-  description: "Statistik och dataanalys vid Linköpings universitet – studiebevakning, kursutvärderingar och stöd.",
+  title: "Kandidatprogrammet",
+  description: "Statistik och dataanalys, 180 hp, vid Linköpings universitet – programmet, studiebevakning och stöd.",
 };
 
 const LINKS = [
@@ -16,20 +16,20 @@ const LINKS = [
   { href: "https://liu.se/", label: "Linköpings universitet" },
 ];
 
-export default function EducationPage() {
+export default function BachelorPage() {
   return (
     <Suspense fallback={<HeroSkeleton />}>
-      <Education />
+      <Bachelor />
     </Suspense>
   );
 }
 
-async function Education() {
+async function Bachelor() {
   const ubu = await getCommitteeBySlug("ubu");
   return (
     <ContentPage
       slug="utbildning"
-      kicker="Utbildning"
+      kicker="Studenter / Kandidat"
       heroAside={
         <div className="hidden justify-end md:flex">
           <Formula />
@@ -37,31 +37,7 @@ async function Education() {
       }
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-          {ubu && (
-            <div className="overflow-hidden rounded-[1.75rem] bg-ink p-7 text-white">
-              <div className="flex items-center gap-4">
-                {ubu.logo_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={ubu.logo_url} alt="" className="size-16 object-contain" />
-                )}
-                <div>
-                  <p className="kicker text-white/50">Studiebevakning</p>
-                  <p className="display-tight mt-1 text-2xl normal-case">{ubu.short_name}</p>
-                </div>
-              </div>
-              <p className="mt-5 text-[0.95rem] leading-relaxed text-white/70">{ubu.tagline} Hör av dig om kurser, examination eller studiemiljö – anonymt om du vill.</p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {ubu.email && (
-                  <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">
-                    <Mail size={15} /> Mejla UBU
-                  </a>
-                )}
-                <Link href="/utskott/ubu" className="btn btn-ghost-dark btn-sm">
-                  Om UBU
-                </Link>
-              </div>
-            </div>
-          )}
+          {ubu && <UbuCard ubu={ubu} />}
           <ul className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
             {LINKS.map((l) => (
               <li key={l.href} className="border-b border-ink/10 last:border-0">

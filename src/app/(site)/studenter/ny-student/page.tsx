@@ -9,8 +9,8 @@ import { HeroSkeleton } from "@/components/ui/skeletons";
 import { listUpcomingEvents } from "@/lib/data/events";
 
 export const metadata: Metadata = {
-  title: "Ny student",
-  description: "Välkommen till Statistik och dataanalys i Linköping! Mottagningen, overallen och vanliga frågor.",
+  title: "Nya studenter",
+  description: "Välkommen till StatLin – oavsett om du börjar på kandidaten eller mastern. Mottagningen, overallen och vanliga frågor.",
 };
 
 export default function NewStudentPage() {
@@ -26,7 +26,7 @@ async function NewStudent() {
   return (
     <ContentPage
       slug="ny-student"
-      kicker="Ny student"
+      kicker="Studenter / Nya studenter"
       heroAside={
         <div className="hidden grid-cols-2 gap-4 md:grid">
           <div className="-rotate-3 transition-transform duration-700 hover:rotate-0">

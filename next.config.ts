@@ -40,6 +40,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Utbildning och Ny student flyttade under Studenter – gamla länkar ska fortsätta fungera.
+  async redirects() {
+    return [
+      { source: "/utbildning", destination: "/studenter/kandidat", permanent: true },
+      { source: "/ny-student", destination: "/studenter/ny-student", permanent: true },
+      { source: "/studenter", destination: "/studenter/kandidat", permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

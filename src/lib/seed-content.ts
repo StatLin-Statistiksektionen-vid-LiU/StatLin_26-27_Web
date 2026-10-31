@@ -144,7 +144,7 @@ StatLin står för *Statistiksektionen i Linköping* och skrivs med versalt S oc
   {
     slug: "ny-student",
     title: "Ny student",
-    lead: "Grattis till platsen! Här är allt du behöver veta inför starten på Statistik och dataanalys.",
+    lead: "Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.",
     body_md: `## Mottagningen
 
 De första veckorna är fyllda av aktiviteter där du lär känna dina kursare, äldre studenter och Linköping. Allt är frivilligt och det finns alltid alkoholfria alternativ. Schemat publiceras under **Evenemang** och i våra kanaler i god tid innan terminsstart.
@@ -177,7 +177,7 @@ Prata med någon du litar på i sektionen, vårt arbetsmiljöombud eller univers
   },
   {
     slug: "utbildning",
-    title: "Utbildning",
+    title: "Kandidat",
     lead: "Statistik och dataanalys vid Linköpings universitet – och hur sektionen hjälper dig genom studierna.",
     body_md: `## Programmet
 
@@ -196,6 +196,26 @@ Utbildningsutskottet (UBU) bevakar att utbildningen håller hög kvalitet. Vi sa
 ## Hjälp och stöd
 
 Universitetet erbjuder studenthälsa, studieverkstad och stöd vid funktionsnedsättning. Hör av dig till oss om du inte vet vart du ska vända dig – vi hjälper dig att hitta rätt.`,
+  },
+  {
+    slug: "master",
+    title: "Master",
+    lead: "Läser du Statistics and Machine Learning? StatLin är din sektion också – här är det viktigaste för att komma igång.",
+    body_md: `## Programmet
+
+**Statistics and Machine Learning (120 hp)** är ett tvåårigt masterprogram vid Linköpings universitet som ges helt på engelska. Det bygger vidare på statistik, maskininlärning och programmering, och många av studenterna kommer från andra universitet och länder.
+
+## StatLin är till för båda programmen
+
+Sektionen representerar kandidat- och masterstudenterna lika mycket. Alla evenemang är öppna för dig, och vi byter gärna till engelska.
+
+- **Kom på ett evenemang.** Allt vi ordnar finns i kalendern.
+- **Prata med vår masteransvariga** i styrelsen om du har frågor eller idéer för masterstudenterna.
+- **Engagera dig** i ett utskott – fester, idrott, spel, karriär eller utbildning.
+
+## Frågor om studierna?
+
+UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination eller studiemiljö – anonymt om du vill.`,
   },
   {
     slug: "foretag",

@@ -188,7 +188,7 @@ export async function HomeSections() {
       <section className={news.length > 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}>
         <div className="container-site grid gap-6 lg:grid-cols-2">
           <Reveal>
-            <Link href="/ny-student" className="noise group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-red p-8 text-white md:p-12">
+            <Link href="/studenter/ny-student" className="noise group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-red p-8 text-white md:p-12">
               <div className="grid-paper pointer-events-none absolute inset-0 text-white" aria-hidden />
               <span className="kicker relative text-white/80">För dig som är ny</span>
               <div className="relative">

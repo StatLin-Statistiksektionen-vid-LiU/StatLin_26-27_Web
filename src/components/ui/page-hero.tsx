@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import type { CSSProperties, ReactNode } from "react";
+import { cn, fitHeading } from "@/lib/utils";
 
 /** Mörk sidhuvudyta med rutnät – gemensam för alla undersidor. */
 export function PageHero({
@@ -10,9 +10,15 @@ export function PageHero({
   children,
   aside,
   className,
+  fitTitle,
 }: {
   kicker: string;
   title: ReactNode;
+  /**
+   * Titeln som ren text, för redigerbara titlar: storleken räknas då ut efter längsta ordet så att
+   * långa sammansättningar krymper i stället för att brytas mitt i ordet. Mobil och desktop var för sig.
+   */
+  fitTitle?: string;
   accent?: string;
   lead?: ReactNode;
   children?: ReactNode;
@@ -36,7 +42,15 @@ export function PageHero({
             <span className="h-px w-8 bg-red" aria-hidden />
             {kicker}
           </p>
-          <h1 className="display mt-6 text-[clamp(2.6rem,7.5vw,6.5rem)] [overflow-wrap:anywhere]">{title}</h1>
+          <h1
+            className={cn(
+              "display mt-6 [overflow-wrap:anywhere]",
+              fitTitle ? "text-[length:var(--title-sm)] md:text-[length:var(--title-md)]" : "text-[clamp(2.6rem,7.5vw,6.5rem)]",
+            )}
+            style={fitTitle ? titleSizes(fitTitle, !!aside) : undefined}
+          >
+            {title}
+          </h1>
           {lead && <div className="mt-7 max-w-2xl text-lg leading-relaxed text-white/70 md:text-xl">{lead}</div>}
           {children && <div className="mt-9">{children}</div>}
         </div>
@@ -44,4 +58,13 @@ export function PageHero({
       </div>
     </section>
   );
+}
+
+/** "display" har ungefär 0,93 em per versal – 0,96 ger lite marginal. */
+function titleSizes(text: string, hasAside: boolean): CSSProperties {
+  const opts = { maxRem: 6.5, charWidth: 0.96 };
+  return {
+    "--title-sm": fitHeading(text, { ...opts, maxVw: 11, usableVw: 88 }).fontSize,
+    "--title-md": fitHeading(text, { ...opts, maxVw: 7.5, usableVw: hasAside ? 56 : 80 }).fontSize,
+  } as CSSProperties;
 }

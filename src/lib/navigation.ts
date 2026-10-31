@@ -16,8 +16,15 @@ export const NAV: NavGroup[] = [
       { href: "/grafisk-profil", label: "Grafisk profil", description: "Loggor, färger och typsnitt" },
     ],
   },
-  { label: "Utbildning", href: "/utbildning" },
-  { label: "Ny student", href: "/ny-student" },
+  {
+    label: "Studenter",
+    href: "/studenter",
+    children: [
+      { href: "/studenter/kandidat", label: "Kandidat", description: "Statistik och dataanalys, 180 hp" },
+      { href: "/studenter/master", label: "Master", description: "Statistics and Machine Learning, 120 hp" },
+      { href: "/studenter/ny-student", label: "Nya studenter", description: "Mottagning, overall och vanliga frågor" },
+    ],
+  },
   { label: "Företag", href: "/foretag" },
   { label: "Kontakt", href: "/kontakt" },
 ];
@@ -25,8 +32,9 @@ export const NAV: NavGroup[] = [
 /** Var de redigerbara sidorna (pages-tabellen) visas på sajten. */
 export const PAGE_PATHS: Record<string, string> = {
   om: "/sektionen",
-  "ny-student": "/ny-student",
-  utbildning: "/utbildning",
+  utbildning: "/studenter/kandidat",
+  master: "/studenter/master",
+  "ny-student": "/studenter/ny-student",
   foretag: "/foretag",
   kontakt: "/kontakt",
   en: "/en",

@@ -7,7 +7,7 @@ import { siteUrl } from "@/lib/site-url";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = await siteUrl();
   const [events, news, committees] = await Promise.all([listAllPublishedEvents(), listNews(500), listCommittees({ visibleOnly: true })]);
-  const staticPaths = ["", "/evenemang", "/nyheter", "/sektionen", "/sektionen/styrelsen", "/utskott", "/utbildning", "/ny-student", "/foretag", "/kontakt", "/dokument", "/galleri", "/grafisk-profil", "/en", "/en/masters"];
+  const staticPaths = ["", "/evenemang", "/nyheter", "/sektionen", "/sektionen/styrelsen", "/utskott", "/studenter/kandidat", "/studenter/master", "/studenter/ny-student", "/foretag", "/kontakt", "/dokument", "/galleri", "/grafisk-profil", "/en", "/en/masters"];
   return [
     ...staticPaths.map((p) => ({ url: `${base}${p}`, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.7 })),
     ...events.map((e) => ({ url: `${base}/evenemang/${e.slug}`, lastModified: e.updated_at, priority: 0.6 })),

@@ -211,7 +211,7 @@ async function login(page, email, password) {
       await page.fill('textarea[name="lead"]', "Välkommen till StatLin – testad ingress!");
       await page.getByRole("button", { name: "Spara och publicera" }).click();
       await page.getByText("Sidan är sparad och publicerad.").waitFor();
-      await page.goto(`${BASE}/ny-student`);
+      await page.goto(`${BASE}/studenter/ny-student`);
       await page.getByText("Välkommen till StatLin – testad ingress!").waitFor();
     });
 

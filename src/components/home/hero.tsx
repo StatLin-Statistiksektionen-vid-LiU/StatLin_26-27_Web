@@ -47,7 +47,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
           Kommande evenemang
           <ArrowRight size={18} className="transition-transform duration-500 group-hover:translate-x-1" />
         </Link>
-        <Link href="/ny-student" className="btn btn-ghost-dark">
+        <Link href="/studenter/ny-student" className="btn btn-ghost-dark">
           Ny student?
         </Link>
         <a
