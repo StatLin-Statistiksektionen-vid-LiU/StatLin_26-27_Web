@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { saveSettings } from "@/app/admin/_actions/content";
 import { ActionForm } from "@/components/admin/action-form";
-import { Field, FormSection, TextInput } from "@/components/admin/fields";
+import { Field, FormSection, TextArea, TextInput } from "@/components/admin/fields";
 import { AdminHeader } from "@/components/admin/ui";
 import { canManageSettings } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -24,9 +24,27 @@ async function Settings() {
   const s = await getSettings();
   return (
     <>
-      <AdminHeader title="Inställningar" description="Kontaktuppgifter och länkar som visas i sidfoten och på kontaktsidan." />
+      <AdminHeader title="Inställningar" description="Startsidans texter, kontaktuppgifter och länkar som visas i sidfoten och på kontaktsidan." />
       <ActionForm action={saveSettings}>
         <div className="grid gap-6 lg:grid-cols-2">
+          <FormSection
+            title="Startsidan"
+            description="Texterna överst på startsidan. Skriv *ord* med stjärnor för att göra dem röda, och tryck Enter för en ny rad."
+            className="lg:col-span-2"
+          >
+            <Field label="Liten rad ovanför" name="hero_kicker">
+              <TextInput name="hero_kicker" defaultValue={s.hero_kicker} maxLength={80} />
+            </Field>
+            <Field label="Rubrik" name="hero_title" required hint="T.ex. Sektionen för *statistik*, dataanalys och maskininlärning vid LiU">
+              <TextArea name="hero_title" defaultValue={s.hero_title} rows={2} maxLength={140} required />
+            </Field>
+            <Field label="Underrubrik" name="hero_text">
+              <TextArea name="hero_text" defaultValue={s.hero_text} rows={2} maxLength={300} />
+            </Field>
+            <Field label="Om sektionen" name="home_intro" required hint="Den stora texten under ”01 Om sektionen”.">
+              <TextArea name="home_intro" defaultValue={s.home_intro} rows={3} maxLength={400} required />
+            </Field>
+          </FormSection>
           <FormSection title="Kontakt">
             <Field label="Allmän e-post" name="contact_email" required>
               <TextInput name="contact_email" type="email" defaultValue={s.contact_email} />
@@ -61,7 +79,7 @@ async function Settings() {
             </Field>
           </FormSection>
           <FormSection title="Beskrivning">
-            <Field label="Slogan" name="tagline" hint="Används som beskrivning i sidfot och sökmotorer.">
+            <Field label="Slogan" name="tagline" hint="Visas i sidfoten under kontaktuppgifterna.">
               <TextInput name="tagline" defaultValue={s.tagline} maxLength={200} />
             </Field>
           </FormSection>

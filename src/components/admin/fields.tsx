@@ -128,9 +128,19 @@ export function TitleSlugFields({
   );
 }
 
-export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function FormSection({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <section className="rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-7">
+    <section className={cn("rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-7", className)}>
       <div className="mb-5">
         <h2 className="text-base font-bold">{title}</h2>
         {description && <p className="mt-1 text-sm text-stone">{description}</p>}

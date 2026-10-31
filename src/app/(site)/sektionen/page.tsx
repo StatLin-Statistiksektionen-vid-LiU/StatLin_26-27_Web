@@ -61,7 +61,11 @@ async function AboutContent() {
                 <Fact label="Förkortning">
                   <span className="font-mono">StatLin · StLn · StL · SL · S</span>
                 </Fact>
-                <Fact label="Program">Statistik och dataanalys, 180 hp</Fact>
+                <Fact label="Program">
+                  Statistik och dataanalys, 180 hp
+                  <br />
+                  Statistics and Machine Learning, 120 hp
+                </Fact>
                 <Fact label="Färger">
                   <span className="flex gap-2">
                     {["#ff0707", "#000000", "#ffffff"].map((c) => (

@@ -286,30 +286,40 @@ export async function deletePartner(fd: FormData) {
 
 /* ---------- Inställningar ---------- */
 
+const settingsSchema = z.object({
+  contact_email: z.string().trim().toLowerCase().email("Ange en giltig e-postadress."),
+  instagram: zUrl,
+  facebook: zUrl,
+  linkedin: zUrl,
+  address: zText(200),
+  sektionsrum: zText(200),
+  org_number: zText(40),
+  tagline: zText(200),
+  hero_kicker: zText(80, "Kickern"),
+  hero_title: zRequired(140, "Rubriken"),
+  hero_text: zText(300, "Underrubriken"),
+  home_intro: zRequired(400, "Texten"),
+  announcement: zText(200),
+  announcement_url: zUrl,
+});
+
+/** Sparar bara fälten som finns i formuläret, så att delformulär (t.ex. bara startsidan) inte tömmer resten. */
 export async function saveSettings(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();
   if (!canManageSettings(user)) return forbidden;
-  const parsed = z
-    .object({
-      contact_email: z.string().trim().toLowerCase().email("Ange en giltig e-postadress."),
-      instagram: zUrl,
-      facebook: zUrl,
-      linkedin: zUrl,
-      address: zText(200),
-      sektionsrum: zText(200),
-      org_number: zText(40),
-      tagline: zText(200),
-      announcement: zText(200),
-      announcement_url: zUrl,
-    })
-    .safeParse(formObject(fd));
+  const raw = formObject(fd);
+  type Key = keyof typeof settingsSchema.shape;
+  const present = Object.keys(settingsSchema.shape).filter((k) => k in raw) as Key[];
+  if (present.length === 0) return { error: "Inget att spara." };
+  const mask = Object.fromEntries(present.map((k) => [k, true])) as { [K in Key]?: true };
+  const parsed = settingsSchema.pick(mask).safeParse(raw);
   if (!parsed.success) return invalid(parsed.error);
   const db = getDb();
   const stmt = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
   db.transaction(() => {
     for (const [k, v] of Object.entries(parsed.data)) if (k in DEFAULT_SETTINGS) stmt.run(k, v);
   })();
-  audit(user.id, "update", "settings", null, "Webbplatsinställningar");
+  audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_") || k === "home_intro") ? "Startsidan" : "Webbplatsinställningar");
   revalidateSite();
   return { ok: true, message: "Inställningarna är sparade." };
 }

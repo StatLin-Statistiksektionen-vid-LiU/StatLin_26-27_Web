@@ -41,6 +41,7 @@ async function FooterContact() {
   ].filter((x) => x.href);
   return (
     <div className="space-y-5">
+      {s.tagline && <p className="max-w-md leading-relaxed text-white/60">{s.tagline}</p>}
       <a href={`mailto:${s.contact_email}`} className="group flex items-center gap-3 text-lg font-semibold text-white">
         <Mail size={18} className="text-red" />
         <span className="link-underline">{s.contact_email}</span>

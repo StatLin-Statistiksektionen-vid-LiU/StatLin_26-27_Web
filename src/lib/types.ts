@@ -200,7 +200,9 @@ export interface SiteSettings {
   org_number: string;
   tagline: string;
   hero_kicker: string;
+  hero_title: string;
   hero_text: string;
+  home_intro: string;
   announcement: string;
   announcement_url: string;
 }

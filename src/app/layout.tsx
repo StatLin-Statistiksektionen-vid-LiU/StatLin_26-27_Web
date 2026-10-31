@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s · StatLin",
   },
   description:
-    "StatLin är sektionen för dig som läser statistik och dataanalys vid Linköpings universitet. Evenemang, nyheter, utskott, studiebevakning och kontakt med arbetslivet.",
+    "StatLin är sektionen för dig som läser statistik och dataanalys eller Statistics and Machine Learning vid Linköpings universitet. Evenemang, nyheter, utskott, studiebevakning och kontakt med arbetslivet.",
   applicationName: "StatLin",
   openGraph: {
     type: "website",

@@ -4,24 +4,26 @@ import { NewsCard } from "@/components/content/news-card";
 import { ArrowRight, ArrowUpRight, Calendar, Handshake } from "@/components/icons";
 import { CountUp } from "@/components/ui/count-up";
 import { Reveal } from "@/components/ui/reveal";
+import { AccentText } from "@/components/ui/accent-text";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { listBoard, listCommittees } from "@/lib/data/content";
+import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
 import { listNews } from "@/lib/data/news";
 
 export async function HomeSections() {
-  const [events, news, committees, board] = await Promise.all([
+  const [events, news, committees, board, settings] = await Promise.all([
     listUpcomingEvents(6),
     listNews(4),
     listCommittees({ visibleOnly: true }),
     listBoard(),
+    getSettings(),
   ]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
   const stats = [
     { value: utskott.length, label: "Utskott & grupper", note: "från SCB till eSTIG" },
     { value: board.length, label: "Poster i styrelsen", note: "väljs varje år" },
     { value: events.length, label: "Kommande evenemang", note: "just nu i kalendern" },
-    { value: 180, label: "Högskolepoäng", note: "kandidatprogrammet" },
+    { value: 2, label: "Program", note: "kandidat och master" },
   ];
 
   return (
@@ -37,9 +39,7 @@ export async function HomeSections() {
               Om sektionen
             </p>
             <p className="mt-7 text-[clamp(1.75rem,3.6vw,3.15rem)] font-semibold leading-[1.12] tracking-tight [font-stretch:104%]">
-              Vi är statistikstudenternas sektion i Linköping. Här möts <span className="mono-accent text-red-deep">gemenskap</span>,{" "}
-              <span className="mono-accent text-red-deep">utbildning</span> och vägen ut i{" "}
-              <span className="mono-accent text-red-deep">arbetslivet</span>.
+              <AccentText text={settings.home_intro.trim() || DEFAULT_SETTINGS.home_intro} accentClassName="mono-accent text-red-deep" />
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link href="/sektionen" className="btn btn-ink group">
@@ -194,7 +194,7 @@ export async function HomeSections() {
               <div className="relative">
                 <h2 className="display text-[clamp(2.4rem,5vw,4.4rem)]">Ny student?</h2>
                 <p className="mt-4 max-w-md text-lg text-white/85">
-                  Mottagningen, overallen och allt du undrar inför första dagen på Statistik och dataanalys.
+                  Mottagningen, overallen och allt du undrar inför första dagen – på kandidaten eller mastern.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-3 font-semibold">
                   Läs mer
