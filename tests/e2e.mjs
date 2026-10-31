@@ -81,16 +81,22 @@ async function login(page, email, password) {
       await page.fill('textarea[name="body_md"]', "## Program\n- Mingel\n- **Middag**\n\nVälkomna!");
       await page.fill('input[name="location"]', "Kårallen");
       await page.selectOption('select[name="committee_id"]', { label: "SCB – StatLins Centrala Bärseri" });
-      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
-      await page.getByText("Evenemanget är skapat!").waitFor();
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
+      await page.getByText("Evenemanget är publicerat!").waitFor();
     });
 
-    await step("Validering: sluttid före starttid ger fältfel", async () => {
-      await page.fill('input[name="ends_at"]', "2000-01-01T10:00");
+    await step("Validering: sluttid före starttid ger fältfel och öppnar Fler detaljer", async () => {
+      // Förra sidan ligger kvar dold i DOM:en (Next behåller den), så bara synliga element räknas.
+      const more = page.locator("summary:visible", { hasText: "Fler detaljer" });
+      const endsAt = page.locator('input[name="ends_at"]:visible');
+      await more.click();
+      await endsAt.fill("2000-01-01T10:00");
+      await more.click();
       await page.getByRole("button", { name: "Spara ändringar" }).click();
       await page.getByText("Sluttiden måste vara efter starttiden.").first().waitFor();
+      await endsAt.waitFor({ timeout: 3000 });
       assert.equal(await page.inputValue('input[name="title"]'), "Testsittning med galleri", "fälten ska behållas");
-      await page.fill('input[name="ends_at"]', "");
+      await endsAt.fill("");
     });
 
     await step("Ladda upp tre bilder till galleriet", async () => {
@@ -155,8 +161,20 @@ async function login(page, email, password) {
       assert.ok(titles.includes("Testsittning med galleri"), "SCB ska se SCB-evenemanget");
       assert.ok(!titles.some((t) => t.includes("LAN")), "SCB ska inte se eSTIG:s evenemang");
       await page.goto(`${BASE}/admin/evenemang/ny`);
-      assert.ok(await page.locator('select[name="committee_id"]').isDisabled(), "utskottsväljaren ska vara låst");
+      assert.equal(await page.locator('select[name="committee_id"]').count(), 0, "utskottet ska inte gå att välja");
+      await page.getByText("SCB – StatLins Centrala Bärseri").waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-committee-new.png` });
+    });
+
+    await step("Utskottets översikt har genvägar och sparar utkast", async () => {
+      await page.goto(`${BASE}/admin`);
+      await page.getByRole("heading", { name: "SCB", exact: true }).waitFor();
+      await page.screenshot({ path: `${SHOTS}/admin-committee-dashboard.png`, fullPage: true });
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/ny/), page.getByRole("link", { name: /Nytt evenemang/ }).click()]);
+      await page.fill('input[name="title"]', "Utkast från utskottet");
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Spara som utkast" }).click()]);
+      await page.getByText("Evenemanget är sparat som utkast").waitFor();
+      await page.getByRole("button", { name: "Publicera", exact: true }).waitFor();
     });
 
     await step("Utskottskonto nekas andra utskotts evenemang och uppladdning", async () => {
@@ -244,7 +262,7 @@ async function login(page, email, password) {
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Pubkväll att granska");
       await page.fill('input[name="location"]', "Kårallen");
-      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       reviewId = page.url().match(/evenemang\/(\d+)/)[1];
       await page.getByText("Ej granskad", { exact: true }).first().waitFor();
       assert.equal(await page.getByRole("button", { name: "Markera som granskad" }).count(), 0, "utskottet ska inte kunna granska");
@@ -295,7 +313,7 @@ async function login(page, email, password) {
       await login(page, "admin@statlin.se", "admin-statlin-2026");
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Styrelsemöte i testet");
-      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
+      await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       await page.getByText("Granskad", { exact: true }).first().waitFor();
     });
 

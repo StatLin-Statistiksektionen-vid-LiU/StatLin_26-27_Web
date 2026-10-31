@@ -4,12 +4,13 @@ import { Suspense } from "react";
 import { deleteNews } from "@/app/admin/_actions/news";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { NewsForm } from "@/components/admin/news-form";
-import { AdminHeader, Notice } from "@/components/admin/ui";
+import { AdminHeader, Notice, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Trash } from "@/components/icons";
 import { canEditOwned } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listCommittees } from "@/lib/data/content";
 import { getNewsById } from "@/lib/data/news";
+import { formatTimestamp } from "@/lib/dates";
 
 export const metadata = { title: "Redigera nyhet" };
 
@@ -29,12 +30,18 @@ async function EditNews({ params, searchParams }: Pick<PageProps<"/admin/nyheter
   if (!canEditOwned(user, item)) redirect("/admin/nyheter?nekad=1");
   const committees = await listCommittees();
   const visible = user.role === "committee" ? committees.filter((c) => c.id === user.committee_id) : committees;
+  const scheduled = !!item.published && item.published_at > new Date().toISOString();
   return (
     <>
-      {sp.skapad && <Notice>Nyheten är publicerad!</Notice>}
+      {sp.skapad && (
+        <Notice>
+          {!item.published ? "Nyheten är sparad som utkast och syns inte på sajten än." : scheduled ? `Nyheten publiceras ${formatTimestamp(item.published_at)}.` : "Nyheten är publicerad!"}
+        </Notice>
+      )}
       <AdminHeader
         back={{ href: "/admin/nyheter", label: "Nyheter" }}
         title={item.title}
+        description={<StatusBadge published={!!item.published} label={scheduled ? `Schemalagd ${formatTimestamp(item.published_at)}` : undefined} />}
         actions={
           <>
             <Link href={`/nyheter/${item.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">

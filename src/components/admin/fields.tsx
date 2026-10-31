@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { ChevronDown } from "@/components/icons";
 import { FieldError, useFormCtx } from "./action-form";
 import { cn, slugify, slugifyWhileTyping } from "@/lib/utils";
 
@@ -147,5 +148,55 @@ export function FormSection({
       </div>
       <div className="space-y-5">{children}</div>
     </section>
+  );
+}
+
+/**
+ * Hopfällbar ruta för fält som sällan behövs. Öppen från början om något av fälten har ett värde,
+ * och öppnar sig själv om något av dem får ett valideringsfel.
+ */
+export function MoreDetails({
+  title = "Fler detaljer",
+  summary,
+  fields,
+  defaultOpen,
+  children,
+}: {
+  title?: string;
+  summary?: string;
+  fields: string[];
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const { state } = useFormCtx();
+  const hasError = fields.some((f) => state.fieldErrors?.[f]);
+  const [open, setOpen] = useState(!!defaultOpen);
+  const [hadError, setHadError] = useState(hasError);
+  if (hasError !== hadError) {
+    setHadError(hasError);
+    if (hasError) setOpen(true);
+  }
+  return (
+    <details open={open} onToggle={(e) => setOpen(e.currentTarget.open)} className="group rounded-[1.5rem] border border-ink/10 bg-white">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.5rem] p-5 outline-none focus-visible:ring-4 focus-visible:ring-ink/10 md:px-7 [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="block text-base font-bold">{title}</span>
+          {summary && <span className="mt-1 block text-sm text-stone">{summary}</span>}
+        </span>
+        <ChevronDown size={18} className="shrink-0 text-stone transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-5 border-t border-ink/10 p-5 md:p-7">{children}</div>
+    </details>
+  );
+}
+
+/** Arrangör eller avsändare som utskottskonton inte kan ändra – visas som text i stället för en låst lista. */
+export function FixedCommittee({ label, name, hint }: { label: string; name: string; hint: string }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-sm font-semibold text-ink">{label}</p>
+      <p className="rounded-xl bg-paper px-3.5 py-2.5 font-semibold">{name}</p>
+      <p className="mt-1.5 text-[0.82rem] leading-snug text-stone">{hint}</p>
+    </div>
   );
 }

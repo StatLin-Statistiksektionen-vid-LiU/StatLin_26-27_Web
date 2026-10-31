@@ -29,7 +29,14 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
       <AdminSidebar
-        user={{ name: user.name, post: user.post, role: user.role, committee_name: user.committee_name, committee_id: user.committee_id }}
+        user={{
+          name: user.name,
+          post: user.post,
+          role: user.role,
+          committee_name: user.committee_name,
+          committee_id: user.committee_id,
+          committee_kind: user.committee_kind,
+        }}
         unseenTasks={unseenTasks}
       />
       <div className="min-w-0">

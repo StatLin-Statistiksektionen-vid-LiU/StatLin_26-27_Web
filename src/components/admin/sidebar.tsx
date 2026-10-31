@@ -20,10 +20,10 @@ import {
   Settings,
   Users,
 } from "@/components/icons";
-import { ROLE_LABELS, type Role } from "@/lib/types";
+import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
-type SidebarUser = { name: string; post: string; role: Role; committee_name: string | null; committee_id: number | null };
+type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind">;
 
 export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
   const pathname = usePathname();
@@ -31,20 +31,27 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const editor = user.role !== "committee";
   const admin = user.role === "admin";
 
+  const tasks = { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks };
+  // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
+  const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
   const groups = [
     {
       label: "Innehåll",
-      items: [
-        { href: "/admin", label: "Översikt", Icon: Home, exact: true },
-        { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks },
-        { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
-        { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
-        editor
-          ? { href: "/admin/utskott", label: "Utskott", Icon: Layers }
-          : user.committee_id
-            ? { href: `/admin/utskott/${user.committee_id}`, label: `Utskottssidan`, Icon: Layers }
-            : null,
-      ],
+      items: editor
+        ? [
+            { href: "/admin", label: "Översikt", Icon: Home, exact: true },
+            tasks,
+            { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
+            { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            { href: "/admin/utskott", label: "Utskott", Icon: Layers },
+          ]
+        : [
+            { href: "/admin", label: "Översikt", Icon: Home, exact: true },
+            { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
+            { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            ownPage,
+            tasks,
+          ],
     },
     {
       label: "Sektionen",

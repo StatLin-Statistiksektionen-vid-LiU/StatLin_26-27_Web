@@ -77,6 +77,7 @@ export interface UserRow {
 export type SessionUser = Pick<UserRow, "id" | "email" | "name" | "post" | "role" | "committee_id"> & {
   must_change_password: boolean;
   committee_name: string | null;
+  committee_kind: Committee["kind"] | null;
 };
 
 export interface BoardMember {

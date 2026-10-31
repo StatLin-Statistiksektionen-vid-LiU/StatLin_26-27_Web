@@ -37,7 +37,9 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
 
   return (
     <>
-      {sp.skapad && <Notice>Evenemanget är skapat! Ladda gärna upp bilder längre ned.</Notice>}
+      {sp.skapad && (
+        <Notice>{event.published ? "Evenemanget är publicerat! Ladda gärna upp bilder längre ned." : "Evenemanget är sparat som utkast och syns inte på sajten än."}</Notice>
+      )}
       <AdminHeader
         back={{ href: "/admin/evenemang", label: "Evenemang" }}
         title={event.title}
