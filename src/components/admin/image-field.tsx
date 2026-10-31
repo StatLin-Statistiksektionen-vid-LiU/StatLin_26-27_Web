@@ -14,6 +14,7 @@ export function ImageField({
   hint,
   aspect = "aspect-[16/9]",
   fit = "cover",
+  onChange,
 }: {
   name: string;
   label: string;
@@ -21,12 +22,15 @@ export function ImageField({
   hint?: string;
   aspect?: string;
   fit?: "cover" | "contain";
+  /** Körs när en ny bild laddats upp eller bilden tagits bort, t.ex. för att spara direkt. */
+  onChange?: (image: ImageRef | null) => void;
 }) {
   const [image, setImageState] = useState<ImageRef | null>(defaultImage);
   const [changed, setChanged] = useState(false);
   const setImage = (img: ImageRef | null) => {
     setImageState(img);
     setChanged(true);
+    onChange?.(img);
   };
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);

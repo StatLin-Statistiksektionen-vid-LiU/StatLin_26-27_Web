@@ -9,7 +9,7 @@ import { ArrowLeft } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getNewsBySlug, listNews } from "@/lib/data/news";
 import { fitHeading, stripMarkdown } from "@/lib/utils";
-import { Editable } from "@/components/edit-mode/editable";
+import { EditModeButton, Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/nyheter/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -67,6 +67,9 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
             </p>
           )}
         </div>
+        <EditModeButton target={{ type: "news-cover", id: item.id, committeeId: item.committee_id }} className="absolute bottom-5 right-5 z-30">
+          Byt omslag
+        </EditModeButton>
       </header>
       </Editable>
       {item.cover && (

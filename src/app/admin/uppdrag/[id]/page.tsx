@@ -9,8 +9,8 @@ import { TaskForm } from "@/components/admin/task-form";
 import { DueLabel, PersonChip, STATUS_ORDER, STATUS_STYLES, TaskStatusBadge } from "@/components/admin/task-ui";
 import { AdminHeader, Card, Notice } from "@/components/admin/ui";
 import { Markdown } from "@/components/content/markdown";
-import { ArrowUpRight, Lock, Trash, Users } from "@/components/icons";
-import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
+import { ArrowUpRight, Image as ImageIcon, Lock, Trash, Users } from "@/components/icons";
+import { canEditImages, canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listEventsForAdmin } from "@/lib/data/events";
 import { getTask, listTaskComments, listTaskRecipients } from "@/lib/data/tasks";
@@ -172,6 +172,12 @@ async function TaskDetail({
               <Meta label="Skapat">{formatTimestamp(task.created_at)}</Meta>
               {task.completed_at && <Meta label="Klart">{formatTimestamp(task.completed_at)}</Meta>}
             </dl>
+            {/* Affischer och omslag är vanliga uppdrag – den som får byta evenemangets bilder kommer dit direkt. */}
+            {task.event && canEditImages(user, task.event) && (
+              <Link href={`/admin/bilder/evenemang/${task.event.id}`} className="btn btn-ghost btn-sm mt-5 w-full bg-white">
+                <ImageIcon size={15} /> Ladda upp omslag
+              </Link>
+            )}
           </Card>
         </div>
       </div>

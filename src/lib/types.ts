@@ -72,10 +72,13 @@ export interface UserRow {
   locked_until: string | null;
   last_login_at: string | null;
   created_at: string;
+  /** Grafiskt ansvar: bilder och omslag på hela sajten, oavsett roll och utskott. */
+  design: number;
 }
 
 export type SessionUser = Pick<UserRow, "id" | "email" | "name" | "post" | "role" | "committee_id"> & {
   must_change_password: boolean;
+  design: boolean;
   committee_name: string | null;
   committee_kind: Committee["kind"] | null;
   committee_slug: string | null;
@@ -189,7 +192,7 @@ export interface Task {
   completed_at: string | null;
   from: TaskPerson | null;
   to: TaskPerson | null;
-  event: { id: number; title: string; slug: string } | null;
+  event: { id: number; title: string; slug: string; committee_id: number | null } | null;
   comment_count: number;
 }
 

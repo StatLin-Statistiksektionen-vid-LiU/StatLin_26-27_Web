@@ -58,14 +58,15 @@ async function seedDemo(created: { email: string; password: string; role: string
     { email: "info@statlin.se", name: "Namn Efternamn", post: "Informationsansvarig", role: "editor", committee: "styrelsen" },
     { email: "scb@statlin.se", name: "Namn Efternamn", post: "Ordförande SCB", role: "committee", committee: "scb" },
     { email: "ubu@statlin.se", name: "Namn Efternamn", post: "Utbildningsansvarig", role: "committee", committee: "ubu" },
+    { email: "grafiskt@statlin.se", name: "Namn Efternamn", post: "Grafiskt ansvarig", role: "committee", committee: "styrelsen", design: 1 },
   ];
   for (const u of demoUsers) {
     const exists = db.prepare("SELECT 1 FROM users WHERE email = ?").get(u.email);
     if (exists) continue;
     const password = process.env.DEMO_PASSWORD ?? generatePassword();
     db.prepare(
-      `INSERT INTO users (email, name, post, role, committee_id, password_hash) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(u.email, u.name, u.post, u.role, committeeId(u.committee), await hashPassword(password));
+      `INSERT INTO users (email, name, post, role, committee_id, design, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(u.email, u.name, u.post, u.role, committeeId(u.committee), u.design ?? 0, await hashPassword(password));
     created.push({ email: u.email, password, role: u.role });
   }
   const adminId = (db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1").get() as { id: number }).id;

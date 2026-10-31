@@ -14,7 +14,7 @@ import { formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/da
 import { googleCalendarUrl } from "@/lib/ics";
 import { siteUrl } from "@/lib/site-url";
 import { fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
-import { Editable } from "@/components/edit-mode/editable";
+import { EditModeButton, Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/evenemang/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -93,6 +93,9 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
           </h1>
           {event.summary && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75 md:text-xl">{event.summary}</p>}
         </div>
+        <EditModeButton target={{ type: "event-images", id: event.id, committeeId: event.committee_id }} className="absolute bottom-5 right-5 z-30">
+          Byt bilder
+        </EditModeButton>
       </header>
       </Editable>
 

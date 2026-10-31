@@ -12,7 +12,7 @@ const person = (prefix: "f" | "t" | "a") => `
 
 const TASK_SELECT = `
   SELECT t.*, ${person("f")}, ${person("t")},
-    e.title AS event_title, e.slug AS event_slug,
+    e.title AS event_title, e.slug AS event_slug, e.committee_id AS event_committee_id,
     (SELECT COUNT(*) FROM task_comments c WHERE c.task_id = t.id) AS comment_count
   FROM tasks t
   LEFT JOIN users fu ON fu.id = t.from_user_id LEFT JOIN committees fc ON fc.id = fu.committee_id
@@ -47,7 +47,10 @@ function toTask(r: Row): Task {
     completed_at: r.completed_at as string | null,
     from: toPerson(r, "f"),
     to: toPerson(r, "t"),
-    event: r.event_id != null && r.event_title != null ? { id: r.event_id as number, title: r.event_title as string, slug: r.event_slug as string } : null,
+    event:
+      r.event_id != null && r.event_title != null
+        ? { id: r.event_id as number, title: r.event_title as string, slug: r.event_slug as string, committee_id: r.event_committee_id as number | null }
+        : null,
     comment_count: r.comment_count as number,
   };
 }

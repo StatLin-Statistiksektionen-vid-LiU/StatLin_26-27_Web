@@ -13,15 +13,15 @@ import {
   zText,
   zUrl,
 } from "@/lib/admin/form";
-import { audit, nowIso, revalidateSite } from "@/lib/admin/helpers";
-import { canEditCommittee, canManageSettings, isEditor } from "@/lib/auth/permissions";
+import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers";
+import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
 import { deleteMediaIfUnused, MediaError, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
-import type { Media } from "@/lib/types";
+import type { DocumentCategory, Media } from "@/lib/types";
 
 const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
@@ -143,6 +143,27 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
   return { ok: true, message: "Utskottet är sparat." };
 }
 
+/** Bara loggan, från sidan Bilder – även för grafiskt ansvarig, på alla utskott. */
+export async function setCommitteeLogo(committeeId: number, mediaId: number | null) {
+  const user = await requireUser();
+  const db = getDb();
+  const committee = db.prepare("SELECT id, short_name, logo_url FROM committees WHERE id = ?").get(committeeId) as
+    | { id: number; short_name: string; logo_url: string | null }
+    | undefined;
+  if (!committee || !canEditImages(user, { committee_id: committee.id }) || !canUseImage(user, mediaId)) throw new Error("Saknar behörighet.");
+  const media = mediaId ? (db.prepare("SELECT * FROM media WHERE id = ?").get(mediaId) as Media | undefined) : undefined;
+  const logoUrl = toImageRef(media)?.src ?? null;
+  if (logoUrl === committee.logo_url) return;
+  // Loggan sparas som adress. En uppladdad logga som ersätts tas bort om inget annat använder den.
+  const old = committee.logo_url?.startsWith("/media/")
+    ? (db.prepare("SELECT id FROM media WHERE ? LIKE '/media/' || path_base || '-%'").get(committee.logo_url) as { id: number } | undefined)
+    : undefined;
+  db.prepare("UPDATE committees SET logo_url = ?, updated_at = ? WHERE id = ?").run(logoUrl, nowIso(), committeeId);
+  await deleteMediaIfUnused(old?.id);
+  audit(user.id, "logo", "committee", committeeId, committee.short_name);
+  revalidateSite();
+}
+
 /* ---------- Sidor ---------- */
 
 export async function savePage(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -177,12 +198,18 @@ const docSchema = z.object({
 
 export async function saveDocument(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();
-  if (!isEditor(user)) return forbidden;
+  if (!canManageDocuments(user)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = docSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
-  const d = parsed.data;
+  // Grafiskt ansvarig lägger bara upp grafiskt material, vad formuläret än skickar.
+  const d = isEditor(user) ? parsed.data : { ...parsed.data, category: "grafiskt" as const };
   const db = getDb();
+  const old = id
+    ? (db.prepare("SELECT media_id, category FROM documents WHERE id = ?").get(id) as { media_id: number | null; category: DocumentCategory } | undefined)
+    : undefined;
+  if (id && !old) return { error: "Dokumentet finns inte längre." };
+  if (old && !canManageDocument(user, old.category)) return forbidden;
 
   let mediaId: number | null = null;
   const file = fd.get("file");
@@ -194,9 +221,7 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
     }
   }
 
-  if (id) {
-    const old = db.prepare("SELECT media_id FROM documents WHERE id = ?").get(id) as { media_id: number | null } | undefined;
-    if (!old) return { error: "Dokumentet finns inte längre." };
+  if (id && old) {
     const nextMedia = mediaId ?? (fd.get("remove_file") === "on" ? null : old.media_id);
     db.prepare(
       "UPDATE documents SET title=@title, category=@category, description=@description, url=@url, doc_date=@doc_date, published=@published, media_id=@media_id WHERE id=@id",
@@ -218,11 +243,13 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
 
 export async function deleteDocument(fd: FormData) {
   const user = await requireUser();
-  if (!isEditor(user)) redirect("/admin");
+  if (!canManageDocuments(user)) redirect("/admin");
   const id = Number(fd.get("id"));
   const db = getDb();
-  const row = db.prepare("SELECT title, media_id FROM documents WHERE id = ?").get(id) as { title: string; media_id: number | null } | undefined;
-  if (row) {
+  const row = db.prepare("SELECT title, media_id, category FROM documents WHERE id = ?").get(id) as
+    | { title: string; media_id: number | null; category: DocumentCategory }
+    | undefined;
+  if (row && canManageDocument(user, row.category)) {
     db.prepare("DELETE FROM documents WHERE id = ?").run(id);
     await deleteMediaIfUnused(row.media_id);
     audit(user.id, "delete", "document", id, row.title);

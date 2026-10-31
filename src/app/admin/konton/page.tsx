@@ -43,6 +43,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
                     <span className="truncate font-semibold">{u.name}</span>
                     {u.id === me.id && <span className="chip bg-red/10 text-red-deep">Du</span>}
                     {!u.active && <span className="chip bg-ink/[0.07] text-ink/60">Inaktiv</span>}
+                    {!!u.design && <span className="chip bg-paper text-ink">Grafiskt</span>}
                   </span>
                   <span className="block truncate text-xs text-stone">
                     {u.email} · {u.post || "–"}

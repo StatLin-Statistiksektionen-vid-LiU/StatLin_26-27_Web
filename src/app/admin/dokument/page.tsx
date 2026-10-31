@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { DocumentForm } from "@/components/admin/document-form";
 import { AdminHeader, Notice, StatusBadge } from "@/components/admin/ui";
 import { Edit, FileText } from "@/components/icons";
-import { isEditor } from "@/lib/auth/permissions";
+import { canManageDocuments, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listDocuments } from "@/lib/data/content";
 import { formatDate } from "@/lib/dates";
@@ -22,13 +22,24 @@ export default function AdminDocuments(props: PageProps<"/admin/dokument">) {
 
 async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dokument">["searchParams"] }) {
   const user = await requireUser();
-  if (!isEditor(user)) redirect("/admin?nekad=1");
-  const [docs, sp] = await Promise.all([listDocuments(), searchParams]);
+  if (!canManageDocuments(user)) redirect("/admin?nekad=1");
+  const [all, sp] = await Promise.all([listDocuments(), searchParams]);
+  // Grafiskt ansvarig ser och lägger upp bara det grafiska materialet.
+  const editor = isEditor(user);
+  const docs = editor ? all : all.filter((d) => d.category === "grafiskt");
   return (
     <>
       {sp.sparad && <Notice>Dokumentet är tillagt.</Notice>}
       {sp.raderad && <Notice>Dokumentet är borttaget.</Notice>}
-      <AdminHeader title="Dokument" description="Stadgar, reglemente, protokoll och annat som ska finnas tillgängligt för medlemmarna." />
+      {sp.nekad && <Notice tone="warning">Du har inte behörighet till det dokumentet.</Notice>}
+      <AdminHeader
+        title="Dokument"
+        description={
+          editor
+            ? "Stadgar, reglemente, protokoll och annat som ska finnas tillgängligt för medlemmarna."
+            : "Mallar och material till den grafiska profilen. De visas under Mallar och material på sidan Grafisk profil."
+        }
+      />
       <div className="grid gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
@@ -51,7 +62,7 @@ async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dok
           </ul>
         </div>
         <div className="lg:col-span-2">
-          <DocumentForm />
+          <DocumentForm category={editor ? undefined : "grafiskt"} />
         </div>
       </div>
     </>

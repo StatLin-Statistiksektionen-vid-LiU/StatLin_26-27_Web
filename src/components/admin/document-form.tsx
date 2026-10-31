@@ -1,27 +1,36 @@
 import { saveDocument } from "@/app/admin/_actions/content";
 import { ActionForm } from "./action-form";
 import { Field, FormSection, Select, TextInput, Toggle } from "./fields";
-import { DOCUMENT_CATEGORIES, type DocumentItem } from "@/lib/types";
+import { DOCUMENT_CATEGORIES, type DocumentCategory, type DocumentItem } from "@/lib/types";
 import { formatBytes } from "@/lib/utils";
 
-export function DocumentForm({ doc }: { doc?: DocumentItem | null }) {
+/** category låser kategorin – grafiskt ansvarig lägger bara upp grafiskt material (servern kontrollerar också). */
+export function DocumentForm({ doc, category }: { doc?: DocumentItem | null; category?: DocumentCategory }) {
   return (
     <ActionForm action={saveDocument} submitLabel={doc ? "Spara" : "Lägg till dokument"} resetOnSuccess={!doc} stickyFooter={false}>
       {doc && <input type="hidden" name="id" value={doc.id} />}
       <FormSection title={doc ? "Dokument" : "Nytt dokument"}>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Titel" name="title" required>
-            <TextInput name="title" defaultValue={doc?.title} placeholder="Protokoll sektionsmöte HT26" maxLength={160} />
+            <TextInput name="title" defaultValue={doc?.title} placeholder={category === "grafiskt" ? "Affischmall A3" : "Protokoll sektionsmöte HT26"} maxLength={160} />
           </Field>
-          <Field label="Kategori" name="category">
-            <Select name="category" defaultValue={doc?.category ?? "protokoll"}>
-              {Object.entries(DOCUMENT_CATEGORIES).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          {category ? (
+            <div>
+              <p className="mb-1.5 text-sm font-semibold">Kategori</p>
+              <input type="hidden" name="category" value={category} />
+              <p className="rounded-xl bg-paper px-3.5 py-2.5 text-sm">{DOCUMENT_CATEGORIES[category]}</p>
+            </div>
+          ) : (
+            <Field label="Kategori" name="category">
+              <Select name="category" defaultValue={doc?.category ?? "protokoll"}>
+                {Object.entries(DOCUMENT_CATEGORIES).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
         </div>
         <div className="grid gap-5 sm:grid-cols-[1fr_12rem]">
           <Field label="Beskrivning" name="description">
@@ -32,7 +41,11 @@ export function DocumentForm({ doc }: { doc?: DocumentItem | null }) {
           </Field>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={doc?.file ? "Ersätt fil" : "Fil"} name="file" hint="PDF, Word, Excel, PowerPoint m.fl. · max 30 MB">
+          <Field
+            label={doc?.file ? "Ersätt fil" : "Fil"}
+            name="file"
+            hint={category === "grafiskt" ? "PDF, PowerPoint eller ZIP (t.ex. en mapp med mallar) · max 30 MB" : "PDF, Word, Excel, PowerPoint m.fl. · max 30 MB"}
+          >
             <input
               type="file"
               name="file"

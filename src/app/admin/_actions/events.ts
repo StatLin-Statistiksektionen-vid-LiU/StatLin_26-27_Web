@@ -15,7 +15,7 @@ import {
   zUrl,
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
-import { canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
+import { canEditImages, canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
@@ -139,14 +139,14 @@ export async function setEventChecked(fd: FormData) {
   revalidateSite();
 }
 
-/* ---------- Galleri ---------- */
+/* ---------- Galleri och omslag (även grafiskt ansvarig, på alla evenemang) ---------- */
 
 async function authorizeImage(imageId: number) {
   const user = await requireUser();
   const row = getDb()
     .prepare("SELECT ei.id, ei.event_id, ei.media_id, e.committee_id FROM event_images ei JOIN events e ON e.id = ei.event_id WHERE ei.id = ?")
     .get(imageId) as { id: number; event_id: number; media_id: number; committee_id: number | null } | undefined;
-  if (!row || !canEditOwned(user, row)) throw new Error("Saknar behörighet.");
+  if (!row || !canEditImages(user, row)) throw new Error("Saknar behörighet.");
   return { user, row };
 }
 
@@ -169,17 +169,22 @@ export async function deleteEventImage(imageId: number) {
 export async function reorderEventImages(eventId: number, imageIds: number[]) {
   const user = await requireUser();
   const event = loadEvent(eventId);
-  if (!event || !canEditOwned(user, event)) throw new Error("Saknar behörighet.");
+  if (!event || !canEditImages(user, event)) throw new Error("Saknar behörighet.");
   const db = getDb();
   const stmt = db.prepare("UPDATE event_images SET sort_order = ? WHERE id = ? AND event_id = ?");
   db.transaction(() => imageIds.forEach((imgId, i) => stmt.run(i, imgId, eventId)))();
   revalidateSite();
 }
 
+/** Från stjärnan i galleriet och från sidan Bilder. Ett nytt omslag ska granskas på nytt, precis som andra ändringar. */
 export async function setEventCover(eventId: number, mediaId: number | null) {
   const user = await requireUser();
   const event = loadEvent(eventId);
-  if (!event || !canEditOwned(user, event) || !canUseImage(user, mediaId, eventId)) throw new Error("Saknar behörighet.");
-  getDb().prepare("UPDATE events SET cover_media_id = ?, updated_at = ? WHERE id = ?").run(mediaId, nowIso(), eventId);
+  if (!event || !canEditImages(user, event) || !canUseImage(user, mediaId, eventId)) throw new Error("Saknar behörighet.");
+  if (mediaId === event.cover_media_id) return;
+  const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";
+  getDb().prepare(`UPDATE events SET cover_media_id = ?, updated_at = ?${uncheck} WHERE id = ?`).run(mediaId, nowIso(), eventId);
+  await deleteMediaIfUnused(event.cover_media_id);
+  audit(user.id, "cover", "event", eventId, event.title);
   revalidateSite();
 }

@@ -1,4 +1,4 @@
-// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan och tentastatistiken
+// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken och grafiskt ansvar
 // mot en körande server som seedats med demodata och kända lösenord:
 //
 //   ADMIN_PASSWORD=admin-statlin-2026 DEMO_PASSWORD=demo-statlin-2026 npm run seed -- --demo
@@ -262,7 +262,9 @@ async function login(page, email, password) {
       await page.waitForURL(/\/admin\?nekad=1/);
     });
 
-    await step("Utskottskonto nekas kurslistan och länkarna", async () => {
+    await step("Utskottskonto nekas kurslistan, länkarna och bildsidan", async () => {
+      await page.goto(`${BASE}/admin/bilder`);
+      await page.waitForURL(/\/admin\?nekad=1/);
       await page.goto(`${BASE}/admin/kurser`);
       await page.waitForURL(/\/admin\?nekad=1/);
       await page.goto(`${BASE}/admin/lankar`);
@@ -480,6 +482,76 @@ async function login(page, email, password) {
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByText("Affisch till testsittningen").waitFor();
       await page.getByText("Hemlig planering i testet").waitFor();
+    });
+
+    // Grafiskt ansvar: bilderna på alla evenemang och nyheter, men inte texterna.
+    let scbEventId;
+    let coverBefore;
+    await step("Admin granskar SCB:s evenemang innan grafiskt ansvarig byter omslag", async () => {
+      await page.goto(`${BASE}/admin/evenemang`);
+      const href = await reviewRow("Testsittning med galleri").locator('a[href^="/admin/evenemang/"]').first().getAttribute("href");
+      scbEventId = href.match(/evenemang\/(\d+)/)[1];
+      await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
+      await page.getByRole("button", { name: "Markera som granskad" }).click();
+      await page.getByText("Granskad", { exact: true }).first().waitFor();
+      await page.goto(`${BASE}/evenemang/${eventSlug}`);
+      coverBefore = await page.locator("article header img").first().getAttribute("src");
+    });
+
+    await step("Grafiskt ansvarig byter omslag och laddar upp en galleribild på SCB:s evenemang", async () => {
+      await page.context().clearCookies();
+      await login(page, "grafiskt@statlin.se", "demo-statlin-2026");
+      await Promise.all([page.waitForURL(/\/admin\/bilder$/), page.getByRole("link", { name: /Bilder och omslag/ }).click()]);
+      const gallery = page.getByRole("group", { name: "Testsittning med galleri" }).getByRole("link", { name: /Galleri/ });
+      assert.equal(await gallery.getAttribute("href"), `/admin/bilder/evenemang/${scbEventId}`);
+      // En ny sidladdning, så att bildsidans omslagsfält inte ligger kvar dolda i DOM:en. Filen väljs först när
+      // sidan hydrerats – annars hinner fältet inte lyssna på den.
+      await page.goto(`${BASE}/admin/bilder/evenemang/${scbEventId}`);
+      await page.waitForLoadState("networkidle");
+      await page.locator('input[type="file"]:not([multiple])').setInputFiles(`${IMG}/test-3.jpg`);
+      await page.getByText("Sparat", { exact: true }).waitFor({ timeout: 30000 });
+      await page.locator('input[type="file"][multiple]').setInputFiles(`${IMG}/test-2.jpg`);
+      await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 4, null, { timeout: 30000 });
+      await page.screenshot({ path: `${SHOTS}/design-event-images.png`, fullPage: true });
+      await page.goto(`${BASE}/evenemang/${eventSlug}`);
+      const coverAfter = await page.locator("article header img").first().getAttribute("src");
+      assert.ok(coverAfter && coverAfter !== coverBefore, "omslaget ska ha bytts");
+      assert.equal(await page.locator('#galleri button[aria-label^="Visa bild"]').count(), 4);
+    });
+
+    await step("Grafiskt ansvarig nekas evenemangets text men får Byt bilder i redigeringsläget", async () => {
+      await page.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+      await page.locator("button:visible", { hasText: "Byt bilder" }).click();
+      const panel = page.getByRole("dialog");
+      await panel.getByText("Omslagsbild", { exact: true }).waitFor();
+      assert.equal(await page.locator("button:visible", { hasText: "Redigera evenemanget" }).count(), 0, "texten ska inte gå att redigera");
+      await page.keyboard.press("Escape");
+      await panel.waitFor({ state: "detached" });
+      await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
+      await page.waitForURL(/nekad=1/);
+    });
+
+    await step("Grafiskt ansvarig lägger upp en mall som visas under Grafisk profil", async () => {
+      await page.goto(`${BASE}/admin/dokument`);
+      assert.equal(await page.locator('select[name="category"]').count(), 0, "kategorin ska vara låst");
+      await page.fill('input[name="title"]', "Affischmall A3");
+      await page.locator('input[name="file"]').setInputFiles({ name: "affischmall.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%statlin-test\n") });
+      // Servern bestämmer kategorin, även om formuläret skickar ett protokoll.
+      await page.evaluate(() => (document.querySelector('input[name="category"]').value = "protokoll"));
+      await Promise.all([page.waitForURL(/\/admin\/dokument\?sparad=1/), page.getByRole("button", { name: "Lägg till dokument" }).click()]);
+      await page.goto(`${BASE}/grafisk-profil`);
+      await page.locator("#material").getByText("Affischmall A3").waitFor();
+      await page.goto(`${BASE}/dokument`);
+      const group = page.getByRole("heading", { name: "Grafisk profil", exact: true }).locator("xpath=following-sibling::ul[1]");
+      await group.getByText("Affischmall A3").waitFor();
+    });
+
+    await step("Omslagsbytet tar bort granskningen och syns i loggen", async () => {
+      await page.context().clearCookies();
+      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await page.getByText("bytte omslag på").first().waitFor();
+      await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
+      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
     });
   } catch {
     /* resultatet skrivs ut nedan */

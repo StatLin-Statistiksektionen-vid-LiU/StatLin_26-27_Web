@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { canEditCommittee, canEditOwned, canManageCourses, canManageSettings, isEditor } from "@/lib/auth/permissions";
+import { canEditCommittee, canEditImages, canEditOwned, canManageCourses, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -8,7 +8,7 @@ import type { SessionUser } from "@/lib/types";
  * Behörigheten speglar permissions.ts; servern kontrollerar alltid igen när något hämtas eller sparas.
  */
 
-export type EditUser = Pick<SessionUser, "id" | "name" | "post" | "role" | "committee_id" | "committee_name" | "committee_slug">;
+export type EditUser = Pick<SessionUser, "id" | "name" | "post" | "role" | "committee_id" | "committee_name" | "committee_slug" | "design">;
 
 export type EditTarget =
   | { type: "page"; slug: string }
@@ -18,6 +18,9 @@ export type EditTarget =
   | { type: "event"; id: number; committeeId: number | null }
   | { type: "news"; id: number; committeeId: number | null }
   | { type: "board"; id: number }
+  /** Bara bilderna – även för grafiskt ansvarig, som inte får ändra texten. */
+  | { type: "event-images"; id: number; committeeId: number | null }
+  | { type: "news-cover"; id: number; committeeId: number | null }
   /** Bara för länken "Hantera kurser" – kurslistan redigeras i adminpanelen. */
   | { type: "courses" };
 
@@ -86,6 +89,9 @@ export function canEditTarget(user: EditUser, target: EditTarget): boolean {
     case "event":
     case "news":
       return canEditOwned(user, { committee_id: target.committeeId });
+    case "event-images":
+    case "news-cover":
+      return canEditImages(user, { committee_id: target.committeeId });
     case "courses":
       return canManageCourses(user);
   }

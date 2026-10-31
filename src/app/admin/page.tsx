@@ -3,7 +3,7 @@ import { Suspense, type ReactNode } from "react";
 import { DueLabel, PersonChip } from "@/components/admin/task-ui";
 import { AdminHeader, Card, Notice, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Board, Calendar, Check, Image as ImageIcon, Layers, Newspaper, Plus } from "@/components/icons";
-import { canReviewEvents } from "@/lib/auth/permissions";
+import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { dashboardStats, listAudit } from "@/lib/data/admin";
 import { getCommitteeById } from "@/lib/data/content";
@@ -36,6 +36,8 @@ const ACTION_LABELS: Record<string, string> = {
   uncheck: "ångrade granskningen av",
   status: "ändrade status på",
   claim: "tog",
+  cover: "bytte omslag på",
+  logo: "bytte logga på",
 };
 
 export default function Dashboard(props: PageProps<"/admin">) {
@@ -58,6 +60,7 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
 }
 
 const upcomingOf = (events: EventItem[], now: string) => events.filter((e) => e.starts_at >= now.slice(0, 10)).reverse().slice(0, 5);
+const missingCovers = (events: EventItem[], now: string) => events.filter((e) => e.starts_at >= now.slice(0, 10) && !e.cover).reverse().slice(0, 6);
 const needingImages = (events: EventItem[], now: string) => events.filter((e) => e.starts_at < now && e.image_count === 0 && e.published).slice(0, 4);
 /** "e-STIG" och "eSTIG" är samma sak – används för att inte visa samma namn två gånger. */
 const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
@@ -65,22 +68,27 @@ const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
 /** Utskottens egen översikt: deras färg och logga, stora knappar för det vanligaste och bara deras eget innehåll. */
 async function CommitteeDashboard({ user }: { user: SessionUser }) {
   const committee = user.committee_id ? await getCommitteeById(user.committee_id) : null;
-  const [events, news, myTasks] = await Promise.all([
+  // Grafiskt ansvarig sköter bilderna till alla utskott, så bildlistorna gäller hela sajten.
+  const design = hasDesign(user);
+  const [events, news, myTasks, allEvents] = await Promise.all([
     committee ? listEventsForAdmin(committee.id) : [],
     committee ? listNewsForAdmin(committee.id) : [],
     listOpenTasksTo(user.id, 4),
+    design ? listEventsForAdmin(null) : [],
   ]);
   const now = nowLocal();
   const nowIso = new Date().toISOString();
   const upcoming = upcomingOf(events, now);
-  const needsImages = needingImages(events, now);
+  const needsImages = needingImages(design ? allEvents : events, now);
   const latestNews = news.slice(0, 4);
 
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) visas med sin post och har ingen egen sida.
   const board = committee?.kind === "styrelse";
   const title = board ? user.post || user.name : (committee?.short_name ?? user.name);
   const subtitle = board
-    ? "Lägg upp evenemang och nyheter i styrelsens namn."
+    ? design
+      ? "Omslag och bilder till hela sajten, och evenemang och nyheter i styrelsens namn."
+      : "Lägg upp evenemang och nyheter i styrelsens namn."
     : committee && simplify(committee.name) !== simplify(title)
       ? committee.name
       : null;
@@ -90,6 +98,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   const accent = committee?.accent ?? "#ff0707";
 
   const actions = [
+    ...(design ? [{ href: "/admin/bilder", label: "Bilder och omslag", hint: "Omslag, galleri och loggor.", Icon: ImageIcon }] : []),
     { href: "/admin/evenemang/ny", label: "Nytt evenemang", hint: "Sittning, pub, turnering …", Icon: Calendar },
     { href: "/admin/nyheter/ny", label: "Ny nyhet", hint: "Berätta vad som är på gång.", Icon: Newspaper },
     board || !committee
@@ -132,7 +141,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
         </div>
       </header>
 
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <ul className={cn("grid grid-cols-1 gap-3", actions.length > 3 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3")}>
         {actions.map(({ href, label, hint, Icon }, i) => (
           <li key={href}>
             <Link
@@ -155,6 +164,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
       </ul>
 
       <MyTasks tasks={myTasks} />
+
+      {design && <MissingCovers events={missingCovers(allEvents, now)} />}
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
         <Card className="p-6 lg:col-span-3">
@@ -201,7 +212,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
         </Card>
       </div>
 
-      <NeedsImages events={needsImages} />
+      <NeedsImages events={needsImages} href={design ? (e) => `/admin/bilder/evenemang/${e.id}` : undefined} />
     </>
   );
 }
@@ -217,7 +228,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
   const cards = [
     { label: "Kommande evenemang", value: stats.upcoming, href: "/admin/evenemang", Icon: Calendar },
     { label: "Publicerade nyheter", value: stats.news, href: "/admin/nyheter", Icon: Newspaper },
-    { label: "Bilder i gallerier", value: stats.images, href: "/admin/evenemang", Icon: ImageIcon },
+    { label: "Bilder i gallerier", value: stats.images, href: "/admin/bilder", Icon: ImageIcon },
     { label: "Utkast", value: stats.drafts, href: "/admin/evenemang", Icon: Plus },
   ];
 
@@ -404,7 +415,41 @@ function EventList({ events, meta, side }: { events: EventItem[]; meta?: (e: Eve
   );
 }
 
-function NeedsImages({ events }: { events: EventItem[] }) {
+/** Kommande evenemang från alla utskott utan omslagsbild – det grafiskt ansvarig brukar få i uppdrag. */
+function MissingCovers({ events }: { events: EventItem[] }) {
+  if (events.length === 0) return null;
+  return (
+    <section aria-labelledby="saknar-omslag" className="mt-8 rounded-[1.5rem] border border-ink/10 bg-white p-6">
+      <div className="flex items-center justify-between">
+        <h2 id="saknar-omslag" className="font-bold">
+          Saknar omslag
+        </h2>
+        <Link href="/admin/bilder" className="text-sm font-semibold text-red-deep hover:underline">
+          Alla bilder
+        </Link>
+      </div>
+      <p className="mt-1 text-sm text-stone">Kommande evenemang som ännu inte har någon omslagsbild.</p>
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map((e) => (
+          <li key={e.id}>
+            <Link href={`/admin/bilder/evenemang/${e.id}`} className="flex items-center gap-3 rounded-2xl border border-dashed border-ink/20 p-4 hover:border-red">
+              <ImageIcon size={20} className="shrink-0 text-red" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{e.title}</span>
+                <span className="block text-xs text-stone">
+                  {formatDate(e.starts_at)} · {e.committee?.short_name ?? "Hela sektionen"}
+                  {!e.published && " · Utkast"}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function NeedsImages({ events, href = (e) => `/admin/evenemang/${e.id}#galleri` }: { events: EventItem[]; href?: (e: EventItem) => string }) {
   if (events.length === 0) return null;
   return (
     <Card className="mt-6 p-6">
@@ -413,7 +458,7 @@ function NeedsImages({ events }: { events: EventItem[] }) {
       <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {events.map((e) => (
           <li key={e.id}>
-            <Link href={`/admin/evenemang/${e.id}#galleri`} className="flex items-center gap-3 rounded-2xl border border-dashed border-ink/20 p-4 hover:border-red">
+            <Link href={href(e)} className="flex items-center gap-3 rounded-2xl border border-dashed border-ink/20 p-4 hover:border-red">
               <ImageIcon size={20} className="shrink-0 text-red" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold">{e.title}</span>

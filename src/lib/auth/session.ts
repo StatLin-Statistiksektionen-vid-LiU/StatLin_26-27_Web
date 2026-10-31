@@ -73,18 +73,18 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   await connection();
   const row = getDb()
     .prepare(
-      `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, u.must_change_password, c.short_name AS committee_name, c.kind AS committee_kind,
-              c.slug AS committee_slug
+      `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, u.must_change_password, u.design, c.short_name AS committee_name,
+              c.kind AS committee_kind, c.slug AS committee_slug
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN committees c ON c.id = u.committee_id
        WHERE s.id = ? AND s.expires_at > ? AND u.active = 1`,
     )
     .get(hashToken(token), new Date().toISOString()) as
-    | (Omit<SessionUser, "must_change_password"> & { must_change_password: number })
+    | (Omit<SessionUser, "must_change_password" | "design"> & { must_change_password: number; design: number })
     | undefined;
   if (!row) return null;
-  return { ...row, must_change_password: row.must_change_password === 1 };
+  return { ...row, must_change_password: row.must_change_password === 1, design: row.design === 1 };
 });
 
 /**

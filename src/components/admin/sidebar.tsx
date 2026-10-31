@@ -14,6 +14,7 @@ import {
   FileText,
   Handshake,
   Home,
+  Image as ImageIcon,
   Key,
   Layers,
   Logout,
@@ -22,11 +23,11 @@ import {
   Settings,
   Users,
 } from "@/components/icons";
-import { canManageCourses } from "@/lib/auth/permissions";
+import { canManageCourses, hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
-type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "committee_slug">;
+type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "committee_slug" | "design">;
 
 export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
   const pathname = usePathname();
@@ -38,6 +39,9 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
   const courses = { href: "/admin/kurser", label: "Kurser", Icon: BarChart };
+  const images = { href: "/admin/bilder", label: "Bilder", Icon: ImageIcon };
+  // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
+  const design = hasDesign(user);
   const groups = [
     {
       label: "Innehåll",
@@ -47,14 +51,17 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             tasks,
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            images,
             { href: "/admin/utskott", label: "Utskott", Icon: Layers },
           ]
         : [
             { href: "/admin", label: "Översikt", Icon: Home, exact: true },
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            design ? images : null,
             ownPage,
             canManageCourses(user) ? courses : null,
+            design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,
           ],
     },

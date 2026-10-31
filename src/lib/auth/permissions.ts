@@ -1,8 +1,9 @@
-import type { SessionUser } from "@/lib/types";
+import type { DocumentCategory, SessionUser } from "@/lib/types";
 
 type Owned = { committee_id: number | null };
 /** Det behörigheterna bygger på. Räcker även i webbläsaren, där redigeringsläget visar pennor efter samma regler. */
 type Who = Pick<SessionUser, "role" | "committee_id">;
+type Designer = Who & Pick<SessionUser, "design">;
 
 export const isAdmin = (u: Who) => u.role === "admin";
 export const isEditor = (u: Who) => u.role === "admin" || u.role === "editor";
@@ -37,6 +38,19 @@ export function canUpdateTask(u: SessionUser, t: TaskRef): boolean {
 export function canEditTask(u: SessionUser, t: TaskRef): boolean {
   return seesAllTasks(u) || t.from_user_id === u.id;
 }
+
+/* Grafiskt ansvar (flaggan under Konton): bilderna på hela sajten. Texterna följer fortfarande rollen. */
+export const hasDesign = (u: Pick<SessionUser, "design">) => !!u.design;
+
+/** Omslag och galleri på evenemang, omslag på nyheter och utskottens loggor. */
+export const canEditImages = (u: Designer, item: Owned) => canEditOwned(u, item) || hasDesign(u);
+
+/** Adminsidan Bilder, med alla omslag och loggor på ett ställe. */
+export const canManageImages = (u: Designer) => isEditor(u) || hasDesign(u);
+
+/** Dokument: redaktörer alla kategorier, grafiskt ansvarig bara det grafiska materialet. */
+export const canManageDocuments = (u: Designer) => isEditor(u) || hasDesign(u);
+export const canManageDocument = (u: Designer, category: DocumentCategory) => isEditor(u) || (hasDesign(u) && category === "grafiskt");
 
 /** Programmens kurslista: redaktörer och UBU, som bevakar utbildningen. */
 export const canManageCourses = (u: Who & Pick<SessionUser, "committee_slug">) => isEditor(u) || (u.role === "committee" && u.committee_slug === "ubu");

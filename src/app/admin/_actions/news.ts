@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
-import { canEditOwned, isEditor } from "@/lib/auth/permissions";
+import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
@@ -100,4 +100,19 @@ export async function deleteNews(fd: FormData) {
   audit(user.id, "delete", "news", id, existing.title);
   revalidateSite();
   redirect("/admin/nyheter?raderad=1");
+}
+
+/** Bara omslaget, från sidan Bilder och redigeringsläget – även för grafiskt ansvarig, på alla nyheter. */
+export async function setNewsCover(newsId: number, mediaId: number | null) {
+  const user = await requireUser();
+  const db = getDb();
+  const item = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(newsId) as
+    | { id: number; committee_id: number | null; title: string; cover_media_id: number | null }
+    | undefined;
+  if (!item || !canEditImages(user, item) || !canUseImage(user, mediaId)) throw new Error("Saknar behörighet.");
+  if (mediaId === item.cover_media_id) return;
+  db.prepare("UPDATE news SET cover_media_id = ?, updated_at = ? WHERE id = ?").run(mediaId, nowIso(), newsId);
+  await deleteMediaIfUnused(item.cover_media_id);
+  audit(user.id, "cover", "news", newsId, item.title);
+  revalidateSite();
 }

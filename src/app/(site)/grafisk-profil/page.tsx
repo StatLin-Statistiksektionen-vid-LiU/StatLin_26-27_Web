@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense, cache } from "react";
 import { Overall } from "@/components/content/overall";
-import { Download, FileText } from "@/components/icons";
+import { ArrowUpRight, Download, FileText } from "@/components/icons";
 import { CopyButton } from "@/components/ui/copy-button";
 import { PageHero } from "@/components/ui/page-hero";
 import { Reveal } from "@/components/ui/reveal";
-import { cn } from "@/lib/utils";
+import { listDocuments } from "@/lib/data/content";
+import { cn, formatBytes, safeExternalUrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Grafisk profil",
@@ -75,6 +77,12 @@ const FONTS = [
   { name: "Bahnschrift", use: "Allt som rör STAR", style: { fontFamily: "Bahnschrift, 'DIN Alternate', 'Archivo Variable', sans-serif", fontStretch: "88%" } },
 ];
 
+/** Hela styrdokumentet länkas redan överst, så det står inte med bland mallarna. */
+const GUIDE_PDF = "/brand/download/grafiskt-styrdokument.pdf";
+
+/** Det grafiskt ansvarig lagt upp under Dokument (kategorin Grafisk profil). */
+const listMaterial = cache(async () => (await listDocuments({ publishedOnly: true })).filter((d) => d.category === "grafiskt" && d.url !== GUIDE_PDF));
+
 const NAMES = [
   ["StatLin", "Förkortning"],
   ["StLn", "4 tecken"],
@@ -100,7 +108,7 @@ export default function BrandPage() {
           <img src="/brand/statlin-inverterad.svg" alt="" className="mx-auto hidden w-60 animate-float md:block" />
         }
       >
-        <a href="/brand/download/grafiskt-styrdokument.pdf" className="btn btn-red" target="_blank" rel="noopener noreferrer">
+        <a href={GUIDE_PDF} className="btn btn-red" target="_blank" rel="noopener noreferrer">
           <FileText size={18} /> Hela styrdokumentet (PDF)
         </a>
       </PageHero>
@@ -116,11 +124,12 @@ export default function BrandPage() {
             ["#klader", "Kläder"],
           ].map(([href, label]) => (
             <li key={href}>
-              <a href={href} className="block whitespace-nowrap rounded-full px-4 py-2 text-ink/70 transition-colors hover:bg-white hover:text-ink">
-                {label}
-              </a>
+              <NavLink href={href}>{label}</NavLink>
             </li>
           ))}
+          <Suspense fallback={null}>
+            <MaterialNavItem />
+          </Suspense>
         </ul>
       </nav>
 
@@ -305,7 +314,75 @@ export default function BrandPage() {
           </div>
         </div>
       </section>
+
+      <Suspense fallback={null}>
+        <Material />
+      </Suspense>
     </>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a href={href} className="block whitespace-nowrap rounded-full px-4 py-2 text-ink/70 transition-colors hover:bg-white hover:text-ink">
+      {children}
+    </a>
+  );
+}
+
+async function MaterialNavItem() {
+  if ((await listMaterial()).length === 0) return null;
+  return (
+    <li>
+      <NavLink href="#material">Mallar</NavLink>
+    </li>
+  );
+}
+
+/** Mallar för affischer, presentationer och inlägg. Visas bara när det finns något uppladdat. */
+async function Material() {
+  const docs = (await listMaterial()).flatMap((d) => {
+    const href = d.file?.href ?? safeExternalUrl(d.url);
+    return href ? [{ ...d, href }] : [];
+  });
+  if (docs.length === 0) return null;
+  return (
+    <section id="material" aria-labelledby="material-rubrik" className="container-site scroll-mt-32 py-20 md:py-28">
+      <p className="kicker text-stone">
+        <span className="text-red">Ladda ner</span> · Från grafiskt ansvarig
+      </p>
+      <h2 id="material-rubrik" className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)]">
+        Mallar och material
+      </h2>
+      <p className="mt-5 max-w-2xl text-ink/70">Med rätt loggor, färger och typsnitt från början – för affischer, presentationer och inlägg.</p>
+      <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {docs.map((d) => (
+          <li key={d.id}>
+            <a
+              href={d.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex h-full items-start gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 transition-colors duration-300 hover:border-ink/40"
+            >
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ink text-white transition-colors group-hover:bg-red">
+                <FileText size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold tracking-tight">{d.title}</span>
+                {d.description && <span className="mt-0.5 block text-sm leading-snug text-stone">{d.description}</span>}
+                <span className="kicker mt-2 block text-stone-light">{d.file ? `${d.file.ext.toUpperCase()} · ${formatBytes(d.file.size)}` : "Länk"}</span>
+              </span>
+              {d.file ? (
+                <Download size={18} className="mt-1 shrink-0 text-red opacity-60 transition-opacity group-hover:opacity-100" />
+              ) : (
+                <ArrowUpRight size={18} className="mt-1 shrink-0 text-red opacity-60 transition-opacity group-hover:opacity-100" />
+              )}
+              <span className="sr-only"> (öppnas i en ny flik)</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

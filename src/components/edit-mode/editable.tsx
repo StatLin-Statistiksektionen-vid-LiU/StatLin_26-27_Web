@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Edit, Plus } from "@/components/icons";
+import { Edit, Image as ImageIcon, Plus } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { canEditTarget, editStore, useEditState, type EditTarget } from "./store";
 
@@ -80,5 +80,23 @@ export function EditModeLink({
     <Link href={href} className={cn("btn btn-red btn-sm", className)}>
       <Icon size={16} /> {children}
     </Link>
+  );
+}
+
+/** En knapp som bara visas i redigeringsläget och öppnar sidopanelen, utan ram runt något – t.ex. "Byt bilder". */
+export function EditModeButton({ target, children, className }: { target: EditTarget; children: ReactNode; className?: string }) {
+  const { user, editing } = useEditState();
+  if (!editing || !user || !canEditTarget(user, target)) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => editStore.open(target)}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full bg-red px-3.5 py-2 text-xs font-bold text-white shadow-[0_10px_30px_-10px_rgb(255_7_7/0.8)] transition-colors hover:bg-red-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
+        className,
+      )}
+    >
+      <ImageIcon size={14} /> {children}
+    </button>
   );
 }

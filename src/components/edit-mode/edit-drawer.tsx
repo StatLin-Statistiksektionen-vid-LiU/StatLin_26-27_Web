@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { setNewsCover } from "@/app/admin/_actions/news";
 import { BoardMemberForm, CommitteeForm, FooterSettingsForm, HomeTextsForm, PageForm } from "@/components/admin/content-forms";
+import { CoverSlot } from "@/components/admin/cover-slot";
 import { EventForm } from "@/components/admin/event-form";
+import { EventImagesEditor } from "@/components/admin/event-images-editor";
 import { NewsForm } from "@/components/admin/news-form";
 import { ArrowUpRight, Close } from "@/components/icons";
-import type { BoardMember, Committee, EventItem, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
+import type { BoardMember, Committee, EventItem, ImageRef, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
 import { editStore, targetQuery, useEditState, type EditTarget } from "./store";
 
 const TITLES: Record<EditTarget["type"], string> = {
@@ -18,6 +21,8 @@ const TITLES: Record<EditTarget["type"], string> = {
   event: "Evenemanget",
   news: "Nyheten",
   board: "Styrelseposten",
+  "event-images": "Evenemangets bilder",
+  "news-cover": "Nyhetens omslag",
   courses: "Kurslistan",
 };
 
@@ -36,6 +41,10 @@ function adminHref(t: EditTarget): string {
       return `/admin/nyheter/${t.id}`;
     case "board":
       return `/admin/styrelsen/${t.id}`;
+    case "event-images":
+      return `/admin/bilder/evenemang/${t.id}`;
+    case "news-cover":
+      return "/admin/bilder#nyheter";
     case "courses":
       return "/admin/kurser";
   }
@@ -44,6 +53,7 @@ function adminHref(t: EditTarget): string {
 /** Sidopanelen som pennorna öppnar. Formulären är desamma som i adminpanelen. */
 export function EditDrawer() {
   const { open } = useEditState();
+  const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -58,8 +68,10 @@ export function EditDrawer() {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
       opener?.focus();
+      // Galleribilderna laddas upp via API:t och inte med en server action, så sidan bakom visar dem först efter en uppdatering.
+      if (open.type === "event-images") router.refresh();
     };
-  }, [open]);
+  }, [open, router]);
 
   if (!open) return null;
   return (
@@ -105,6 +117,8 @@ type Data = {
   member?: BoardMember;
   committees?: Committee[];
   user?: Pick<SessionUser, "role" | "committee_id">;
+  cover?: ImageRef | null;
+  images?: { id: number; caption: string; image: ImageRef }[];
 };
 
 function DrawerBody({ target }: { target: EditTarget }) {
@@ -161,6 +175,24 @@ function DrawerBody({ target }: { target: EditTarget }) {
       return d.item && d.committees && d.user ? <NewsForm item={d.item} committees={d.committees} user={d.user} onSaved={onSaved} /> : null;
     case "board":
       return d.member && d.committees ? <BoardMemberForm member={d.member} committees={d.committees} nextOrder={d.member.sort_order} onSaved={onSaved} /> : null;
+    // Bilderna sparas direkt, och sidan bakom panelen uppdateras när de sparats.
+    case "event-images":
+      return d.images ? (
+        <div className="pb-8">
+          <EventImagesEditor eventId={target.id} cover={d.cover ?? null} images={d.images} />
+        </div>
+      ) : null;
+    case "news-cover":
+      return (
+        <div className="max-w-md pb-8">
+          <CoverSlot
+            label="Omslagsbild"
+            image={d.cover ?? null}
+            save={(mediaId) => setNewsCover(target.id, mediaId)}
+            hint="Visas under rubriken och i nyhetslistan. Liggande bild, gärna 2100 × 900 px."
+          />
+        </div>
+      );
     case "courses":
       return null;
   }

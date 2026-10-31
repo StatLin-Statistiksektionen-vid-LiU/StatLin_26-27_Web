@@ -5,7 +5,8 @@
  * utskott. Kontona hör till posten och lämnas över varje år.
  *
  * Skriptet kan köras igen: befintliga konton lämnas orörda, förutom att en tom post (eller den
- * gamla platshållaren "Styrelsen") fylls i, och att info@ uppgraderas från redaktör till admin.
+ * gamla platshållaren "Styrelsen") fylls i, att info@ uppgraderas från redaktör till admin och att
+ * grafiskt@ får grafiskt ansvar (bilder och omslag på hela sajten).
  * Ren JavaScript så att det går att köra både lokalt och i Docker-containern.
  *
  *   npm run create-accounts
@@ -39,6 +40,8 @@ const ACCOUNTS = [
 
 /** Info är webbansvarig och ska vara administratör. */
 const UPGRADE_TO_ADMIN = new Set(["info@statlin.se"]);
+/** Grafiskt ansvarig byter omslag, galleribilder och loggor överallt och lägger upp mallar. */
+const DESIGN = new Set(["grafiskt@statlin.se"]);
 /** Posten som skriptet tidigare satte på ordförande och vice – byts mot den riktiga posten. */
 const PLACEHOLDER_POSTS = new Set(["", "Styrelsen"]);
 
@@ -54,9 +57,12 @@ const pick = () => words[crypto.randomInt(words.length)];
 const newPassword = () => `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 
 const db = new Database(dbPath);
-const findUser = db.prepare("SELECT id, role, post FROM users WHERE email = ?");
+// Kolumnen kommer med webbplatsens migrering 7. Har sajten inte startat sedan uppdateringen hoppas flaggan över.
+const hasDesignColumn = !!db.prepare("SELECT 1 FROM pragma_table_info('users') WHERE name = 'design'").get();
+const findUser = db.prepare(`SELECT id, role, post${hasDesignColumn ? ", design" : ""} FROM users WHERE email = ?`);
 const setPost = db.prepare("UPDATE users SET post = ? WHERE id = ?");
 const setRole = db.prepare("UPDATE users SET role = ? WHERE id = ?");
+const setDesign = hasDesignColumn ? db.prepare("UPDATE users SET design = 1 WHERE id = ?") : null;
 const findCommittee = db.prepare("SELECT id FROM committees WHERE slug = ?");
 const insert = db.prepare(
   "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1)",
@@ -78,6 +84,10 @@ db.transaction(() => {
         setRole.run("admin", existing.id);
         changes.push("redaktör → admin");
       }
+      if (DESIGN.has(email) && setDesign && !existing.design) {
+        setDesign.run(existing.id);
+        changes.push("grafiskt ansvar");
+      }
       if (changes.length) updated.push(`${email}: ${changes.join(", ")}`);
       else skipped.push(`${email} finns redan (${existing.role}) – orört`);
       continue;
@@ -88,7 +98,8 @@ db.transaction(() => {
       continue;
     }
     const password = newPassword();
-    insert.run(email, name, post, role, committeeRow.id, bcrypt.hashSync(password, 11));
+    const { lastInsertRowid } = insert.run(email, name, post, role, committeeRow.id, bcrypt.hashSync(password, 11));
+    if (DESIGN.has(email)) setDesign?.run(lastInsertRowid);
     created.push({ email, role, password });
   }
 })();
@@ -101,4 +112,5 @@ if (created.length) {
 }
 if (updated.length) console.log(`\nUppdaterade konton:\n${updated.map((s) => `  ${s}`).join("\n")}`);
 if (skipped.length) console.log(`\n${skipped.map((s) => `  ${s}`).join("\n")}`);
+if (!hasDesignColumn) console.log("\nGrafiskt ansvar sattes inte: starta webbplatsen en gång så att databasen uppdateras, och kör skriptet igen.");
 console.log("\nLogga in på /logga-in.\n");

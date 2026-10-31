@@ -16,10 +16,27 @@ const PARALLEL = 3;
  * Bildgalleri för ett evenemang. Flera bilder kan dras in samtidigt; de laddas upp
  * parallellt med förlopp, optimeras på servern och dyker upp direkt på evenemangssidan.
  */
-export function GalleryManager({ eventId, initial, coverMediaId }: { eventId: number; initial: Item[]; coverMediaId: number | null }) {
+export function GalleryManager({
+  eventId,
+  initial,
+  coverMediaId,
+  onCoverChange,
+}: {
+  eventId: number;
+  initial: Item[];
+  coverMediaId: number | null;
+  /** Körs när stjärnan väljer eller tar bort omslaget, så att ett omslagsfält bredvid kan visa det. */
+  onCoverChange?: (image: ImageRef | null) => void;
+}) {
   const [items, setItems] = useState<Item[]>(initial);
   const [pending, setPending] = useState<Pending[]>([]);
   const [cover, setCover] = useState<number | null>(coverMediaId);
+  // Omslaget kan också bytas utanför galleriet (formuläret eller omslagsfältet) – följ med när det sparats.
+  const [coverProp, setCoverProp] = useState(coverMediaId);
+  if (coverMediaId !== coverProp) {
+    setCoverProp(coverMediaId);
+    setCover(coverMediaId);
+  }
   const [over, setOver] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
@@ -77,13 +94,17 @@ export function GalleryManager({ eventId, initial, coverMediaId }: { eventId: nu
   const remove = (item: Item) => {
     if (!confirm("Ta bort bilden från galleriet?")) return;
     setItems((list) => list.filter((x) => x.id !== item.id));
-    if (cover === item.image.id) setCover(null);
+    if (cover === item.image.id) {
+      setCover(null);
+      onCoverChange?.(null);
+    }
     startTransition(() => deleteEventImage(item.id));
   };
 
   const makeCover = (item: Item) => {
     const next = cover === item.image.id ? null : item.image.id;
     setCover(next);
+    onCoverChange?.(next === null ? null : item.image);
     startTransition(() => setEventCover(eventId, next));
   };
 

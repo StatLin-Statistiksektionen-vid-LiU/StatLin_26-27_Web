@@ -18,6 +18,7 @@ const schema = z.object({
   role: z.enum(["admin", "editor", "committee"], { message: "Välj en roll." }),
   committee_id: zOptionalId,
   active: zCheckbox,
+  design: zCheckbox,
 });
 
 function adminCount(excludeId?: number) {
@@ -34,7 +35,8 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse({ ...formObject(fd), active: id ? fd.get("active") ?? undefined : "on" });
   if (!parsed.success) return invalid(parsed.error);
-  const d = parsed.data;
+  // Grafiskt ansvar gäller bara utskottsroller – redaktörer och administratörer får redan ändra alla bilder.
+  const d = { ...parsed.data, design: parsed.data.role === "committee" ? parsed.data.design : 0 };
   if (d.role === "committee" && !d.committee_id) {
     return { error: "Ett utskottskonto måste kopplas till ett utskott.", fieldErrors: { committee_id: "Välj utskott." } };
   }
@@ -47,7 +49,9 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
     if ((d.role !== "admin" || !d.active) && adminCount(id) === 0) {
       return { error: "Det måste finnas minst en aktiv administratör." };
     }
-    db.prepare("UPDATE users SET email=@email, name=@name, post=@post, role=@role, committee_id=@committee_id, active=@active WHERE id=@id").run({ ...d, id });
+    db.prepare(
+      "UPDATE users SET email=@email, name=@name, post=@post, role=@role, committee_id=@committee_id, active=@active, design=@design WHERE id=@id",
+    ).run({ ...d, id });
     if (!d.active) destroyAllSessionsForUser(id);
     audit(me.id, "update", "user", id, d.email);
     return { ok: true, message: "Kontot är sparat." };
@@ -56,7 +60,7 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
   const password = generatePassword();
   const res = db
     .prepare(
-      "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (@email, @name, @post, @role, @committee_id, @hash, 1)",
+      "INSERT INTO users (email, name, post, role, committee_id, design, password_hash, must_change_password) VALUES (@email, @name, @post, @role, @committee_id, @design, @hash, 1)",
     )
     .run({ ...d, hash: await hashPassword(password) });
   audit(me.id, "create", "user", Number(res.lastInsertRowid), d.email);

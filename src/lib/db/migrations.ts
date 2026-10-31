@@ -249,6 +249,9 @@ const steps: string[] = [
     fetched_at  TEXT NOT NULL
   );
   `,
+  /* 7: grafiskt ansvar – kontot byter omslag, galleribilder och loggor på hela sajten och laddar upp grafiskt material */ `
+  ALTER TABLE users ADD COLUMN design INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export function migrate(db: Database.Database) {

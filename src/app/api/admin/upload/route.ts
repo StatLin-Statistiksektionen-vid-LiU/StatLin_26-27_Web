@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
 import { isAllowedOrigin } from "@/lib/allowed-origins";
-import { canEditOwned, isEditor } from "@/lib/auth/permissions";
+import { canEditImages, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { MediaError, isImageUpload, storeFile, storeImage } from "@/lib/media-store";
@@ -20,7 +20,7 @@ function originHost(origin: string): string {
 /**
  * Uppladdning från adminpanelen (bilder och dokument).
  * purpose = "image"   → fristående bild (omslag, porträtt, logga); kopplas när formuläret sparas
- *         = "gallery" → bild som läggs direkt i ett evenemangs galleri (kräver eventId)
+ *         = "gallery" → bild som läggs direkt i ett evenemangs galleri (kräver eventId; eget utskott eller grafiskt ansvar)
  *         = "file"    → dokument (PDF m.m.), endast redaktörer
  */
 export async function POST(request: Request) {
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         | { id: number; committee_id: number | null; title: string }
         | undefined;
       if (!event) return json({ error: "Evenemanget finns inte." }, 404);
-      if (!canEditOwned(user, event)) return json({ error: "Du får inte ladda upp bilder till det här evenemanget." }, 403);
+      if (!canEditImages(user, event)) return json({ error: "Du får inte ladda upp bilder till det här evenemanget." }, 403);
 
       const media = await storeImage(file, user.id);
       const next = (db.prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM event_images WHERE event_id = ?").get(eventId) as { n: number }).n;

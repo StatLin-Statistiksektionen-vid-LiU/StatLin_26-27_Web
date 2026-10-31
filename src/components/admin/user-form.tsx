@@ -53,6 +53,14 @@ export function UserForm({ user, committees }: { user?: UserListItem | null; com
             ))}
           </Select>
         </Field>
+        {role === "committee" && (
+          <Toggle
+            name="design"
+            label="Grafiskt ansvar"
+            defaultChecked={!!user?.design}
+            hint="Får byta omslag, galleribilder och utskottsloggor på hela sajten och lägga upp mallar under Grafisk profil. Texterna följer rollen."
+          />
+        )}
         {user && <Toggle name="active" label="Aktivt konto" defaultChecked={!!user.active} hint="Inaktiva konton kan inte logga in." />}
       </FormSection>
     </ActionForm>

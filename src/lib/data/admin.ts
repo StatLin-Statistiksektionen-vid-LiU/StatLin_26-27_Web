@@ -13,6 +13,7 @@ export interface UserListItem {
   committee_name: string | null;
   active: number;
   must_change_password: number;
+  design: number;
   last_login_at: string | null;
   created_at: string;
 }
@@ -22,7 +23,7 @@ export async function listUsers(): Promise<UserListItem[]> {
   return db
     .prepare(
       `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, c.short_name AS committee_name, u.active,
-        u.must_change_password, u.last_login_at, u.created_at
+        u.must_change_password, u.design, u.last_login_at, u.created_at
        FROM users u LEFT JOIN committees c ON c.id = u.committee_id
        ORDER BY CASE u.role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, u.name`,
     )
@@ -35,7 +36,7 @@ export async function getUser(id: number): Promise<UserListItem | null> {
     (db
       .prepare(
         `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, c.short_name AS committee_name, u.active,
-          u.must_change_password, u.last_login_at, u.created_at
+          u.must_change_password, u.design, u.last_login_at, u.created_at
          FROM users u LEFT JOIN committees c ON c.id = u.committee_id WHERE u.id = ?`,
       )
       .get(id) as UserListItem) ?? null

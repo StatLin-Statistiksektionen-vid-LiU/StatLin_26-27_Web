@@ -22,9 +22,10 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 **Adminpanel för poster (`/admin`)**
 
 - Inloggning per post med roller (se nedan). Kontot spärras tillfälligt efter upprepade felförsök.
-- **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
+- **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
 - **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
+- **Bilder**: en sida med alla omslag, galleribilder och utskottsloggor. En bild sparas så fort den har laddats upp. Kontot med **grafiskt ansvar** byter bilderna på alla evenemang, nyheter och utskott men inte texterna, ser kommande evenemang som saknar omslag i sin översikt och lägger upp mallar som visas under *Mallar och material* på sidan Grafisk profil.
 - **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
 - **Länkar** och **kurser**: redaktörerna sköter länksidan och väljer vilka länkar som är genvägar. Programmens kurslista sköts av redaktörerna och UBU, och tentastatistiken hämtas automatiskt från kurskoden.
 - Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
@@ -39,7 +40,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 | --- | --- | --- |
 | **Administratör** | Ordförande, vice ordförande, informationsansvarig (webbansvarig) | Allt, inklusive konton och granskning av evenemang |
 | **Redaktör** | Den som ska sköta innehållet utan att hantera konton | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, länkar, kurser, kontaktuppgifter |
-| **Utskott** | Övriga poster: SCB, UBU, SASU, StatPub, STIG, eSTIG, kassör, grafiskt ansvarig … | Det egna utskottets evenemang, nyheter, bilder och utskottssida. UBU sköter dessutom programmens kurslista. |
+| **Utskott** | Övriga poster: SCB, UBU, SASU, StatPub, STIG, eSTIG, kassör, grafiskt ansvarig … | Det egna utskottets evenemang, nyheter, bilder och utskottssida. UBU sköter dessutom programmens kurslista. Med *Grafiskt ansvar* (under *Konton*) byter kontot också omslag, galleribilder och loggor på hela sajten och lägger upp grafiskt material under *Dokument*. |
 
 Alla roller når uppdragstavlan. Administratörer och redaktörer ser alla uppdrag, övriga ser det som delats med hela styrelsen och det som rör dem själva.
 
@@ -67,7 +68,7 @@ Ett konto per post i styrelsen, 13 stycken. Kontot hör till posten och lämnas 
 | `estig@statlin.se` | Utskott (eSTIG) | e-STIG |
 | `amo@statlin.se` | Utskott (AMO) | Arbetsmiljöombud |
 
-Finns det ett `webb@statlin.se` sedan tidigare lämnar skriptet det orört. Info är webbansvarig, så det kontot kan stängas av under *Konton* när info@ har tagit över.
+Skriptet ger grafiskt@ *Grafiskt ansvar*. Finns det ett `webb@statlin.se` sedan tidigare lämnar skriptet det orört. Info är webbansvarig, så det kontot kan stängas av under *Konton* när info@ har tagit över.
 
 Lösenord skrivs aldrig in här eller någon annanstans i repot, eftersom alla som kan läsa repot då kan logga in. Kontona skapas med `create-accounts` (se [Fly.io](#flyio)), som visar ett engångslösenord per konto en gång. Lämna över lösenorden personligen eller via en lösenordshanterare. Varje konto måste byta lösenord vid första inloggningen, och en administratör återställer glömda lösenord under *Konton*.
 
@@ -87,6 +88,7 @@ Demokonton i Codespaces:
 | `info@statlin.se` | `demo-statlin-2026` | Redaktör |
 | `scb@statlin.se` | `demo-statlin-2026` | Utskott (SCB) |
 | `ubu@statlin.se` | `demo-statlin-2026` | Utskott (UBU) |
+| `grafiskt@statlin.se` | `demo-statlin-2026` | Utskott (styrelsen), grafiskt ansvar |
 
 Logga in på `/logga-in`. Codespaces är privat för ditt konto, och lösenorden gäller bara där. Stäng av eller ta bort codespacet när du är klar (*Code → Codespaces → … → Delete*) så att du inte förbrukar din gratiskvot.
 
@@ -199,7 +201,8 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
 5. **Uppdragstavlan**: *Nytt uppdrag* skickar ett uppdrag till en annan post, eller lägger upp det öppet så att vem som helst kan ta det. Mottagaren flyttar det mellan Planerat, Pågår, Behöver hjälp och Klart, och båda kan skriva kommentarer, till exempel med en länk till utkastet i Canva.
 6. **Länkar och kurser**: under *Länkar* (redaktörer) styrs länksidan – slå på *Genväg* för att länken ska visas överst och på startsidan. Under *Kurser* (redaktörer och UBU) finns programmens kurslista. Skriv kurskoden, så hämtas tentastatistiken automatiskt inom någon minut.
-7. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. Bilder, gallerier och partners ändras fortfarande i adminpanelen, och panelen har en länk dit.
+7. **Bilder (grafiskt ansvarig)**: under *Bilder* finns omslagen till alla evenemang och nyheter och utskottens loggor – ladda upp en bild så är den sparad. *Galleri* på ett evenemang leder till dess bildgalleri. Översikten visar kommande evenemang som saknar omslag, och ett uppdrag som är kopplat till ett evenemang har knappen *Ladda upp omslag*. Mallar läggs upp under *Dokument* och visas under *Mallar och material* på sidan Grafisk profil.
+8. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. På evenemang och nyheter byter *Byt bilder* och *Byt omslag* bilderna direkt i sidopanelen. Partners ändras i adminpanelen, och panelen har en länk dit.
 
 Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
 
@@ -238,7 +241,7 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
 | `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
-| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik) mot en nyseedad server – se kommentaren i filen |
+| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, grafiskt ansvar) mot en nyseedad server – se kommentaren i filen |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra
