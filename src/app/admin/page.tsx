@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { DueLabel, PersonChip } from "@/components/admin/task-ui";
 import { AdminHeader, Card, Notice } from "@/components/admin/ui";
-import { ArrowUpRight, Calendar, Check, Image as ImageIcon, Newspaper, Plus } from "@/components/icons";
+import { ArrowUpRight, Board, Calendar, Check, Image as ImageIcon, Newspaper, Plus } from "@/components/icons";
 import { canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { dashboardStats, listAudit } from "@/lib/data/admin";
 import { listEventsForAdmin } from "@/lib/data/events";
+import { listOpenTasksTo } from "@/lib/data/tasks";
 import { formatDate, formatTimestamp, nowLocal, parts } from "@/lib/dates";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/types";
 
@@ -20,6 +22,7 @@ const ENTITY_LABELS: Record<string, string> = {
   partner: "partner",
   user: "konto",
   settings: "inställningar",
+  task: "uppdraget",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",
@@ -28,6 +31,8 @@ const ACTION_LABELS: Record<string, string> = {
   upload: "laddade upp",
   check: "granskade",
   uncheck: "ångrade granskningen av",
+  status: "ändrade status på",
+  claim: "tog",
 };
 
 export default function Dashboard(props: PageProps<"/admin">) {
@@ -42,7 +47,12 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
   const user = await requireUser();
   const sp = await searchParams;
   const scope = user.role === "committee" ? user.committee_id : null;
-  const [stats, events, audit] = await Promise.all([dashboardStats(scope), listEventsForAdmin(scope), listAudit(10, user.role === "committee" ? user.id : undefined)]);
+  const [stats, events, audit, myTasks] = await Promise.all([
+    dashboardStats(scope),
+    listEventsForAdmin(scope),
+    listAudit(10, user.role === "committee" ? user.id : undefined),
+    listOpenTasksTo(user.id, 4),
+  ]);
   const now = nowLocal();
   const upcoming = events.filter((e) => e.starts_at >= now.slice(0, 10)).reverse().slice(0, 5);
   const needsImages = events.filter((e) => e.starts_at < now && e.image_count === 0 && e.published).slice(0, 4);
@@ -91,6 +101,37 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
         ))}
       </div>
 
+      {myTasks.length > 0 && (
+        <section aria-labelledby="uppdrag-till-dig" className="mt-8 rounded-[1.5rem] border border-ink/10 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <h2 id="uppdrag-till-dig" className="flex items-center gap-2 font-bold">
+              <Board size={18} className="text-red" /> Uppdrag till dig
+            </h2>
+            <Link href="/admin/uppdrag?visa=till" className="text-sm font-semibold text-red-deep hover:underline">
+              Tavlan
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {myTasks.map((t) => (
+              <li key={t.id}>
+                <Link href={`/admin/uppdrag/${t.id}`} className="flex items-center gap-3 rounded-2xl border border-ink/10 p-4 hover:border-ink/30">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{t.title}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone">
+                      <span className="inline-flex min-w-0 items-center gap-1">
+                        från <PersonChip person={t.from} className="font-medium text-ink" />
+                      </span>
+                      {t.due_date && <DueLabel date={t.due_date} />}
+                    </span>
+                  </span>
+                  <ArrowUpRight size={16} className="shrink-0 text-stone" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {toReview && (
         <section aria-labelledby="att-granska" className="mt-8 rounded-[1.5rem] border border-ink/10 bg-white p-6">
           <div className="flex items-center justify-between">
@@ -109,7 +150,7 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
             </p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-stone">Nya och ändrade evenemang från utskotten och info. Granskningen påverkar inte vad som visas på sajten.</p>
+              <p className="mt-1 text-sm text-stone">Nya och ändrade evenemang från utskotten och övriga poster. Granskningen påverkar inte vad som visas på sajten.</p>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {toReview.slice(0, 6).map((e) => (
                   <li key={e.id}>

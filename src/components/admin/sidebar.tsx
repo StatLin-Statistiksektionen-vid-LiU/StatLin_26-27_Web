@@ -6,6 +6,7 @@ import { useState } from "react";
 import { logout } from "@/app/admin/_actions/auth";
 import {
   ArrowUpRight,
+  Board,
   Calendar,
   Close,
   FileText,
@@ -24,7 +25,7 @@ import { cn, initials } from "@/lib/utils";
 
 type SidebarUser = { name: string; post: string; role: Role; committee_name: string | null; committee_id: number | null };
 
-export function AdminSidebar({ user }: { user: SidebarUser }) {
+export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const editor = user.role !== "committee";
@@ -35,6 +36,7 @@ export function AdminSidebar({ user }: { user: SidebarUser }) {
       label: "Innehåll",
       items: [
         { href: "/admin", label: "Översikt", Icon: Home, exact: true },
+        { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks },
         { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
         { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
         editor
@@ -75,7 +77,7 @@ export function AdminSidebar({ user }: { user: SidebarUser }) {
             <p className="kicker px-3 text-[0.62rem] text-white/35">{g.label}</p>
             <ul className="mt-2 space-y-0.5">
               {g.items.filter(Boolean).map((item) => {
-                const { href, label, Icon, exact } = item as { href: string; label: string; Icon: typeof Home; exact?: boolean };
+                const { href, label, Icon, exact, badge } = item as { href: string; label: string; Icon: typeof Home; exact?: boolean; badge?: number };
                 const active = isActive(href, exact);
                 return (
                   <li key={href}>
@@ -89,6 +91,12 @@ export function AdminSidebar({ user }: { user: SidebarUser }) {
                     >
                       <Icon size={18} className={active ? "text-red" : ""} />
                       {label}
+                      {!!badge && (
+                        <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-red px-1.5 text-[0.7rem] font-bold leading-5 text-white tabular">
+                          {badge}
+                          <span className="sr-only"> nya</span>
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );

@@ -24,16 +24,19 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
 - Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
 - **Konton** (endast admin). Nya konton får ett läsbart engångslösenord, till exempel `kvartil-median-4821`, som måste bytas vid första inloggningen.
-- **Granskning**: administratörerna bockar av evenemang som granskade. Nya och ändrade evenemang från utskotten och info samlas under *Att granska* i översikten. Bocken påverkar aldrig om ett evenemang visas på sajten.
+- **Uppdragstavla** för styrelsen: posterna skickar uppdrag till varandra, till exempel från SASU till grafiskt ansvarig om en affisch. Uppdragen sorteras i Planerat, Pågår, Behöver hjälp och Klart och har kommentarer, deadline och koppling till evenemang. Avsändaren väljer om uppdraget syns för hela styrelsen eller bara för mottagaren. Ordförande, vice och info ser alltid allt. Uppdrag utan mottagare kan vem som helst ta, och nya uppdrag till dig syns som en siffra i menyn.
+- **Granskning**: administratörerna bockar av evenemang som granskade. Nya och ändrade evenemang från utskotten och övriga poster samlas under *Att granska* i översikten. Bocken påverkar aldrig om ett evenemang visas på sajten.
 - **Revisionslogg**: översikten visar vem som ändrade vad.
 
 ## Roller
 
 | Roll | Typiskt för | Får göra |
 | --- | --- | --- |
-| **Administratör** | Webbansvarig, ordförande, vice ordförande | Allt, inklusive konton och granskning av evenemang |
-| **Redaktör** | Informationsansvarig | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, kontaktuppgifter |
-| **Utskott** | SCB, UBU, SASU, StatPub, STIG, eSTIG … | Det egna utskottets evenemang, nyheter, bilder och utskottssida |
+| **Administratör** | Ordförande, vice ordförande, informationsansvarig (webbansvarig) | Allt, inklusive konton och granskning av evenemang |
+| **Redaktör** | Den som ska sköta innehållet utan att hantera konton | Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse, dokument, partners, kontaktuppgifter |
+| **Utskott** | Övriga poster: SCB, UBU, SASU, StatPub, STIG, eSTIG, kassör, grafiskt ansvarig … | Det egna utskottets evenemang, nyheter, bilder och utskottssida |
+
+Alla roller når uppdragstavlan. Administratörer och redaktörer ser alla uppdrag, övriga ser det som delats med hela styrelsen och det som rör dem själva.
 
 Behörigheten kontrolleras på servern i varje sida, server action och uppladdning, inte bara i gränssnittet.
 
@@ -41,11 +44,25 @@ Behörigheten kontrolleras på servern i varje sida, server action och uppladdni
 
 | Konto | Roll | Används av |
 | --- | --- | --- |
-| `webb@statlin.se` | Administratör | Webbansvarig |
+Ett konto per post i styrelsen, 13 stycken. Kontot hör till posten och lämnas över varje år. Posten är det som visas på uppdragstavlan.
+
+| Konto | Roll | Post |
+| --- | --- | --- |
 | `ordforande@statlin.se` | Administratör | Ordförande |
-| `vice@statlin.se` | Administratör | Vice ordförande |
-| `info@statlin.se` | Redaktör | Informationsansvarig |
-| `ubu@`, `sasu@`, `scb@`, `statpub@`, `stig@`, `estig@` och `amo@statlin.se` | Utskott | Respektive utskott |
+| `vice@statlin.se` | Administratör | Vice ordförande / sekreterare |
+| `info@statlin.se` | Administratör | Informationsansvarig (webbansvarig) |
+| `kassor@statlin.se` | Utskott (styrelsen) | Kassör |
+| `grafiskt@statlin.se` | Utskott (styrelsen) | Grafiskt ansvarig |
+| `master@statlin.se` | Utskott (styrelsen) | Masteransvarig |
+| `ubu@statlin.se` | Utskott (UBU) | Utbildningsbevakare |
+| `sasu@statlin.se` | Utskott (SASU) | SASU |
+| `scb@statlin.se` | Utskott (SCB) | Mästerichef |
+| `statpub@statlin.se` | Utskott (StatPub) | Pub |
+| `stig@statlin.se` | Utskott (STIG) | STIG |
+| `estig@statlin.se` | Utskott (eSTIG) | e-STIG |
+| `amo@statlin.se` | Utskott (AMO) | Arbetsmiljöombud |
+
+Finns det ett `webb@statlin.se` sedan tidigare lämnar skriptet det orört. Info är webbansvarig, så det kontot kan stängas av under *Konton* när info@ har tagit över.
 
 Lösenord skrivs aldrig in här eller någon annanstans i repot, eftersom alla som kan läsa repot då kan logga in. Kontona skapas med `create-accounts` (se [Fly.io](#flyio)), som visar ett engångslösenord per konto en gång. Lämna över lösenorden personligen eller via en lösenordshanterare. Varje konto måste byta lösenord vid första inloggningen, och en administratör återställer glömda lösenord under *Konton*.
 
@@ -173,8 +190,9 @@ sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
 2. **Nytt evenemang**: fyll i titel, tid och plats. Utan omslagsbild genereras ett omslag i utskottets färger med utskottets logga.
 3. **Efter evenemanget**: öppna det under *Evenemang*, scrolla till *Bildgalleri* och dra in bilderna. De dyker upp direkt på sajten och i galleriet. Klicka på ★ för att välja omslag.
 4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
+5. **Uppdragstavlan**: *Nytt uppdrag* skickar ett uppdrag till en annan post, eller lägger upp det öppet så att vem som helst kan ta det. Mottagaren flyttar det mellan Planerat, Pågår, Behöver hjälp och Klart, och båda kan skriva kommentarer, till exempel med en länk till utkastet i Canva.
 
-Översikten visar evenemang som har varit men saknar bilder. Ordförande och vice ser också *Att granska*: evenemang som utskotten eller info har skapat eller ändrat sedan de senast granskades.
+Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
 
 ## Teknik
 
@@ -211,7 +229,7 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
 | `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
-| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri) mot en nyseedad server – se kommentaren i filen |
+| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla) mot en nyseedad server – se kommentaren i filen |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra

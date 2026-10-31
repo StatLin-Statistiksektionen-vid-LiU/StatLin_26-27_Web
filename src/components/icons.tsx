@@ -203,6 +203,23 @@ export const Grip = (p: IconProps) => (
     <circle cx="15" cy="18" r="1" fill="currentColor" />
   </svg>
 );
+export const Board = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="3.5" y="4" width="17" height="16" rx="2.5" />
+    <path d="M9.5 4v16M14.5 4v16M5.8 8h1.4M11.3 8h1.4M11.3 11.5h1.4M16.8 8h1.4" />
+  </svg>
+);
+export const Lock = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="5" y="10.5" width="14" height="9.5" rx="2" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
+export const MessageCircle = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4A7.5 7.5 0 1 1 20 11.5Z" />
+  </svg>
+);
 export const Search = (p: IconProps) => (
   <svg {...base(p)}>
     <circle cx="11" cy="11" r="7" />

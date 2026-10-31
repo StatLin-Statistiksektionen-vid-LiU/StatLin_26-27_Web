@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
- * Skapar sektionens fasta konton: ordförande och vice (administratörer), info (redaktör)
- * och ett konto per utskott. Konton som redan finns lämnas orörda, så skriptet kan köras igen.
+ * Skapar ett konto per post i styrelsen (13 st). Ordförande, vice och info är administratörer,
+ * resten har utskottsroll – kopplade till sitt utskott, eller till styrelsen för poster utan
+ * utskott. Kontona hör till posten och lämnas över varje år.
+ *
+ * Skriptet kan köras igen: befintliga konton lämnas orörda, förutom att en tom post (eller den
+ * gamla platshållaren "Styrelsen") fylls i, och att info@ uppgraderas från redaktör till admin.
  * Ren JavaScript så att det går att köra både lokalt och i Docker-containern.
  *
  *   npm run create-accounts
@@ -16,19 +20,27 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
 
-/** E-post, namn, post, roll och utskottets slug. */
+/** E-post, namn, post, roll och utskottets slug. Posten är det som visas på uppdragstavlan. */
 const ACCOUNTS = [
-  ["ordforande@statlin.se", "Ordförande", "Styrelsen", "admin", "styrelsen"],
-  ["vice@statlin.se", "Vice ordförande", "Styrelsen", "admin", "styrelsen"],
-  ["info@statlin.se", "Info", "Informationsansvarig", "editor", "styrelsen"],
-  ["ubu@statlin.se", "UBU", "", "committee", "ubu"],
-  ["sasu@statlin.se", "SASU", "", "committee", "sasu"],
-  ["scb@statlin.se", "SCB", "", "committee", "scb"],
-  ["statpub@statlin.se", "StatPub", "", "committee", "statpub"],
-  ["stig@statlin.se", "STIG", "", "committee", "stig"],
-  ["estig@statlin.se", "eSTIG", "", "committee", "estig"],
-  ["amo@statlin.se", "AMO", "", "committee", "amo"],
+  ["ordforande@statlin.se", "Ordförande", "Ordförande", "admin", "styrelsen"],
+  ["vice@statlin.se", "Vice ordförande", "Vice ordförande / sekreterare", "admin", "styrelsen"],
+  ["info@statlin.se", "Info", "Informationsansvarig", "admin", "styrelsen"],
+  ["kassor@statlin.se", "Kassör", "Kassör", "committee", "styrelsen"],
+  ["grafiskt@statlin.se", "Grafiskt ansvarig", "Grafiskt ansvarig", "committee", "styrelsen"],
+  ["master@statlin.se", "Masteransvarig", "Masteransvarig", "committee", "styrelsen"],
+  ["ubu@statlin.se", "UBU", "Utbildningsbevakare", "committee", "ubu"],
+  ["sasu@statlin.se", "SASU", "SASU", "committee", "sasu"],
+  ["scb@statlin.se", "SCB", "Mästerichef", "committee", "scb"],
+  ["statpub@statlin.se", "StatPub", "Pub", "committee", "statpub"],
+  ["stig@statlin.se", "STIG", "STIG", "committee", "stig"],
+  ["estig@statlin.se", "eSTIG", "e-STIG", "committee", "estig"],
+  ["amo@statlin.se", "AMO", "Arbetsmiljöombud", "committee", "amo"],
 ];
+
+/** Info är webbansvarig och ska vara administratör. */
+const UPGRADE_TO_ADMIN = new Set(["info@statlin.se"]);
+/** Posten som skriptet tidigare satte på ordförande och vice – byts mot den riktiga posten. */
+const PLACEHOLDER_POSTS = new Set(["", "Styrelsen"]);
 
 const dataDir = path.resolve(process.env.DATA_DIR ?? path.join(process.cwd(), "data"));
 const dbPath = path.join(dataDir, "statlin.db");
@@ -42,7 +54,9 @@ const pick = () => words[crypto.randomInt(words.length)];
 const newPassword = () => `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 
 const db = new Database(dbPath);
-const findUser = db.prepare("SELECT role FROM users WHERE email = ?");
+const findUser = db.prepare("SELECT id, role, post FROM users WHERE email = ?");
+const setPost = db.prepare("UPDATE users SET post = ? WHERE id = ?");
+const setRole = db.prepare("UPDATE users SET role = ? WHERE id = ?");
 const findCommittee = db.prepare("SELECT id FROM committees WHERE slug = ?");
 const insert = db.prepare(
   "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1)",
@@ -50,11 +64,22 @@ const insert = db.prepare(
 
 const created = [];
 const skipped = [];
+const updated = [];
 db.transaction(() => {
   for (const [email, name, post, role, committee] of ACCOUNTS) {
     const existing = findUser.get(email);
     if (existing) {
-      skipped.push(`${email} finns redan (${existing.role}) – orört`);
+      const changes = [];
+      if (PLACEHOLDER_POSTS.has(existing.post) && existing.post !== post) {
+        setPost.run(post, existing.id);
+        changes.push(`post "${post}"`);
+      }
+      if (UPGRADE_TO_ADMIN.has(email) && existing.role === "editor") {
+        setRole.run("admin", existing.id);
+        changes.push("redaktör → admin");
+      }
+      if (changes.length) updated.push(`${email}: ${changes.join(", ")}`);
+      else skipped.push(`${email} finns redan (${existing.role}) – orört`);
       continue;
     }
     const committeeRow = findCommittee.get(committee);
@@ -74,5 +99,6 @@ if (created.length) {
 } else {
   console.log("\nInga nya konton behövdes.");
 }
+if (updated.length) console.log(`\nUppdaterade konton:\n${updated.map((s) => `  ${s}`).join("\n")}`);
 if (skipped.length) console.log(`\n${skipped.map((s) => `  ${s}`).join("\n")}`);
 console.log("\nLogga in på /logga-in.\n");

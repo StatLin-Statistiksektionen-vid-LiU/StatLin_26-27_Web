@@ -298,6 +298,66 @@ async function login(page, email, password) {
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Skapa evenemang" }).click()]);
       await page.getByText("Granskad", { exact: true }).first().waitFor();
     });
+
+    let taskUrl;
+    const tasksLink = () => page.locator('nav[aria-label="Adminmeny"] a[href="/admin/uppdrag"]').first();
+    const newTask = async (title, recipient) => {
+      await page.goto(`${BASE}/admin/uppdrag/ny`);
+      await page.fill('input[name="title"]', title);
+      const to = await page.locator('select[name="to_user_id"] option', { hasText: recipient }).first().getAttribute("value");
+      await page.selectOption('select[name="to_user_id"]', to);
+      await page.check('input[name="visibility"][value="privat"]');
+      await Promise.all([page.waitForURL(/\/admin\/uppdrag\/\d+\?skapat=1/), page.getByRole("button", { name: "Skicka uppdraget" }).click()]);
+      return page.url().split("?")[0];
+    };
+
+    await step("Utskottskonto skickar ett privat uppdrag till info", async () => {
+      await page.context().clearCookies();
+      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      taskUrl = await newTask("Affisch till testsittningen", "Informationsansvarig");
+      await page.goto(`${BASE}/admin/uppdrag?visa=fran`);
+      await page.getByText("Affisch till testsittningen").waitFor();
+    });
+
+    await step("Mottagaren får en siffra i menyn som nollställs på tavlan", async () => {
+      await page.context().clearCookies();
+      await login(page, "info@statlin.se", "demo-statlin-2026");
+      assert.match(await tasksLink().innerText(), /1/, "siffran ska synas i menyn");
+      await page.goto(`${BASE}/admin/uppdrag?visa=till`);
+      await page.getByText("Affisch till testsittningen").waitFor();
+      await page.waitForTimeout(1500);
+      await page.reload();
+      assert.doesNotMatch(await tasksLink().innerText(), /\d/, "siffran ska försvinna efter besöket");
+    });
+
+    await step("Mottagaren ändrar status och kommenterar", async () => {
+      await page.goto(taskUrl);
+      await page.locator('button[aria-pressed="false"]', { hasText: "Behöver hjälp" }).click();
+      await page.locator('button[aria-pressed="true"]', { hasText: "Behöver hjälp" }).waitFor();
+      await page.fill('textarea[name="body"]', "Vilket format vill ni ha?");
+      await page.getByRole("button", { name: "Skicka", exact: true }).click();
+      await page.getByText("Kommentaren är skickad.").waitFor();
+    });
+
+    await step("Utskottskonto ser inte andras privata uppdrag", async () => {
+      const secret = await newTask("Hemlig planering i testet", "Administratör");
+      await page.context().clearCookies();
+      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await page.goto(`${BASE}/admin/uppdrag`);
+      await page.getByText("Affisch till testsittningen").waitFor();
+      assert.equal(await page.getByText("Hemlig planering i testet").count(), 0, "privat uppdrag ska inte synas på tavlan");
+      const html = await (await page.goto(secret)).text();
+      assert.ok(!html.includes("Hemlig planering i testet"), "privat uppdrag ska inte finnas i HTML:en");
+      await page.waitForURL(/\/admin\/uppdrag$/);
+    });
+
+    await step("Admin ser alla uppdrag", async () => {
+      await page.context().clearCookies();
+      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await page.goto(`${BASE}/admin/uppdrag`);
+      await page.getByText("Affisch till testsittningen").waitFor();
+      await page.getByText("Hemlig planering i testet").waitFor();
+    });
   } catch {
     /* resultatet skrivs ut nedan */
   } finally {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { getSessionUser } from "@/lib/auth/session";
+import { countUnseenTasks } from "@/lib/data/tasks";
 
 export const metadata: Metadata = {
   title: { default: "Adminpanel", template: "%s · Admin · StatLin" },
@@ -24,9 +25,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/logga-in?next=/admin");
+  const unseenTasks = await countUnseenTasks(user.id);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
-      <AdminSidebar user={{ name: user.name, post: user.post, role: user.role, committee_name: user.committee_name, committee_id: user.committee_id }} />
+      <AdminSidebar
+        user={{ name: user.name, post: user.post, role: user.role, committee_name: user.committee_name, committee_id: user.committee_id }}
+        unseenTasks={unseenTasks}
+      />
       <div className="min-w-0">
         {user.must_change_password && (
           <div className="flex flex-wrap items-center justify-between gap-3 bg-red px-6 py-3 text-sm font-semibold text-white">

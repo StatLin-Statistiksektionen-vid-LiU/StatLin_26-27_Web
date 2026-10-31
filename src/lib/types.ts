@@ -155,6 +155,50 @@ export const DOCUMENT_CATEGORIES: Record<DocumentCategory, string> = {
   ovrigt: "Övrigt",
 };
 
+export type TaskStatus = "planerad" | "pagar" | "hjalp" | "klar";
+
+export const TASK_STATUSES: Record<TaskStatus, string> = {
+  planerad: "Planerat",
+  pagar: "Pågår",
+  hjalp: "Behöver hjälp",
+  klar: "Klart",
+};
+
+/** Ett konto på uppdragstavlan, visat som sin post (t.ex. "Grafiskt ansvarig") och sitt utskott. */
+export interface TaskPerson {
+  id: number;
+  label: string;
+  committee: string | null;
+  accent: string | null;
+}
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  from_user_id: number | null;
+  to_user_id: number | null;
+  status: TaskStatus;
+  shared: number;
+  due_date: string | null;
+  event_id: number | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  from: TaskPerson | null;
+  to: TaskPerson | null;
+  event: { id: number; title: string; slug: string } | null;
+  comment_count: number;
+}
+
+export interface TaskComment {
+  id: number;
+  task_id: number;
+  body: string;
+  created_at: string;
+  author: TaskPerson | null;
+}
+
 export interface DocumentItem {
   id: number;
   title: string;

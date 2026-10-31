@@ -67,7 +67,7 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
 
       {list.length === 0 ? (
         tab === "ogranskade" ? (
-          <EmptyState title="Allt är granskat">Nya evenemang från utskotten och info hamnar här.</EmptyState>
+          <EmptyState title="Allt är granskat">Nya evenemang från utskotten och övriga poster hamnar här.</EmptyState>
         ) : (
           <EmptyState
             title={tab === "kommande" ? "Inga kommande evenemang" : "Inga tidigare evenemang"}

@@ -185,6 +185,34 @@ const steps: string[] = [
   UPDATE pages SET lead = 'Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.'
     WHERE slug = 'ny-student' AND lead = 'Grattis till platsen! Här är allt du behöver veta inför starten på Statistik och dataanalys.';
   `,
+  /* 4: uppdragstavlan – uppdrag mellan styrelsens poster (ett konto per post) */ `
+  CREATE TABLE tasks (
+    id           INTEGER PRIMARY KEY,
+    title        TEXT NOT NULL,
+    description  TEXT NOT NULL DEFAULT '',
+    from_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    to_user_id   INTEGER REFERENCES users(id) ON DELETE SET NULL, -- NULL = öppet, vem som helst kan ta det
+    status       TEXT NOT NULL DEFAULT 'planerad' CHECK (status IN ('planerad','pagar','hjalp','klar')),
+    shared       INTEGER NOT NULL DEFAULT 1,                      -- syns för hela styrelsen
+    due_date     TEXT,
+    event_id     INTEGER REFERENCES events(id) ON DELETE SET NULL,
+    assigned_at  TEXT,                                            -- när någon annan gav uppdraget till mottagaren
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    completed_at TEXT
+  );
+  CREATE INDEX tasks_to ON tasks(to_user_id, status);
+  CREATE INDEX tasks_from ON tasks(from_user_id);
+  CREATE TABLE task_comments (
+    id         INTEGER PRIMARY KEY,
+    task_id    INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    body       TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX task_comments_task ON task_comments(task_id, created_at);
+  ALTER TABLE users ADD COLUMN tasks_seen_at TEXT;
+  `,
 ];
 
 export function migrate(db: Database.Database) {
