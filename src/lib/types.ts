@@ -286,6 +286,7 @@ export interface SiteSettings {
   hero_kicker: string;
   hero_title: string;
   hero_text: string;
+  hero_ring_color: "red" | "white";
   home_intro: string;
   announcement: string;
   announcement_url: string;

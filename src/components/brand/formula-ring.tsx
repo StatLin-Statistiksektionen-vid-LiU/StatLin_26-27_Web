@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from "react";
 import { LOGO_GEOMETRY as G, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
+import type { SiteSettings } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /** Formlernas radie, utanför loggans tunna vita kant. */
 const RADIUS = 494;
@@ -55,7 +57,7 @@ function Superscript({ children }: { children: string }) {
  * Texten ligger still på sin bana och fylls med en gradient, så bara gradienten och en rotation ändras när ringen rör sig.
  * Servern ritar gradienten med radie 0, vilket gör texten helt genomskinlig.
  */
-export function FormulaRing() {
+export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_color"] }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const layerRef = useRef<SVGSVGElement>(null);
@@ -221,7 +223,7 @@ export function FormulaRing() {
       ref={layerRef}
       aria-hidden
       viewBox={LOGO_VIEWBOX}
-      className="logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+      className={cn("logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible", glow === "white" && "logo-formler-vit")}
     >
       <defs>
         <radialGradient ref={gradientRef} id={`${id}-fade`} gradientUnits="userSpaceOnUse" cx={G.cx} cy={G.cy} r="0">

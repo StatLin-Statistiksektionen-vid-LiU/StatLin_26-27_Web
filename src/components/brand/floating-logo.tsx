@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { LOGO_GEOMETRY as G, LOGO_GRID, LOGO_SIGNATURE, LOGO_TEXT, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
 import { cn } from "@/lib/utils";
-import { FormulaRing } from "./formula-ring";
 
 /**
  * Sektionsloggan som svävar i 3D och följer pekaren.
  * Loggan visas i sin officiella form, med en tunn vit kant som skiljer den svarta ringen från den svarta bakgrunden.
  * Introt bygger upp loggan lager för lager; slutläget är alltid den exakta loggan.
+ * `ring` ligger i samma 3D-lager som loggan, och heron lägger formelringen där.
  */
-export function FloatingLogo({ className, intro = true, formler = false }: { className?: string; intro?: boolean; formler?: boolean }) {
+export function FloatingLogo({ className, intro = true, ring }: { className?: string; intro?: boolean; ring?: ReactNode }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -95,7 +95,7 @@ export function FloatingLogo({ className, intro = true, formler = false }: { cla
             willChange: "transform",
           }}
         >
-          {formler && <FormulaRing />}
+          {ring}
           <svg
             viewBox={LOGO_VIEWBOX}
             className="relative h-full w-full overflow-visible"

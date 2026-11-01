@@ -2,13 +2,19 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { DataField } from "@/components/brand/data-field";
 import { FloatingLogo } from "@/components/brand/floating-logo";
+import { FormulaRing } from "@/components/brand/formula-ring";
 import { ArrowRight } from "@/components/icons";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { cn } from "@/lib/utils";
 import { Editable } from "@/components/edit-mode/editable";
 
-/** Texterna kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
+/** Texterna och ringens glöd kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
+async function HeroRing() {
+  const s = await getSettings();
+  return <FormulaRing glow={s.hero_ring_color} />;
+}
+
 async function HeroKicker() {
   const s = await getSettings();
   return <>{s.hero_kicker}</>;
@@ -112,7 +118,14 @@ export function Hero() {
 
         {/* Loggan */}
         <div className="flex flex-1 items-center justify-center py-6 md:py-3">
-          <FloatingLogo className="w-[min(82vw,56svh,640px)]" formler />
+          <FloatingLogo
+            className="w-[min(82vw,56svh,640px)]"
+            ring={
+              <Suspense fallback={null}>
+                <HeroRing />
+              </Suspense>
+            }
+          />
         </div>
 
         <Suspense fallback={<HeroBottom title={null} text={null} />}>

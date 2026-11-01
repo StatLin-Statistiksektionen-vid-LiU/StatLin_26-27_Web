@@ -516,11 +516,17 @@
     glow-breathe 7s 2.9s ease-in-out infinite;
 }
 
-/* Formelringen. Vitt glow: drop-shadow(0 0 2px rgb(255 255 255 / 0.8)) drop-shadow(0 0 6px rgb(255 255 255 / 0.5)). */
+/* Formelringen. Glöden väljs under Inställningar → Startsidan. */
 .logo-formler {
-  filter: drop-shadow(0 0 2px #ff0707) drop-shadow(0 0 6px rgb(255 7 7 / 0.8));
+  --glow-near: #ff0707;
+  --glow-far: rgb(255 7 7 / 0.8);
+  filter: drop-shadow(0 0 2px var(--glow-near)) drop-shadow(0 0 6px var(--glow-far));
   transform: translateZ(-18px);
   text-rendering: geometricPrecision;
+}
+.logo-formler-vit {
+  --glow-near: rgb(255 255 255 / 0.8);
+  --glow-far: rgb(255 255 255 / 0.5);
 }
 .logo-formler text {
   font-family: var(--font-serif);
@@ -529,7 +535,7 @@
 }
 @media (max-width: 640px) {
   .logo-formler {
-    filter: drop-shadow(0 0 1.5px #ff0707) drop-shadow(0 0 4px rgb(255 7 7 / 0.8));
+    filter: drop-shadow(0 0 1.5px var(--glow-near)) drop-shadow(0 0 4px var(--glow-far));
   }
   .logo-formler text {
     font-size: 30px;

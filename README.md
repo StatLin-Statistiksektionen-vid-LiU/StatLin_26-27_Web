@@ -236,7 +236,7 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 
 Sajten visar den officiella loggan. På svart bakgrund smälter den svarta ringen ihop med bakgrunden, så loggan får en tunn vit kant: klassen `logo-kant` på bilder och en tunn cirkel i `FloatingLogo`. Den inverterade formen används bara på overallteckningen och som nedladdning under Grafisk profil.
 
-Startsidans hero har också en formelring (`src/components/brand/formula-ring.tsx`). Formlerna ligger i ett eget lager utanför loggan, så loggan ritas aldrig om. De syns när musen rör sig nära loggan och i ett svep strax efter att sidan laddats och sedan var 4:e minut, och på telefon när man trycker på loggan. Med `prefers-reduced-motion` finns inget svep, och musen över loggan visar hela ringen stilla. Glöden ställs in på en rad i `.logo-formler` i `src/app/globals.css`.
+Startsidans hero har också en formelring (`src/components/brand/formula-ring.tsx`). Formlerna ligger i ett eget lager utanför loggan, så loggan ritas aldrig om. De syns när musen rör sig nära loggan och i ett svep strax efter att sidan laddats och sedan var 4:e minut, och på telefon när man trycker på loggan. Med `prefers-reduced-motion` finns inget svep, och musen över loggan visar hela ringen stilla. Admin väljer glöden under Inställningar → Startsidan, röd (förval) eller vit, medan formlerna alltid är vita. Färgen läses bakom en egen `Suspense`, så loggan ligger kvar i det statiska skalet.
 
 ## Kommandon
 

@@ -163,6 +163,12 @@ export function HomeTextsSection({ s, className }: { s: SiteSettings; className?
       <Field label="Om sektionen" name="home_intro" required hint="Den stora texten under ”01 Om sektionen”.">
         <TextArea name="home_intro" defaultValue={s.home_intro} rows={3} maxLength={400} required />
       </Field>
+      <Field label="Formelringens glöd" name="hero_ring_color" hint="Färgen på glöden runt formlerna på startsidan. Formlerna är alltid vita.">
+        <Select name="hero_ring_color" defaultValue={s.hero_ring_color}>
+          <option value="red">Röd</option>
+          <option value="white">Vit</option>
+        </Select>
+      </Field>
     </FormSection>
   );
 }

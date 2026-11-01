@@ -87,6 +87,7 @@ async function login(page, email, password) {
       await page.locator(".floating-logo").first().waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 0, "inloggningen ska inte ha formler");
       await page.goto(`${BASE}/`);
+      await page.locator(".logo-formler").waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 1);
       assert.equal(await ringRadius(page), "0", "formlerna ska vara dolda när sidan laddats");
       await moveOverLogo(page);
@@ -139,6 +140,60 @@ async function login(page, email, password) {
       const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
       assert.match(fill, /^(rgba\(255, 255, 255, 0\.7\)|rgb\(255 255 255 \/ 0\.7\))$/, "musen över loggan ska visa hela ringen");
       await stillCtx.close();
+    });
+
+    await step("Formelringens glöd är röd som förval och kan bytas till vit under Inställningar", async () => {
+      const glowCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const glow = await glowCtx.newPage();
+      const ringGlow = async (color) => {
+        await glow.goto(`${BASE}/`);
+        await glow.locator(".logo-formler").waitFor({ state: "attached" });
+        await moveOverLogo(glow);
+        await glow.waitForFunction(ringIsVisible, null, { timeout: 8000 });
+        assert.match(await glow.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter), color);
+      };
+      await ringGlow(/255, 7, 7/);
+      await login(glow, "info@statlin.se", "demo-statlin-2026");
+      // Listan får inte ändras förrän sidan är hydrerad. Annars ritar React om formuläret och klicket försvinner.
+      const hydrated = () => glow.waitForFunction(() => Object.keys(document.querySelector("#hero_ring_color") ?? {}).some((k) => k.startsWith("__react")));
+      await glow.goto(`${BASE}/admin/installningar`);
+      await hydrated();
+      const field = glow.locator("#hero_ring_color");
+      assert.equal(await field.inputValue(), "red");
+      assert.deepEqual(await field.locator("option").allTextContents(), ["Röd", "Vit"]);
+      const save = glow.getByRole("button", { name: "Spara", exact: true });
+      // Servern ska neka ett påhittat värde, även om någon manipulerar listan.
+      await field.evaluate((el) => {
+        el.add(new Option("Blå", "blue"));
+        el.value = "blue";
+      });
+      await save.click();
+      await glow.getByText("Välj röd eller vit.").first().waitFor();
+      await glow.reload();
+      await hydrated();
+      assert.equal(await field.inputValue(), "red");
+      await field.selectOption("white");
+      await save.click();
+      await glow.getByText("Inställningarna är sparade.").waitFor();
+      await ringGlow(/255, 255, 255/);
+      await glow.screenshot({ path: `${SHOTS}/formelring-vit.png` });
+      // Sparar man med pennan på startsidan ska valet stå kvar.
+      await glow.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+      await glow.locator("button:visible", { hasText: "Redigera texten" }).first().click();
+      const panel = glow.getByRole("dialog");
+      const inDrawer = panel.locator('select[name="hero_ring_color"]');
+      await inDrawer.waitFor();
+      assert.equal(await inDrawer.inputValue(), "white");
+      await panel.getByRole("button", { name: "Spara", exact: true }).click();
+      await panel.waitFor({ state: "detached" });
+      await ringGlow(/255, 255, 255/);
+      // Tillbaka till förvalet, så att senare steg inte påverkas.
+      await glow.goto(`${BASE}/admin/installningar`);
+      await hydrated();
+      await field.selectOption("red");
+      await save.click();
+      await glow.getByText("Inställningarna är sparade.").waitFor();
+      await glowCtx.close();
     });
 
     await step("Genvägsraden på startsidan visar genvägarna", async () => {
