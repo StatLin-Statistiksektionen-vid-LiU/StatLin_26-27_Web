@@ -36,7 +36,6 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           committee_name: user.committee_name,
           committee_id: user.committee_id,
           committee_kind: user.committee_kind,
-          committee_slug: user.committee_slug,
           design: user.design,
         }}
         unseenTasks={unseenTasks}

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 const LINKS = [
-  { href: "/studenter/lankar?program=master#kurser", label: "Kurser och tentastatistik" },
+  { href: "/tentastatistik", label: "Tentastatistik" },
   { href: "https://studieinfo.liu.se/program/F7MML", label: "Programmet i Studieinfo" },
 ];
 

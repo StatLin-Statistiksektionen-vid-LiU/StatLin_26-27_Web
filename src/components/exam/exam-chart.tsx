@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { parts } from "@/lib/dates";
+import { formatDateShort } from "@/lib/dates";
 import {
   MIN_RESULTS,
   formatPercent,
   gradeColors,
   mergeGradeOrder,
+  passRateByYear,
   primaryModule,
   summarizeModule,
   visibleOccasions,
@@ -14,6 +15,8 @@ import {
   type ExamStats,
 } from "@/lib/exam-stats";
 import { cn } from "@/lib/utils";
+import { GradeDistribution } from "./grade-distribution";
+import { PassRateTrend } from "./pass-rate-trend";
 
 /** Så många tillfällen visas innan "Visa alla". Är det bara några få till visas alla direkt. */
 const FIRST_ROWS = 12;
@@ -23,16 +26,14 @@ const SHOW_ALL_UP_TO = 15;
 const ROW =
   "grid cursor-default grid-cols-[4.75rem_minmax(0,1fr)_5.75rem] items-center gap-3 px-2 py-1.5 sm:grid-cols-[6.5rem_minmax(0,1fr)_7.5rem] sm:px-3";
 
-const shortDate = (date: string) => {
-  const p = parts(date);
-  return `${p.day} ${p.monthShort} ${p.year}`;
-};
+/** Två tillfällen behövs för att något ska kunna ändras över tid. */
+const MIN_TREND_OCCASIONS = 2;
 
 /**
- * Betygen per tentatillfälle: en 100 %-stapel per tillfälle, nyast först, med andelen godkända och
- * antalet skrivande bredvid. Hovra eller tabba till en rad för exakta siffror; tabellvyn visar allt
- * utan diagram. Mönstret följer dataviz-skillen: tunna staplar, 2 px mellanrum mellan betygen,
- * teckenförklaring och en tabell som tvilling.
+ * Kursens statistik: nyckeltal, godkända över tid, betygen de senaste åren och betygen per tentatillfälle
+ * som 100 %-staplar, nyast först, med andelen godkända och antalet skrivande bredvid. Hovra eller tabba
+ * till en rad för exakta siffror; tabellvyn visar allt utan diagram. Mönstret följer dataviz-skillen:
+ * tunna staplar, 2 px mellanrum mellan betygen, teckenförklaring och en tabell som tvilling.
  */
 export function ExamChart({ stats, today }: { stats: ExamStats; today: string }) {
   const now = new Date(today);
@@ -60,6 +61,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
   const [fromYear, toYear] = summary ? [summary.from.slice(0, 4), summary.to.slice(0, 4)] : ["", ""];
   const period = summary?.recent ? "de senaste tre åren" : fromYear === toYear ? fromYear : `${fromYear}–${toYear}`;
   const active = tip ? rows[tip.index] : null;
+  const showTrend = occasions.length >= MIN_TREND_OCCASIONS;
 
   return (
     <div>
@@ -94,10 +96,23 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
           <Tile
             label="Godkända senast"
             value={formatPercent(summary.latest.passed / summary.latest.total)}
-            note={`${shortDate(summary.latest.date)}, ${summary.latest.total} skrivande`}
+            note={`${formatDateShort(summary.latest.date)}, ${summary.latest.total} skrivande`}
           />
         </dl>
       )}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-12">
+        {showTrend && (
+          <section className="min-w-0 rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6 lg:col-span-7">
+            <PassRateTrend key={m.code} occasions={occasions} />
+          </section>
+        )}
+        {summary && (
+          <section className={cn("flex min-w-0 flex-col rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6", showTrend ? "lg:col-span-5" : "lg:col-span-12")}>
+            <GradeDistribution grades={summary.grades} color={color} period={period} />
+          </section>
+        )}
+      </div>
 
       <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -153,7 +168,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
                   tip?.index === i ? "bg-paper-2" : "hover:bg-paper-2",
                 )}
               >
-                <span className="tabular text-[0.8rem] text-stone sm:text-sm">{shortDate(o.date)}</span>
+                <span className="tabular text-[0.8rem] text-stone sm:text-sm">{formatDateShort(o.date)}</span>
                 <Bar occasion={o} color={color} />
                 <span className="tabular whitespace-nowrap text-right text-sm">
                   <span className="font-semibold">{formatPercent(o.passed / o.total)}</span>
@@ -196,7 +211,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
               {rows.map((o) => (
                 <tr key={o.date}>
                   <th scope="row" className="tabular whitespace-nowrap px-4 py-2.5 text-left font-normal">
-                    {shortDate(o.date)}
+                    {formatDateShort(o.date)}
                   </th>
                   {order.map((g) => (
                     <td key={g} className="tabular px-3 py-2.5 text-right">
@@ -222,6 +237,52 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
             {showAll ? "Visa färre" : `Visa alla ${occasions.length} tillfällen`}
           </button>
         )}
+      </div>
+
+      {view === "table" && <YearTable occasions={occasions} caption={`${m.title} (${m.code})`} />}
+    </div>
+  );
+}
+
+/** Siffrorna bakom linjen i "Godkända över tid", nyast först. */
+function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption: string }) {
+  return (
+    <div className="mt-10">
+      <h3 className="display-tight text-lg">Per år</h3>
+      <div className="mt-3 overflow-x-auto rounded-[1.25rem] border border-ink/10 bg-white">
+        <table className="w-full min-w-max text-sm">
+          <caption className="sr-only">Andel godkända per år för {caption}</caption>
+          <thead>
+            <tr className="border-b border-ink/10 text-left">
+              <th scope="col" className="kicker px-4 py-3 font-medium text-stone">
+                År
+              </th>
+              <th scope="col" className="kicker px-3 py-3 text-right font-medium text-stone">
+                Tillfällen
+              </th>
+              <th scope="col" className="kicker px-3 py-3 text-right font-medium text-stone">
+                Skrivningar
+              </th>
+              <th scope="col" className="kicker px-4 py-3 text-right font-medium text-stone">
+                Godkända
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink/[0.07]">
+            {passRateByYear(occasions)
+              .reverse()
+              .map((y) => (
+                <tr key={y.year}>
+                  <th scope="row" className="tabular px-4 py-2.5 text-left font-normal">
+                    {y.year}
+                  </th>
+                  <td className="tabular px-3 py-2.5 text-right">{y.occasions}</td>
+                  <td className="tabular px-3 py-2.5 text-right">{y.total}</td>
+                  <td className="tabular px-4 py-2.5 text-right font-semibold">{formatPercent(y.passed / y.total)}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -257,7 +318,7 @@ function Tooltip({ occasion, color, top }: { occasion: ExamOccasion; color: Map<
       className="pointer-events-none absolute left-[5.5rem] z-10 w-56 rounded-2xl border border-ink/10 bg-white p-4 text-sm shadow-[0_24px_50px_-24px_rgb(10_10_10/0.45)] sm:left-[8rem]"
       style={{ top: top + 4 }}
     >
-      <p className="font-semibold">{shortDate(occasion.date)}</p>
+      <p className="font-semibold">{formatDateShort(occasion.date)}</p>
       <p className="text-stone">
         {occasion.total} skrivande · {formatPercent(occasion.passed / occasion.total)} godkända
       </p>

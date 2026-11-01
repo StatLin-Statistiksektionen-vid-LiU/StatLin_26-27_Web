@@ -37,5 +37,3 @@ export const PROGRAMS: { value: Program; label: string; name: string }[] = [
 export const normalizeSearch = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export const isExternalUrl = (url: string) => /^https?:\/\//i.test(url);
-
-export const formatCredits = (credits: number) => `${String(credits).replace(".", ",")} hp`;

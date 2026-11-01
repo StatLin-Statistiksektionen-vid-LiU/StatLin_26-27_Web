@@ -70,11 +70,12 @@ async function login(page, email, password) {
 
     await step("Länksidan: sökning, kurskod och fästa länkar", async () => {
       await page.goto(`${BASE}/studenter/lankar`);
-      const search = page.getByRole("searchbox", { name: "Sök bland länkar och kurser" });
+      assert.equal(await page.getByRole("heading", { name: /Kurser och/ }).count(), 0, "kurslistan ska vara borta");
+      const search = page.getByRole("searchbox", { name: "Sök bland länkarna" });
       await search.fill("tenta");
       await page.locator("#grupp-tentor").waitFor();
       await search.fill("732G33");
-      await page.getByRole("link", { name: /Programmering i R/ }).first().waitFor();
+      await page.getByRole("link", { name: /Visa tentastatistik för 732G33/ }).waitFor();
       await search.fill("tata24");
       await page.getByRole("link", { name: /Visa tentastatistik för TATA24/ }).waitFor();
       await search.fill("");
@@ -84,21 +85,42 @@ async function login(page, email, password) {
       await page.screenshot({ path: `${SHOTS}/links.png` });
     });
 
-    await step("Kurssidan visar tentastatistik, tabell och länkar", async () => {
+    await step("Länksidan: kurskodsfältet föreslår koder och leder till kursen", async () => {
+      await page.goto(`${BASE}/studenter/lankar`);
+      await page.waitForLoadState("networkidle");
+      const box = page.locator('section[aria-labelledby="tentastatistik"]').getByRole("combobox", { name: "Kurskod" });
+      await box.click();
+      await box.pressSequentially("732g3");
+      const suggestion = page.getByRole("option", { name: "732G33" });
+      await suggestion.waitFor();
+      await Promise.all([page.waitForURL(/\/tentastatistik\/732G33$/), suggestion.click()]);
+    });
+
+    await step("Kurssidan visar graferna, tabellerna och länkarna", async () => {
       await page.goto(`${BASE}/tentastatistik/732g33`);
       await page.waitForURL(/\/tentastatistik\/732G33$/);
+      await page.waitForLoadState("networkidle");
       await page.getByRole("heading", { level: 1, name: "732G33" }).waitFor();
       await page.getByText("Programmering i R").first().waitFor();
       assert.ok((await page.locator('ol > li[tabindex="0"]').count()) > 0, "diagrammet saknar tentatillfällen");
-      await page.getByRole("link", { name: /Y-sektionen/ }).first().waitFor();
+      const trend = page.getByRole("img", { name: /Godkända över tid/ });
+      await trend.waitFor();
+      await page.getByRole("heading", { name: "Betyg de senaste tre åren" }).waitFor();
+      await trend.hover();
+      await page.getByText(/^hela \d{4}$/).waitFor();
+      await page.screenshot({ path: `${SHOTS}/exam-stats-graphs.png` });
+      assert.equal(await page.locator('a[href*="ysektionen.se"]').count(), 0, "Y-sektionen ska inte länkas");
       await page.getByRole("link", { name: /liustats/ }).first().waitFor();
       await page.getByRole("button", { name: "Tabell" }).click();
-      await page.getByRole("table").waitFor();
+      await page.getByRole("table", { name: /Betyg per tentatillfälle/ }).waitFor();
+      await page.getByRole("heading", { name: "Per år" }).waitFor();
+      await page.getByRole("table", { name: /Andel godkända per år/ }).waitFor();
       await page.screenshot({ path: `${SHOTS}/exam-stats.png`, fullPage: true });
     });
 
     await step("Tentastatistik för vilken kurs som helst via kurskoden", async () => {
       await page.goto(`${BASE}/tentastatistik`);
+      assert.equal(await page.getByRole("heading", { name: /Våra/ }).count(), 0, "programmens kurser ska vara borta");
       const box = page.getByRole("combobox", { name: "Kurskod" });
       await box.fill("tata24");
       await box.press("Enter");
@@ -262,26 +284,16 @@ async function login(page, email, password) {
       await page.waitForURL(/\/admin\?nekad=1/);
     });
 
-    await step("Utskottskonto nekas kurslistan, länkarna och bildsidan", async () => {
+    await step("Utskottskonto nekas länkarna och bildsidan", async () => {
       await page.goto(`${BASE}/admin/bilder`);
-      await page.waitForURL(/\/admin\?nekad=1/);
-      await page.goto(`${BASE}/admin/kurser`);
       await page.waitForURL(/\/admin\?nekad=1/);
       await page.goto(`${BASE}/admin/lankar`);
       await page.waitForURL(/\/admin\?nekad=1/);
     });
 
-    await step("UBU lägger till en kurs som syns på länksidan", async () => {
-      await page.context().clearCookies();
-      await login(page, "ubu@statlin.se", "demo-statlin-2026");
-      await page.goto(`${BASE}/admin/kurser`);
-      await page.fill('input[name="code"]', "tata24");
-      await page.fill('input[name="name"]', "Linjär algebra");
-      await page.selectOption('select[name="program"]', "master");
-      await page.fill('input[name="credits"]', "6");
-      await Promise.all([page.waitForURL(/\/admin\/kurser\?sparad=1/), page.getByRole("button", { name: "Lägg till kurs" }).click()]);
-      await page.goto(`${BASE}/studenter/lankar?program=master`);
-      await page.locator("#kurslista").getByText("TATA24", { exact: true }).waitFor();
+    await step("Kurslistan är borta ur adminpanelen", async () => {
+      assert.equal(await page.locator('nav[aria-label="Adminmeny"] a[href="/admin/kurser"]').count(), 0, "menyn ska inte länka till Kurser");
+      assert.equal((await page.goto(`${BASE}/admin/kurser`)).status(), 404);
     });
 
     await step("Admin skapar konto och får engångslösenord", async () => {

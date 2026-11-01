@@ -252,6 +252,10 @@ const steps: string[] = [
   /* 7: grafiskt ansvar – kontot byter omslag, galleribilder och loggor på hela sajten och laddar upp grafiskt material */ `
   ALTER TABLE users ADD COLUMN design INTEGER NOT NULL DEFAULT 0;
   `,
+  /* 8: programmens kurslista tas bort – tentastatistiken söks på kurskod – och länken till Y-sektionens tentastatistik */ `
+  DROP TABLE IF EXISTS courses;
+  DELETE FROM links WHERE url LIKE 'https://ysektionen.se/%';
+  `,
 ];
 
 export function migrate(db: Database.Database) {

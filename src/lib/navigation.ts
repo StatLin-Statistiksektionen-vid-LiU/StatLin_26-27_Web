@@ -23,7 +23,7 @@ export const NAV: NavGroup[] = [
       { href: "/studenter/kandidat", label: "Kandidat", description: "Statistik och dataanalys, 180 hp" },
       { href: "/studenter/master", label: "Master", description: "Statistics and Machine Learning, 120 hp" },
       { href: "/studenter/ny-student", label: "Nya studenter", description: "Mottagning, overall och vanliga frågor" },
-      { href: "/studenter/lankar", label: "Länkar", description: "Schema, tentor, kurser och genvägar" },
+      { href: "/studenter/lankar", label: "Länkar", description: "Schema, tentor och genvägar" },
       { href: "/tentastatistik", label: "Tentastatistik", description: "Betyg per tentatillfälle, för alla kurser" },
     ],
   },

@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Fästa länkar och kurser på länksidan. Sparas bara i webbläsaren, så det behövs inget konto.
- * Id:n är "l12" för länken med id 12 och "k732G33" för en kurs (koden ändras aldrig, till skillnad från id).
+ * Fästa länkar på länksidan. Sparas bara i webbläsaren, så det behövs inget konto.
+ * Id:n är "l12" för länken med id 12. Fästa kurser från när sidan hade en kurslista ("k732G33") ligger kvar men visas inte.
  */
 
 const KEY = "statlin-fasta-lankar";

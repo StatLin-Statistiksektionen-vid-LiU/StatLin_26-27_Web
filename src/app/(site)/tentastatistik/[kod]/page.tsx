@@ -3,16 +3,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CourseSearch } from "@/components/exam/course-search";
 import { ExamChart } from "@/components/exam/exam-chart";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "@/components/icons";
+import { ArrowLeft, ArrowUpRight } from "@/components/icons";
 import { PageHero } from "@/components/ui/page-hero";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getExamStats } from "@/lib/data/exam-stats";
-import { getCourseByCode, listCourses } from "@/lib/data/links";
 import { formatTimestamp, todayLocal } from "@/lib/dates";
 import { normalizeCourseCode, visibleOccasions } from "@/lib/exam-stats";
-import { PROGRAMS, formatCredits } from "@/lib/links";
-import type { Course } from "@/lib/types";
-import { safeExternalUrl } from "@/lib/utils";
 
 type Params = PageProps<"/tentastatistik/[kod]">["params"];
 
@@ -21,17 +17,13 @@ async function load(params: Params) {
   const { kod } = await params;
   const code = normalizeCourseCode(kod);
   if (!code) return null;
-  const [result, course] = await Promise.all([getExamStats(code), getCourseByCode(code)]);
-  return { code, course, ...result };
+  return { code, ...(await getExamStats(code)) };
 }
 
 export async function generateMetadata({ params }: PageProps<"/tentastatistik/[kod]">): Promise<Metadata> {
   const data = await load(params);
-  if (!data?.stats) {
-    const title = data?.course ? `Tentastatistik ${data.code} ${data.course.name}` : "Hittade ingen tentastatistik";
-    return { title, robots: { index: false } };
-  }
-  const name = data.stats.title.sv || data.stats.title.en || data.course?.name || "";
+  if (!data?.stats) return { title: "Hittade ingen tentastatistik", robots: { index: false } };
+  const name = data.stats.title.sv || data.stats.title.en;
   const course = `${data.code}${name ? ` ${name}` : ""}`;
   return {
     title: `Tentastatistik ${course}`,
@@ -50,11 +42,10 @@ export default function CourseStatsPage(props: PageProps<"/tentastatistik/[kod]"
 
 async function CourseStats({ params }: { params: Params }) {
   const data = await load(params);
-  if (!data?.stats) return <Missing code={data?.code ?? null} course={data?.course ?? null} unavailable={data?.unavailable ?? false} />;
-  const { code, course, stats, fetchedAt } = data;
-  const name = stats.title.sv || course?.name || stats.title.en;
+  if (!data?.stats) return <Missing code={data?.code ?? null} unavailable={data?.unavailable ?? false} />;
+  const { code, stats, fetchedAt } = data;
+  const name = stats.title.sv || stats.title.en;
   const hasResults = stats.modules.some((m) => visibleOccasions(m).length > 0);
-  const known = await listCourses({ activeOnly: true });
 
   return (
     <>
@@ -73,9 +64,8 @@ async function CourseStats({ params }: { params: Params }) {
             </>
           )
         }
-        aside={course ? <CourseFacts course={course} /> : undefined}
       >
-        <CourseLinks code={code} course={course} />
+        <CourseLinks code={code} />
       </PageHero>
 
       <section className="container-site py-12 md:py-16">
@@ -83,8 +73,8 @@ async function CourseStats({ params }: { params: Params }) {
           <ExamChart stats={stats} today={todayLocal()} />
         ) : (
           <p className="max-w-2xl text-lg text-stone">
-            Det finns statistik för kursen, men inget tentatillfälle har minst fem resultat. Så små grupper visar vi inte – titta hos Y-sektionen
-            eller liustats om du vill se mer.
+            Det finns statistik för kursen, men inget tentatillfälle har minst fem resultat. Så små grupper visar vi inte – titta hos liustats om du
+            vill se mer.
           </p>
         )}
         <p className="mt-12 max-w-3xl border-t border-ink/10 pt-6 text-sm leading-relaxed text-stone">
@@ -103,7 +93,7 @@ async function CourseStats({ params }: { params: Params }) {
             Sök en annan kurs
           </h2>
           <div className="mt-6">
-            <CourseSearch known={known.map((c) => ({ code: c.code, name: c.name }))} />
+            <CourseSearch />
           </div>
         </div>
       </section>
@@ -112,30 +102,21 @@ async function CourseStats({ params }: { params: Params }) {
 }
 
 /** Ingen statistik: okänd kod, en kod som inte ser ut som en kurskod, eller en källa som inte svarar. */
-async function Missing({ code, course, unavailable }: { code: string | null; course: Course | null; unavailable: boolean }) {
-  const known = await listCourses({ activeOnly: true });
+function Missing({ code, unavailable }: { code: string | null; unavailable: boolean }) {
   const lead = unavailable
-    ? "Källan för tentastatistiken svarar inte just nu. Försök igen om en stund, eller titta hos Y-sektionen och liustats så länge."
-    : course
-      ? `${course.name} finns på vårt program, men LiU har ingen tentastatistik för kursen än – den kan vara ny eller sakna tentamen.`
-      : code
-        ? `Hittade ingen tentastatistik för ${code}. Kontrollera kurskoden, eller sök på en annan kurs.`
-        : "Det där ser inte ut som en kurskod. LiU:s kurskoder har sex tecken, till exempel 732G33 eller TATA24.";
+    ? "Källan för tentastatistiken svarar inte just nu. Försök igen om en stund."
+    : code
+      ? `Hittade ingen tentastatistik för ${code}. Kontrollera kurskoden, eller sök på en annan kurs.`
+      : "Det där ser inte ut som en kurskod. LiU:s kurskoder har sex tecken, till exempel 732G33 eller TATA24.";
   return (
     <>
-      <PageHero
-        kicker="Studenter / Tentastatistik"
-        title={code ?? "Tentastatistik"}
-        fitTitle={code ? undefined : "Tentastatistik"}
-        lead={lead}
-        aside={course ? <CourseFacts course={course} /> : undefined}
-      />
+      <PageHero kicker="Studenter / Tentastatistik" title={code ?? "Tentastatistik"} fitTitle={code ? undefined : "Tentastatistik"} lead={lead} />
       <div className="container-site relative z-20 -mt-8 pb-20">
-        <CourseSearch known={known.map((c) => ({ code: c.code, name: c.name }))} />
+        <CourseSearch />
         {code && (
           <div className="mt-10">
             <p className="kicker text-stone">Leta vidare</p>
-            <CourseLinks code={code} course={course} light />
+            <CourseLinks code={code} light />
           </div>
         )}
         <Link href="/tentastatistik" className="mt-10 inline-flex items-center gap-2 font-semibold">
@@ -148,15 +129,12 @@ async function Missing({ code, course, unavailable }: { code: string | null; cou
 }
 
 /** Kursen hos LiU och hos andra som samlar tentor och statistik. */
-function CourseLinks({ code, course, light }: { code: string; course: Course | null; light?: boolean }) {
+function CourseLinks({ code, light }: { code: string; light?: boolean }) {
   const links = [
     { href: `https://studieinfo.liu.se/kurs/${code}`, label: "Kursplan" },
     { href: `https://liutentor.se/search/${code}`, label: "Gamla tentor" },
-    { href: `https://ysektionen.se/student/tentastatistik/${code.toLowerCase()}/`, label: "Y-sektionen" },
     { href: `https://liustats.se/${code}`, label: "liustats" },
   ];
-  const extra = course && safeExternalUrl(course.url);
-  if (extra) links.splice(1, 0, { href: extra, label: "Kurssidan" });
   return (
     <ul className="mt-4 flex flex-wrap gap-3">
       {links.map((l) => (
@@ -169,35 +147,5 @@ function CourseLinks({ code, course, light }: { code: string; course: Course | n
         </li>
       ))}
     </ul>
-  );
-}
-
-/** För kurser på våra program: var i programmet kursen ligger. */
-function CourseFacts({ course }: { course: Course }) {
-  const program = PROGRAMS.find((p) => p.value === course.program);
-  const facts = [
-    ["Program", program ? `${program.label}, ${program.name}` : course.program],
-    ["Termin", course.period ? `${course.term}, period ${course.period}` : String(course.term)],
-    ["Omfattning", course.elective ? `${formatCredits(course.credits)}, valbar` : formatCredits(course.credits)],
-  ];
-  return (
-    <div className="rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6">
-      <p className="kicker text-white/60">På StatLins program</p>
-      <dl className="mt-4 divide-y divide-white/10 text-sm">
-        {facts.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-4 py-3 first:pt-0 last:pb-0">
-            <dt className="text-white/60">{label}</dt>
-            <dd className="text-right font-semibold">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <Link
-        href={`/studenter/lankar${course.program === "master" ? "?program=master" : ""}#kurser`}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white"
-      >
-        <span className="link-underline">Alla kurser på programmet</span>
-        <ArrowRight size={14} />
-      </Link>
-    </div>
   );
 }

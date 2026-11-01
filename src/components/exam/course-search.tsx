@@ -4,10 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { ArrowRight, Search } from "@/components/icons";
 import { normalizeCourseCode } from "@/lib/exam-stats";
-import { normalizeSearch } from "@/lib/links";
 import { cn } from "@/lib/utils";
-
-type Known = { code: string; name: string };
 
 /** Kodlistan (drygt 4 000 koder) hämtas en gång per sidvisning, först när någon börjar skriva. */
 let codesPromise: Promise<string[]> | null = null;
@@ -30,11 +27,9 @@ const HINT = "Skriv en kurskod med sex tecken, till exempel 732G33 eller TATA24.
  * och src/proxy.ts skickar vidare till kurssidan.
  */
 export function CourseSearch({
-  known = [],
   defaultValue = "",
   invalid,
 }: {
-  known?: Known[];
   defaultValue?: string;
   /** Visa tipset om kurskoder direkt, när ?kod= inte var en kurskod. */
   invalid?: boolean;
@@ -48,16 +43,7 @@ export function CourseSearch({
   const listId = useId();
 
   const query = value.replace(/\s+/g, "").toUpperCase();
-  const names = new Map(known.map((k) => [k.code, k.name]));
-  const text = normalizeSearch(value.trim());
-  const suggestions =
-    query.length < 2
-      ? []
-      : [
-          // Våra kurser först, och de går även att hitta på namnet ("programmering").
-          ...known.filter((k) => k.code.startsWith(query) || (text.length >= 3 && normalizeSearch(k.name).includes(text))).map((k) => k.code),
-          ...codes.filter((c) => c.startsWith(query) && !names.has(c)),
-        ].slice(0, MAX_SUGGESTIONS);
+  const suggestions = query.length < 2 ? [] : codes.filter((c) => c.startsWith(query)).slice(0, MAX_SUGGESTIONS);
   const expanded = open && suggestions.length > 0;
 
   function go(raw: string) {
@@ -150,10 +136,9 @@ export function CourseSearch({
               go(code);
             }}
             onMouseEnter={() => setActive(i)}
-            className={cn("flex cursor-pointer items-baseline gap-4 px-5 py-2.5", i === active && "bg-paper")}
+            className={cn("cursor-pointer px-5 py-2.5 font-mono text-sm font-semibold text-red-deep", i === active && "bg-paper")}
           >
-            <span className="w-16 shrink-0 font-mono text-sm font-semibold text-red-deep">{code}</span>
-            <span className="min-w-0 truncate text-sm text-stone">{names.get(code) ?? ""}</span>
+            {code}
           </li>
         ))}
       </ul>

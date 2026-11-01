@@ -6,7 +6,6 @@ import { useState } from "react";
 import { logout } from "@/app/admin/_actions/auth";
 import {
   ArrowUpRight,
-  BarChart,
   Board,
   Calendar,
   Chain,
@@ -23,11 +22,11 @@ import {
   Settings,
   Users,
 } from "@/components/icons";
-import { canManageCourses, hasDesign } from "@/lib/auth/permissions";
+import { hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
-type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "committee_slug" | "design">;
+type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
 
 export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
   const pathname = usePathname();
@@ -38,7 +37,6 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const tasks = { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks };
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
-  const courses = { href: "/admin/kurser", label: "Kurser", Icon: BarChart };
   const images = { href: "/admin/bilder", label: "Bilder", Icon: ImageIcon };
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
   const design = hasDesign(user);
@@ -60,7 +58,6 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             design ? images : null,
             ownPage,
-            canManageCourses(user) ? courses : null,
             design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,
           ],
@@ -73,7 +70,6 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         { href: "/admin/sidor", label: "Sidor", Icon: FileText },
         { href: "/admin/dokument", label: "Dokument", Icon: FileText },
         { href: "/admin/lankar", label: "Länkar", Icon: Chain },
-        courses,
         { href: "/admin/partners", label: "Partners", Icon: Handshake },
       ],
     },

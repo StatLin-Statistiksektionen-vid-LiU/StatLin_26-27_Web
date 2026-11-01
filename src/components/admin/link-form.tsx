@@ -1,6 +1,6 @@
-import { saveCourse, saveLink } from "@/app/admin/_actions/links";
-import { LINK_CATEGORIES, LINK_ICONS, PROGRAMS, formatCredits } from "@/lib/links";
-import type { Course, LinkItem } from "@/lib/types";
+import { saveLink } from "@/app/admin/_actions/links";
+import { LINK_CATEGORIES, LINK_ICONS } from "@/lib/links";
+import type { LinkItem } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { Field, FormSection, Select, TextInput, Toggle } from "./fields";
 
@@ -51,54 +51,6 @@ export function LinkForm({ link, nextOrder = 0 }: { link?: LinkItem | null; next
           defaultChecked={!!link?.featured}
         />
         <Toggle name="active" label="Visas på sajten" defaultChecked={link ? !!link.active : true} />
-      </FormSection>
-    </ActionForm>
-  );
-}
-
-export function CourseForm({ course, nextOrder = 0 }: { course?: Course | null; nextOrder?: number }) {
-  return (
-    <ActionForm action={saveCourse} submitLabel={course ? "Spara" : "Lägg till kurs"} stickyFooter={false}>
-      {course && <input type="hidden" name="id" value={course.id} />}
-      <FormSection title={course ? "Kurs" : "Ny kurs"}>
-        <div className="grid gap-5 sm:grid-cols-[10rem_minmax(0,1fr)]">
-          <Field label="Kurskod" name="code" required>
-            <TextInput name="code" defaultValue={course?.code} maxLength={6} placeholder="732G33" className="font-mono uppercase" />
-          </Field>
-          <Field label="Kursnamn" name="name" required>
-            <TextInput name="name" defaultValue={course?.name} maxLength={140} />
-          </Field>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="Program" name="program">
-            <Select name="program" defaultValue={course?.program ?? "kandidat"}>
-              {PROGRAMS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Termin" name="term">
-            <TextInput name="term" type="number" min={1} max={10} defaultValue={course?.term ?? 1} />
-          </Field>
-          <Field label="Högskolepoäng" name="credits">
-            <TextInput name="credits" inputMode="decimal" defaultValue={course ? formatCredits(course.credits).replace(" hp", "") : "7,5"} />
-          </Field>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Period" name="period" hint="Till exempel 1, 2 eller 1–2.">
-            <TextInput name="period" defaultValue={course?.period} maxLength={20} />
-          </Field>
-          <Field label="Sortering" name="sort_order" hint="Inom terminen. Lägre nummer visas först.">
-            <TextInput name="sort_order" type="number" min={0} defaultValue={course?.sort_order ?? nextOrder} />
-          </Field>
-        </div>
-        <Field label="Egen kurslänk" name="url" hint="Valfri, till exempel kursens webbsida. Kursplanen hos LiU länkas alltid.">
-          <TextInput name="url" type="url" defaultValue={course?.url} placeholder="https://" />
-        </Field>
-        <Toggle name="elective" label="Valbar kurs" defaultChecked={!!course?.elective} />
-        <Toggle name="active" label="Visas på sajten" defaultChecked={course ? !!course.active : true} />
       </FormSection>
     </ActionForm>
   );

@@ -9,27 +9,25 @@ import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { PageHero } from "@/components/ui/page-hero";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getPage } from "@/lib/data/content";
-import { getCourseSummaries } from "@/lib/data/exam-stats";
-import { listCourses, listLinks } from "@/lib/data/links";
+import { listLinks } from "@/lib/data/links";
 import { todayLocal } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "Länkar",
-  description: "Schema, tentor, Lisam, programmens kurser och tentastatistik – allt du behöver som student, samlat på ett ställe.",
+  description: "Schema, tentor, Lisam och tentastatistik för alla LiU-kurser – allt du behöver som student, samlat på ett ställe.",
 };
 
-export default function LinksPage(props: PageProps<"/studenter/lankar">) {
+export default function LinksPage() {
   return (
     <Suspense fallback={<HeroSkeleton />}>
-      <Links searchParams={props.searchParams} />
+      <Links />
     </Suspense>
   );
 }
 
-async function Links({ searchParams }: { searchParams: PageProps<"/studenter/lankar">["searchParams"] }) {
-  const [page, links, courses, sp] = await Promise.all([getPage("lankar"), listLinks({ activeOnly: true }), listCourses({ activeOnly: true }), searchParams]);
+async function Links() {
+  const [page, links] = await Promise.all([getPage("lankar"), listLinks({ activeOnly: true })]);
   if (!page) notFound();
-  const summaries = await getCourseSummaries(courses.map((c) => c.code));
   return (
     <>
       <Editable target={{ type: "page", slug: "lankar" }} label="Redigera sidan" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
@@ -45,7 +43,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/studenter/lan
           }
         />
       </Editable>
-      <LinkBoard links={links} courses={courses} summaries={summaries} initialProgram={sp.program === "master" ? "master" : "kandidat"} />
+      <LinkBoard links={links} />
       {page.body_md.trim() && (
         <section className="container-prose pb-24">
           <Editable target={{ type: "page", slug: "lankar" }} label="Redigera texten">

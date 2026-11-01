@@ -87,7 +87,8 @@ export function QuickLinksCard({ links, extra = [] }: { links: LinkItem[]; extra
         </>
       )}
       <ul className={links.length > 0 ? "divide-y divide-ink/10 border-t border-ink/10" : "divide-y divide-ink/10"}>
-        {[...extra, { href: "/studenter/lankar", label: "Alla länkar" }].map((l) => (
+        {/* En länk som redan är genväg ska inte stå två gånger i samma kort. */}
+        {[...extra.filter((e) => !links.some((l) => l.url === e.href)), { href: "/studenter/lankar", label: "Alla länkar" }].map((l) => (
           <li key={l.href}>
             <AnyLink href={l.href} className="group flex items-center justify-between px-5 py-4 font-semibold hover:bg-paper/60">
               {l.label}

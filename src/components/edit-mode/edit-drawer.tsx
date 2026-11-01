@@ -23,7 +23,6 @@ const TITLES: Record<EditTarget["type"], string> = {
   board: "Styrelseposten",
   "event-images": "Evenemangets bilder",
   "news-cover": "Nyhetens omslag",
-  courses: "Kurslistan",
 };
 
 function adminHref(t: EditTarget): string {
@@ -45,8 +44,6 @@ function adminHref(t: EditTarget): string {
       return `/admin/bilder/evenemang/${t.id}`;
     case "news-cover":
       return "/admin/bilder#nyheter";
-    case "courses":
-      return "/admin/kurser";
   }
 }
 
@@ -193,7 +190,5 @@ function DrawerBody({ target }: { target: EditTarget }) {
           />
         </div>
       );
-    case "courses":
-      return null;
   }
 }

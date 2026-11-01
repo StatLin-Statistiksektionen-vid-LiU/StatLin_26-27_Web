@@ -132,7 +132,7 @@ async function seedDemo(created: { email: string; password: string; role: string
     if (i === 0) db.prepare("UPDATE events SET cover_media_id = ? WHERE id = ?").run(media.id, gasqueId);
   }
 
-  // Påhittad tentastatistik för en av våra kurser och en annan LiU-kurs, så att diagrammen syns i demot
+  // Påhittad tentastatistik för två LiU-kurser, så att diagrammen syns i demot
   // och e2e-testet fungerar utan att källan behöver nås. Kodlistan är de koder sajten tror att källan har.
   const insertStats = db.prepare("INSERT OR REPLACE INTO exam_stats (course_code, data, fetched_at) VALUES (?, ?, ?)");
   const demoStats = [

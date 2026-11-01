@@ -53,6 +53,12 @@ export function parts(local: string) {
   };
 }
 
+/** "12 jan 2024" – för diagram och tabeller, där det är trångt. */
+export function formatDateShort(local: string): string {
+  const p = parts(local);
+  return `${p.day} ${p.monthShort} ${p.year}`;
+}
+
 export function formatDate(local: string, withYear = false): string {
   const d = asUtc(local);
   return (withYear ? dayMonthYear : dayMonth).format(d);

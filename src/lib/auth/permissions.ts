@@ -52,9 +52,6 @@ export const canManageImages = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocuments = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocument = (u: Designer, category: DocumentCategory) => isEditor(u) || (hasDesign(u) && category === "grafiskt");
 
-/** Programmens kurslista: redaktörer och UBU, som bevakar utbildningen. */
-export const canManageCourses = (u: Who & Pick<SessionUser, "committee_slug">) => isEditor(u) || (u.role === "committee" && u.committee_slug === "ubu");
-
 export const canManageUsers = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;

@@ -81,7 +81,6 @@ export type SessionUser = Pick<UserRow, "id" | "email" | "name" | "post" | "role
   design: boolean;
   committee_name: string | null;
   committee_kind: Committee["kind"] | null;
-  committee_slug: string | null;
 };
 
 export interface BoardMember {
@@ -255,20 +254,6 @@ export interface LinkItem {
 }
 
 export type Program = "kandidat" | "master";
-
-export interface Course {
-  id: number;
-  code: string;
-  name: string;
-  credits: number;
-  program: Program;
-  term: number;
-  period: string;
-  elective: number;
-  url: string;
-  sort_order: number;
-  active: number;
-}
 
 export interface SiteSettings {
   contact_email: string;

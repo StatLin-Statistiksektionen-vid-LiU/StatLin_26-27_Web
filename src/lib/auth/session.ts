@@ -74,7 +74,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const row = getDb()
     .prepare(
       `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, u.must_change_password, u.design, c.short_name AS committee_name,
-              c.kind AS committee_kind, c.slug AS committee_slug
+              c.kind AS committee_kind
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN committees c ON c.id = u.committee_id

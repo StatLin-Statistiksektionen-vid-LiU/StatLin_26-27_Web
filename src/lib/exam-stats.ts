@@ -144,15 +144,31 @@ export function summarizeModule(m: ExamModule, now = new Date()): ModuleSummary 
   };
 }
 
-/** Kompakt sammanfattning för kurslistan. */
-export type CourseStatSummary = Pick<ModuleSummary, "from" | "to" | "recent" | "passRate" | "total" | "grades"> & { module: string };
+export type YearPassRate = {
+  year: string;
+  occasions: number;
+  total: number;
+  passed: number;
+  /** Medeldatumet för årets tillfällen, i millisekunder – där året ritas på en tidsaxel. */
+  at: number;
+};
 
-export function courseSummary(stats: ExamStats | null): CourseStatSummary | null {
-  if (!stats) return null;
-  const m = primaryModule(stats);
-  const s = m && summarizeModule(m);
-  if (!m || !s) return null;
-  return { module: m.title, from: s.from, to: s.to, recent: s.recent, passRate: s.passRate, total: s.total, grades: s.grades };
+/** Årets alla skrivningar sammanslagna, äldst först. Ett tillfälle väger alltså efter hur många som skrev. */
+export function passRateByYear(occasions: ExamOccasion[]): YearPassRate[] {
+  const years = new Map<string, ExamOccasion[]>();
+  for (const o of occasions) {
+    const year = o.date.slice(0, 4);
+    years.set(year, [...(years.get(year) ?? []), o]);
+  }
+  return [...years.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([year, list]) => ({
+      year,
+      occasions: list.length,
+      total: resultCount(list),
+      passed: list.reduce((n, o) => n + o.passed, 0),
+      at: list.reduce((n, o) => n + Date.parse(o.date), 0) / list.length,
+    }));
 }
 
 /** "78 %" med hårt mellanslag, så att procenttecknet aldrig hamnar ensamt på nästa rad. */

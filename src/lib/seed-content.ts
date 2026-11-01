@@ -2,7 +2,7 @@
  * Standardinnehåll som läggs in vid första start. Allt går att redigera i adminpanelen.
  * Utskott, förkortningar och loggor kommer från StatLins grafiska styrdokument.
  */
-import type { LinkCategory, Program } from "./types";
+import type { LinkCategory } from "./types";
 
 export const SEED_COMMITTEES = [
   {
@@ -316,7 +316,6 @@ export const SEED_LINKS: SeedLink[] = [
   // Tentor
   { label: "Tentamenstillfällen", description: "När och var går tentan?", url: "https://talprod2.it.liu.se/tentasearch/", category: "tentor", keywords: "tentaschema tentadatum sal" },
   { label: "Hämta rättad tenta", description: "Så får du tillbaka din tenta", url: "https://liuonline.sharepoint.com/sites/student-under-studietiden/SitePages/hamta-rattad-tenta.aspx", category: "tentor", keywords: "rättad tenta hämta" },
-  { label: "Tentastatistik hos Y-sektionen", description: "Betygsfördelning för alla LiU-kurser", url: "https://ysektionen.se/student/tentastatistik/", category: "tentor", keywords: "statistik betyg" },
   { label: "Tentastatistik hos liustats", description: "Studentdriven statistik över tentaresultat", url: "https://liustats.se/", category: "tentor", keywords: "statistik betyg" },
   { label: "Tentastatistik (LiU, officiell)", description: "LiU:s egen sammanställning i Lisam", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Tentamenstatistik.aspx", category: "tentor", keywords: "statistik betyg officiell" },
   { label: "Tentaarkiv (IDA)", description: "Gamla tentor, kräver LiU-inloggning", url: "https://www.ida.liu.se/edu/ugrad/office/old_exams/", category: "tentor", keywords: "gamla tentor arkiv" },
@@ -348,52 +347,6 @@ export const SEED_LINKS: SeedLink[] = [
   { label: "Kalenderflöde", description: "Prenumerera på evenemangen i din kalender", url: "/kalender.ics", category: "statlin", keywords: "ical ics kalender prenumerera" },
   { label: "Dokument", description: "Stadgar, protokoll och styrdokument", url: "/dokument", category: "statlin", keywords: "stadgar protokoll" },
   { label: "Ännu fler LiU-länkar", description: "Tenuil samlar nästan allt för LiU-studenter", url: "https://tenuil.com/", category: "statlin", keywords: "tenuil länkar" },
-];
-
-type SeedCourse = { code: string; name: string; credits: number; program: Program; term: number; period: string; elective: number };
-
-/** Programplanerna för antagning HT 2026 (F7KSA och F7MML) enligt Studieinfo. UBU håller listan aktuell under Admin → Kurser. */
-export const SEED_COURSES: SeedCourse[] = [
-  { code: "732G48", name: "Introduktion till statistik och dataanalys", credits: 20, program: "kandidat", term: 1, period: "1–2", elective: 0 },
-  { code: "764G09", name: "Grundläggande matematik, linjär algebra och logik för statistiker", credits: 10, program: "kandidat", term: 1, period: "1–2", elective: 0 },
-  { code: "732G49", name: "Grundläggande statistik: Inferens", credits: 7.5, program: "kandidat", term: 2, period: "1", elective: 0 },
-  { code: "764G07", name: "Matematisk analys", credits: 15, program: "kandidat", term: 2, period: "1–2", elective: 0 },
-  { code: "732G33", name: "Programmering i R", credits: 7.5, program: "kandidat", term: 2, period: "2", elective: 0 },
-  { code: "732G51", name: "Statistiska undersökningar: Urval och design", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
-  { code: "732G52", name: "Tidsserieanalys", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
-  { code: "732G53", name: "Linjära modeller 1", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
-  { code: "732G54", name: "Linjära modeller 2", credits: 7.5, program: "kandidat", term: 3, period: "", elective: 0 },
-  { code: "732G16", name: "Databaser: design och programmering", credits: 7.5, program: "kandidat", term: 4, period: "", elective: 0 },
-  { code: "732G20", name: "Statistisk teori", credits: 7.5, program: "kandidat", term: 4, period: "", elective: 0 },
-  { code: "732G55", name: "Grundläggande SAS-programmering", credits: 6, program: "kandidat", term: 4, period: "", elective: 0 },
-  { code: "732G56", name: "Statistisk undersökning", credits: 9, program: "kandidat", term: 4, period: "", elective: 0 },
-  { code: "732G08", name: "Multivariata metoder", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
-  { code: "732G34", name: "Statistiska metoder för komplexa data", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
-  { code: "732G43", name: "Bayesiansk statistik", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
-  { code: "732G57", name: "Maskininlärning för statistiker", credits: 7.5, program: "kandidat", term: 5, period: "", elective: 1 },
-  { code: "732G47", name: "Kandidatuppsats i statistik", credits: 15, program: "kandidat", term: 6, period: "", elective: 0 },
-  { code: "732G96", name: "Programmering i Python", credits: 7.5, program: "kandidat", term: 6, period: "", elective: 1 },
-  { code: "764G03", name: "Flervariabelanalys", credits: 7.5, program: "kandidat", term: 6, period: "", elective: 1 },
-  { code: "732A60", name: "Akademiska studier på avancerad nivå", credits: 3, program: "master", term: 1, period: "1", elective: 0 },
-  { code: "732A94", name: "Avancerad programmering i R", credits: 6, program: "master", term: 1, period: "1", elective: 0 },
-  { code: "732A83", name: "Statistiska metoder", credits: 9, program: "master", term: 1, period: "1–2", elective: 0 },
-  { code: "732A99", name: "Maskininlärning", credits: 9, program: "master", term: 1, period: "2", elective: 0 },
-  { code: "732A70", name: "Introduktion till Python", credits: 3, program: "master", term: 1, period: "2", elective: 0 },
-  { code: "732A75", name: "Avancerad Data Mining", credits: 6, program: "master", term: 2, period: "1", elective: 0 },
-  { code: "732A89", name: "Datorintensiva statistiska metoder", credits: 6, program: "master", term: 2, period: "1", elective: 0 },
-  { code: "732A82", name: "Deep Learning", credits: 6, program: "master", term: 2, period: "1–2", elective: 0 },
-  { code: "732A54", name: "Analys av Big Data", credits: 6, program: "master", term: 2, period: "2", elective: 0 },
-  { code: "732A91", name: "Bayesianska metoder", credits: 6, program: "master", term: 2, period: "2", elective: 0 },
-  { code: "732A51", name: "Bioinformatik", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A57", name: "Databasteknik", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A63", name: "Sannolikhetsteori", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A76", name: "Forskningsprojekt", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A80", name: "Tidsserier och sekvensinlärning", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A81", name: "Text Mining", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A88", name: "Multivariata statistiska metoder", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A96", name: "Avancerad maskininlärning", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A98", name: "Visualisering", credits: 6, program: "master", term: 3, period: "", elective: 1 },
-  { code: "732A67", name: "Masteruppsats i statistik", credits: 30, program: "master", term: 4, period: "", elective: 0 },
 ];
 
 export const STAR_COPY = {

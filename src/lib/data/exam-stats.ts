@@ -2,7 +2,7 @@ import "server-only";
 import { after } from "next/server";
 import { cache } from "react";
 import { getDb } from "@/lib/db";
-import { courseSummary, isFail, type CourseStatSummary, type ExamModule, type ExamStats } from "@/lib/exam-stats";
+import { isFail, type ExamModule, type ExamStats } from "@/lib/exam-stats";
 import { readDb } from "./db";
 
 /**
@@ -177,35 +177,3 @@ export const getExamStats = cache(async (code: string): Promise<ExamStatsResult>
   const stats = await refreshCourse(code);
   return { stats: stats ?? null, fetchedAt: stats ? new Date().toISOString() : null, unavailable: stats === undefined };
 });
-
-/** Kurslistans sammanfattningar. Väntar aldrig på källan – saknade och gamla kurser hämtas efter svaret, en i taget. */
-export async function getCourseSummaries(codes: string[]): Promise<Record<string, CourseStatSummary | null>> {
-  const db = await readDb();
-  if (codes.length === 0) return {};
-  const rows = db
-    .prepare(`SELECT course_code, data, fetched_at FROM exam_stats WHERE course_code IN (${codes.map(() => "?").join(", ")})`)
-    .all(...codes) as Row[];
-  const saved = new Map(rows.map((r) => [r.course_code, r]));
-  const out: Record<string, CourseStatSummary | null> = {};
-  const todo: string[] = [];
-  for (const code of codes) {
-    const row = saved.get(code);
-    out[code] = row ? courseSummary(parseJson<ExamStats>(row.data)) : null;
-    if (!row || isStale(row.fetched_at)) todo.push(code);
-  }
-  if (todo.length) {
-    after(async () => {
-      const known = new Set(readCodes().codes ?? (await refreshCodes()) ?? []);
-      for (const code of todo) if (known.has(code)) await refreshCourse(code);
-    });
-  }
-  return out;
-}
-
-/** Efter att en kurs sparats i admin: hämta dess statistik i bakgrunden. */
-export function prefetchExamStats(code: string) {
-  after(async () => {
-    const known = new Set(readCodes().codes ?? (await refreshCodes()) ?? []);
-    if (known.has(code)) await refreshCourse(code);
-  });
-}
