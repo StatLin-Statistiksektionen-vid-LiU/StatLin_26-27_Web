@@ -112,7 +112,7 @@ export function Hero() {
 
         {/* Loggan */}
         <div className="flex flex-1 items-center justify-center py-6 md:py-3">
-          <FloatingLogo className="w-[min(82vw,56svh,640px)]" />
+          <FloatingLogo className="w-[min(82vw,56svh,640px)]" formler />
         </div>
 
         <Suspense fallback={<HeroBottom title={null} text={null} />}>

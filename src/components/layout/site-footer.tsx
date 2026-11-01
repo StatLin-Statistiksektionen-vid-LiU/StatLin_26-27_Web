@@ -78,6 +78,8 @@ export function SiteFooter() {
       <div className="container-site relative pt-24">
         <div className="grid gap-14 md:grid-cols-12">
           <div className="md:col-span-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/statlin.svg" alt="" width={64} height={64} loading="lazy" className="logo-kant mb-5 size-16" />
             <p className="kicker text-red">Statistiksektionen i Linköping</p>
             <p className="display-tight mt-5 max-w-md text-[clamp(1.8rem,3.4vw,2.8rem)]">
               Allt blir mer <span className="mono-accent text-red">signifikant</span> tillsammans.

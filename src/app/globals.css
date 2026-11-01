@@ -206,6 +206,11 @@
   }
 }
 
+/* Vit kant runt loggan på svart: ringens ytterkant ligger på 88,4 % av bildens radie. */
+@utility logo-kant {
+  background: radial-gradient(circle closest-side, #fff calc(88.4% + var(--kant, 2px)), transparent calc(88.4% + var(--kant, 2px) + 0.5px));
+}
+
 /* ---------- Komponenter ---------- */
 
 @layer components {
@@ -509,6 +514,31 @@
   animation:
     logo-fade 2s 0.9s ease-out both,
     glow-breathe 7s 2.9s ease-in-out infinite;
+}
+
+/* Formelringen. Vitt glow: drop-shadow(0 0 2px rgb(255 255 255 / 0.8)) drop-shadow(0 0 6px rgb(255 255 255 / 0.5)). */
+.logo-formler {
+  filter: drop-shadow(0 0 2px #ff0707) drop-shadow(0 0 6px rgb(255 7 7 / 0.8));
+  transform: translateZ(-18px);
+  text-rendering: geometricPrecision;
+}
+.logo-formler text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 27px;
+}
+@media (max-width: 640px) {
+  .logo-formler {
+    filter: drop-shadow(0 0 1.5px #ff0707) drop-shadow(0 0 4px rgb(255 7 7 / 0.8));
+  }
+  .logo-formler text {
+    font-size: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-logo:hover .logo-formler text {
+    fill: rgb(255 255 255 / 0.7);
+  }
 }
 
 @keyframes logo-ring-in {

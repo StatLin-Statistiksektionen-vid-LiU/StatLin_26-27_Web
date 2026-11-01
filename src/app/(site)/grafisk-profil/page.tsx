@@ -105,7 +105,7 @@ export default function BrandPage() {
         lead="Gemensamma symboler för gamla och nya medlemmar. En interaktiv sammanfattning av StatLins grafiska styrdokument – med loggor, färgkoder och typsnitt att ladda ner."
         aside={
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/brand/statlin-inverterad.svg" alt="" className="mx-auto hidden w-60 animate-float md:block" />
+          <img src="/brand/statlin.svg" alt="" className="logo-kant mx-auto hidden w-60 animate-float md:block" />
         }
       >
         <a href={GUIDE_PDF} className="btn btn-red" target="_blank" rel="noopener noreferrer">

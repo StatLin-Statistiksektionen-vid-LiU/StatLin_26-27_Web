@@ -3,13 +3,14 @@
 import { useEffect, useId, useRef } from "react";
 import { LOGO_GEOMETRY as G, LOGO_GRID, LOGO_SIGNATURE, LOGO_TEXT, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
 import { cn } from "@/lib/utils";
+import { FormulaRing } from "./formula-ring";
 
 /**
  * Sektionsloggan som svävar i 3D och följer pekaren.
- * Loggan visas i sin inverterade form (styrdokumentet kap. 3.1: alternativ form på svart bakgrund).
+ * Loggan visas i sin officiella form, med en tunn vit kant som skiljer den svarta ringen från den svarta bakgrunden.
  * Introt bygger upp loggan lager för lager; slutläget är alltid den exakta loggan.
  */
-export function FloatingLogo({ className, intro = true }: { className?: string; intro?: boolean }) {
+export function FloatingLogo({ className, intro = true, formler = false }: { className?: string; intro?: boolean; formler?: boolean }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -46,10 +47,7 @@ export function FloatingLogo({ className, intro = true }: { className?: string; 
       const ay = auto ? Math.cos(t / 3400) * 0.25 : targetY;
       x += (ax - x) * 0.055;
       y += (ay - y) * 0.055;
-      el.style.setProperty("--rx", `${(-y * 10).toFixed(3)}deg`);
-      el.style.setProperty("--ry", `${(x * 14).toFixed(3)}deg`);
-      el.style.setProperty("--sx", `${(50 - x * 28).toFixed(2)}%`);
-      el.style.setProperty("--sy", `${(38 - y * 24).toFixed(2)}%`);
+      el.style.transform = `rotateX(${(-y * 10).toFixed(3)}deg) rotateY(${(x * 14).toFixed(3)}deg)`;
       if (running) raf = requestAnimationFrame(loop);
     };
 
@@ -93,14 +91,14 @@ export function FloatingLogo({ className, intro = true }: { className?: string; 
           ref={tiltRef}
           className="logo-tilt relative h-full w-full"
           style={{
-            transform: "rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))",
             transformStyle: "preserve-3d",
             willChange: "transform",
           }}
         >
+          {formler && <FormulaRing />}
           <svg
             viewBox={LOGO_VIEWBOX}
-            className="h-full w-full overflow-visible drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]"
+            className="relative h-full w-full overflow-visible"
             role="img"
             aria-label="StatLins sektionslogga – Statistiksektionen, Linköpings universitet"
           >
@@ -108,10 +106,6 @@ export function FloatingLogo({ className, intro = true }: { className?: string; 
               <clipPath id={`${id}-disc`}>
                 <circle cx={G.cx} cy={G.cy} r={G.ringR} />
               </clipPath>
-              <radialGradient id={`${id}-depth`} cx="50%" cy="35%" r="70%">
-                <stop offset="0%" stopColor="#1d1d1d" />
-                <stop offset="100%" stopColor="#000" />
-              </radialGradient>
               {/* Mjuk diagonal "wipe" som avslöjar signaturen nerifrån vänster – som en stigande graf. */}
               <linearGradient id={`${id}-wipe`} x1="0" y1="1" x2="1" y2="0">
                 <stop offset="0" stopColor="#fff" />
@@ -128,12 +122,13 @@ export function FloatingLogo({ className, intro = true }: { className?: string; 
             </defs>
 
             <g className="logo-ring-group">
-              <circle cx={G.cx} cy={G.cy} r={G.discR} fill={`url(#${id}-depth)`} />
+              <circle cx={G.cx} cy={G.cy} r={468} fill="none" stroke="#fff" strokeOpacity={0.8} strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
+              <circle cx={G.cx} cy={G.cy} r={G.discR} fill="#fff" />
               <g clipPath={`url(#${id}-disc)`} mask={`url(#${id}-grid)`}>
-                <path d={LOGO_GRID} fill="#fff" fillRule="evenodd" />
+                <path d={LOGO_GRID} fill="#000" fillRule="evenodd" />
               </g>
-              <circle cx={G.cx} cy={G.cy} r={G.ringR} fill="none" stroke="#fff" strokeWidth={G.ringW} />
-              <path className="logo-text" d={LOGO_TEXT} fill="#000" fillRule="evenodd" />
+              <circle cx={G.cx} cy={G.cy} r={G.ringR} fill="none" stroke="#000" strokeWidth={G.ringW} />
+              <path className="logo-text" d={LOGO_TEXT} fill="#fff" fillRule="evenodd" />
             </g>
             <g mask={`url(#${id}-sig)`}>
               <path
@@ -148,16 +143,6 @@ export function FloatingLogo({ className, intro = true }: { className?: string; 
               />
             </g>
           </svg>
-
-          {/* Spekulär highlight som följer lutningen */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-[9.5%] rounded-full mix-blend-soft-light"
-            style={{
-              background:
-                "radial-gradient(circle at var(--sx, 50%) var(--sy, 38%), rgb(255 255 255 / 0.55), transparent 55%)",
-            }}
-          />
         </div>
       </div>
 

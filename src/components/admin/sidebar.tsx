@@ -157,7 +157,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
       <div className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden">
         <Link href="/admin" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/statlin-inverterad.svg" alt="" className="size-8" />
+          <img src="/brand/statlin.svg" alt="" className="logo-kant size-8 [--kant:1px]" />
           <span className="display-tight text-sm">
             Stat<span className="text-red">Lin</span> admin
           </span>
@@ -175,7 +175,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
       <aside className="sticky top-0 hidden h-dvh flex-col bg-ink lg:flex">
         <Link href="/admin" className="flex items-center gap-3 px-6 pb-2 pt-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/statlin-inverterad.svg" alt="" className="size-10 transition-transform duration-700 hover:rotate-[-12deg]" />
+          <img src="/brand/statlin.svg" alt="" className="logo-kant size-10 transition-transform duration-700 [--kant:1px] hover:rotate-[-12deg]" />
           <span>
             <span className="display-tight block text-white">
               Stat<span className="text-red">Lin</span>

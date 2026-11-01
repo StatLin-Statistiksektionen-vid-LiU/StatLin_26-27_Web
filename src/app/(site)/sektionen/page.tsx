@@ -47,7 +47,7 @@ async function AboutContent() {
         lead={page?.lead}
         aside={
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/brand/statlin-inverterad.svg" alt="" className="mx-auto hidden w-64 animate-float drop-shadow-[0_30px_50px_rgba(255,7,7,0.25)] md:block" />
+          <img src="/brand/statlin.svg" alt="" className="logo-kant mx-auto hidden w-64 animate-float drop-shadow-[0_30px_50px_rgba(255,7,7,0.25)] md:block" />
         }
       />
       </Editable>

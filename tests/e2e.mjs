@@ -1,4 +1,4 @@
-// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen och grafiskt ansvar
+// End-to-end-test av loggan, inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen och grafiskt ansvar
 // mot en körande server som seedats med demodata och kända lösenord:
 //
 //   ADMIN_PASSWORD=admin-statlin-2026 DEMO_PASSWORD=demo-statlin-2026 npm run seed -- --demo
@@ -60,7 +60,57 @@ async function login(page, email, password) {
   let eventSlug;
   let resourceFile;
 
+  // Formelringens gradient: radie 0 betyder att formlerna är helt dolda.
+  const ringRadius = (p) => p.locator(".logo-formler radialGradient").getAttribute("r");
+  const ringIsHidden = () => document.querySelector(".logo-formler radialGradient").getAttribute("r") === "0";
+  const ringIsVisible = () => Number(document.querySelector(".logo-formler radialGradient").getAttribute("r")) > 100;
+  const moveOverLogo = async (p) => {
+    const box = await p.locator(".floating-logo").boundingBox();
+    await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await p.mouse.move(box.x + box.width / 2 + 5, box.y + box.height / 2 + 5);
+  };
+
   try {
+    await step("Sajten visar den officiella loggan och overallen den inverterade", async () => {
+      await page.goto(`${BASE}/`);
+      await page.locator('header img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
+      await page.locator('footer img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
+      const hero = page.locator('.floating-logo svg[role="img"]');
+      assert.equal(await hero.locator(".logo-text").getAttribute("fill"), "#fff", "texten i herologgan ska vara vit");
+      assert.equal(await page.locator('img[src="/brand/statlin-inverterad.svg"]').count(), 0, "startsidan ska inte visa den inverterade");
+      await page.goto(`${BASE}/studenter/ny-student`);
+      await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
+    });
+
+    await step("Formelringen visas vid musen, försvinner när musen står stilla och sveper av sig själv", async () => {
+      await page.goto(`${BASE}/logga-in`);
+      await page.locator(".floating-logo").first().waitFor({ state: "attached" });
+      assert.equal(await page.locator(".logo-formler").count(), 0, "inloggningen ska inte ha formler");
+      await page.goto(`${BASE}/`);
+      assert.equal(await page.locator(".logo-formler").count(), 1);
+      assert.equal(await ringRadius(page), "0", "formlerna ska vara dolda när sidan laddats");
+      await moveOverLogo(page);
+      await page.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
+      await moveOverLogo(page);
+      await page.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
+      // Musen står stilla, så nästa svep kommer av sig självt.
+      await page.waitForFunction(ringIsVisible, null, { timeout: 12000 });
+    });
+
+    await step("Formelringen är stilla med minskad rörelse", async () => {
+      const stillCtx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+      const still = await stillCtx.newPage();
+      await still.goto(`${BASE}/`);
+      await moveOverLogo(still);
+      await still.waitForTimeout(3500);
+      assert.equal(await ringRadius(still), "0", "gradienten ska inte animeras");
+      const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
+      assert.match(fill, /^(rgba\(255, 255, 255, 0\.7\)|rgb\(255 255 255 \/ 0\.7\))$/, "musen över loggan ska visa hela ringen");
+      await stillCtx.close();
+    });
+
     await step("Genvägsraden på startsidan visar genvägarna", async () => {
       await page.goto(`${BASE}/`);
       const row = page.locator('section[aria-labelledby="genvagar-start"]');

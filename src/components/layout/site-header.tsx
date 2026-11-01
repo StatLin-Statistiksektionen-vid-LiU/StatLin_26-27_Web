@@ -88,11 +88,11 @@ function HeaderView({ pathname }: { pathname: string | null }) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/brand/statlin-inverterad.svg"
+                src="/brand/statlin.svg"
                 alt=""
                 width={36}
                 height={36}
-                className="size-9 transition-transform duration-700 group-hover:rotate-[-12deg]"
+                className="logo-kant size-9 transition-transform duration-700 [--kant:1px] group-hover:rotate-[-12deg]"
               />
             </span>
             <span className="display-tight text-[1.05rem] tracking-tight" translate="no">
