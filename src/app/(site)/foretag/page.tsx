@@ -38,7 +38,7 @@ async function Companies() {
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] rounded-[1.75rem] bg-ink p-7 text-white">
           <p className="kicker text-white/50">Kontakt</p>
-          <p className="display-tight mt-3 text-2xl">Näringslivsansvarig</p>
+          <p className="display-tight mt-3 text-2xl">Näringslivs&shy;ansvarig</p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-white/70">
             SASU tar fram upplägg för lunchföreläsningar, case, annonser och STAR. Berätta vad ni vill uppnå så återkommer vi.
           </p>

@@ -240,6 +240,40 @@ async function login(page, email, password) {
       await page.waitForURL(/logga-in/);
     });
 
+    await step("Fyra sidor går inte att scrolla åt sidan vid 320 px, och texten ryms", async () => {
+      const phoneCtx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      const problems = [];
+      for (const [address, texts] of [
+        ["/sektionen", 'main a[href^="mailto:"]'],
+        ["/sektionen/styrelsen", 'main a[href^="mailto:"]'],
+        ["/foretag", "main p.display-tight"],
+        ["/grafisk-profil", "main h2"],
+      ]) {
+        await phone.goto(`${BASE}${address}`);
+        await phone.locator(texts).first().waitFor();
+        await phone.waitForLoadState("networkidle");
+        await phone.evaluate(() => document.fonts.ready);
+        const width = await phone.evaluate(() => document.documentElement.scrollWidth);
+        if (width !== 320) problems.push(`${address} är ${width} px bred`);
+        const menu = await phone.getByRole("button", { name: "Öppna meny" }).boundingBox();
+        if (menu.x < 0 || menu.x + menu.width > 320) problems.push(`${address}: menyknappen ligger på ${menu.x}–${menu.x + menu.width} px`);
+        // Text kan rinna ur sin ruta utan att rutan växer, så mät själva texten.
+        const outside = await phone.locator(texts).evaluateAll((elements) =>
+          elements
+            .filter((element) => {
+              const range = document.createRange();
+              range.selectNodeContents(element);
+              return range.getBoundingClientRect().right > element.getBoundingClientRect().right + 0.5;
+            })
+            .map((element) => element.innerText),
+        );
+        if (outside.length) problems.push(`${address}: ${outside.join(", ")} rinner ur sin ruta`);
+      }
+      await phoneCtx.close();
+      assert.equal(problems.length, 0, problems.join("; "));
+    });
+
     await step("Fel lösenord visar fel och behåller e-post", async () => {
       await page.goto(`${BASE}/logga-in`);
       await page.fill("#email", "info@statlin.se");

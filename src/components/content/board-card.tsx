@@ -21,11 +21,29 @@ export function BoardCard({ member }: { member: BoardMember }) {
         {member.bio && <p className="mt-1.5 text-[0.93rem] leading-relaxed text-stone">{member.bio}</p>}
         {member.email && (
           <a href={`mailto:${member.email}`} className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-semibold text-red-deep">
-            <Mail size={15} />
-            <span className="link-underline">{member.email}</span>
+            <Mail size={15} className="max-[24.5rem]:shrink-0" />
+            <EmailText email={member.email} />
           </a>
         )}
       </div>
     </Editable>
+  );
+}
+
+/**
+ * Under 392 px ryms de längsta adresserna inte bredvid ikonen och bryts därför efter @.
+ * Två varianter, eftersom en adress i två textnoder hamnar en bråkdel av en pixel fel på större skärmar.
+ */
+function EmailText({ email }: { email: string }) {
+  const afterAt = email.indexOf("@") + 1;
+  return (
+    <>
+      <span className="link-underline max-[24.5rem]:hidden">{email}</span>
+      <span className="link-underline hidden [overflow-wrap:anywhere] max-[24.5rem]:block">
+        {email.slice(0, afterAt)}
+        <wbr />
+        {email.slice(afterAt)}
+      </span>
+    </>
   );
 }

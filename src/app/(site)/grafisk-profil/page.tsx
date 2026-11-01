@@ -386,13 +386,14 @@ async function Material() {
   );
 }
 
+/** Under 435 px ryms inte de längsta rubrikerna i 2rem, så där följer storleken skärmbredden. */
 function BrandHeading({ index, title, dark }: { index: string; title: string; dark?: boolean }) {
   return (
     <div>
       <p className={cn("kicker", dark ? "text-white/50" : "text-stone")}>
         <span className="text-red">§ {index}</span> · Grafiskt styrdokument
       </p>
-      <h2 className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)]">{title}</h2>
+      <h2 className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)] max-[27.1875rem]:text-[7vw]">{title}</h2>
     </div>
   );
 }
