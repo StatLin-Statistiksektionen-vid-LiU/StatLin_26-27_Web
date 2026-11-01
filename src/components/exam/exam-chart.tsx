@@ -257,7 +257,8 @@ function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption:
               <th scope="col" className="kicker px-4 py-3 font-medium text-stone">
                 År
               </th>
-              <th scope="col" className="kicker px-3 py-3 text-right font-medium text-stone">
+              {/* På mobil räcker inte bredden till alla fyra, och Godkända är siffran man kommer hit för. */}
+              <th scope="col" className="kicker hidden px-3 py-3 text-right font-medium text-stone sm:table-cell">
                 Tillfällen
               </th>
               <th scope="col" className="kicker px-3 py-3 text-right font-medium text-stone">
@@ -276,7 +277,7 @@ function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption:
                   <th scope="row" className="tabular px-4 py-2.5 text-left font-normal">
                     {y.year}
                   </th>
-                  <td className="tabular px-3 py-2.5 text-right">{y.occasions}</td>
+                  <td className="tabular hidden px-3 py-2.5 text-right sm:table-cell">{y.occasions}</td>
                   <td className="tabular px-3 py-2.5 text-right">{y.total}</td>
                   <td className="tabular px-4 py-2.5 text-right font-semibold">{formatPercent(y.passed / y.total)}</td>
                 </tr>
