@@ -16,7 +16,7 @@ const HIDDEN_BELOW = 8;
 
 const FIRST_SWEEP_MS = 2600;
 const SWEEP_MS = 7000;
-const SWEEP_PERIOD_MS = 9000;
+const SWEEP_PERIOD_MS = 240000;
 const STILL_MS = 1000;
 const TAP_MS = 5000;
 const DRAW_MS = 30;

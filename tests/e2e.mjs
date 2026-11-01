@@ -82,7 +82,7 @@ async function login(page, email, password) {
       await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
     });
 
-    await step("Formelringen visas vid musen, försvinner när musen står stilla och sveper av sig själv", async () => {
+    await step("Formelringen visas vid musen och försvinner när musen står stilla", async () => {
       await page.goto(`${BASE}/logga-in`);
       await page.locator(".floating-logo").first().waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 0, "inloggningen ska inte ha formler");
@@ -95,8 +95,38 @@ async function login(page, email, password) {
       await moveOverLogo(page);
       await page.waitForFunction(ringIsVisible, null, { timeout: 5000 });
       await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
-      // Musen står stilla, så nästa svep kommer av sig självt.
-      await page.waitForFunction(ringIsVisible, null, { timeout: 12000 });
+    });
+
+    await step("Formelringen sveper efter 2,6 sekunder och sedan var 4:e minut", async () => {
+      const clockCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const clocked = await clockCtx.newPage();
+      await clocked.clock.install();
+      await clocked.goto(`${BASE}/`);
+      await clocked.locator(".logo-formler").waitFor({ state: "attached" });
+      assert.equal(await ringRadius(clocked), "0", "formlerna ska vara dolda när sidan laddats");
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 10000 });
+      const sweptAt = await clocked.evaluate(() => performance.now());
+      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      // Spolar fram till en tid räknat från första svepet och ger ringen en sekund på sig att rita.
+      const forwardTo = async (ms) => {
+        await clocked.clock.fastForward(ms - (await clocked.evaluate(() => performance.now())));
+        await clocked.waitForTimeout(1000);
+      };
+      await forwardTo(sweptAt + 235_000);
+      assert.equal(await ringRadius(clocked), "0", "inget nytt svep före 4 minuter");
+      await forwardTo(sweptAt + 241_000);
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      // Är loggan utanför skärmen när svepet ska gå hoppas det över. Nästa kommer 4 minuter senare, inte när man scrollar tillbaka.
+      await clocked.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+      await clocked.waitForTimeout(500);
+      await forwardTo(sweptAt + 482_000);
+      await clocked.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await clocked.waitForTimeout(1000);
+      assert.equal(await ringRadius(clocked), "0", "svepet som hoppades över ska inte komma i efterhand");
+      await forwardTo(sweptAt + 723_000);
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await clockCtx.close();
     });
 
     await step("Formelringen är stilla med minskad rörelse", async () => {
