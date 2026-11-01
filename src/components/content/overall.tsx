@@ -1,6 +1,7 @@
 /**
  * Studentoverallen enligt styrdokumentet (kap. 6.1.1): svart med röda revärer längs
- * ärmar och benens utsida, namnet i röda bokstäver och sektionsloggan inverterad på ryggen.
+ * ärmar och benens utsida och namnet i röda bokstäver. Ryggen avviker avsiktligt från kapitlet:
+ * den visar den officiella loggan i stället för den inverterade.
  */
 export function Overall({ side, name = "NAMN" }: { side: "fram" | "bak"; name?: string }) {
   const body =
@@ -31,7 +32,11 @@ export function Overall({ side, name = "NAMN" }: { side: "fram" | "bak"; name?: 
           ))}
         </>
       ) : (
-        <image href="/brand/statlin-inverterad.svg" x="135" y="120" width="130" height="130" />
+        <>
+          {/* Loggans svarta ring slutar på 57,5 enheter och smälter annars ihop med tyget. Kanten är lika bred oavsett storlek. */}
+          <circle cx="200" cy="185" r="57.5" fill="none" stroke="#fff" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+          <image href="/brand/statlin.svg" x="135" y="120" width="130" height="130" />
+        </>
       )}
     </svg>
   );

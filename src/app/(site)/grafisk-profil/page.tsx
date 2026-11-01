@@ -291,7 +291,7 @@ export default function BrandPage() {
             <BrandHeading index="6" title="Overallen" dark />
             <p className="mt-6 text-lg leading-relaxed text-white/75">
               Svart overall med röda revärer från halsen längs ärmarna till ärmuppslaget, och från armhålan ned längs benens utsida. Namnet eller
-              smeknamnet sys på med utklippta bokstäver i rött teddytyg, och sektionsloggan sitter i sin inverterade form på ryggen.
+              smeknamnet sys på med utklippta bokstäver i rött teddytyg, och sektionsloggan sitter på ryggen.
             </p>
             <ul className="mt-8 grid gap-3 text-[0.95rem] text-white/70 sm:grid-cols-2">
               <li className="rounded-2xl border border-white/10 p-4">

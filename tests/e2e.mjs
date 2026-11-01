@@ -70,16 +70,45 @@ async function login(page, email, password) {
     await p.mouse.move(box.x + box.width / 2 + 5, box.y + box.height / 2 + 5);
   };
 
+  // Läser av loggan på overallens rygg längs en radie, utifrån och in: mörkt tyg, en ljus kant och sedan loggans svarta ring.
+  const assertLogoEdge = async (back) => {
+    const { data, info } = await sharp(await back.screenshot()).greyscale().raw().toBuffer({ resolveWithObject: true });
+    const scale = info.width / 400;
+    const row = Math.round(185 * scale) * info.width * info.channels;
+    const outer = 57.5 * scale;
+    const levels = [];
+    for (let r = Math.round(outer * 1.2); r >= Math.round(outer * 0.86); r--) levels.push(data[row + (Math.round(200 * scale) + r) * info.channels]);
+    const edge = levels.indexOf(Math.max(...levels));
+    assert.ok(levels[0] < 60, `tyget utanför kanten ska vara mörkt: ${levels}`);
+    assert.ok(levels[edge] > 130, `kanten ska vara ljus: ${levels}`);
+    assert.ok(Math.min(...levels.slice(edge + 1)) < 60, `ringen innanför kanten ska vara svart: ${levels}`);
+  };
+
   try {
-    await step("Sajten visar den officiella loggan och overallen den inverterade", async () => {
+    await step("Sajten visar den officiella loggan, också på overallen", async () => {
       await page.goto(`${BASE}/`);
       await page.locator('header img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
       await page.locator('footer img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
       const hero = page.locator('.floating-logo svg[role="img"]');
       assert.equal(await hero.locator(".logo-text").getAttribute("fill"), "#fff", "texten i herologgan ska vara vit");
       assert.equal(await page.locator('img[src="/brand/statlin-inverterad.svg"]').count(), 0, "startsidan ska inte visa den inverterade");
+      const back = 'svg[aria-label="Overallen bakifrån med sektionsloggan"]';
+      const logoOnEdge = `${back} circle[stroke="#fff"] + image[href="/brand/statlin.svg"]`;
       await page.goto(`${BASE}/studenter/ny-student`);
-      await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
+      await page.locator(logoOnEdge).first().waitFor({ state: "attached" });
+      assert.equal(await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').count(), 0, "overallen ska inte ha den inverterade");
+      // Den inverterade finns kvar som nedladdning under Grafisk profil, men inte på overallen eller i texten om den.
+      await page.goto(`${BASE}/grafisk-profil`);
+      await page.locator(logoOnEdge).waitFor({ state: "attached" });
+      await page.locator('img[src="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
+      assert.equal(await page.getByText("sitter i sin inverterade form").count(), 0);
+      await assertLogoEdge(page.locator(back));
+      // Den minsta overallen: den vita kanten ska synas även när loggan är drygt 45 px bred.
+      const phoneCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      await phone.goto(`${BASE}/studenter/ny-student`);
+      await assertLogoEdge(phone.locator(`${back}:visible`));
+      await phoneCtx.close();
     });
 
     await step("Formelringen visas vid musen och försvinner när musen står stilla", async () => {
