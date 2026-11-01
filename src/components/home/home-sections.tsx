@@ -194,13 +194,14 @@ export async function HomeSections() {
 
       {/* 05 Vägar in – luften ovanför kommer annars från nyheterna, som bara visas när det finns några. */}
       <section className={news.length > 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}>
-        <div className="container-site grid gap-6 lg:grid-cols-2">
+        {/* Under 360 px får ordet STUDENT? inte plats i kortet i rubrikens minsta storlek, så där krymper rubrikerna med skärmen. grid-cols-1 hindrar att innehållet gör kolumnen bredare än sidan. */}
+        <div className="container-site grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Reveal>
             <Link href="/studenter/ny-student" className="noise group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-red p-8 text-white md:p-12">
               <div className="grid-paper pointer-events-none absolute inset-0 text-white" aria-hidden />
               <span className="kicker relative text-white/80">För dig som är ny</span>
               <div className="relative">
-                <h2 className="display text-[clamp(2.4rem,5vw,4.4rem)]">Ny student?</h2>
+                <h2 className="display text-[clamp(2.4rem,5vw,4.4rem)] max-[22.5rem]:text-[10vw]">Ny student?</h2>
                 <p className="mt-4 max-w-md text-lg text-white/85">
                   Mottagningen, overallen och allt du undrar inför första dagen – på kandidaten eller mastern.
                 </p>
@@ -227,7 +228,7 @@ export async function HomeSections() {
                 <Handshake size={16} /> För företag
               </span>
               <div className="relative">
-                <p className="text-[clamp(2.4rem,5vw,4.4rem)] font-light uppercase leading-none tracking-[0.18em] [font-stretch:110%]">STAR</p>
+                <p className="text-[clamp(2.4rem,5vw,4.4rem)] font-light uppercase leading-none tracking-[0.18em] [font-stretch:110%] max-[22.5rem]:text-[10vw]">STAR</p>
                 <div className="mt-2 h-[3px] w-40 bg-[#8f1d1d]" aria-hidden />
                 <p className="mt-5 max-w-md text-lg text-white/80">
                   StatLins arbetsmarknadsdag – och fler sätt att möta Linköpings statistik- och datastudenter.

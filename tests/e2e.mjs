@@ -119,6 +119,29 @@ async function login(page, email, password) {
       }
     });
 
+    await step("Startsidan går inte att scrolla åt sidan vid 320 px, och menyknappen syns helt", async () => {
+      // Mobilemulering: på en telefon följer sidhuvudet sidans bredd, så en för bred sida skjuter ut menyknappen.
+      const phoneCtx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      await phone.goto(`${BASE}/`);
+      await phone.waitForLoadState("networkidle");
+      await phone.evaluate(() => document.fonts.ready);
+      assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth), 320, "sidan ska vara lika bred som skärmen");
+      const menu = await phone.getByRole("button", { name: "Öppna meny" }).boundingBox();
+      assert.ok(menu.x >= 0 && menu.x + menu.width <= 320, `menyknappen ligger på ${menu.x}–${menu.x + menu.width} px`);
+      // Korten klipper det som sticker ut, så sidans bredd säger inget om att rubrikerna får plats.
+      for (const title of [phone.getByRole("heading", { name: "Ny student?" }), phone.locator('main a[href="/foretag"]').getByText("STAR", { exact: true })]) {
+        const spare = await title.evaluate((el) => {
+          const text = document.createRange();
+          text.selectNodeContents(el);
+          const card = el.closest("a");
+          return card.getBoundingClientRect().right - parseFloat(getComputedStyle(card).paddingRight) - text.getBoundingClientRect().right;
+        });
+        assert.ok(spare >= 0, `rubriken går ${-spare} px in i kortets marginal`);
+      }
+      await phoneCtx.close();
+    });
+
     await step("Länksidan: sökning, kurskod och fästa länkar", async () => {
       await page.goto(`${BASE}/studenter/lankar`);
       assert.equal(await page.getByRole("heading", { name: /Kurser och/ }).count(), 0, "kurslistan ska vara borta");
