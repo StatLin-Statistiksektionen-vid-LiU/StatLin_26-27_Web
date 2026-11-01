@@ -22,6 +22,7 @@ const ENTITY_LABELS: Record<string, string> = {
   committee: "utskott",
   page: "sida",
   document: "dokument",
+  resource: "hjälpmedel",
   partner: "partner",
   user: "konto",
   settings: "inställningar",

@@ -255,6 +255,25 @@ export interface LinkItem {
 
 export type Program = "kandidat" | "master";
 
+export type ResourceCategory = "fusklapp" | "kod" | "guide" | "ovrigt";
+
+/** bada = syns under både Kandidat och Master. */
+export type ResourceProgram = Program | "bada";
+
+export interface ResourceItem {
+  id: number;
+  title: string;
+  description: string;
+  program: ResourceProgram;
+  /** 1–6, null = hela programmet. */
+  term: number | null;
+  category: ResourceCategory;
+  media_id: number | null;
+  url: string;
+  created_at: string;
+  file: { href: string; size: number; ext: string; image: boolean } | null;
+}
+
 export interface SiteSettings {
   contact_email: string;
   instagram: string;

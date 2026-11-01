@@ -23,6 +23,7 @@ const TITLES: Record<EditTarget["type"], string> = {
   board: "Styrelseposten",
   "event-images": "Evenemangets bilder",
   "news-cover": "Nyhetens omslag",
+  resources: "Hjälpmedel",
 };
 
 function adminHref(t: EditTarget): string {
@@ -44,6 +45,8 @@ function adminHref(t: EditTarget): string {
       return `/admin/bilder/evenemang/${t.id}`;
     case "news-cover":
       return "/admin/bilder#nyheter";
+    case "resources":
+      return "/admin/hjalpmedel";
   }
 }
 
@@ -172,6 +175,8 @@ function DrawerBody({ target }: { target: EditTarget }) {
       return d.item && d.committees && d.user ? <NewsForm item={d.item} committees={d.committees} user={d.user} onSaved={onSaved} /> : null;
     case "board":
       return d.member && d.committees ? <BoardMemberForm member={d.member} committees={d.committees} nextOrder={d.member.sort_order} onSaved={onSaved} /> : null;
+    case "resources":
+      return null;
     // Bilderna sparas direkt, och sidan bakom panelen uppdateras när de sparats.
     case "event-images":
       return d.images ? (

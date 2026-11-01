@@ -256,6 +256,24 @@ const steps: string[] = [
   DROP TABLE IF EXISTS courses;
   DELETE FROM links WHERE url LIKE 'https://ysektionen.se/%';
   `,
+  /* 9: hjälpmedel per program – fusklappar, GitHub-länkar och annat som styrelsen lägger upp */ `
+  CREATE TABLE resources (
+    id          INTEGER PRIMARY KEY,
+    title       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    program     TEXT NOT NULL CHECK (program IN ('kandidat','master','bada')),
+    term        INTEGER CHECK (term BETWEEN 1 AND 6),               -- NULL = hela programmet
+    category    TEXT NOT NULL CHECK (category IN ('fusklapp','kod','guide','ovrigt')),
+    media_id    INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    url         TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  -- Länken överst i gruppen StatLin. En ny databas har inga länkar än och får den från SEED_LINKS efter migrationerna.
+  INSERT INTO links (label, description, url, keywords, category, sort_order)
+    SELECT 'Hjälpmedel', 'Fusklappar, GitHub-länkar och guider per program', '/studenter/hjalpmedel', 'fusklapp formelblad github kod guide', 'statlin',
+      (SELECT COALESCE(MIN(sort_order), 0) - 1 FROM links WHERE category = 'statlin')
+    WHERE EXISTS (SELECT 1 FROM settings WHERE key = 'seeded_links');
+  `,
 ];
 
 export function migrate(db: Database.Database) {

@@ -7,6 +7,7 @@ import { logout } from "@/app/admin/_actions/auth";
 import {
   ArrowUpRight,
   Board,
+  BookOpen,
   Calendar,
   Chain,
   Close,
@@ -38,6 +39,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
   const images = { href: "/admin/bilder", label: "Bilder", Icon: ImageIcon };
+  const resources = { href: "/admin/hjalpmedel", label: "Hjälpmedel", Icon: BookOpen };
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
   const design = hasDesign(user);
   const groups = [
@@ -50,6 +52,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             images,
+            resources,
             { href: "/admin/utskott", label: "Utskott", Icon: Layers },
           ]
         : [
@@ -57,6 +60,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             design ? images : null,
+            resources,
             ownPage,
             design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,

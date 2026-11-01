@@ -82,6 +82,11 @@ export const Download = (p: IconProps) => (
     <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
   </svg>
 );
+export const BookOpen = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 7v13M12 7a3 3 0 0 0-3-3H4.5A1.5 1.5 0 0 0 3 5.5v11A1.5 1.5 0 0 0 4.5 18H9a3 3 0 0 1 3 2 3 3 0 0 1 3-2h4.5a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 19.5 4H15a3 3 0 0 0-3 3Z" />
+  </svg>
+);
 export const FileText = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />

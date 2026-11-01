@@ -69,6 +69,13 @@ async function Masters() {
               </div>
             </div>
           )}
+          <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
+            <p className="kicker text-stone">Study resources</p>
+            <p className="mt-3 leading-relaxed text-stone">Cheat sheets, GitHub links and guides for your programme, sorted by year and term. The page itself is in Swedish.</p>
+            <Link href="/studenter/hjalpmedel?program=master" className="btn btn-ink mt-5 w-full">
+              See the resources <ArrowRight size={18} />
+            </Link>
+          </div>
           <TranslateTip />
         </div>
       }

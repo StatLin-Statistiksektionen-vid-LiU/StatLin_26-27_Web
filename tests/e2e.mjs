@@ -1,4 +1,4 @@
-// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken och grafiskt ansvar
+// End-to-end-test av inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen och grafiskt ansvar
 // mot en körande server som seedats med demodata och kända lösenord:
 //
 //   ADMIN_PASSWORD=admin-statlin-2026 DEMO_PASSWORD=demo-statlin-2026 npm run seed -- --demo
@@ -58,6 +58,7 @@ async function login(page, email, password) {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   let eventSlug;
+  let resourceFile;
 
   try {
     await step("Genvägsraden på startsidan visar genvägarna", async () => {
@@ -129,6 +130,41 @@ async function login(page, email, password) {
       await page.getByText("Betyg per tillfälle").waitFor();
       await page.goto(`${BASE}/tentastatistik/XYZ999`);
       await page.getByText("Hittade ingen tentastatistik för XYZ999").waitFor();
+    });
+
+    await step("Kurskod som hann skrivas innan sidan hydrerats går också att söka på", async () => {
+      const scripts = /_next\/static\/.*\.js/;
+      const slowly = async (route) => {
+        await new Promise((r) => setTimeout(r, 2000));
+        await route.continue();
+      };
+      await page.route(scripts, slowly);
+      await page.goto(`${BASE}/tentastatistik`, { waitUntil: "commit" });
+      const box = page.getByRole("combobox", { name: "Kurskod" });
+      await box.fill("tata24");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+      await page.unroute(scripts, slowly);
+      await box.press("Enter");
+      await page.waitForURL(/\/tentastatistik\/TATA24$/);
+    });
+
+    await step("Hjälpmedelssidan är öppen och nås från programmen, men adminsidan kräver inloggning", async () => {
+      await page.goto(`${BASE}/studenter/hjalpmedel`);
+      await page.getByRole("heading", { name: "Hjälpmedel", level: 1 }).waitFor();
+      assert.equal(await page.getByRole("tab", { name: "Kandidat" }).getAttribute("aria-selected"), "true");
+      await page.getByText("Det finns inga hjälpmedel här ännu.").waitFor();
+      await page.goto(`${BASE}/studenter/lankar`);
+      await page.locator('main a[href="/studenter/hjalpmedel"]').first().waitFor();
+      assert.equal(await page.locator('main a[href="/studenter/hjalpmedel"]').count(), 1, "länken ska finnas en gång på länksidan");
+      await page.goto(`${BASE}/studenter/kandidat`);
+      await page.locator('main a[href="/studenter/hjalpmedel"]').waitFor();
+      for (const address of ["/studenter/master", "/en/masters"]) {
+        await page.goto(`${BASE}${address}`);
+        await page.locator('main a[href="/studenter/hjalpmedel?program=master"]').waitFor();
+      }
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await page.waitForURL(/logga-in/);
     });
 
     await step("Fel lösenord visar fel och behåller e-post", async () => {
@@ -296,6 +332,68 @@ async function login(page, email, password) {
       assert.equal((await page.goto(`${BASE}/admin/kurser`)).status(), 404);
     });
 
+    await step("Utskottskonto lägger upp en fusklapp som PDF, och den syns under rätt termin", async () => {
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await page.waitForLoadState("networkidle");
+      assert.ok((await page.locator('nav[aria-label="Adminmeny"] a[href="/admin/hjalpmedel"]').count()) > 0, "menyn ska länka till Hjälpmedel");
+      await page.fill('input[name="title"]', "Formelblad inferens");
+      await page.selectOption('select[name="category"]', "fusklapp");
+      await page.selectOption('select[name="program"]', "kandidat");
+      await page.selectOption('select[name="term"]', "3");
+      const pdf = path.join(IMG, "formelblad.pdf");
+      fs.writeFileSync(pdf, "%PDF-1.4\n% testfil\n");
+      await page.setInputFiles('input[name="file"]', pdf);
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?sparad=1/), page.getByRole("button", { name: "Lägg till hjälpmedel" }).click()]);
+      await page.getByText("Hjälpmedlet är tillagt.").waitFor();
+
+      await page.goto(`${BASE}/studenter/hjalpmedel`);
+      const list = page.getByRole("tabpanel");
+      await list.getByRole("heading", { name: "År 2" }).waitFor();
+      await list.getByRole("heading", { name: /Termin 3/ }).waitFor();
+      const row = list.getByRole("link", { name: /Formelblad inferens/ });
+      await row.getByText("Fusklapp", { exact: true }).waitFor();
+      await row.getByText(/PDF · \d+ B/).waitFor();
+      resourceFile = await row.getAttribute("href");
+      assert.equal((await fetch(`${BASE}${resourceFile}`)).status, 200, "filen ska gå att öppna utan inloggning");
+      await page.getByRole("link", { name: "Hantera hjälpmedel" }).waitFor();
+
+      await page.getByRole("tab", { name: "Master" }).click();
+      await page.getByText("Det finns inga hjälpmedel här ännu.").waitFor();
+      assert.ok(page.url().endsWith("?program=master"), "fliken ska hamna i adressen");
+    });
+
+    await step("Ett foto går också bra som hjälpmedel", async () => {
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await page.waitForLoadState("networkidle");
+      await page.fill('input[name="title"]', "Foto av anteckningar");
+      await page.selectOption('select[name="category"]', "guide");
+      await page.selectOption('select[name="program"]', "master");
+      await page.selectOption('select[name="term"]', "1");
+      await page.setInputFiles('input[name="file"]', path.join(IMG, "test-2.jpg"));
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?sparad=1/), page.getByRole("button", { name: "Lägg till hjälpmedel" }).click()]);
+      await page.goto(`${BASE}/studenter/hjalpmedel?program=master`);
+      const row = page.getByRole("tabpanel").getByRole("link", { name: /Foto av anteckningar/ });
+      await row.getByText("Bild", { exact: true }).waitFor();
+      const href = await row.getAttribute("href");
+      assert.match(href, /-2000\.webp$/, "länken ska gå till den största bilden");
+      assert.equal((await fetch(`${BASE}${href}`)).status, 200);
+    });
+
+    await step("Hjälpmedel kräver en fil eller länk, och Master har bara fyra terminer", async () => {
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await page.waitForLoadState("networkidle");
+      const submit = page.getByRole("button", { name: "Lägg till hjälpmedel" });
+      await page.fill('input[name="title"]', "Utan innehåll");
+      await submit.click();
+      await page.getByText("Ladda upp en fil eller ange en länk.").waitFor();
+      await page.fill('input[name="url"]', "https://github.com/statlin/tentor");
+      await page.selectOption('select[name="program"]', "master");
+      await page.selectOption('select[name="term"]', "5");
+      await submit.click();
+      await page.getByText("Mastern har bara fyra terminer.").waitFor();
+      assert.equal(await page.getByRole("link", { name: /Utan innehåll/ }).count(), 0);
+    });
+
     await step("Admin skapar konto och får engångslösenord", async () => {
       await page.context().clearCookies();
       await login(page, "admin@statlin.se", "admin-statlin-2026");
@@ -352,6 +450,58 @@ async function login(page, email, password) {
       await page.getByText("Inställningarna är sparade.").waitFor();
       await page.goto(BASE);
       await page.locator("footer").getByText("Testgatan 1, 583 30 Linköping").waitFor();
+    });
+
+    await step("Redaktör lägger till en GitHub-länk för båda programmen", async () => {
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await page.waitForLoadState("networkidle");
+      await page.fill('input[name="title"]', "R-kod från labbarna");
+      await page.selectOption('select[name="category"]', "kod");
+      await page.selectOption('select[name="program"]', "bada");
+      await page.fill('input[name="url"]', "https://github.com/statlin/r-kod");
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?sparad=1/), page.getByRole("button", { name: "Lägg till hjälpmedel" }).click()]);
+      for (const address of ["/studenter/hjalpmedel", "/studenter/hjalpmedel?program=master"]) {
+        await page.goto(`${BASE}${address}`);
+        const list = page.getByRole("tabpanel");
+        await list.getByRole("heading", { name: "Hela programmet" }).waitFor();
+        const row = list.getByRole("link", { name: /R-kod från labbarna/ });
+        await row.getByText("Kod", { exact: true }).waitFor();
+        await row.getByText("github.com").waitFor();
+        assert.equal(await row.getAttribute("href"), "https://github.com/statlin/r-kod");
+      }
+      assert.equal(await page.getByRole("tab", { name: "Master" }).getAttribute("aria-selected"), "true", "?program=master ska öppna fliken Master");
+      assert.equal(await page.getByRole("tabpanel").getByRole("link", { name: /Formelblad inferens/ }).count(), 0, "fusklappen är bara för Kandidat");
+      await page.screenshot({ path: `${SHOTS}/hjalpmedel-master.png`, fullPage: true });
+    });
+
+    await step("Hjälpmedel som ändras och tas bort försvinner från sidan, och filen med", async () => {
+      // Listan sköts gemensamt: info ändrar fusklappen som SCB lade upp.
+      await page.goto(`${BASE}/admin/hjalpmedel`);
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\/\d+$/), page.getByRole("link", { name: /Formelblad inferens/ }).click()]);
+      const editUrl = page.url();
+      await page.waitForLoadState("networkidle");
+      await page.check('input[name="remove_file"]');
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText("Ladda upp en fil eller ange en länk.").waitFor();
+      await page.uncheck('input[name="remove_file"]');
+      await page.selectOption('select[name="term"]', "4");
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText("Hjälpmedlet är sparat.").waitFor();
+      await page.goto(`${BASE}/studenter/hjalpmedel`);
+      const list = page.getByRole("tabpanel");
+      await list.getByRole("heading", { name: /Termin 4/ }).waitFor();
+      assert.equal(await list.getByRole("heading", { name: /Termin 3/ }).count(), 0);
+
+      await page.goto(editUrl);
+      await page.waitForLoadState("networkidle");
+      page.once("dialog", (d) => d.accept());
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?raderad=1/), page.getByRole("button", { name: "Ta bort" }).click()]);
+      await page.goto(`${BASE}/admin`);
+      await page.getByText(/tog bort hjälpmedel/).waitFor();
+      await page.goto(`${BASE}/studenter/hjalpmedel`);
+      await page.getByRole("tabpanel").getByRole("heading", { name: "Hela programmet" }).waitFor();
+      assert.equal(await page.getByRole("tabpanel").getByRole("link", { name: /Formelblad inferens/ }).count(), 0);
+      assert.equal((await fetch(`${BASE}${resourceFile}`)).status, 404, "filen ska vara borttagen");
     });
 
     await step("Utskottskonto nekas inställningarna", async () => {

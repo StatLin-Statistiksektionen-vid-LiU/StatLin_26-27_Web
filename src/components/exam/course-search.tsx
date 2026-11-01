@@ -63,7 +63,8 @@ export function CourseSearch({
       role="search"
       onSubmit={(e) => {
         e.preventDefault();
-        go(expanded && active >= 0 ? suggestions[active] : value);
+        // Fältets eget värde: det man hann skriva innan sidan hydrerats finns inte i value.
+        go(expanded && active >= 0 ? suggestions[active] : String(new FormData(e.currentTarget).get("kod")));
       }}
       className="relative w-full max-w-xl"
     >

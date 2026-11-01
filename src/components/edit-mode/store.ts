@@ -20,7 +20,9 @@ export type EditTarget =
   | { type: "board"; id: number }
   /** Bara bilderna – även för grafiskt ansvarig, som inte får ändra texten. */
   | { type: "event-images"; id: number; committeeId: number | null }
-  | { type: "news-cover"; id: number; committeeId: number | null };
+  | { type: "news-cover"; id: number; committeeId: number | null }
+  /** Hjälpmedlen sköts i adminpanelen. Målet styr bara vem som ser länken dit. */
+  | { type: "resources" };
 
 type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null };
 
@@ -90,6 +92,8 @@ export function canEditTarget(user: EditUser, target: EditTarget): boolean {
     case "event-images":
     case "news-cover":
       return canEditImages(user, { committee_id: target.committeeId });
+    case "resources":
+      return true;
   }
 }
 

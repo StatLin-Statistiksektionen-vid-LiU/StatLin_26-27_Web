@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 const LINKS = [
   { href: "/tentastatistik", label: "Tentastatistik" },
+  { href: "/studenter/hjalpmedel", label: "Hjälpmedel" },
   { href: "https://studieinfo.liu.se/program/F7KSA", label: "Programmet i Studieinfo" },
 ];
 

@@ -119,6 +119,7 @@ export async function deleteMediaIfUnused(mediaId: number | null | undefined) {
         (SELECT COUNT(*) FROM board_members WHERE photo_media_id = @id) +
         (SELECT COUNT(*) FROM partners WHERE logo_media_id = @id) +
         (SELECT COUNT(*) FROM documents WHERE media_id = @id) +
+        (SELECT COUNT(*) FROM resources WHERE media_id = @id) +
         (SELECT COUNT(*) FROM committees WHERE logo_url LIKE '%' || (SELECT path_base FROM media WHERE id = @id) || '%') AS n`,
     )
     .get({ id: mediaId }) as { n: number };

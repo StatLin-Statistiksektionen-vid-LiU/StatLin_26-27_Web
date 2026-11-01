@@ -149,6 +149,12 @@ StatLin står för *Statistiksektionen i Linköping* och skrivs med versalt S oc
     body_md: "",
   },
   {
+    slug: "hjalpmedel",
+    title: "Hjälp*medel*",
+    lead: "Fusklappar, GitHub-länkar och guider till kandidaten och mastern, sorterade på årskurs och termin.",
+    body_md: "",
+  },
+  {
     slug: "ny-student",
     title: "Ny student",
     lead: "Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.",
@@ -342,6 +348,7 @@ export const SEED_LINKS: SeedLink[] = [
   { label: "Språkverkstaden", description: "Hjälp med att skriva rapporter och uppsatser", url: "https://liuonline.sharepoint.com/sites/student-stod-och-kontakt/SitePages/Sprakstod-svenska.aspx", category: "stod", keywords: "skriva språk handledning" },
   { label: "StuFF", description: "Studentkåren för filosofiska fakulteten", url: "https://stuff.liu.se/", category: "stod", keywords: "studentkår kår" },
   // StatLin
+  { label: "Hjälpmedel", description: "Fusklappar, GitHub-länkar och guider per program", url: "/studenter/hjalpmedel", category: "statlin", keywords: "fusklapp formelblad github kod guide" },
   { label: "UBU – studiebevakning", description: "Problem med en kurs? Säg till, gärna anonymt", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
   { label: "Evenemang", description: "Allt StatLin ordnar", url: "/evenemang", category: "statlin", keywords: "event sittning pub" },
   { label: "Kalenderflöde", description: "Prenumerera på evenemangen i din kalender", url: "/kalender.ics", category: "statlin", keywords: "ical ics kalender prenumerera" },

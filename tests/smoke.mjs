@@ -24,6 +24,7 @@ const PAGES = [
   "/studenter/master",
   "/studenter/ny-student",
   "/studenter/lankar",
+  "/studenter/hjalpmedel",
   "/tentastatistik",
   "/tentastatistik/732G33",
   "/foretag",
