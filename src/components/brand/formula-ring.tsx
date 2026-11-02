@@ -121,6 +121,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       if (sweepStart === null && targetWidth === 0 && width < HIDDEN_BELOW) {
         width = 0;
         gradient.setAttribute("r", "0");
+        delete layer.dataset.shown;
         running = false;
         return;
       }
@@ -130,6 +131,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     const start = () => {
       if (running || !visible) return;
       running = true;
+      layer.dataset.shown = "true";
       last = performance.now();
       raf = requestAnimationFrame(tick);
     };

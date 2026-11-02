@@ -238,6 +238,8 @@ Sajten visar den officiella loggan. På svart bakgrund smälter den svarta ringe
 
 Startsidans hero har också en formelring (`src/components/brand/formula-ring.tsx`). Formlerna ligger i ett eget lager utanför loggan, så loggan ritas aldrig om. De syns när musen rör sig nära loggan och i ett svep strax efter att sidan laddats och sedan var 4:e minut, och på telefon när man trycker på loggan. Med `prefers-reduced-motion` finns inget svep, och musen över loggan visar hela ringen stilla. Admin väljer glöden under Inställningar → Startsidan, röd (förval) eller vit, medan formlerna alltid är vita. Färgen läses bakom en egen `Suspense`, så loggan ligger kvar i det statiska skalet.
 
+På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan lättare, medan datorn ser ut som förut. Ritytan i heron ritar ungefär 30 gånger per sekund med högst 1,5× upplösning, och linjens glöd är breda genomskinliga streck i stället för skuggoskärpa. Loggan gungar med CSS-animationer i stället för en JS-loop, och med `prefers-reduced-motion` står den still. Introt är en enda rotation av hela loggan, reflexen är en gradient utan oskärpa, kornet i `noise` är borta, och sidhuvudet och evenemangskorten saknar `backdrop-filter`, så sidhuvudet är helt täckande. Rubriken tonas in tidigare och knapparna syns direkt. Tills Archivo har kommit används Arial eller Roboto, skalade till samma bredd, så att rubriken bryts likadant och heron inte hoppar. Medan texten laddas håller en osynlig kopia av standardtexten platsen. De tre nedersta sektionerna har klassen `below-fold`: på en smal telefonskärm får de `content-visibility: auto` och läggs inte ut förrän de närmar sig skärmen.
+
 ## Kommandon
 
 | Kommando | Gör |

@@ -18,7 +18,8 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
   useEffect(() => {
     const el = tiltRef.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // En telefon gungar med CSS i stället, se .logo-tilt i globals.css.
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
 
     let targetX = 0;
     let targetY = 0;
@@ -40,7 +41,7 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
     };
 
     const loop = (t: number) => {
-      // Utan pekare (mobil) gungar loggan själv i en långsam Lissajous-bana.
+      // När pekaren står stilla gungar loggan själv i en långsam Lissajous-bana.
       idle++;
       const auto = idle > 120;
       const ax = auto ? Math.sin(t / 2600) * 0.35 : targetX;
@@ -98,7 +99,7 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
           {ring}
           <svg
             viewBox={LOGO_VIEWBOX}
-            className="relative h-full w-full overflow-visible"
+            className="logo-mark relative h-full w-full overflow-visible"
             role="img"
             aria-label="StatLins sektionslogga – Statistiksektionen, Linköpings universitet"
           >
@@ -147,11 +148,7 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
       </div>
 
       {/* Reflex under loggan */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-[9%] left-1/2 h-[7%] w-[62%] -translate-x-1/2 animate-float-shadow rounded-[50%]"
-        style={{ background: "radial-gradient(closest-side, rgb(255 7 7 / 0.45), transparent)", filter: "blur(14px)" }}
-      />
+      <div aria-hidden className="logo-reflex pointer-events-none absolute left-1/2 -translate-x-1/2 animate-float-shadow rounded-[50%]" />
     </div>
   );
 }

@@ -74,7 +74,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
         className={cn(
           "fixed inset-x-0 top-0 z-50 text-white transition-[background-color,border-color,backdrop-filter] duration-500",
           scrolled || open
-            ? "border-b border-white/[0.08] bg-ink/90 backdrop-blur-xl backdrop-saturate-150"
+            ? "border-b border-white/[0.08] bg-ink/90 backdrop-blur-xl backdrop-saturate-150 pointer-coarse:bg-ink pointer-coarse:backdrop-filter-none"
             : "border-b border-transparent bg-transparent",
         )}
       >

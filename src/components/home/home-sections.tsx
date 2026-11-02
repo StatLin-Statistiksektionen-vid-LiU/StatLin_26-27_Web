@@ -122,7 +122,7 @@ export async function HomeSections() {
       </section>
 
       {/* 03 Utskott */}
-      <section className="noise relative overflow-hidden bg-ink py-24 text-white md:py-32">
+      <section className="below-fold noise relative overflow-hidden bg-ink py-24 text-white [--fold-h:1360px] md:py-32">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
         <div className="container-site relative">
           <Reveal>
@@ -171,7 +171,7 @@ export async function HomeSections() {
 
       {/* 04 Nyheter */}
       {news.length > 0 && (
-        <section className="py-24 md:py-32">
+        <section className="below-fold py-24 [--fold-h:2050px] md:py-32">
           <div className="container-site">
             <Reveal>
               <SectionHeading index="04" kicker="Nyheter" title={<>Senaste <span className="mono-accent text-red-deep">nytt</span></>} href="/nyheter" linkLabel="Alla nyheter" />
@@ -193,7 +193,7 @@ export async function HomeSections() {
       )}
 
       {/* 05 Vägar in – luften ovanför kommer annars från nyheterna, som bara visas när det finns några. */}
-      <section className={news.length > 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}>
+      <section className={`below-fold [--fold-h:860px] ${news.length > 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}`}>
         {/* Under 360 px får ordet STUDENT? inte plats i kortet i rubrikens minsta storlek, så där krymper rubrikerna med skärmen. grid-cols-1 hindrar att innehållet gör kolumnen bredare än sidan. */}
         <div className="container-site grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Reveal>

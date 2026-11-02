@@ -124,6 +124,21 @@
 
 /* ---------- Typografi ---------- */
 
+/* Archivo är bredare än systemets typsnitt. Utan de här fick heron ett hopp när rubriken fick en rad till vid typsnittsbytet. Skalan är uppmätt mot display-tight. */
+@font-face {
+  font-family: "Archivo Reserv Arial";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 100 900;
+  size-adjust: 111%;
+}
+
+@font-face {
+  font-family: "Archivo Reserv Roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 100 900;
+  size-adjust: 122%;
+}
+
 @utility display {
   font-family: var(--font-sans);
   font-stretch: 125%;
@@ -140,6 +155,11 @@
   text-transform: uppercase;
   letter-spacing: -0.015em;
   line-height: 1;
+
+  /* Telefon: reservfonterna är lika breda som Archivo här, så att rubriken bryts likadant innan Archivo har kommit. */
+  @media (pointer: coarse) {
+    font-family: "Archivo Variable", "Archivo Reserv Arial", "Archivo Reserv Roboto", var(--font-sans);
+  }
 }
 
 /* Accentord i rubriker: ärver vikt och versaler från rubriken, bara typsnittet byts. */
@@ -203,6 +223,20 @@
     opacity: 0.06;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* Telefon: blandningsläget kostar ett eget ritpass, och på de här mörka och röda ytorna syns kornet knappt. */
+  @media (pointer: coarse) {
+    &::after {
+      content: none;
+    }
+  }
+}
+
+/* Telefon: en sektion långt ner läggs inte ut förrän den närmar sig skärmen. --fold-h är innehållets ungefärliga höjd vid 390 px, så att sidan inte hoppar när sektionen visas första gången. */
+@utility below-fold {
+  @media (pointer: coarse) and (max-width: 640px) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--fold-h);
   }
 }
 
@@ -516,13 +550,63 @@
     glow-breathe 7s 2.9s ease-in-out infinite;
 }
 
-/* Formelringen. Glöden väljs under Inställningar → Startsidan. */
+/* Reflexen under loggan. */
+.logo-reflex {
+  bottom: -9%;
+  height: 7%;
+  width: 62%;
+  background: radial-gradient(closest-side, rgb(255 7 7 / 0.45), transparent);
+  filter: blur(14px);
+}
+
+/* Telefon: enklare effekter som ser ungefär likadana ut. */
+@media (pointer: coarse) {
+  /* Hela loggan roterar in som en helhet. Maskerna och signaturens glöd skulle ritas om varje bildruta medan sidan laddar. */
+  .floating-logo.is-intro .logo-ring-group,
+  .floating-logo.is-intro .grid-wipe,
+  .floating-logo.is-intro .logo-text,
+  .floating-logo.is-intro .sig-wipe,
+  .floating-logo.is-intro .logo-signature {
+    animation: none;
+  }
+  .floating-logo svg g[mask] {
+    mask: none;
+  }
+  /* Introts slutbild är loggans vanliga utseende, så animationerna fyller bara bakåt. Annars ligger deras lager kvar när introt är slut. */
+  .floating-logo.is-intro .logo-mark {
+    animation: logo-ring-in 1.2s var(--ease-out-expo) backwards;
+  }
+  .floating-logo.is-intro .logo-glow {
+    animation-fill-mode: backwards, none;
+  }
+  /* En högre och svagare gradient i stället för oskärpa, som kostar ett eget ritpass. */
+  .logo-reflex {
+    bottom: -16.75%;
+    height: 22.5%;
+    width: 78%;
+    background: radial-gradient(closest-side, rgb(255 7 7 / 0.13), rgb(255 7 7 / 0.06) 50%, transparent);
+    filter: none;
+  }
+}
+/* Loggan gungar i samma bana som JS-loopen på datorn, men utan arbete på huvudtråden. */
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .logo-tilt {
+    animation:
+      logo-sway-y 8.17s cubic-bezier(0.37, 0, 0.63, 1) -4.085s infinite alternate,
+      logo-sway-x 10.68s cubic-bezier(0.37, 0, 0.63, 1) -5.34s infinite alternate;
+  }
+}
+
+/* Formelringen. Glöden väljs under Inställningar → Startsidan. Filtret kostar ett eget ritpass, så det gäller bara medan ringen syns. */
 .logo-formler {
   --glow-near: #ff0707;
   --glow-far: rgb(255 7 7 / 0.8);
-  filter: drop-shadow(0 0 2px var(--glow-near)) drop-shadow(0 0 6px var(--glow-far));
+  --glow: drop-shadow(0 0 2px var(--glow-near)) drop-shadow(0 0 6px var(--glow-far));
   transform: translateZ(-18px);
   text-rendering: geometricPrecision;
+}
+.logo-formler[data-shown] {
+  filter: var(--glow);
 }
 .logo-formler-vit {
   --glow-near: rgb(255 255 255 / 0.8);
@@ -535,18 +619,37 @@
 }
 @media (max-width: 640px) {
   .logo-formler {
-    filter: drop-shadow(0 0 1.5px var(--glow-near)) drop-shadow(0 0 4px var(--glow-far));
+    --glow: drop-shadow(0 0 1.5px var(--glow-near)) drop-shadow(0 0 4px var(--glow-far));
   }
   .logo-formler text {
     font-size: 30px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .floating-logo:hover .logo-formler {
+    filter: var(--glow);
+  }
   .floating-logo:hover .logo-formler text {
     fill: rgb(255 255 255 / 0.7);
   }
 }
 
+@keyframes logo-sway-y {
+  from {
+    transform: rotateY(-4.9deg);
+  }
+  to {
+    transform: rotateY(4.9deg);
+  }
+}
+@keyframes logo-sway-x {
+  from {
+    rotate: x -2.5deg;
+  }
+  to {
+    rotate: x 2.5deg;
+  }
+}
 @keyframes logo-ring-in {
   from {
     opacity: 0;
