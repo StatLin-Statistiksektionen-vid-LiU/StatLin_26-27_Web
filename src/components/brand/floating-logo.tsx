@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { LOGO_GEOMETRY as G, LOGO_GRID, LOGO_SIGNATURE, LOGO_TEXT, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
 import { cn } from "@/lib/utils";
-import { FormulaRing } from "./formula-ring";
 
 /**
  * Sektionsloggan som svävar i 3D och följer pekaren.
  * Loggan visas i sin officiella form, med en tunn vit kant som skiljer den svarta ringen från den svarta bakgrunden.
  * Introt bygger upp loggan lager för lager; slutläget är alltid den exakta loggan.
+ * `ring` ligger i samma 3D-lager som loggan, och heron lägger formelringen där.
  */
-export function FloatingLogo({ className, intro = true, formler = false }: { className?: string; intro?: boolean; formler?: boolean }) {
+export function FloatingLogo({ className, intro = true, ring }: { className?: string; intro?: boolean; ring?: ReactNode }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -18,7 +18,8 @@ export function FloatingLogo({ className, intro = true, formler = false }: { cla
   useEffect(() => {
     const el = tiltRef.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // En telefon gungar med CSS i stället, se .logo-tilt i globals.css.
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
 
     let targetX = 0;
     let targetY = 0;
@@ -40,7 +41,7 @@ export function FloatingLogo({ className, intro = true, formler = false }: { cla
     };
 
     const loop = (t: number) => {
-      // Utan pekare (mobil) gungar loggan själv i en långsam Lissajous-bana.
+      // När pekaren står stilla gungar loggan själv i en långsam Lissajous-bana.
       idle++;
       const auto = idle > 120;
       const ax = auto ? Math.sin(t / 2600) * 0.35 : targetX;
@@ -95,10 +96,10 @@ export function FloatingLogo({ className, intro = true, formler = false }: { cla
             willChange: "transform",
           }}
         >
-          {formler && <FormulaRing />}
+          {ring}
           <svg
             viewBox={LOGO_VIEWBOX}
-            className="relative h-full w-full overflow-visible"
+            className="logo-mark relative h-full w-full overflow-visible"
             role="img"
             aria-label="StatLins sektionslogga – Statistiksektionen, Linköpings universitet"
           >
@@ -147,11 +148,7 @@ export function FloatingLogo({ className, intro = true, formler = false }: { cla
       </div>
 
       {/* Reflex under loggan */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-[9%] left-1/2 h-[7%] w-[62%] -translate-x-1/2 animate-float-shadow rounded-[50%]"
-        style={{ background: "radial-gradient(closest-side, rgb(255 7 7 / 0.45), transparent)", filter: "blur(14px)" }}
-      />
+      <div aria-hidden className="logo-reflex pointer-events-none absolute left-1/2 -translate-x-1/2 animate-float-shadow rounded-[50%]" />
     </div>
   );
 }

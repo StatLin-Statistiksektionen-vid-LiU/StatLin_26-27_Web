@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from "react";
 import { LOGO_GEOMETRY as G, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
+import type { SiteSettings } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /** Formlernas radie, utanför loggans tunna vita kant. */
 const RADIUS = 494;
@@ -16,7 +18,7 @@ const HIDDEN_BELOW = 8;
 
 const FIRST_SWEEP_MS = 2600;
 const SWEEP_MS = 7000;
-const SWEEP_PERIOD_MS = 9000;
+const SWEEP_PERIOD_MS = 240000;
 const STILL_MS = 1000;
 const TAP_MS = 5000;
 const DRAW_MS = 30;
@@ -55,7 +57,7 @@ function Superscript({ children }: { children: string }) {
  * Texten ligger still på sin bana och fylls med en gradient, så bara gradienten och en rotation ändras när ringen rör sig.
  * Servern ritar gradienten med radie 0, vilket gör texten helt genomskinlig.
  */
-export function FormulaRing() {
+export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_color"] }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const layerRef = useRef<SVGSVGElement>(null);
@@ -119,6 +121,7 @@ export function FormulaRing() {
       if (sweepStart === null && targetWidth === 0 && width < HIDDEN_BELOW) {
         width = 0;
         gradient.setAttribute("r", "0");
+        delete layer.dataset.shown;
         running = false;
         return;
       }
@@ -128,6 +131,7 @@ export function FormulaRing() {
     const start = () => {
       if (running || !visible) return;
       running = true;
+      layer.dataset.shown = "true";
       last = performance.now();
       raf = requestAnimationFrame(tick);
     };
@@ -221,7 +225,7 @@ export function FormulaRing() {
       ref={layerRef}
       aria-hidden
       viewBox={LOGO_VIEWBOX}
-      className="logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+      className={cn("logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible", glow === "white" && "logo-formler-vit")}
     >
       <defs>
         <radialGradient ref={gradientRef} id={`${id}-fade`} gradientUnits="userSpaceOnUse" cx={G.cx} cy={G.cy} r="0">

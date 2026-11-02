@@ -70,23 +70,53 @@ async function login(page, email, password) {
     await p.mouse.move(box.x + box.width / 2 + 5, box.y + box.height / 2 + 5);
   };
 
+  // Läser av loggan på overallens rygg längs en radie, utifrån och in: mörkt tyg, en ljus kant och sedan loggans svarta ring.
+  const assertLogoEdge = async (back) => {
+    const { data, info } = await sharp(await back.screenshot()).greyscale().raw().toBuffer({ resolveWithObject: true });
+    const scale = info.width / 400;
+    const row = Math.round(185 * scale) * info.width * info.channels;
+    const outer = 57.5 * scale;
+    const levels = [];
+    for (let r = Math.round(outer * 1.2); r >= Math.round(outer * 0.86); r--) levels.push(data[row + (Math.round(200 * scale) + r) * info.channels]);
+    const edge = levels.indexOf(Math.max(...levels));
+    assert.ok(levels[0] < 60, `tyget utanför kanten ska vara mörkt: ${levels}`);
+    assert.ok(levels[edge] > 130, `kanten ska vara ljus: ${levels}`);
+    assert.ok(Math.min(...levels.slice(edge + 1)) < 60, `ringen innanför kanten ska vara svart: ${levels}`);
+  };
+
   try {
-    await step("Sajten visar den officiella loggan och overallen den inverterade", async () => {
+    await step("Sajten visar den officiella loggan, också på overallen", async () => {
       await page.goto(`${BASE}/`);
       await page.locator('header img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
       await page.locator('footer img[src="/brand/statlin.svg"]').first().waitFor({ state: "attached" });
       const hero = page.locator('.floating-logo svg[role="img"]');
       assert.equal(await hero.locator(".logo-text").getAttribute("fill"), "#fff", "texten i herologgan ska vara vit");
       assert.equal(await page.locator('img[src="/brand/statlin-inverterad.svg"]').count(), 0, "startsidan ska inte visa den inverterade");
+      const back = 'svg[aria-label="Overallen bakifrån med sektionsloggan"]';
+      const logoOnEdge = `${back} circle[stroke="#fff"] + image[href="/brand/statlin.svg"]`;
       await page.goto(`${BASE}/studenter/ny-student`);
-      await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
+      await page.locator(logoOnEdge).first().waitFor({ state: "attached" });
+      assert.equal(await page.locator('svg image[href="/brand/statlin-inverterad.svg"]').count(), 0, "overallen ska inte ha den inverterade");
+      // Den inverterade finns kvar som nedladdning under Grafisk profil, men inte på overallen eller i texten om den.
+      await page.goto(`${BASE}/grafisk-profil`);
+      await page.locator(logoOnEdge).waitFor({ state: "attached" });
+      await page.locator('img[src="/brand/statlin-inverterad.svg"]').first().waitFor({ state: "attached" });
+      assert.equal(await page.getByText("sitter i sin inverterade form").count(), 0);
+      await assertLogoEdge(page.locator(back));
+      // Den minsta overallen: den vita kanten ska synas även när loggan är drygt 45 px bred.
+      const phoneCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      await phone.goto(`${BASE}/studenter/ny-student`);
+      await assertLogoEdge(phone.locator(`${back}:visible`));
+      await phoneCtx.close();
     });
 
-    await step("Formelringen visas vid musen, försvinner när musen står stilla och sveper av sig själv", async () => {
+    await step("Formelringen visas vid musen och försvinner när musen står stilla", async () => {
       await page.goto(`${BASE}/logga-in`);
       await page.locator(".floating-logo").first().waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 0, "inloggningen ska inte ha formler");
       await page.goto(`${BASE}/`);
+      await page.locator(".logo-formler").waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 1);
       assert.equal(await ringRadius(page), "0", "formlerna ska vara dolda när sidan laddats");
       await moveOverLogo(page);
@@ -95,8 +125,38 @@ async function login(page, email, password) {
       await moveOverLogo(page);
       await page.waitForFunction(ringIsVisible, null, { timeout: 5000 });
       await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
-      // Musen står stilla, så nästa svep kommer av sig självt.
-      await page.waitForFunction(ringIsVisible, null, { timeout: 12000 });
+    });
+
+    await step("Formelringen sveper efter 2,6 sekunder och sedan var 4:e minut", async () => {
+      const clockCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const clocked = await clockCtx.newPage();
+      await clocked.clock.install();
+      await clocked.goto(`${BASE}/`);
+      await clocked.locator(".logo-formler").waitFor({ state: "attached" });
+      assert.equal(await ringRadius(clocked), "0", "formlerna ska vara dolda när sidan laddats");
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 10000 });
+      const sweptAt = await clocked.evaluate(() => performance.now());
+      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      // Spolar fram till en tid räknat från första svepet och ger ringen en sekund på sig att rita.
+      const forwardTo = async (ms) => {
+        await clocked.clock.fastForward(ms - (await clocked.evaluate(() => performance.now())));
+        await clocked.waitForTimeout(1000);
+      };
+      await forwardTo(sweptAt + 235_000);
+      assert.equal(await ringRadius(clocked), "0", "inget nytt svep före 4 minuter");
+      await forwardTo(sweptAt + 241_000);
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      // Är loggan utanför skärmen när svepet ska gå hoppas det över. Nästa kommer 4 minuter senare, inte när man scrollar tillbaka.
+      await clocked.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+      await clocked.waitForTimeout(500);
+      await forwardTo(sweptAt + 482_000);
+      await clocked.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await clocked.waitForTimeout(1000);
+      assert.equal(await ringRadius(clocked), "0", "svepet som hoppades över ska inte komma i efterhand");
+      await forwardTo(sweptAt + 723_000);
+      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      await clockCtx.close();
     });
 
     await step("Formelringen är stilla med minskad rörelse", async () => {
@@ -109,6 +169,223 @@ async function login(page, email, password) {
       const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
       assert.match(fill, /^(rgba\(255, 255, 255, 0\.7\)|rgb\(255 255 255 \/ 0\.7\))$/, "musen över loggan ska visa hela ringen");
       await stillCtx.close();
+    });
+
+    await step("Formelringens glöd är röd som förval och kan bytas till vit under Inställningar", async () => {
+      const glowCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const glow = await glowCtx.newPage();
+      const ringGlow = async (color) => {
+        await glow.goto(`${BASE}/`);
+        await glow.locator(".logo-formler").waitFor({ state: "attached" });
+        await moveOverLogo(glow);
+        await glow.waitForFunction(ringIsVisible, null, { timeout: 8000 });
+        assert.match(await glow.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter), color);
+      };
+      await ringGlow(/255, 7, 7/);
+      await login(glow, "info@statlin.se", "demo-statlin-2026");
+      // Listan får inte ändras förrän sidan är hydrerad. Annars ritar React om formuläret och klicket försvinner.
+      const hydrated = () => glow.waitForFunction(() => Object.keys(document.querySelector("#hero_ring_color") ?? {}).some((k) => k.startsWith("__react")));
+      await glow.goto(`${BASE}/admin/installningar`);
+      await hydrated();
+      const field = glow.locator("#hero_ring_color");
+      assert.equal(await field.inputValue(), "red");
+      assert.deepEqual(await field.locator("option").allTextContents(), ["Röd", "Vit"]);
+      const save = glow.getByRole("button", { name: "Spara", exact: true });
+      // Servern ska neka ett påhittat värde, även om någon manipulerar listan.
+      await field.evaluate((el) => {
+        el.add(new Option("Blå", "blue"));
+        el.value = "blue";
+      });
+      await save.click();
+      await glow.getByText("Välj röd eller vit.").first().waitFor();
+      await glow.reload();
+      await hydrated();
+      assert.equal(await field.inputValue(), "red");
+      await field.selectOption("white");
+      await save.click();
+      await glow.getByText("Inställningarna är sparade.").waitFor();
+      await ringGlow(/255, 255, 255/);
+      await glow.screenshot({ path: `${SHOTS}/formelring-vit.png` });
+      // Sparar man med pennan på startsidan ska valet stå kvar.
+      await glow.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+      await glow.locator("button:visible", { hasText: "Redigera texten" }).first().click();
+      const panel = glow.getByRole("dialog");
+      const inDrawer = panel.locator('select[name="hero_ring_color"]');
+      await inDrawer.waitFor();
+      assert.equal(await inDrawer.inputValue(), "white");
+      await panel.getByRole("button", { name: "Spara", exact: true }).click();
+      await panel.waitFor({ state: "detached" });
+      await ringGlow(/255, 255, 255/);
+      // Tillbaka till förvalet, så att senare steg inte påverkas.
+      await glow.goto(`${BASE}/admin/installningar`);
+      await hydrated();
+      await field.selectOption("red");
+      await save.click();
+      await glow.getByText("Inställningarna är sparade.").waitFor();
+      await glowCtx.close();
+    });
+
+    await step("Telefonen får de enklare effekterna och datorn behåller sina", async () => {
+      // Skuggoskärpan syns bara i anropen till ritytan, så det högsta värdet sparas. Ritningarna räknas för att se takten.
+      const watchCanvas = () => {
+        window.__canvas = { blur: 0, draws: 0 };
+        const proto = CanvasRenderingContext2D.prototype;
+        const blur = Object.getOwnPropertyDescriptor(proto, "shadowBlur");
+        Object.defineProperty(proto, "shadowBlur", {
+          get() {
+            return blur.get.call(this);
+          },
+          set(value) {
+            window.__canvas.blur = Math.max(window.__canvas.blur, value);
+            blur.set.call(this, value);
+          },
+        });
+        const clear = proto.clearRect;
+        proto.clearRect = function (...args) {
+          window.__canvas.draws++;
+          return clear.apply(this, args);
+        };
+      };
+      const open = async (options) => {
+        const context = await browser.newContext({ deviceScaleFactor: 3, ...options });
+        const p = await context.newPage();
+        await p.addInitScript(watchCanvas);
+        await p.goto(`${BASE}/`);
+        await p.locator(".logo-formler").waitFor({ state: "attached" });
+        await p.locator("h1").waitFor();
+        await p.waitForFunction(() => Object.keys(document.querySelector(".floating-logo")).some((k) => k.startsWith("__react")));
+        return p;
+      };
+      const effects = (p) =>
+        p.evaluate(() => {
+          const css = (selector, pseudo) => getComputedStyle(document.querySelector(selector), pseudo);
+          const grain = css("section.noise", "::after");
+          const title = getComputedStyle(document.querySelector("h1").closest('[class*="fade-up"]'));
+          const buttons = getComputedStyle(document.querySelector("section.noise a.btn-red").closest('[class*="fade-up"]'));
+          return {
+            sway: css(".logo-tilt").animationName,
+            intro: css('.floating-logo svg[role="img"]').animationName,
+            signature: css(".logo-signature").animationName,
+            mask: css(".floating-logo svg g[mask]").maskImage === "none" ? "none" : "url",
+            reflex: css(".floating-logo .animate-float-shadow").filter,
+            grain: grain.content === "none" ? "none" : grain.mixBlendMode,
+            title: `${title.animationDelay} ${title.animationDuration}`,
+            buttons: `${buttons.animationName} ${buttons.animationDelay}`,
+            canvasWidth: document.querySelector("canvas").width,
+            shadowBlur: window.__canvas.blur,
+            sections: css(".below-fold").contentVisibility,
+            titleFont: css("h1").fontFamily.includes("Reserv"),
+          };
+        });
+      const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);
+      const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
+      const draws = (p) => p.evaluate(() => window.__canvas.draws);
+      // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
+      const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "sig-wipe", "sig-glow"].includes(a.animationName));
+      const scrollHeader = async (p) => {
+        await p.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
+        await p.locator("header.backdrop-blur-xl").waitFor();
+      };
+
+      const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+      const phone = await open(mobile);
+      assert.deepEqual(await effects(phone), {
+        sway: "logo-sway-y, logo-sway-x",
+        intro: "logo-ring-in",
+        signature: "none",
+        mask: "none",
+        reflex: "none",
+        grain: "none",
+        title: "0.3s 0.8s",
+        buttons: "none 0s",
+        canvasWidth: 585,
+        shadowBlur: 0,
+        sections: "auto",
+        titleFont: true,
+      });
+      assert.equal(await inlineTilt(phone), "", "ingen loop i JS ska vrida loggan på telefon");
+      const drawsBefore = await draws(phone);
+      await phone.waitForTimeout(2000);
+      assert.ok((await draws(phone)) - drawsBefore <= 68, "ritytan ska rita högst ungefär 30 bilder per sekund på telefon");
+      await phone.waitForFunction(introIsOver, null, { timeout: 15000 });
+      // Ett tryck på loggan visar hela ringen, som blir bredare än ett svep någonsin är.
+      const logo = await phone.locator(".floating-logo").boundingBox();
+      await phone.touchscreen.tap(logo.x + logo.width / 2, logo.y + logo.height / 2);
+      await phone.waitForFunction(() => Number(document.querySelector(".logo-formler radialGradient").getAttribute("r")) > 500, null, { timeout: 5000 });
+      assert.match(await ringFilter(phone), /drop-shadow/);
+      await scrollHeader(phone);
+      assert.equal(await phone.locator("header").first().evaluate((el) => getComputedStyle(el).backdropFilter), "none");
+      await phone.waitForFunction(() => getComputedStyle(document.querySelector("header")).backgroundColor === "rgb(10, 10, 10)", null, { timeout: 5000 });
+      await phone.context().close();
+
+      // Heron hoppar inte under laddningen. Loggan ska stå på samma höjd i skalet (utan JS) som med rubriken på plats, både före och efter Archivo.
+      // Reservfonten är Arial eller Roboto, så maskinen som kör testet behöver ett av dem.
+      const logoTop = async (width, javaScriptEnabled, fonts) => {
+        const context = await browser.newContext({ ...mobile, viewport: { width, height: 900 }, javaScriptEnabled });
+        const p = await context.newPage();
+        if (!fonts) await p.route("**/*.woff2", (route) => route.abort());
+        await p.goto(`${BASE}/`);
+        if (javaScriptEnabled) await p.locator("h1").waitFor();
+        await p.evaluate(() => document.fonts.ready);
+        const { y } = await p.locator(".floating-logo").boundingBox();
+        await context.close();
+        return y;
+      };
+      for (const width of [360, 390, 430]) {
+        const tops = [await logoTop(width, false, false), await logoTop(width, true, false), await logoTop(width, false, true), await logoTop(width, true, true)];
+        assert.ok(Math.max(...tops) - Math.min(...tops) <= 1, `loggan hoppar vid ${width} px: ${tops.join(", ")}`);
+      }
+
+      // Telefon med minskad rörelse: ingen ny gungning och ingen loop.
+      const stillPhone = await open({ ...mobile, reducedMotion: "reduce" });
+      assert.equal((await effects(stillPhone)).sway, "none");
+      assert.equal(await inlineTilt(stillPhone), "");
+      await stillPhone.waitForTimeout(500);
+      const stillDraws = await draws(stillPhone);
+      await stillPhone.waitForTimeout(1000);
+      assert.equal(await draws(stillPhone), stillDraws, "ritytan ska stå still");
+      await stillPhone.context().close();
+
+      // Sektionernas gissade höjder gäller en smal skärm. En surfplatta lägger ut allt direkt.
+      const tablet = await open({ ...mobile, viewport: { width: 768, height: 1024 } });
+      assert.equal((await effects(tablet)).sections, "visible");
+      await tablet.context().close();
+
+      const desktop = await open({ viewport: { width: 1440, height: 900 } });
+      assert.deepEqual(await effects(desktop), {
+        sway: "none",
+        intro: "none",
+        signature: "sig-glow",
+        mask: "url",
+        reflex: "blur(14px)",
+        grain: "overlay",
+        title: "1.6s 1.2s",
+        buttons: "fade-up 1.85s",
+        canvasWidth: 2880,
+        shadowBlur: 18,
+        sections: "visible",
+        titleFont: false,
+      });
+      const tiltBefore = await inlineTilt(desktop);
+      await desktop.mouse.move(100, 100);
+      await desktop.waitForTimeout(500);
+      assert.notEqual(await inlineTilt(desktop), tiltBefore, "loggan ska följa musen");
+      // Ringens filter gäller bara medan ringen syns.
+      await moveOverLogo(desktop);
+      await desktop.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      assert.match(await ringFilter(desktop), /drop-shadow/);
+      await desktop.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      assert.equal(await ringFilter(desktop), "none", "en dold ring ska inte ha filter");
+      await scrollHeader(desktop);
+      await desktop.waitForFunction(() => getComputedStyle(document.querySelector("header")).backdropFilter.includes("blur(24px)"), null, { timeout: 5000 });
+      await desktop.context().close();
+
+      // Minskad rörelse på dator: musen över loggan visar hela ringen med glöd, utan loop.
+      const stillDesktop = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+      await moveOverLogo(stillDesktop);
+      await stillDesktop.waitForTimeout(300);
+      assert.match(await ringFilter(stillDesktop), /drop-shadow/);
+      await stillDesktop.context().close();
     });
 
     await step("Genvägsraden på startsidan visar genvägarna", async () => {

@@ -15,6 +15,8 @@ export function DataField({ className }: { className?: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Telefon: lägre upplösning, färre bilder och en glöd utan skuggoskärpa.
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
 
     let w = 0;
     let h = 0;
@@ -65,7 +67,7 @@ export function DataField({ className }: { className?: string }) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
       w = rect.width;
       h = rect.height;
       canvas.width = Math.round(w * dpr);
@@ -154,19 +156,27 @@ export function DataField({ className }: { className?: string }) {
       ctx.closePath();
       ctx.fill();
 
-      // Linjen
+      // Linjen. Skuggoskärpan är dyr att rita, så telefonen får sin glöd av breda genomskinliga streck.
+      const line = new Path2D();
+      for (let i = 0; i < series.length; i++) {
+        if (i === 0) line.moveTo(xs[i], ys[i]);
+        else line.lineTo(xs[i], ys[i]);
+      }
       ctx.save();
-      ctx.shadowColor = "rgba(255,7,7,0.8)";
-      ctx.shadowBlur = 18;
+      ctx.lineJoin = "round";
+      if (coarse) {
+        for (const [width, alpha] of [[19, 0.025], [13, 0.035], [9, 0.05]]) {
+          ctx.strokeStyle = `rgba(255,7,7,${alpha})`;
+          ctx.lineWidth = width;
+          ctx.stroke(line);
+        }
+      } else {
+        ctx.shadowColor = "rgba(255,7,7,0.8)";
+        ctx.shadowBlur = 18;
+      }
       ctx.strokeStyle = "rgba(255,7,7,0.85)";
       ctx.lineWidth = 2;
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      for (let i = 0; i < series.length; i++) {
-        if (i === 0) ctx.moveTo(xs[i], ys[i]);
-        else ctx.lineTo(xs[i], ys[i]);
-      }
-      ctx.stroke();
+      ctx.stroke(line);
       ctx.restore();
 
       // Senaste mätpunkt: glider längs linjen nära högerkanten
@@ -192,6 +202,11 @@ export function DataField({ className }: { className?: string }) {
 
     // Rörelsen följer klockan, inte antalet bildrutor: samma fart på 60 och 144 Hz.
     const loop = (now: number) => {
+      // Telefonen ritar ungefär var 33:e ms. Gränsen ligger strax under, så att ingen bild hoppas över i onödan.
+      if (coarse && now - last < 30) {
+        raf = requestAnimationFrame(loop);
+        return;
+      }
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
       last = now;
       draw(dt);

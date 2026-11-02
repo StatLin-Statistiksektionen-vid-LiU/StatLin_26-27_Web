@@ -325,6 +325,7 @@ const settingsSchema = z.object({
   hero_kicker: zText(80, "Kickern"),
   hero_title: zRequired(140, "Rubriken"),
   hero_text: zText(300, "Underrubriken"),
+  hero_ring_color: z.enum(["red", "white"], "Välj röd eller vit."),
   home_intro: zRequired(400, "Texten"),
   announcement: zText(200),
   announcement_url: zUrl,

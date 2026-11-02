@@ -2,13 +2,19 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { DataField } from "@/components/brand/data-field";
 import { FloatingLogo } from "@/components/brand/floating-logo";
+import { FormulaRing } from "@/components/brand/formula-ring";
 import { ArrowRight } from "@/components/icons";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { cn } from "@/lib/utils";
 import { Editable } from "@/components/edit-mode/editable";
 
-/** Texterna kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
+/** Texterna och ringens glöd kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
+async function HeroRing() {
+  const s = await getSettings();
+  return <FormulaRing glow={s.hero_ring_color} />;
+}
+
 async function HeroKicker() {
   const s = await getSettings();
   return <>{s.hero_kicker}</>;
@@ -26,9 +32,21 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
   const size = titleSize(title ?? DEFAULT_SETTINGS.hero_title);
   return (
     <div className="grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
-      <Editable target={{ type: "home" }} label="Redigera texten" className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both]")}>
+      <Editable
+        target={{ type: "home" }}
+        label="Redigera texten"
+        className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both] pointer-coarse:[animation-delay:.3s] pointer-coarse:[animation-duration:.8s]")}
+      >
         {title === null ? (
-          <div className="min-h-[9rem]" aria-hidden />
+          // På telefon håller en osynlig kopia av standardtexten platsen, så att höjden stämmer vid varje skärmbredd.
+          <div className="min-h-[9rem] pointer-coarse:min-h-0" aria-hidden>
+            <div className="invisible hidden pointer-coarse:block">
+              <p className={cn("display-tight leading-[1.02]", size.text)}>
+                <AccentText text={DEFAULT_SETTINGS.hero_title} />
+              </p>
+              <p className="mt-4 max-w-lg text-[1rem] leading-relaxed">{DEFAULT_SETTINGS.hero_text}</p>
+            </div>
+          </div>
         ) : (
           <>
             <h1 className={cn("display-tight leading-[1.02]", size.text)}>
@@ -38,9 +56,10 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
           </>
         )}
       </Editable>
+      {/* Knapparna finns både i skalet och i det som kommer senare. På telefon, där det dröjer längre, syns de direkt så att intoningen inte börjar om. */}
       <div
         className={cn(
-          "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_both]",
+          "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_both] pointer-coarse:animate-none",
           size.col.includes("lg:col-span-8") && "lg:col-span-4",
         )}
       >
@@ -112,7 +131,14 @@ export function Hero() {
 
         {/* Loggan */}
         <div className="flex flex-1 items-center justify-center py-6 md:py-3">
-          <FloatingLogo className="w-[min(82vw,56svh,640px)]" formler />
+          <FloatingLogo
+            className="w-[min(82vw,56svh,640px)]"
+            ring={
+              <Suspense fallback={null}>
+                <HeroRing />
+              </Suspense>
+            }
+          />
         </div>
 
         <Suspense fallback={<HeroBottom title={null} text={null} />}>

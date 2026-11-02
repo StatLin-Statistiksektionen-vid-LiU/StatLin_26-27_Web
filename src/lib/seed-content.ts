@@ -164,7 +164,7 @@ De första veckorna är fyllda av aktiviteter där du lär känna dina kursare, 
 
 ## Overallen
 
-Statistikstudenter bär **svart overall med röda revärer** – från halsen längs ärmarna och längs benens utsida. Ditt namn eller smeknamn sys på i rött tyg, och sektionsloggan sitter i sin inverterade form på ryggen. Du får veta hur du beställer under mottagningen.
+Statistikstudenter bär **svart overall med röda revärer** – från halsen längs ärmarna och längs benens utsida. Ditt namn eller smeknamn sys på i rött tyg, och sektionsloggan sitter på ryggen. Du får veta hur du beställer under mottagningen.
 
 ## Vanliga frågor
 
