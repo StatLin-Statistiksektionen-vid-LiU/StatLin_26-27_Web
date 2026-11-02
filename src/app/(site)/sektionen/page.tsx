@@ -148,7 +148,7 @@ async function AboutContent() {
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[6.5rem_1fr] gap-3 border-b border-ink/[0.07] pb-4 last:border-0 last:pb-0">
+    <div className="grid grid-cols-[6.5rem_1fr] gap-3 border-b border-ink/[0.07] pb-4 last:border-0 last:pb-0 max-[20.5625rem]:grid-cols-1 max-[20.5625rem]:gap-1.5">
       <dt className="kicker pt-0.5 text-stone">{label}</dt>
       <dd className="font-medium">{children}</dd>
     </div>

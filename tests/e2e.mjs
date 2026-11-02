@@ -274,6 +274,53 @@ async function login(page, email, password) {
       assert.equal(problems.length, 0, problems.join("; "));
     });
 
+    await step("Styrelsekorten: chippen går att läsa i sin helhet vid 320 px och ikonen behåller sin storlek", async () => {
+      const phoneCtx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      const problems = [];
+      for (const address of ["/sektionen", "/sektionen/styrelsen", "/utskott/ubu", "/utskott/sasu", "/utskott/scb"]) {
+        await phone.goto(`${BASE}${address}`);
+        const chips = phone.locator("main .chip.left-3");
+        await chips.first().waitFor();
+        await phone.evaluate(() => document.fonts.ready);
+        // Kortet klipper chippet utan att något växer, så jämför texten med chippet och chippet med kortet.
+        const clipped = await chips.evaluateAll((elements) =>
+          elements
+            .filter((chip) => {
+              const range = document.createRange();
+              range.selectNodeContents(chip);
+              const text = range.getBoundingClientRect();
+              const box = chip.getBoundingClientRect();
+              const card = chip.parentElement.getBoundingClientRect();
+              return text.right > box.right + 0.5 || text.bottom > box.bottom + 0.5 || box.right > card.right + 0.5;
+            })
+            .map((chip) => chip.textContent),
+        );
+        if (clipped.length) problems.push(`${address}: ${clipped.join(", ")} klipps`);
+      }
+      // Vid 768 px är korten på /sektionen som smalast i förhållande till adresserna.
+      await phone.setViewportSize({ width: 768, height: 1024 });
+      await phone.goto(`${BASE}/sektionen`);
+      const icons = phone.locator('main a[href^="mailto:"] svg');
+      await icons.first().waitFor();
+      await phone.evaluate(() => document.fonts.ready);
+      const iconWidths = await icons.evaluateAll((elements) => elements.map((icon) => icon.getBoundingClientRect().width));
+      if (iconWidths.some((width) => width !== 15)) problems.push(`/sektionen vid 768 px: ikonerna är ${iconWidths.join(", ")} px breda`);
+      await phoneCtx.close();
+      assert.equal(problems.length, 0, problems.join("; "));
+    });
+
+    await step("/sektionen går inte att scrolla åt sidan vid 280 px", async () => {
+      const phoneCtx = await browser.newContext({ viewport: { width: 280, height: 568 }, isMobile: true, hasTouch: true });
+      const phone = await phoneCtx.newPage();
+      await phone.goto(`${BASE}/sektionen`);
+      await phone.locator("main dl").waitFor();
+      await phone.waitForLoadState("networkidle");
+      await phone.evaluate(() => document.fonts.ready);
+      assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth), 280);
+      await phoneCtx.close();
+    });
+
     await step("Fel lösenord visar fel och behåller e-post", async () => {
       await page.goto(`${BASE}/logga-in`);
       await page.fill("#email", "info@statlin.se");
