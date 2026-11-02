@@ -14,14 +14,16 @@ export function BoardCard({ member }: { member: BoardMember }) {
           photo={member.photo}
           className="aspect-[4/5] w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.03]"
         />
-        <span className="chip absolute left-3 top-3 bg-white/95 text-ink">{member.post}</span>
+        <span className="chip absolute left-3 top-3 h-auto min-h-[1.7rem] max-w-[calc(100%-0.75rem)] whitespace-normal bg-white/95 py-0.5 text-center text-ink [overflow-wrap:anywhere] max-[25.9375rem]:max-w-[calc(100%-1.5rem)] max-[20.8125rem]:px-1.5">
+          {breakablePost(member.post)}
+        </span>
       </div>
       <div className="flex flex-1 flex-col pt-4">
         <p className="text-lg font-bold tracking-tight">{name}</p>
         {member.bio && <p className="mt-1.5 text-[0.93rem] leading-relaxed text-stone">{member.bio}</p>}
         {member.email && (
-          <a href={`mailto:${member.email}`} className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-semibold text-red-deep">
-            <Mail size={15} className="max-[24.5rem]:shrink-0" />
+          <a href={`mailto:${member.email}`} aria-label={member.email} className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-semibold text-red-deep">
+            <Mail size={15} className="shrink-0" />
             <EmailText email={member.email} />
           </a>
         )}
@@ -30,20 +32,19 @@ export function BoardCard({ member }: { member: BoardMember }) {
   );
 }
 
-/**
- * Under 392 px ryms de längsta adresserna inte bredvid ikonen och bryts därför efter @.
- * Två varianter, eftersom en adress i två textnoder hamnar en bråkdel av en pixel fel på större skärmar.
- */
+/** Mjukt bindestreck före efterleden, så att långa poster bryts vid ordfogen i smala kort. */
+function breakablePost(post: string) {
+  return post.replace(/(\p{L})(ansvarig|bevakare|ombud)/giu, "$1\u00AD$2");
+}
+
+/** Adresser som inte ryms bredvid ikonen bryts efter @. Chromium läser `<wbr>` som ett mellanslag, så länken har `aria-label`. */
 function EmailText({ email }: { email: string }) {
   const afterAt = email.indexOf("@") + 1;
   return (
-    <>
-      <span className="link-underline max-[24.5rem]:hidden">{email}</span>
-      <span className="link-underline hidden [overflow-wrap:anywhere] max-[24.5rem]:block">
-        {email.slice(0, afterAt)}
-        <wbr />
-        {email.slice(afterAt)}
-      </span>
-    </>
+    <span className="link-underline [overflow-wrap:anywhere]">
+      {email.slice(0, afterAt)}
+      <wbr />
+      {email.slice(afterAt)}
+    </span>
   );
 }
