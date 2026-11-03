@@ -19,12 +19,18 @@ export function getDb(): Database.Database {
   if (!globalThis.__statlinDb) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     const db = new Database(path.join(DATA_DIR, "statlin.db"));
-    db.pragma("journal_mode = WAL");
-    db.pragma("foreign_keys = ON");
-    db.pragma("busy_timeout = 5000");
-    db.pragma("synchronous = NORMAL");
-    migrate(db);
-    bootstrap(db);
+    try {
+      db.pragma("journal_mode = WAL");
+      db.pragma("foreign_keys = ON");
+      db.pragma("busy_timeout = 5000");
+      db.pragma("synchronous = NORMAL");
+      migrate(db);
+      bootstrap(db);
+    } catch (err) {
+      // Nästa begäran försöker igen med ett nytt handtag, så det här måste stängas – annars läcker varje försök filhandtag.
+      db.close();
+      throw err;
+    }
     globalThis.__statlinDb = db;
   }
   return globalThis.__statlinDb;

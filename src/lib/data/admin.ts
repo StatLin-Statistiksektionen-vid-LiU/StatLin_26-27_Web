@@ -54,17 +54,23 @@ export interface AuditItem {
   user_post: string | null;
 }
 
-/** Senaste ändringarna. Inloggningar, också misslyckade (login_failed), är inga ändringar och tas inte med. */
+/**
+ * Senaste ändringarna. Inloggningar är inga ändringar och tas inte med – utom på kontosidan (userId), som också
+ * visar misslyckade inloggningar mot kontot: login_failed har kontot som entity_id och ingen användare.
+ */
 export async function listAudit(limit = 12, userId?: number): Promise<AuditItem[]> {
   const db = await readDb();
+  const where = userId
+    ? "(a.user_id = @userId AND a.action NOT IN ('login', 'login_failed')) OR (a.action = 'login_failed' AND a.entity = 'user' AND a.entity_id = @entityId)"
+    : "a.action NOT IN ('login', 'login_failed')";
   return db
     .prepare(
       `SELECT a.id, a.action, a.entity, a.entity_id, a.summary, a.created_at, u.name AS user_name, u.post AS user_post
        FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
-       WHERE a.action NOT IN ('login', 'login_failed') ${userId ? "AND a.user_id = @userId" : ""}
+       WHERE ${where}
        ORDER BY a.id DESC LIMIT @limit`,
     )
-    .all({ limit, userId: userId ?? null }) as AuditItem[];
+    .all({ limit, userId: userId ?? null, entityId: userId ? String(userId) : null }) as AuditItem[];
 }
 
 export async function dashboardStats(committeeId: number | null) {

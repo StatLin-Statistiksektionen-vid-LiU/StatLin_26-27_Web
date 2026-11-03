@@ -9,7 +9,7 @@
 import sharp from "sharp";
 import { getDb } from "../src/lib/db";
 import { createFirstAdmin } from "../src/lib/db/bootstrap";
-import { hashPassword, generatePassword, placeholderProblem } from "../src/lib/auth/password";
+import { envPasswordProblem, hashPassword, generatePassword } from "../src/lib/auth/password";
 import { storeImage } from "../src/lib/media-store";
 import { addDaysLocal, nowLocal } from "../src/lib/dates";
 import type { ExamOccasion, ExamStats } from "../src/lib/exam-stats";
@@ -21,10 +21,13 @@ if (refusal) {
   console.error(refusal);
   process.exit(1);
 }
-// Ett lösenord som står i repot vägras innan databasen ens öppnas.
-const placeholder = placeholderProblem("ADMIN_PASSWORD", process.env.ADMIN_PASSWORD) ?? (demo ? placeholderProblem("DEMO_PASSWORD", process.env.DEMO_PASSWORD) : null);
-if (placeholder) {
-  console.error(placeholder);
+// En tom variabel räknas som osatt (då slumpas lösenordet). Ett lösenord som står i repot, eller som är för kort
+// efter trim, vägras innan databasen ens öppnas.
+const adminPassword = process.env.ADMIN_PASSWORD || undefined;
+const demoPassword = process.env.DEMO_PASSWORD || undefined;
+const passwordRefusal = envPasswordProblem("ADMIN_PASSWORD", adminPassword) ?? (demo ? envPasswordProblem("DEMO_PASSWORD", demoPassword) : null);
+if (passwordRefusal) {
+  console.error(passwordRefusal);
   process.exit(1);
 }
 const db = getDb();
@@ -58,7 +61,7 @@ async function main() {
   // ADMIN_EMAIL och ADMIN_PASSWORD gör den ingenting; annars gäller standardvärdena för lokal körning.
   const created: { email: string; password: string; role: string }[] = [];
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase() || "admin@statlin.se";
-  const password = process.env.ADMIN_PASSWORD || generatePassword();
+  const password = adminPassword?.trim() ?? generatePassword();
   if (createFirstAdmin(db, email, password)) created.push({ email, password, role: "admin" });
 
   if (demo) await seedDemo(created);
@@ -87,7 +90,7 @@ async function seedDemo(created: { email: string; password: string; role: string
   for (const u of demoUsers) {
     const exists = db.prepare("SELECT 1 FROM users WHERE email = ?").get(u.email);
     if (exists) continue;
-    const password = process.env.DEMO_PASSWORD || generatePassword();
+    const password = demoPassword?.trim() ?? generatePassword();
     // Som alla konton som skript skapar måste demokontona byta lösenord vid första inloggningen.
     db.prepare(
       `INSERT INTO users (email, name, post, role, committee_id, design, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,

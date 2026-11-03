@@ -25,10 +25,17 @@ export function generatePassword(): string {
 /** Lösenord som står i repot (exempelfilen, och förr devcontainern och e2e-testet) och därför är kända för alla. */
 const PLACEHOLDER_PASSWORDS = ["byt-mig-till-nagot-langt", "admin-statlin-2026", "demo-statlin-2026"];
 
-/** Felet om lösenordet i miljövariabeln är en känd platshållare. Konton som skript skapar får aldrig något av dem. */
-export function placeholderProblem(variable: string, password: string | undefined): string | null {
-  if (password === undefined || !PLACEHOLDER_PASSWORDS.includes(password.trim().toLowerCase())) return null;
-  return `${variable} är platshållaren "${password.trim()}", som står i repot och därför är känd för alla – välj ett eget lösenord.`;
+/**
+ * Felet om ett lösenord ur en miljövariabel inte duger för ett konto som ett skript skapar: en känd platshållare,
+ * eller – efter trim – för kort eller tomt (samma krav som när någon byter lösenord). undefined betyder osatt.
+ */
+export function envPasswordProblem(variable: string, password: string | undefined): string | null {
+  if (password === undefined) return null;
+  if (PLACEHOLDER_PASSWORDS.includes(password.trim().toLowerCase())) {
+    return `${variable} är platshållaren "${password.trim()}", som står i repot och därför är känd för alla – välj ett eget lösenord.`;
+  }
+  const problem = passwordProblem(password.trim());
+  return problem ? `${variable} duger inte: ${problem}` : null;
 }
 
 export function passwordProblem(password: string): string | null {
