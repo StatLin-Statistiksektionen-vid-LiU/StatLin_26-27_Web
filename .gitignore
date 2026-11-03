@@ -43,3 +43,9 @@ next-env.d.ts
 
 # data (databas + uppladdningar)
 /data
+
+# databaskopior (README → Säkerhetskopiering): repot är publikt, och en kopia innehåller lösenordshashar och sessioner
+*.db
+*.db-wal
+*.db-shm
+/backups/

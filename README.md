@@ -189,10 +189,10 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 
 ### Säkerhetskopiering
 
-Kopiera `DATA_DIR`. För en säker kopia av databasen medan sajten kör:
+Kopiera `DATA_DIR`. För en säker kopia av databasen medan sajten kör används better-sqlite3:s `backup()`, som följer med sajtens paket (`sqlite3`-programmet finns inte i Docker-bilden). Kör kommandot i repots rot. Kopian hamnar i `backups/`, som git och Docker ignorerar – repot är publikt, och en kopia innehåller lösenordshashar och sessioner:
 
 ```bash
-sqlite3 data/statlin.db ".backup 'backup-$(date +%F).db'"
+node -e "require('fs').mkdirSync('backups',{recursive:true});require('better-sqlite3')('data/statlin.db',{fileMustExist:true}).backup('backups/statlin-'+new Date().toISOString().slice(0,10)+'.db').then(()=>console.log('Kopian ligger i backups/'))"
 ```
 
 ## Guide för poster

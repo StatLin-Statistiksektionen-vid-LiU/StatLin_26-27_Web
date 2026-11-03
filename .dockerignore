@@ -3,6 +3,10 @@
 .next
 node_modules
 data
+*.db
+*.db-wal
+*.db-shm
+/backups/
 npm-debug.log*
 .env
 .env.*
