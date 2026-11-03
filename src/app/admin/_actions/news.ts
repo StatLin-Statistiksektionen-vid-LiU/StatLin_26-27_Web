@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
+import { changedId, type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -61,8 +61,9 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       | undefined;
     if (!existing) return { error: "Nyheten finns inte längre." };
     if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ändra den här nyheten." };
-    // Omslaget kan också ha bytts på sidan Bilder eller i redigeringsläget efter att sidan laddades – rör det bara om fältet ändrats.
-    const coverMediaId = fd.get("cover_media_id__changed") === "1" ? d.cover_media_id : existing.cover_media_id;
+    // Omslaget kan också ha bytts på sidan Bilder eller i redigeringsläget efter att sidan laddades – rör det bara om fältet
+    // ändrats, och bara om omslaget i databasen fortfarande är det som fältet laddades med.
+    const coverMediaId = changedId(fd, "cover_media_id", d.cover_media_id, existing.cover_media_id);
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
     db.prepare(

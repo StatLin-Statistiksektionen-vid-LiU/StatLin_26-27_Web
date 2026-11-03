@@ -4,16 +4,19 @@ import { Field, FixedCommittee, FormSection, MoreDetails, Select, TextArea, Text
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
-import type { Committee, EventItem, SessionUser } from "@/lib/types";
+import type { Committee, EventItem, ImageRef, SessionUser } from "@/lib/types";
 
 export function EventForm({
   event,
+  cover = event?.cover ?? null,
   committees,
   user,
   defaultStart,
   onSaved,
 }: {
   event?: EventItem | null;
+  /** Omslaget i fältet – på redigeringssidan det som senast valts, också med stjärnan i galleriet. */
+  cover?: ImageRef | null;
   committees: Committee[];
   user: Pick<SessionUser, "role" | "committee_id">;
   defaultStart: string;
@@ -73,7 +76,8 @@ export function EventForm({
 
         <div className="space-y-6">
           <FormSection title="Omslagsbild" description="Utan bild genereras ett omslag i utskottets färger.">
-            <ImageField name="cover_media_id" label="Bild" defaultImage={event?.cover ?? null} />
+            {/* Ny key när omslaget bytts någon annanstans, så att fältet visar det och glömmer en tidigare ändring. */}
+            <ImageField key={cover?.id ?? "ingen"} name="cover_media_id" label="Bild" defaultImage={cover} />
           </FormSection>
           <FormSection title="Arrangör">
             {lockedCommittee ? (

@@ -55,7 +55,8 @@ export function NewsForm({
         </div>
         <div className="space-y-6">
           <FormSection title="Omslagsbild">
-            <ImageField name="cover_media_id" label="Bild" defaultImage={item?.cover ?? null} />
+            {/* Ny key när omslaget bytts (sparat här eller någon annanstans), så att fältet glömmer en tidigare ändring. */}
+            <ImageField key={item?.cover?.id ?? "ingen"} name="cover_media_id" label="Bild" defaultImage={item?.cover ?? null} />
           </FormSection>
           <FormSection title="Avsändare">
             {locked ? (

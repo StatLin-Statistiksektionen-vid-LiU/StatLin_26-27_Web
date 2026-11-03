@@ -3,10 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { deleteEvent, setEventChecked } from "@/app/admin/_actions/events";
 import { ConfirmButton } from "@/components/admin/confirm-button";
-import { EventForm } from "@/components/admin/event-form";
-import { GalleryManager } from "@/components/admin/gallery-manager";
-import { AdminHeader, Card, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Check, Image as ImageIcon, Trash } from "@/components/icons";
+import { EventEditor } from "@/components/admin/event-editor";
+import { AdminHeader, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
+import { ArrowUpRight, Check, Trash } from "@/components/icons";
 import { canEditOwned, canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getUser } from "@/lib/data/admin";
@@ -64,17 +63,12 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
 
       {canReviewEvents(user) && <ReviewPanel event={event} />}
 
-      <EventForm event={event} committees={visible} user={user} defaultStart={event.starts_at} />
-
-      <Card className="mt-10 scroll-mt-24 p-5 md:p-7">
-        <div id="galleri" className="mb-5 scroll-mt-24">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <ImageIcon size={20} className="text-red" /> Bildgalleri
-          </h2>
-          <p className="mt-1 text-sm text-stone">Bilderna publiceras direkt på evenemangssidan och i galleriet. Ändringar här sparas automatiskt.</p>
-        </div>
-        <GalleryManager eventId={event.id} initial={images.map((i) => ({ id: i.id, caption: i.caption, image: i.image }))} coverMediaId={event.cover_media_id} />
-      </Card>
+      <EventEditor
+        event={event}
+        committees={visible}
+        user={{ role: user.role, committee_id: user.committee_id }}
+        images={images.map((i) => ({ id: i.id, caption: i.caption, image: i.image }))}
+      />
     </>
   );
 }

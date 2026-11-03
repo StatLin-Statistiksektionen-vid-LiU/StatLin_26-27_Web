@@ -26,6 +26,8 @@ export function ImageField({
   onChange?: (image: ImageRef | null) => void;
 }) {
   const [image, setImageState] = useState<ImageRef | null>(defaultImage);
+  // Bilden fältet laddades med. Sidan ger fältet en ny key när den bytts någon annanstans, så att det börjar om.
+  const [loadedId] = useState(defaultImage?.id ?? null);
   const [changed, setChanged] = useState(false);
   const setImage = (img: ImageRef | null) => {
     setImageState(img);
@@ -54,8 +56,8 @@ export function ImageField({
     <div>
       <p className="mb-1.5 text-sm font-semibold">{label}</p>
       <input type="hidden" name={name} value={image?.id ?? ""} />
-      {/* Talar om för servern att fältet faktiskt ändrats (omslaget kan även sättas från galleriet). */}
-      {changed && <input type="hidden" name={`${name}__changed`} value="1" />}
+      {/* Talar om för servern att fältet faktiskt ändrats, och från vilken bild (omslaget kan även sättas från galleriet). */}
+      {changed && <input type="hidden" name={`${name}__changed`} value={loadedId ?? ""} />}
       <div
         onDragOver={(e) => {
           e.preventDefault();
