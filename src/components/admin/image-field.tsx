@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Image as ImageIcon, Trash, Upload } from "@/components/icons";
+import { useFormCtx } from "./action-form";
 import { uploadFile } from "./upload";
 import type { ImageRef } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function ImageField({
   /** Körs när en ny bild laddats upp eller bilden tagits bort, t.ex. för att spara direkt. */
   onChange?: (image: ImageRef | null) => void;
 }) {
+  const { beginUpload } = useFormCtx();
   const [image, setImageState] = useState<ImageRef | null>(defaultImage);
   // Bilden fältet laddades med. Sidan ger fältet en ny key när den bytts någon annanstans, så att det börjar om.
   const [loadedId] = useState(defaultImage?.id ?? null);
@@ -42,12 +44,15 @@ export function ImageField({
   const upload = async (file: File) => {
     setError(null);
     setProgress(0);
+    // Formuläret runt fältet kan inte sparas förrän bilden är uppladdad.
+    const done = beginUpload();
     try {
       const res = await uploadFile(file, { purpose: "image" }, setProgress);
       if (res.image) setImage(res.image);
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      done();
       setProgress(null);
     }
   };

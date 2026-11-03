@@ -7,8 +7,20 @@ import type { FormState } from "@/lib/admin/form";
 import { cn } from "@/lib/utils";
 
 type SubmitKind = "primary" | "secondary";
-const FormCtx = createContext<{ state: FormState; pending: boolean; submitter: SubmitKind }>({ state: {}, pending: false, submitter: "primary" });
+type FormCtxValue = {
+  state: FormState;
+  pending: boolean;
+  submitter: SubmitKind;
+  /** En bild laddas upp i något av fälten – formuläret kan inte skickas under tiden. */
+  uploading: boolean;
+  /** Anropas när en uppladdning börjar; funktionen som returneras anropas när den är klar. */
+  beginUpload: () => () => void;
+};
+const FormCtx = createContext<FormCtxValue>({ state: {}, pending: false, submitter: "primary", uploading: false, beginUpload: () => () => {} });
 export const useFormCtx = () => useContext(FormCtx);
+
+/** Redigeringspanelen på sajten följer formulärets uppladdningar, så att den inte stängs mitt i en. */
+export const FormWatchCtx = createContext<{ uploading: (uploading: boolean) => void } | null>(null);
 
 /** En knapp som skickar formuläret med ett eget värde, t.ex. published=0 för "Spara som utkast". */
 type SubmitOption = { label: string; name?: string; value?: string };
@@ -74,6 +86,24 @@ export function ActionForm({
   const formRef = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
 
+  // Bilder som laddas upp i fälten. Skickades formuläret under tiden följde det gamla id:t med, och den nya bilden
+  // blev föräldralös – därför väntar knapparna (och Enter) tills uppladdningarna är klara.
+  const [uploads, setUploads] = useState(0);
+  const uploading = uploads > 0;
+  const beginUpload = useCallback(() => {
+    setUploads((n) => n + 1);
+    let open = true;
+    return () => {
+      if (!open) return;
+      open = false;
+      setUploads((n) => n - 1);
+    };
+  }, []);
+  const watch = useContext(FormWatchCtx);
+  useEffect(() => {
+    watch?.uploading(uploading);
+  }, [watch, uploading]);
+
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -105,7 +135,7 @@ export function ActionForm({
 
   const secondaryButton = secondary && <SubmitButton kind="secondary" label={secondary.label} name={secondary.name} value={secondary.value} />;
   return (
-    <FormCtx value={{ state, pending, submitter }}>
+    <FormCtx value={{ state, pending, submitter, uploading, beginUpload }}>
       <form
         ref={formRef}
         // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
@@ -115,6 +145,8 @@ export function ActionForm({
         onChange={() => (dirty.current = true)}
         onSubmit={(e) => {
           e.preventDefault();
+          // Enter i ett fält medan en bild laddas upp: inget skickas förrän den är klar.
+          if (uploading) return;
           // Knappen som skickade formuläret följer med, så att den kan bära ett eget värde.
           const button = (e.nativeEvent as SubmitEvent).submitter;
           setSubmitter(button?.dataset.submit === "secondary" ? "secondary" : "primary");
@@ -191,7 +223,7 @@ export function SubmitButton({
   name?: string;
   value?: string;
 }) {
-  const { pending, submitter } = useFormCtx();
+  const { pending, submitter, uploading } = useFormCtx();
   const primary = kind === "primary";
   return (
     <button
@@ -199,7 +231,7 @@ export function SubmitButton({
       name={name}
       value={value}
       data-submit={kind}
-      disabled={pending}
+      disabled={pending || uploading}
       className={cn(primary ? "btn btn-red min-w-36" : "btn btn-ghost bg-white", "disabled:opacity-70", className)}
     >
       {pending && submitter === kind ? (

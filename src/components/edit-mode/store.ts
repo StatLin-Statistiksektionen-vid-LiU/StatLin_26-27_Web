@@ -24,10 +24,12 @@ export type EditTarget =
   /** Hjälpmedlen sköts i adminpanelen. Målet styr bara vem som ser länken dit. */
   | { type: "resources" };
 
-type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null };
+/** uploading: ett formulär i panelen laddar upp en bild – panelen stängs inte då. */
+type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null; uploading: boolean };
 
 const KEY = "statlin-redigeringslage";
-const SERVER: State = { user: null, editing: false, open: null, flash: null };
+const SERVER: State = { user: null, editing: false, open: null, flash: null, uploading: false };
+const UPLOADING = "En bild laddas fortfarande upp – vänta tills den är klar innan du stänger panelen.";
 let state: State = SERVER;
 const listeners = new Set<() => void>();
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
@@ -52,7 +54,7 @@ export const editStore = {
   },
   get: () => state,
   setUser(user: EditUser | null) {
-    set({ user, editing: user ? readPreference() : false, open: null });
+    set({ user, editing: user ? readPreference() : false, open: null, uploading: false });
   },
   setEditing(editing: boolean) {
     try {
@@ -60,15 +62,31 @@ export const editStore = {
     } catch {
       /* privat läge – valet gäller bara den här sidvisningen */
     }
-    set({ editing, open: editing ? state.open : null });
+    set(editing ? { editing } : { editing, open: null, uploading: false });
   },
   open(target: EditTarget) {
-    set({ open: target });
+    set({ open: target, uploading: false });
   },
   close(flash?: string) {
     clearTimeout(flashTimer);
-    set({ open: null, flash: flash ?? null });
+    set({ open: null, flash: flash ?? null, uploading: false });
     if (flash) flashTimer = setTimeout(() => set({ flash: null }), 3500);
+  },
+  /**
+   * Stängning som användaren bett om – Escape, klick utanför, stängknappen, länken till adminpanelen eller ett
+   * adressbyte. Under en uppladdning står panelen kvar. Returnerar false om panelen inte stängdes.
+   */
+  requestClose(): boolean {
+    if (!state.open) return true;
+    if (state.uploading) {
+      window.alert(UPLOADING);
+      return false;
+    }
+    editStore.close();
+    return true;
+  },
+  setUploading(uploading: boolean) {
+    if (state.uploading !== uploading) set({ uploading });
   },
 };
 

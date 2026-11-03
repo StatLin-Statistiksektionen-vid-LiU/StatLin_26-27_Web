@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { previewMarkdown } from "@/app/admin/_actions/content";
 import { Image as ImageIcon } from "@/components/icons";
+import { useFormCtx } from "./action-form";
 import { uploadFile } from "./upload";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export function MarkdownEditor({
   rows?: number;
   hint?: string;
 }) {
+  const { beginUpload } = useFormCtx();
   const [value, setValue] = useState(defaultValue);
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [html, setHtml] = useState("");
@@ -65,12 +67,15 @@ export function MarkdownEditor({
   const onImage = async (file: File) => {
     setError(null);
     setUploading(true);
+    // Formuläret kan inte sparas förrän bilden är uppladdad – annars sparades texten utan bildlänken.
+    const done = beginUpload();
     try {
       const res = await uploadFile(file, { purpose: "image" });
       if (res.image) insertText(`\n\n![${file.name.replace(/\.[^.]+$/, "")}](${res.image.src})\n\n`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      done();
       setUploading(false);
     }
   };

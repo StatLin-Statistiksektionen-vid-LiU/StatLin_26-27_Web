@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { setNewsCover } from "@/app/admin/_actions/news";
+import { FormWatchCtx } from "@/components/admin/action-form";
 import { BoardMemberForm, CommitteeForm, FooterSettingsForm, HomeTextsForm, PageForm } from "@/components/admin/content-forms";
 import { CoverSlot } from "@/components/admin/cover-slot";
 import { EventForm } from "@/components/admin/event-form";
@@ -50,6 +51,9 @@ function adminHref(t: EditTarget): string {
   }
 }
 
+/** Formulären i panelen berättar när de laddar upp en bild, så att panelen inte stängs mitt i uppladdningen. */
+const WATCH = { uploading: editStore.setUploading };
+
 /** Sidopanelen som pennorna öppnar. Formulären är desamma som i adminpanelen. */
 export function EditDrawer() {
   const { open } = useEditState();
@@ -59,7 +63,7 @@ export function EditDrawer() {
   useEffect(() => {
     if (!open) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && editStore.close();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && editStore.requestClose();
     const overflow = document.body.style.overflow;
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -76,7 +80,7 @@ export function EditDrawer() {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[90]">
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={() => editStore.close()} aria-hidden />
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={() => editStore.requestClose()} aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
@@ -91,16 +95,24 @@ export function EditDrawer() {
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Link href={adminHref(open)} onClick={() => editStore.close()} className="btn btn-ghost btn-sm hidden bg-white sm:inline-flex">
+            <Link
+              href={adminHref(open)}
+              onClick={(e) => {
+                if (!editStore.requestClose()) e.preventDefault();
+              }}
+              className="btn btn-ghost btn-sm hidden bg-white sm:inline-flex"
+            >
               I adminpanelen <ArrowUpRight size={15} />
             </Link>
-            <button ref={closeRef} type="button" onClick={() => editStore.close()} aria-label="Stäng" className="grid size-10 place-items-center rounded-full border border-ink/15 hover:border-ink">
+            <button ref={closeRef} type="button" onClick={() => editStore.requestClose()} aria-label="Stäng" className="grid size-10 place-items-center rounded-full border border-ink/15 hover:border-ink">
               <Close size={18} />
             </button>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto px-4 pt-5 sm:px-6">
-          <DrawerBody key={targetQuery(open)} target={open} />
+          <FormWatchCtx value={WATCH}>
+            <DrawerBody key={targetQuery(open)} target={open} />
+          </FormWatchCtx>
         </div>
       </div>
     </div>
