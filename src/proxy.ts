@@ -13,6 +13,9 @@ export function proxy(request: NextRequest) {
   if (pathname === "/tentastatistik" || pathname.startsWith("/tentastatistik/")) {
     return examStatsRedirect(request) ?? NextResponse.next();
   }
+  // SD-27: server actions (POST med next-action) kontrollerar sessionen själva och svarar med ett fel som formuläret visar.
+  // Omdirigerades själva anropet hit tappade formuläret beskedet. Sidornas omdirigering nedan är oförändrad.
+  if (request.method === "POST" && request.headers.has("next-action")) return NextResponse.next();
   if (!request.cookies.has("statlin_session")) {
     const url = new URL("/logga-in", request.url);
     url.searchParams.set("next", pathname);
