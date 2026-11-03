@@ -44,7 +44,8 @@ export function TaskForm({
         <div className="space-y-6">
           <FormSection title="Till vem?">
             <Field label="Mottagare" name="to_user_id">
-              <Select name="to_user_id" defaultValue={toDefault === null ? "" : String(toDefault)} trackChanges={!!task}>
+              {/* Ny key när mottagaren bytts på sidan ("Jag tar den"): listan visar den nya utan att resten av fälten laddas om. */}
+              <Select key={String(toDefault)} name="to_user_id" defaultValue={toDefault === null ? "" : String(toDefault)} trackChanges={!!task}>
                 <option value="">Öppet – vem som helst kan ta det</option>
                 {inactive && <option value={inactive.id}>{label(inactive)} (inaktiv)</option>}
                 {board.length > 0 && (

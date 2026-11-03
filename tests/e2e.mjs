@@ -687,12 +687,9 @@ async function login(page, email, password) {
     });
 
     await step("Sätt omslag via stjärnan och spara formuläret utan att skriva över det", async () => {
-      // Stjärnan sparar omslaget och ger evenemanget en ny version, som formuläret får när sidan renderats om. En sparning
-      // med den gamla versionen nekas ("Någon annan har sparat"), så vänta på den nya i stället för en fast tid.
-      const version = () => page.evaluate(() => document.querySelector('input[type="hidden"][name="updated_at"]')?.value);
-      const before = await version();
-      await page.locator('button[title="Använd som omslagsbild"]').nth(1).click();
-      await page.waitForFunction((v) => document.querySelector('input[type="hidden"][name="updated_at"]')?.value !== v, before);
+      // Vänta tills stjärnans action svarat (omslaget är sparat) i stället för en fast tid, och spara sedan formuläret.
+      const starSaved = (r) => r.request().method() === "POST" && !!r.request().headers()["next-action"] && r.url().includes("/admin/evenemang/");
+      await Promise.all([page.waitForResponse(starSaved), page.locator('button[title="Använd som omslagsbild"]').nth(1).click()]);
       await page.getByRole("button", { name: "Spara ändringar" }).click();
       await page.getByText("Sparat och publicerat.").waitFor();
     });

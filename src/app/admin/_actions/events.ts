@@ -205,7 +205,9 @@ export async function setEventCover(eventId: number, mediaId: number | null) {
   if (!event || !canEditImages(user, event) || !canUseImage(user, mediaId, eventId)) throw new Error("Saknar behörighet.");
   if (mediaId === event.cover_media_id) return;
   const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";
-  getDb().prepare(`UPDATE events SET cover_media_id = ?, updated_at = ?${uncheck} WHERE id = ?`).run(mediaId, nowIso(), eventId);
+  // updated_at skrivs inte: stjärnan ligger på samma sida som evenemangets formulär, som skriver omslaget bara via
+  // changedId. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
+  getDb().prepare(`UPDATE events SET cover_media_id = ?${uncheck} WHERE id = ?`).run(mediaId, eventId);
   await deleteMediaIfUnused(event.cover_media_id);
   audit(user.id, "cover", "event", eventId, event.title);
   revalidateSite();

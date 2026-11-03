@@ -97,10 +97,11 @@ export async function setTaskStatus(fd: FormData) {
   const existing = loadTask(id);
   if (!existing || !(status in TASK_STATUSES) || !canUpdateTask(user, existing)) redirect("/admin/uppdrag");
   if (existing.status === status) return;
-  const now = nowIso();
+  // updated_at skrivs inte: statusknapparna ligger på samma sida som uppdragets formulär, som inte skriver status eller
+  // completed_at. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   getDb()
-    .prepare("UPDATE tasks SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?")
-    .run(status, status === "klar" ? now : null, now, id);
+    .prepare("UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?")
+    .run(status, status === "klar" ? nowIso() : null, id);
   audit(user.id, "status", "task", id, `${existing.title} → ${TASK_STATUSES[status]}`);
   revalidateBoard();
 }
@@ -112,9 +113,11 @@ export async function claimTask(fd: FormData) {
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
   if (!existing || existing.to_user_id !== null || !canSeeTask(user, existing)) redirect("/admin/uppdrag");
+  // updated_at skrivs inte: knappen ligger på samma sida som uppdragets formulär, som skriver mottagaren bara via changedId.
+  // Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   getDb()
-    .prepare("UPDATE tasks SET to_user_id = ?, assigned_at = NULL, status = CASE status WHEN 'planerad' THEN 'pagar' ELSE status END, updated_at = ? WHERE id = ?")
-    .run(user.id, nowIso(), id);
+    .prepare("UPDATE tasks SET to_user_id = ?, assigned_at = NULL, status = CASE status WHEN 'planerad' THEN 'pagar' ELSE status END WHERE id = ?")
+    .run(user.id, id);
   audit(user.id, "claim", "task", id, existing.title);
   revalidateBoard();
 }
@@ -127,8 +130,9 @@ export async function addTaskComment(_prev: FormState, fd: FormData): Promise<Fo
   const existing = parsed.data.task_id ? loadTask(parsed.data.task_id) : undefined;
   if (!existing || !canSeeTask(user, existing)) return forbidden;
   const db = getDb();
+  // Uppdragets updated_at skrivs inte: kommentarsfältet ligger på samma sida som uppdragets formulär, som inte rör
+  // kommentarerna. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   db.prepare("INSERT INTO task_comments (task_id, user_id, body) VALUES (?, ?, ?)").run(existing.id, user.id, parsed.data.body);
-  db.prepare("UPDATE tasks SET updated_at = ? WHERE id = ?").run(nowIso(), existing.id);
   revalidateBoard();
   return { ok: true, message: "Kommentaren är skickad." };
 }
