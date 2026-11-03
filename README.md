@@ -140,7 +140,7 @@ cp .env.example .env     # fyll i SITE_URL, ADMIN_EMAIL och ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar skapas inget konto: sajten svarar med fel, och loggen säger att `ADMIN_PASSWORD` måste bytas. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
+Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar skapas inget konto: hälsokontrollen `/api/health` svarar 503 och loggen säger att `ADMIN_PASSWORD` är platshållaren, tills ett eget lösenord är satt. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
 
 Skapa en ny administratör, eller ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras:
 
