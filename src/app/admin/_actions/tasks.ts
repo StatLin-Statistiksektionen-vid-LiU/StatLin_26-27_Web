@@ -6,7 +6,7 @@ import { z } from "zod";
 import { changedId, type FormState, formObject, formVersion, invalid, STALE, zOptionalId, zRequired, zText } from "@/lib/admin/form";
 import { audit, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/types";
 
@@ -44,7 +44,8 @@ const taskSchema = z.object({
 });
 
 export async function saveTask(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await actionUser();
+  // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
+  const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   const parsed = taskSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -76,6 +77,7 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
       .run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, updatedAt, d.id, formVersion(fd));
     if (res.changes === 0) return STALE;
     audit(user.id, "update", "task", d.id, d.title);
+    await renewSessionIfDue();
     revalidateBoard();
     return { ok: true, message: "Uppdraget är sparat.", data: { updated_at: updatedAt } };
   }
@@ -86,6 +88,7 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
     .prepare("INSERT INTO tasks (title, description, from_user_id, to_user_id, shared, due_date, event_id, assigned_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
     .run(d.title, d.description, user.id, d.to_user_id, shared, d.due_date, d.event_id, assignedAt(d.to_user_id, user.id));
   audit(user.id, "create", "task", Number(res.lastInsertRowid), d.title);
+  await renewSessionIfDue();
   revalidateBoard();
   redirect(`/admin/uppdrag/${res.lastInsertRowid}?skapat=1`);
 }

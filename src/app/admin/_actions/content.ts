@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
 import { deleteMediaIfUnused, MediaError, storeFile } from "@/lib/media-store";
@@ -126,7 +126,8 @@ const committeeSchema = z.object({
 });
 
 export async function saveCommittee(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await actionUser();
+  // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
+  const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   const id = Number(fd.get("id"));
   if (!id || !canEditCommittee(user, id)) return forbidden;
@@ -150,6 +151,7 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
   ).run({ ...d, ...extra, logo_url: logoUrl, updated_at: updatedAt, id, version: formVersion(fd) });
   if (res.changes === 0) return STALE;
   audit(user.id, "update", "committee", id, d.short_name);
+  await renewSessionIfDue();
   revalidateSite();
   return { ok: true, message: "Utskottet är sparat.", data: { updated_at: updatedAt } };
 }
@@ -179,7 +181,8 @@ export async function setCommitteeLogo(committeeId: number, mediaId: number | nu
 /* ---------- Sidor ---------- */
 
 export async function savePage(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await actionUser();
+  // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
+  const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const parsed = z
@@ -193,6 +196,7 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
     .run({ ...parsed.data, updated_at: updatedAt, updated_by: user.id, version: formVersion(fd) });
   if (res.changes === 0) return getDb().prepare("SELECT 1 FROM pages WHERE slug = ?").get(parsed.data.slug) ? STALE : { error: "Sidan finns inte." };
   audit(user.id, "update", "page", parsed.data.slug, parsed.data.title);
+  await renewSessionIfDue();
   revalidateSite();
   return { ok: true, message: "Sidan är sparad och publicerad.", data: { updated_at: updatedAt } };
 }

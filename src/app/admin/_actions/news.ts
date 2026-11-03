@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 
@@ -57,7 +57,8 @@ function stockholmToIso(local: string): string {
 }
 
 export async function saveNews(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await actionUser();
+  // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
+  const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse(formObject(fd));
@@ -106,6 +107,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     if (res.changes === 0) return STALE;
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "news", id, d.title);
+    await renewSessionIfDue();
     revalidateSite();
     return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast.", data: { updated_at: updatedAt } };
   }
@@ -120,6 +122,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     )
     .run({ ...d, slug, committee_id: committeeId, pinned, published_at: publishedAt, author_id: user.id });
   audit(user.id, "create", "news", Number(res.lastInsertRowid), d.title);
+  await renewSessionIfDue();
   revalidateSite();
   redirect(`/admin/nyheter/${res.lastInsertRowid}?skapad=1`);
 }

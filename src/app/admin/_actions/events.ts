@@ -19,7 +19,7 @@ import {
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 import type { SessionUser } from "@/lib/types";
@@ -58,7 +58,8 @@ function resolveCommittee(user: SessionUser, requested: number | null): number |
 }
 
 export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await actionUser();
+  // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
+  const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse(formObject(fd));
@@ -95,6 +96,7 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     if (res.changes === 0) return STALE;
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "event", id, d.title);
+    await renewSessionIfDue();
     revalidateSite();
     return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast.", data: { updated_at: updatedAt } };
   }
@@ -120,6 +122,7 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
       checked_by: reviewed ? user.id : null,
     });
   audit(user.id, "create", "event", Number(res.lastInsertRowid), d.title);
+  await renewSessionIfDue();
   revalidateSite();
   redirect(`/admin/evenemang/${res.lastInsertRowid}?skapad=1`);
 }
