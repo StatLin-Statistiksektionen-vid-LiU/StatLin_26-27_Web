@@ -42,13 +42,12 @@ const DESIGN = new Set(["grafiskt@statlin.se"]);
 /** Posten som skriptet tidigare satte på ordförande och vice – byts mot den riktiga posten. */
 const PLACEHOLDER_POSTS = new Set(["", "Styrelsen"]);
 
+// openDb() vägrar ett annat schema än skriptets, så kolumnen design (migrering 7) finns alltid.
 const db = openDb();
-// Kolumnen kommer med webbplatsens migrering 7. Har sajten inte startat sedan uppdateringen hoppas flaggan över.
-const hasDesignColumn = !!db.prepare("SELECT 1 FROM pragma_table_info('users') WHERE name = 'design'").get();
-const findUser = db.prepare(`SELECT id, role, post${hasDesignColumn ? ", design" : ""} FROM users WHERE email = ?`);
+const findUser = db.prepare("SELECT id, role, post, design FROM users WHERE email = ?");
 const setPost = db.prepare("UPDATE users SET post = ? WHERE id = ?");
 const setRole = db.prepare("UPDATE users SET role = ? WHERE id = ?");
-const setDesign = hasDesignColumn ? db.prepare("UPDATE users SET design = 1 WHERE id = ?") : null;
+const setDesign = db.prepare("UPDATE users SET design = 1 WHERE id = ?");
 const findCommittee = db.prepare("SELECT id FROM committees WHERE slug = ?");
 const insert = db.prepare(
   "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1)",
@@ -70,7 +69,7 @@ db.transaction(() => {
         setRole.run("admin", existing.id);
         changes.push("redaktör → admin");
       }
-      if (DESIGN.has(email) && setDesign && !existing.design) {
+      if (DESIGN.has(email) && !existing.design) {
         setDesign.run(existing.id);
         changes.push("grafiskt ansvar");
       }
@@ -85,7 +84,7 @@ db.transaction(() => {
     }
     const password = generatePassword();
     const { lastInsertRowid } = insert.run(email, name, post, role, committeeRow.id, bcrypt.hashSync(password, 11));
-    if (DESIGN.has(email)) setDesign?.run(lastInsertRowid);
+    if (DESIGN.has(email)) setDesign.run(lastInsertRowid);
     created.push({ email, role, password });
   }
 })();
@@ -98,5 +97,4 @@ if (created.length) {
 }
 if (updated.length) console.log(`\nUppdaterade konton:\n${updated.map((s) => `  ${s}`).join("\n")}`);
 if (skipped.length) console.log(`\n${skipped.map((s) => `  ${s}`).join("\n")}`);
-if (!hasDesignColumn) console.log("\nGrafiskt ansvar sattes inte: starta webbplatsen en gång så att databasen uppdateras, och kör skriptet igen.");
 console.log("\nLogga in på /logga-in.\n");

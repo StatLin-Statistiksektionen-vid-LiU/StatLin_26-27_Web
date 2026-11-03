@@ -3,6 +3,8 @@ import type Database from "better-sqlite3";
 /**
  * Migreringar körs i ordning och spåras med PRAGMA user_version.
  * Lägg alltid till nya steg sist – ändra aldrig ett steg som redan körts i drift.
+ * Skripten i scripts/ vägrar köra mot ett annat schema än sitt eget: höj EXPECTED_USER_VERSION i
+ * scripts/lib.mjs i samma ändring som ett nytt steg (skripten kan inte importera den här filen).
  */
 const steps: string[] = [
   /* 1: grundschema */ `

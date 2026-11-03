@@ -22,17 +22,22 @@ const password = generatePassword();
 const hash = bcrypt.hashSync(password, 11);
 
 const normalized = email.trim().toLowerCase();
-const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(normalized);
-if (existing) {
-  db.prepare(
-    "UPDATE users SET password_hash = ?, role = 'admin', active = 1, must_change_password = 1, failed_logins = 0, locked_until = NULL WHERE id = ?",
-  ).run(hash, existing.id);
-  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(existing.id);
-  console.log(`\n✓ ${normalized} är nu administratör och har fått ett nytt lösenord.`);
-} else {
-  db.prepare(
-    "INSERT INTO users (email, name, post, role, password_hash, must_change_password) VALUES (?, ?, 'Administratör', 'admin', ?, 1)",
-  ).run(normalized, name, hash);
-  console.log(`\n✓ Administratören ${normalized} skapades.`);
-}
+// Kontot och dess sessioner ändras i en transaktion: håller sajten databasen låst blir det allt eller inget.
+const existed = db
+  .transaction(() => {
+    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(normalized);
+    if (existing) {
+      db.prepare(
+        "UPDATE users SET password_hash = ?, role = 'admin', active = 1, must_change_password = 1, failed_logins = 0, locked_until = NULL WHERE id = ?",
+      ).run(hash, existing.id);
+      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(existing.id);
+      return true;
+    }
+    db.prepare(
+      "INSERT INTO users (email, name, post, role, password_hash, must_change_password) VALUES (?, ?, 'Administratör', 'admin', ?, 1)",
+    ).run(normalized, name, hash);
+    return false;
+  })
+  .immediate();
+console.log(existed ? `\n✓ ${normalized} är nu administratör och har fått ett nytt lösenord.` : `\n✓ Administratören ${normalized} skapades.`);
 console.log(`  Tillfälligt lösenord: ${password}\n  (Måste bytas vid första inloggningen.)\n`);
