@@ -61,6 +61,13 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
   const parsed = schema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
+  // Det som publiceras syns för alla – ett evenemang med bara en rubrik (t.ex. efter ett Enter i rubriken) publiceras inte.
+  if (d.published && !d.summary && !d.body_md) {
+    return {
+      error: "Skriv en kort sammanfattning eller en beskrivning innan evenemanget publiceras – eller spara det som utkast.",
+      fieldErrors: { summary: "Fyll i en sammanfattning eller en beskrivning för att publicera." },
+    };
+  }
   const committeeId = resolveCommittee(user, d.committee_id);
   const db = getDb();
 

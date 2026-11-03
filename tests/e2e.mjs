@@ -985,6 +985,7 @@ async function login(page, email, password) {
     await step("Utskottets nya evenemang är ogranskat", async () => {
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Pubkväll att granska");
+      await page.fill('textarea[name="summary"]', "Pubkväll som administratören granskar i testet.");
       await page.fill('input[name="location"]', "Kårallen");
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       reviewId = page.url().match(/evenemang\/(\d+)/)[1];
@@ -1037,6 +1038,7 @@ async function login(page, email, password) {
       await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Styrelsemöte i testet");
+      await page.fill('textarea[name="summary"]', "Styrelsemöte som administratören lägger upp i testet.");
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       await page.getByText("Granskad", { exact: true }).first().waitFor();
     });

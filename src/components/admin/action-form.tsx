@@ -24,6 +24,7 @@ export function ActionForm({
   submitLabel = "Spara",
   submitValue,
   secondary,
+  secondaryFirst,
   footer,
   stickyFooter = true,
   resetOnSuccess,
@@ -37,6 +38,8 @@ export function ActionForm({
   submitValue?: { name: string; value: string };
   /** En andra, mindre framträdande knapp till vänster om huvudknappen. */
   secondary?: SubmitOption;
+  /** Den andra knappen ligger först i koden, så att Enter i ett fält väljer den (nya inlägg sparas då som utkast). */
+  secondaryFirst?: boolean;
   footer?: ReactNode;
   stickyFooter?: boolean;
   resetOnSuccess?: boolean;
@@ -69,6 +72,7 @@ export function ActionForm({
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, []);
 
+  const secondaryButton = secondary && <SubmitButton kind="secondary" label={secondary.label} name={secondary.name} value={secondary.value} />;
   return (
     <FormCtx value={{ state, pending, submitter }}>
       <form
@@ -98,10 +102,12 @@ export function ActionForm({
           )}
         >
           <div className="flex flex-wrap items-center gap-2">{footer}</div>
-          {/* Huvudknappen ligger först i koden så att Enter i ett fält alltid väljer den. */}
-          <div className="flex flex-row-reverse flex-wrap items-center gap-2">
+          {/* Knappen som ligger först i koden är den som Enter i ett fält väljer: huvudknappen, eller den andra knappen med
+              secondaryFirst. På skärmen står huvudknappen alltid till höger. */}
+          <div className={cn("flex flex-wrap items-center gap-2", !secondaryFirst && "flex-row-reverse")}>
+            {secondaryFirst && secondaryButton}
             <SubmitButton label={submitLabel} name={submitValue?.name} value={submitValue?.value} />
-            {secondary && <SubmitButton kind="secondary" label={secondary.label} name={secondary.name} value={secondary.value} />}
+            {!secondaryFirst && secondaryButton}
           </div>
         </div>
       </form>
