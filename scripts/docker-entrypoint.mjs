@@ -1,5 +1,5 @@
 /**
- * Startskript i Docker-bilden. Molnvärdar (Railway, Fly.io m.fl.) monterar datavolymen
+ * Startskript i Docker-bilden. Molnvärdar (Fly.io m.fl.) monterar datavolymen
  * som root, så containern startar som root, ger appanvändaren äganderätt till DATA_DIR
  * och släpper sedan root-behörigheten innan webbservern startas.
  */

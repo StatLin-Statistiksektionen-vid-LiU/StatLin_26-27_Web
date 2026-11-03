@@ -50,13 +50,13 @@ Behörigheten kontrolleras på servern i varje sida, server action och uppladdni
 
 ### Konton på sajten
 
-Ett konto per post i styrelsen, 13 stycken, som `create-accounts` skapar (`scripts/create-accounts.mjs`). Kontot hör till posten och lämnas över varje år. Posten i kolumnen *Används av* är det som visas på uppdragstavlan.
+Ett konto per post i styrelsen, 13 stycken, som `create-accounts` skapar (`scripts/create-accounts.mjs`). Kontot hör till posten och lämnas över varje år. Posten i kolumnen *Används av* är det som visas på uppdragstavlan. Informationsansvarig är också webbansvarig.
 
 | Konto | Roll | Används av |
 | --- | --- | --- |
 | `ordforande@statlin.se` | Administratör | Ordförande |
 | `vice@statlin.se` | Administratör | Vice ordförande / sekreterare |
-| `info@statlin.se` | Administratör | Informationsansvarig (webbansvarig) |
+| `info@statlin.se` | Administratör | Informationsansvarig |
 | `kassor@statlin.se` | Utskott (styrelsen) | Kassör |
 | `grafiskt@statlin.se` | Utskott (styrelsen) | Grafiskt ansvarig |
 | `master@statlin.se` | Utskott (styrelsen) | Masteransvarig |
@@ -159,7 +159,7 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 - Appen måste köra på **exakt en maskin**, eftersom SQLite-databasen ligger på volymen. Skala aldrig upp med `fly scale count`.
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
-- Skapa sektionens konton (ordförande, vice, info och ett per utskott) med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
+- Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Skapa en ny administratör eller återställ lösenordet: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`.
 - **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
 
@@ -185,13 +185,13 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 
 ### Säkerhetskopiering
 
-Kopiera `DATA_DIR`. För en säker kopia av databasen medan sajten kör används better-sqlite3:s `backup()`, som följer med sajtens paket (`sqlite3`-programmet finns inte i Docker-bilden). Kör kommandot i repots rot. Kopian hamnar i `backups/`, som git och Docker ignorerar – repot är publikt, och en kopia innehåller lösenordshashar och sessioner:
+Kopiera `DATA_DIR`. För en säker kopia av en lokal databas medan sajten kör, kör kommandot nedan i repots rot. Det använder better-sqlite3:s `backup()`, som följer med sajtens paket, och läser katalogen ur `DATA_DIR` (standard `data`). Kopian hamnar i `backups/`, som git och Docker ignorerar – repot är publikt, och en kopia innehåller lösenordshashar och sessioner:
 
 ```bash
-node -e "require('fs').mkdirSync('backups',{recursive:true});require('better-sqlite3')('data/statlin.db',{fileMustExist:true}).backup('backups/statlin-'+new Date().toISOString().slice(0,10)+'.db').then(()=>console.log('Kopian ligger i backups/'))"
+node -e "const d=process.env.DATA_DIR||'data';require('fs').mkdirSync('backups',{recursive:true});require('better-sqlite3')(d+'/statlin.db',{fileMustExist:true}).backup('backups/statlin-'+new Date().toISOString().slice(0,10)+'.db').then(()=>console.log('Kopian ligger i backups/'))"
 ```
 
-Hur produktionens databas återställs ur Flys ögonblicksbilder står under [Återställning och rollback](#återställning-och-rollback).
+En kopia av produktionens databas kommer med ett backupskript, som väntar på beslut. Hur produktionens databas återställs ur Flys ögonblicksbilder står under [Återställning och rollback](#återställning-och-rollback).
 
 ## Överlämning
 
@@ -220,7 +220,7 @@ fly deploy
 node tests/smoke.mjs https://statlin-web.fly.dev   # läser bara, säker mot produktionen
 ```
 
-Ett deploy-skript (SN-03 i `docs/atgardsplan.md`) kommer när beslut B-1 är taget.
+Ett deploy-skript är planerat.
 
 ### Återställning och rollback
 
@@ -329,7 +329,7 @@ src/
   app/media/         serverar uppladdade filer från DATA_DIR
   components/        UI (brand/, content/, home/, layout/, admin/)
   lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
-scripts/             seed, create-admin och create-accounts
+scripts/             seed, create-admin, create-accounts och docker-entrypoint (startskriptet i Docker-bilden)
 public/brand/        loggor (SVG-varianter, utskottsloggor, nedladdningar)
 ```
 
@@ -352,7 +352,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
-| `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
+| `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 

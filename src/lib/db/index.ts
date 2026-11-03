@@ -6,7 +6,7 @@ import { migrate } from "./migrations";
 
 /**
  * All data (databas + uppladdade filer) ligger i DATA_DIR så att en enda volym
- * räcker vid drift (Docker, VPS, Fly/Railway-volym).
+ * räcker vid drift (Docker, VPS, volym hos Fly m.fl.).
  */
 export const DATA_DIR = path.resolve(process.env.DATA_DIR ?? path.join(/* turbopackIgnore: true */ process.cwd(), "data"));
 export const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
