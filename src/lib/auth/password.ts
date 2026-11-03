@@ -13,10 +13,13 @@ export function verifyPassword(password: string, hash: string): Promise<boolean>
   return bcrypt.compare(password, hash);
 }
 
-/** Läsbart engångslösenord, t.ex. "median-bayes-4821". Skripten gör likadant (scripts/lib.mjs). */
+/**
+ * Läsbart engångslösenord, t.ex. "median-uggla-prognos-fika-4821": fyra ord ur 128 och ett tal,
+ * drygt 41 bitar. Skripten gör likadant (scripts/lib.mjs).
+ */
 export function generatePassword(): string {
   const pick = () => WORDS[crypto.randomInt(WORDS.length)];
-  return `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
+  return `${pick()}-${pick()}-${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 }
 
 export function passwordProblem(password: string): string | null {

@@ -31,7 +31,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Länkar**: redaktörerna sköter länksidan och väljer vilka länkar som är genvägar.
 - **Hjälpmedel**: alla konton lägger upp filer och länkar per program och termin, och kan ändra och ta bort allt där. Filerna blir offentliga, och loggen visar vem som gjort vad.
 - Markdown-editor med verktygsrad, förhandsvisning och bilder som dras in eller klistras in direkt i texten.
-- **Konton** (endast admin). Nya konton får ett läsbart engångslösenord, till exempel `kvartil-median-4821`, som måste bytas vid första inloggningen.
+- **Konton** (endast admin). Nya konton får ett läsbart engångslösenord med fyra ord och ett tal, till exempel `kvartil-uggla-prognos-fika-4821`, som måste bytas vid första inloggningen.
 - **Uppdragstavla** för styrelsen: posterna skickar uppdrag till varandra, till exempel från SASU till grafiskt ansvarig om en affisch. Uppdragen sorteras i Planerat, Pågår, Behöver hjälp och Klart och har kommentarer, deadline och koppling till evenemang. Avsändaren väljer om uppdraget syns för hela styrelsen eller bara för mottagaren. Ordförande, vice och info ser alltid allt. Uppdrag utan mottagare kan vem som helst ta, och nya uppdrag till dig syns som en siffra i menyn.
 - **Granskning**: administratörerna bockar av evenemang som granskade. Nya och ändrade evenemang från utskotten och övriga poster samlas under *Att granska* i översikten. Bocken påverkar aldrig om ett evenemang visas på sajten.
 - **Revisionslogg**: översikten visar vem som ändrade vad.

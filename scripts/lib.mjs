@@ -10,10 +10,10 @@ import Database from "better-sqlite3";
 /** Samma ordlista som src/lib/auth/password.ts. Den ligger här eftersom Docker-imagen har scripts/ men inte src/. */
 const WORDS = JSON.parse(fs.readFileSync(new URL("./password-words.json", import.meta.url), "utf8"));
 
-/** Läsbart engångslösenord, samma format som generatePassword() i src/lib/auth/password.ts. */
+/** Läsbart engångslösenord, fyra ord och ett tal – samma format som generatePassword() i src/lib/auth/password.ts. */
 export function generatePassword() {
   const pick = () => WORDS[crypto.randomInt(WORDS.length)];
-  return `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
+  return `${pick()}-${pick()}-${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 }
 
 /** Öppnar sajtens databas i DATA_DIR (standard ./data), eller avslutar om den inte finns. */

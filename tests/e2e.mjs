@@ -840,7 +840,7 @@ async function login(page, email, password) {
       await page.getByRole("button", { name: "Skapa konto" }).click();
       await page.getByText("Kontot för stig@statlin.se är skapat").waitFor();
       const pw = await page.locator("code").first().textContent();
-      assert.ok(/^[a-z]+-[a-z]+-\d{4}$/.test(pw), `oväntat lösenordsformat: ${pw}`);
+      assert.ok(/^[a-z]+(-[a-z]+){3}-\d{4}$/.test(pw), `oväntat lösenordsformat: ${pw}`);
       await page.screenshot({ path: `${SHOTS}/admin-users.png` });
       // Det nya kontot måste byta lösenord vid första inloggningen.
       await page.context().clearCookies();
