@@ -331,7 +331,8 @@ src/
   app/media/         serverar uppladdade filer från DATA_DIR
   components/        UI (brand/, content/, home/, layout/, admin/)
   lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
-scripts/             seed, create-admin, create-accounts och docker-entrypoint (startskriptet i Docker-bilden)
+scripts/             seed, create-admin, create-accounts, docker-entrypoint (startskriptet i Docker-bilden) och lib.mjs,
+                     som create-admin och create-accounts delar, med ordlistan för engångslösenord (password-words.json)
 public/brand/        loggor (SVG-varianter, utskottsloggor, nedladdningar)
 ```
 
