@@ -138,11 +138,13 @@ docker compose up -d --build
 
 Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
 
-Skapa en ny administratör eller återställ lösenordet för en befintlig:
+Skapa en ny administratör, eller ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras:
 
 ```bash
 docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
 ```
+
+Ett befintligt konto blir administratör bara med `--make-admin` (det aktiveras också om det var avstängt). Skriptet skriver ut kontots roll innan något ändras.
 
 ### Fly.io
 
@@ -160,7 +162,7 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
 - Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
-- Skapa en ny administratör eller återställ lösenordet: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`.
+- Återställ lösenordet för ett konto, eller skapa en ny administratör: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte; lägg till `--make-admin` för att göra ett befintligt konto till administratör.
 - **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
 
 ### Utan Docker
@@ -351,7 +353,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run build` / `npm start` | Produktionsbygge / kör bygget |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
-| `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
+| `npm run create-admin -- <e-post> [--make-admin]` | Skapa admin, eller nytt lösenord för ett befintligt konto med rollen orörd; `--make-admin` gör kontot till administratör |
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
