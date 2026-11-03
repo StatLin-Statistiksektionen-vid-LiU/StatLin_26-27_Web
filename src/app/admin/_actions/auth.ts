@@ -38,19 +38,27 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   const db = getDb();
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
   const now = new Date();
+  // Samma svar för okänd adress, fel lösenord, låst och avstängt konto, så att svaret inte avslöjar vilka konton som finns.
+  const denied = () => fail({ error: "Fel e-postadress eller lösenord." });
 
   if (user?.locked_until && new Date(user.locked_until) > now) {
-    return fail({ error: "Kontot är tillfälligt låst efter för många felaktiga försök. Försök igen om en stund." });
+    // Lösenordet prövas inte medan kontot är låst, men jämförelsen görs ändå så att svarstiden blir densamma.
+    await verifyPassword(password, await getDummyHash());
+    return denied();
   }
 
   const ok = await verifyPassword(password, user?.password_hash ?? (await getDummyHash()));
-  if (!user || !ok || !user.active) {
+  if (user && !user.active) {
+    // Ett avstängt konto räknar inga försök. Först med rätt lösenord får personen veta varför det inte går.
+    return ok ? fail({ error: "Kontot är avstängt – kontakta en administratör." }) : denied();
+  }
+  if (!user || !ok) {
     if (user) {
       const failed = user.failed_logins + 1;
       const lock = failed >= MAX_FAILED ? new Date(now.getTime() + LOCK_MINUTES * 60_000).toISOString() : null;
       db.prepare("UPDATE users SET failed_logins = ?, locked_until = ? WHERE id = ?").run(lock ? 0 : failed, lock, user.id);
     }
-    return fail({ error: "Fel e-postadress eller lösenord." });
+    return denied();
   }
 
   db.prepare("UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?").run(now.toISOString(), user.id);
