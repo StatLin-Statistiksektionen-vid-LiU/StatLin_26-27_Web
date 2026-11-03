@@ -119,7 +119,7 @@ Seed-skriptet skriver ut inloggningsuppgifterna, och varje konto måste byta lö
 ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
 ```
 
-Lösenord som står i repot vägras: `byt-mig-till-nagot-langt` ur `.env.example` och de gamla demolösenorden `admin-statlin-2026` och `demo-statlin-2026`.
+Kända platshållare vägras: `byt-mig-till-nagot-langt` ur `.env.example` och de tidigare demolösenorden `admin-statlin-2026` och `demo-statlin-2026`. Devcontainern och e2e-testet seedar med `lokal-admin-2026` och `lokal-demo-2026`, som också står i repot. De är bara till för lokala databaser, och kontona byter lösenord vid första inloggningen.
 
 Utan `--demo` lägger seed in grunddatan (utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF) och, om databasen saknar konton, första administratören. Båda skapas av samma kod som första gången sajten startar (`src/lib/db/bootstrap.ts`), och administratören måste byta lösenord vid första inloggningen. Seed tar adressen ur `ADMIN_EMAIL` (annars `admin@statlin.se`) och lösenordet ur `ADMIN_PASSWORD` (annars slumpas ett, som skrivs ut). Vid första start skapas administratören bara när båda variablerna är satta.
 
@@ -183,7 +183,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | --- | --- |
 | `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), som Fly fyller i från `[build.args]` i `fly.toml` och docker compose från `.env`. Bygg om efter att du ändrat den. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. Lösenordet måste bytas vid första inloggningen, och platshållarna som står i repot vägras. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. Lösenordet måste bytas vid första inloggningen, och de kända platshållarna (se [Kom igång lokalt](#kom-igång-lokalt)) vägras. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
