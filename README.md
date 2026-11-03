@@ -22,7 +22,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 
 **Adminpanel för poster (`/admin`)**
 
-- Inloggning per post med roller (se nedan). Kontot spärras tillfälligt efter upprepade felförsök.
+- Inloggning per post med roller (se nedan). Efter upprepade fel lösenord från samma IP-adress får nästa försök mot kontot vänta, högst en minut, medan inloggning från andra adresser fungerar som vanligt. Misslyckade inloggningar sparas i revisionsloggen i databasen (`audit_log`, åtgärden `login_failed`) med e-postadressen men utan IP, utom de som spärren per IP stoppar.
 - **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
 - **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
@@ -187,7 +187,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
-| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `fly-client-ip` på Fly.io (redan satt i `fly.toml`). |
+| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök och fördröjningen efter fel lösenord räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `fly-client-ip` på Fly.io (redan satt i `fly.toml`). |
 
 ### Säkerhetskopiering
 
@@ -282,7 +282,7 @@ En volym med ett namn som ingen annan volym har ger varningen `Every volume is p
 Hela sajten är en Node-process på en enda Fly-maskin, med SQLite-databasen på maskinens volym.
 
 - Skala aldrig upp med `fly scale count` eller fler processer: en ny maskin får en egen volym och därmed en egen databas.
-- Det som bara finns i processens minne nollas varje gång maskinen startar, och maskinen stängs av när ingen besöker sajten (`auto_stop_machines` i `fly.toml`). Det gäller spärren mot upprepade inloggningsförsök per IP (`src/lib/auth/rate-limit.ts`) och `inflight`-kartan som samlar samtidiga hämtningar av tentastatistik (`src/lib/data/exam-stats.ts`). Kontospärren efter för många fel lösenord ligger i databasen och finns kvar.
+- Det som bara finns i processens minne nollas varje gång maskinen startar, och maskinen stängs av när ingen besöker sajten (`auto_stop_machines` i `fly.toml`). Det gäller spärren mot upprepade inloggningsförsök per IP och fördröjningen efter fel lösenord per konto och IP (båda i `src/lib/auth/rate-limit.ts`) och `inflight`-kartan som samlar samtidiga hämtningar av tentastatistik (`src/lib/data/exam-stats.ts`). Ingen inloggningsspärr ligger i databasen. Där finns bara revisionsloggens rader om misslyckade inloggningar, och de finns kvar.
 
 ### Volymen
 

@@ -54,13 +54,14 @@ export interface AuditItem {
   user_post: string | null;
 }
 
+/** Senaste ändringarna. Inloggningar, också misslyckade (login_failed), är inga ändringar och tas inte med. */
 export async function listAudit(limit = 12, userId?: number): Promise<AuditItem[]> {
   const db = await readDb();
   return db
     .prepare(
       `SELECT a.id, a.action, a.entity, a.entity_id, a.summary, a.created_at, u.name AS user_name, u.post AS user_post
        FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
-       WHERE a.action != 'login' ${userId ? "AND a.user_id = @userId" : ""}
+       WHERE a.action NOT IN ('login', 'login_failed') ${userId ? "AND a.user_id = @userId" : ""}
        ORDER BY a.id DESC LIMIT @limit`,
     )
     .all({ limit, userId: userId ?? null }) as AuditItem[];

@@ -5,7 +5,8 @@ import { getDb } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
-export function audit(userId: number, action: string, entity: string, entityId: string | number | null, summary = "") {
+/** userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. */
+export function audit(userId: number | null, action: string, entity: string, entityId: string | number | null, summary = "") {
   getDb()
     .prepare("INSERT INTO audit_log (user_id, action, entity, entity_id, summary) VALUES (?, ?, ?, ?, ?)")
     .run(userId, action, entity, entityId === null ? null : String(entityId), summary.slice(0, 300));

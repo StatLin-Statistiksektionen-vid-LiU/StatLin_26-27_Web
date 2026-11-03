@@ -6,15 +6,12 @@ import { z } from "zod";
 import { audit } from "@/lib/admin/helpers";
 import { type FormState, invalid } from "@/lib/admin/form";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
-import { clientIp, rateLimitHit } from "@/lib/auth/rate-limit";
+import { clearLoginFailures, clientIp, loginDelayed, loginDelayKey, rateLimitHit, recordLoginFailure } from "@/lib/auth/rate-limit";
 import { createSession, currentToken, destroyAllSessionsForUser, destroySession, requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import type { UserRow } from "@/lib/types";
 
-const MAX_FAILED = 8;
-const LOCK_MINUTES = 15;
-
-// Jämförs mot när kontot inte finns, så att svarstiden inte avslöjar vilka konton som existerar.
+// Jämförs mot när kontot inte finns eller försöket fördröjs, så att svarstiden inte avslöjar vilka konton som existerar.
 let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= hashPassword("statlin-dummy-password"));
 
@@ -31,37 +28,47 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   if (!parsed.success) return fail(invalid(parsed.error));
   const { email, password, next } = parsed.data;
 
-  if (rateLimitHit(`login:${clientIp(await headers())}`)) {
+  const ip = clientIp(await headers());
+  if (rateLimitHit(`login:${ip}`)) {
     return fail({ error: "För många inloggningsförsök. Vänta en stund och försök igen." });
   }
 
   const db = getDb();
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
-  const now = new Date();
-  // Samma svar för okänd adress, fel lösenord, låst och avstängt konto, så att svaret inte avslöjar vilka konton som finns.
-  const denied = () => fail({ error: "Fel e-postadress eller lösenord." });
+  // Samma svar för okänd adress, fel lösenord, fördröjt och avstängt konto, så att svaret inte avslöjar vilka konton
+  // som finns. Varje misslyckat försök sparas i revisionsloggen med adressen, men utan IP.
+  const denied = (reason: string, error = "Fel e-postadress eller lösenord.") => {
+    audit(null, "login_failed", "user", user?.id ?? null, `Misslyckad inloggning (${reason}): ${email}`);
+    return fail({ error });
+  };
 
-  if (user?.locked_until && new Date(user.locked_until) > now) {
-    // Lösenordet prövas inte medan kontot är låst, men jämförelsen görs ändå så att svarstiden blir densamma.
+  if (!user) {
     await verifyPassword(password, await getDummyHash());
-    return denied();
+    return denied("okänd adress");
+  }
+  // Efter upprepade fel från samma IP väntar nästa försök mot kontot en stund. Lösenordet prövas inte under tiden,
+  // men jämförelsen görs ändå så att svarstiden blir densamma.
+  const delayKey = loginDelayKey(user.id, ip);
+  if (loginDelayed(delayKey)) {
+    await verifyPassword(password, await getDummyHash());
+    return denied("fördröjd efter upprepade fel");
   }
 
-  const ok = await verifyPassword(password, user?.password_hash ?? (await getDummyHash()));
-  if (user && !user.active) {
+  const ok = await verifyPassword(password, user.password_hash);
+  if (!user.active) {
     // Ett avstängt konto räknar inga försök. Först med rätt lösenord får personen veta varför det inte går.
-    return ok ? fail({ error: "Kontot är avstängt – kontakta en administratör." }) : denied();
+    if (!ok) return denied("avstängt konto, fel lösenord");
+    return denied("avstängt konto, rätt lösenord", "Kontot är avstängt – kontakta en administratör.");
   }
-  if (!user || !ok) {
-    if (user) {
-      const failed = user.failed_logins + 1;
-      const lock = failed >= MAX_FAILED ? new Date(now.getTime() + LOCK_MINUTES * 60_000).toISOString() : null;
-      db.prepare("UPDATE users SET failed_logins = ?, locked_until = ? WHERE id = ?").run(lock ? 0 : failed, lock, user.id);
-    }
-    return denied();
+  if (!ok) {
+    recordLoginFailure(delayKey);
+    // Räknas bara som statistik – det finns inget lås på hela kontot.
+    db.prepare("UPDATE users SET failed_logins = failed_logins + 1 WHERE id = ?").run(user.id);
+    return denied("fel lösenord");
   }
 
-  db.prepare("UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?").run(now.toISOString(), user.id);
+  clearLoginFailures(delayKey);
+  db.prepare("UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?").run(new Date().toISOString(), user.id);
   await createSession(user.id);
   audit(user.id, "login", "user", user.id, "Loggade in");
 
