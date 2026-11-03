@@ -61,13 +61,24 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       | undefined;
     if (!existing) return { error: "Nyheten finns inte längre." };
     if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ändra den här nyheten." };
-    if (d.cover_media_id !== existing.cover_media_id && !canUseImage(user, d.cover_media_id)) return badCover;
+    // Omslaget kan också ha bytts på sidan Bilder eller i redigeringsläget efter att sidan laddades – rör det bara om fältet ändrats.
+    const coverMediaId = fd.get("cover_media_id__changed") === "1" ? d.cover_media_id : existing.cover_media_id;
+    if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
     db.prepare(
       `UPDATE news SET title=@title, slug=@slug, excerpt=@excerpt, body_md=@body_md, committee_id=@committee_id,
         cover_media_id=@cover_media_id, published=@published, pinned=@pinned, published_at=@published_at, updated_at=@updated_at WHERE id=@id`,
-    ).run({ ...d, slug, committee_id: committeeId, pinned: isEditor(user) ? pinned : existing.pinned, published_at: publishedAt, updated_at: nowIso(), id });
-    if (existing.cover_media_id !== d.cover_media_id) await deleteMediaIfUnused(existing.cover_media_id);
+    ).run({
+      ...d,
+      slug,
+      committee_id: committeeId,
+      cover_media_id: coverMediaId,
+      pinned: isEditor(user) ? pinned : existing.pinned,
+      published_at: publishedAt,
+      updated_at: nowIso(),
+      id,
+    });
+    if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "news", id, d.title);
     revalidateSite();
     return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast." };
