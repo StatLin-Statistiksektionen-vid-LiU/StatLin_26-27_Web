@@ -83,6 +83,7 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     // Omslaget kan också ha valts i galleriet efter att sidan laddades – rör det bara om fältet ändrats, och bara om
     // omslaget i databasen fortfarande är det som fältet laddades med.
     const coverMediaId = changedId(fd, "cover_media_id", d.cover_media_id, existing.cover_media_id);
+    if (coverMediaId === undefined) return STALE;
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId, id)) return badCover;
     // Ändringar från andra än administratörer ska granskas på nytt.
     const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";

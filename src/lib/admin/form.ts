@@ -32,14 +32,15 @@ export function invalid(error: z.ZodError): FormState {
 }
 
 /**
- * Ett fält som bara ska skrivas när någon ändrat det (bildfältet). Fältet skickar då `<namn>__changed` med id:t
- * det laddades med ("" = inget). Det nya värdet används bara om det id:t fortfarande är det som står i databasen –
- * har värdet bytts någon annanstans sedan sidan laddades (stjärnan i galleriet, en annan flik) står databasens kvar.
+ * Ett fält som bara ska skrivas när någon ändrat det (bildfältet, mottagaren). Fältet skickar då `<namn>__changed` med
+ * id:t det laddades med ("" = inget). Orört fält: databasens värde står kvar. Ändrat fält: det nya värdet, om databasen
+ * fortfarande har id:t fältet laddades med. Har värdet bytts någon annanstans sedan sidan laddades (galleriet, en annan
+ * flik, ett raderat konto) returneras undefined – då svarar actionen STALE i stället för att tyst kasta användarens val.
  */
-export function changedId(fd: FormData, name: string, submitted: number | null, current: number | null): number | null {
+export function changedId(fd: FormData, name: string, submitted: number | null, current: number | null): number | null | undefined {
   const loaded = fd.get(`${name}__changed`);
   if (typeof loaded !== "string") return current;
-  return (/^\d+$/.test(loaded) ? Number(loaded) : null) === current ? submitted : current;
+  return (/^\d+$/.test(loaded) ? Number(loaded) : null) === current ? submitted : undefined;
 }
 
 export function formObject(fd: FormData): Record<string, string> {

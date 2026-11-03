@@ -63,6 +63,7 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
     // Mottagaren skrivs bara när fältet ändrats, och bara om uppdraget fortfarande har mottagaren som formuläret
     // laddades med – annars släppte en sparning ett uppdrag som någon tagit under tiden.
     const to = changedId(fd, "to_user_id", d.to_user_id, existing.to_user_id);
+    if (to === undefined) return STALE;
     if (to !== existing.to_user_id) {
       const problem = recipientProblem(to);
       if (problem) return problem;

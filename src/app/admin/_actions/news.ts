@@ -85,6 +85,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     // Omslaget kan också ha bytts på sidan Bilder eller i redigeringsläget efter att sidan laddades – rör det bara om fältet
     // ändrats, och bara om omslaget i databasen fortfarande är det som fältet laddades med.
     const coverMediaId = changedId(fd, "cover_media_id", d.cover_media_id, existing.cover_media_id);
+    if (coverMediaId === undefined) return STALE;
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
     // Bara om nyheten inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
