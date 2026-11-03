@@ -278,6 +278,15 @@ const steps: string[] = [
 
 export function migrate(db: Database.Database) {
   const current = db.pragma("user_version", { simple: true }) as number;
+  // En nyare version av koden har migrerat databasen. Den här koden känner inte till tabellerna och
+  // kolumnerna som tillkommit, så den vägrar i stället för att fela först i en action eller på en sida.
+  if (current > steps.length) {
+    throw new Error(
+      `[statlin] Databasen har user_version ${current}, men koden känner bara till ${steps.length} migreringssteg: ` +
+        "databasen är nyare än koden – återställ ögonblicksbilden från före uppgraderingen eller deploya en nyare version " +
+        "(README → Överlämning → Återställning och rollback).",
+    );
+  }
   if (current >= steps.length) return;
   const run = db.transaction(() => {
     for (let v = current; v < steps.length; v++) {
