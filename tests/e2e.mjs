@@ -37,7 +37,7 @@ const step = async (name, fn) => {
     await fn();
     results.push(`✓ ${name}`);
   } catch (e) {
-    results.push(`✗ ${name}: ${e.message.split("\n")[0]}`);
+    results.push(`✗ ${name}: ${String(e?.message ?? e).split("\n")[0]}`);
     throw e;
   }
 };
@@ -84,6 +84,10 @@ async function login(page, email, password) {
     assert.ok(Math.min(...levels.slice(edge + 1)) < 60, `ringen innanför kanten ska vara svart: ${levels}`);
   };
 
+  // Allt som når det yttre catch räknas som fel, också det som kastas utanför stegen och därför saknar ✗-rad.
+  // process.exit nedan skriver över process.exitCode, så felet vägs in i avslutningskoden där.
+  let aborted = false;
+  let abortReason = "";
   try {
     await step("Sajten visar den officiella loggan, också på overallen", async () => {
       await page.goto(`${BASE}/`);
@@ -1146,14 +1150,16 @@ async function login(page, email, password) {
       await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
       await page.getByText("Ej granskad", { exact: true }).first().waitFor();
     });
-  } catch {
-    /* resultatet skrivs ut nedan */
+  } catch (e) {
+    aborted = true;
+    abortReason = String(e?.message ?? e).split("\n")[0];
   } finally {
     console.log(results.join("\n"));
+    if (aborted) console.log(`\nKörningen avbröts: ${abortReason}`);
     console.log(`\nSkärmdumpar: ${SHOTS}`);
     const relevant = errors.filter((e) => !/Failed to load resource.*(403|401)/.test(e));
     if (relevant.length) console.log("\nKonsolfel:\n" + [...new Set(relevant)].slice(0, 10).join("\n"));
     await browser.close();
-    process.exit(results.some((r) => r.startsWith("✗")) ? 1 : 0);
+    process.exit(aborted || results.some((r) => r.startsWith("✗")) ? 1 : 0);
   }
 })();
