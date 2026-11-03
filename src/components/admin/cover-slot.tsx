@@ -22,7 +22,8 @@ export function CoverSlot({
   name?: string;
   label: string;
   image: ImageRef | null;
-  save: (mediaId: number | null) => Promise<void>;
+  /** Svarar med { error } när inget sparades (t.ex. utgången session). */
+  save: (mediaId: number | null) => Promise<{ error: string } | void>;
   /** Körs när bilden sparats, t.ex. så att galleriet bredvid markerar rätt omslag. */
   onSaved?: (image: ImageRef | null) => void;
   aspect?: string;
@@ -30,6 +31,7 @@ export function CoverSlot({
   hint?: string;
 }) {
   const [status, setStatus] = useState<"saved" | "error" | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   // Ökas för att ladda om fältet med den bild som faktiskt är sparad (efter ett fel eller en ångrad borttagning).
   const [attempt, setAttempt] = useState(0);
@@ -43,10 +45,18 @@ export function CoverSlot({
     }
     startTransition(async () => {
       try {
-        await save(next?.id ?? null);
+        const res = await save(next?.id ?? null);
+        if (res && "error" in res) {
+          // Inget sparades – fältet laddas om med den bild som faktiskt är sparad.
+          setFailure(res.error);
+          setStatus("error");
+          setAttempt((n) => n + 1);
+          return;
+        }
         setStatus("saved");
         onSaved?.(next);
       } catch {
+        setFailure(null);
         setStatus("error");
         setAttempt((n) => n + 1);
       }
@@ -74,7 +84,7 @@ export function CoverSlot({
             <Check size={14} /> Sparat
           </span>
         ) : status === "error" ? (
-          <span className="text-red-deep">Det gick inte att spara. Ladda om sidan och försök igen.</span>
+          <span className="text-red-deep">Det gick inte att spara. {failure ?? "Ladda om sidan och försök igen."}</span>
         ) : null}
       </p>
     </div>

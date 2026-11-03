@@ -159,7 +159,8 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
 /** Bara loggan, från sidan Bilder – även för grafiskt ansvarig, på alla utskott. */
 export async function setCommitteeLogo(committeeId: number, mediaId: number | null) {
   const user = await actionUser();
-  if ("error" in user) return;
+  // Felet går tillbaka till loggans fält, som annars visade "Sparat" fast inget sparats.
+  if ("error" in user) return user;
   const db = getDb();
   const committee = db.prepare("SELECT id, short_name, logo_url FROM committees WHERE id = ?").get(committeeId) as
     | { id: number; short_name: string; logo_url: string | null }

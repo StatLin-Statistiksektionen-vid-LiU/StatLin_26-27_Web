@@ -98,21 +98,27 @@ export function GalleryManager({
       setCover(null);
       onCoverChange?.(null);
     }
-    startTransition(() => deleteEventImage(item.id));
+    startTransition(async () => {
+      await deleteEventImage(item.id);
+    });
   };
 
   const makeCover = (item: Item) => {
     const next = cover === item.image.id ? null : item.image.id;
     setCover(next);
     onCoverChange?.(next === null ? null : item.image);
-    startTransition(() => setEventCover(eventId, next));
+    startTransition(async () => {
+      await setEventCover(eventId, next);
+    });
   };
 
   const saveCaption = (item: Item, caption: string) => {
     if (caption === item.caption) return;
     setItems((list) => list.map((x) => (x.id === item.id ? { ...x, caption } : x)));
     startTransition(async () => {
-      await updateImageCaption(item.id, caption);
+      const res = await updateImageCaption(item.id, caption);
+      // Bocken bara när bildtexten faktiskt sparats (inte t.ex. med en utgången session).
+      if (res && "error" in res) return;
       setSaved(item.id);
       setTimeout(() => setSaved((s) => (s === item.id ? null : s)), 1500);
     });

@@ -147,7 +147,8 @@ export async function deleteNews(fd: FormData) {
 /** Bara omslaget, från sidan Bilder och redigeringsläget – även för grafiskt ansvarig, på alla nyheter. */
 export async function setNewsCover(newsId: number, mediaId: number | null) {
   const user = await actionUser();
-  if ("error" in user) return;
+  // Felet går tillbaka till omslagsfältet, som annars visade "Sparat" fast inget sparats.
+  if ("error" in user) return user;
   const db = getDb();
   const item = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(newsId) as
     | { id: number; committee_id: number | null; title: string; cover_media_id: number | null }
