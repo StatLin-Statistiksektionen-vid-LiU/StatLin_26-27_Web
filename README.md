@@ -102,6 +102,8 @@ npm run seed -- --demo   # grunddata + exempelevenemang, exempelnyheter och demo
 npm run dev              # http://localhost:3000
 ```
 
+**Bara lokalt:** `--demo` lägger in påhittade evenemang, nyheter och demokonton. Kör det aldrig mot produktionens databas. Seed vägrar när `NODE_ENV=production` eller när `SITE_URL` är satt till något annat än `localhost`/`127.0.0.1`.
+
 **Windows utan C++-byggverktyg:** `npm install` avbryts med `gyp ERR! find VS`. npm försöker kompilera better-sqlite3 eftersom paketet har en `binding.gyp`, trots att den förbyggda binären följer med och är den som används (därför installerar `Dockerfile` python3, make och g++). Hoppa över installationsskripten och kör sedan bara de två som behövs:
 
 ```bash
@@ -111,7 +113,7 @@ npm rebuild esbuild unrs-resolver
 
 Kör inte ett vanligt `npm rebuild` efteråt – det försöker kompilera better-sqlite3 igen. Alternativt installerar du det node-gyp kräver på Windows (Visual Studio Build Tools med *Desktop development with C++* samt Python 3), så fungerar `npm install` som vanligt.
 
-Seed-skriptet skriver ut inloggningsuppgifterna, och varje konto måste byta lösenord vid första inloggningen. Vill du välja lösenorden själv:
+Seed-skriptet skriver ut inloggningsuppgifterna, och varje konto måste byta lösenord vid första inloggningen. Vill du välja lösenorden själv (`--demo` fortfarande bara lokalt):
 
 ```bash
 ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
@@ -355,7 +357,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run dev` | Utvecklingsserver |
 | `npm run build` / `npm start` | Produktionsbygge / kör bygget |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
-| `npm run seed [-- --demo]` | Grunddata (och demodata) |
+| `npm run seed [-- --demo]` | Grunddata och första administratören; med `--demo` även demodata och demokonton – bara lokalt, vägras i produktion |
 | `npm run create-admin -- <e-post> [--make-admin]` | Skapa admin, eller nytt lösenord för ett befintligt konto med rollen orörd; `--make-admin` gör kontot till administratör |
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |

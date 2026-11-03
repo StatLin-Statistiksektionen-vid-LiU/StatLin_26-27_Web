@@ -2,7 +2,7 @@
  * Fyller databasen med grunddata (utskott, poster, sidtexter, inställningar).
  *
  *   npm run seed            → grunddata + första admin
- *   npm run seed -- --demo  → även exempelevenemang, exempelnyheter och demokonton
+ *   npm run seed -- --demo  → även exempelevenemang, exempelnyheter och demokonton (bara lokalt, se demoRefusal)
  *
  * Skriptet är idempotent för grunddata: befintligt innehåll skrivs inte över.
  */
@@ -16,6 +16,11 @@ import type { ExamOccasion, ExamStats } from "../src/lib/exam-stats";
 import { mulberry32 } from "../src/lib/utils";
 
 const demo = process.argv.includes("--demo");
+const refusal = demo ? demoRefusal() : null;
+if (refusal) {
+  console.error(refusal);
+  process.exit(1);
+}
 // Ett lösenord som står i repot vägras innan databasen ens öppnas.
 const placeholder = placeholderProblem("ADMIN_PASSWORD", process.env.ADMIN_PASSWORD) ?? (demo ? placeholderProblem("DEMO_PASSWORD", process.env.DEMO_PASSWORD) : null);
 if (placeholder) {
@@ -23,6 +28,23 @@ if (placeholder) {
   process.exit(1);
 }
 const db = getDb();
+
+/**
+ * Demodata (påhittade evenemang, nyheter och demokonton) hör bara hemma i en lokal databas. Vägras när
+ * NODE_ENV=production eller när SITE_URL är satt till något annat än localhost/127.0.0.1.
+ */
+function demoRefusal(): string | null {
+  const reason = "demodata och demokonton får bara läggas in i en lokal databas, aldrig i produktionen.";
+  if (process.env.NODE_ENV === "production") return `seed --demo vägras när NODE_ENV=production: ${reason}`;
+  const site = process.env.SITE_URL?.trim();
+  if (!site) return null;
+  let host = "";
+  try {
+    host = new URL(site).hostname;
+  } catch {}
+  if (host === "localhost" || host === "127.0.0.1") return null;
+  return `seed --demo vägras: SITE_URL är ${site}, inte localhost – ${reason}`;
+}
 
 function committeeId(slug: string): number {
   return (db.prepare("SELECT id FROM committees WHERE slug = ?").get(slug) as { id: number }).id;
@@ -136,16 +158,19 @@ async function seedDemo(created: { email: string; password: string; role: string
   }
 
   // Påhittad tentastatistik för två LiU-kurser, så att diagrammen syns i demot
-  // och e2e-testet fungerar utan att källan behöver nås. Kodlistan är de koder sajten tror att källan har.
+  // och e2e-testet fungerar utan att källan behöver nås. Kodlistan är de koder sajten tror att källan har:
+  // finns den redan (hämtad från källan) lämnas den orörd.
   const insertStats = db.prepare("INSERT OR REPLACE INTO exam_stats (course_code, data, fetched_at) VALUES (?, ?, ?)");
   const demoStats = [
     demoExamStats({ code: "732G33", sv: "Programmering i R", en: "Programming in R", module: "DAT1", grades: ["U", "G", "VG"], pass: 0.55, seed: 1 }),
     demoExamStats({ code: "TATA24", sv: "Linjär algebra", en: "Linear Algebra", module: "TEN1", grades: ["U", "3", "4", "5"], pass: 0.6, seed: 2 }),
   ];
   for (const stats of demoStats) insertStats.run(stats.code, JSON.stringify(stats), new Date().toISOString());
-  const setSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
-  setSetting.run("exam_stats_codes", JSON.stringify(demoStats.map((s) => s.code)));
-  setSetting.run("exam_stats_codes_at", new Date().toISOString());
+  if (!db.prepare("SELECT 1 FROM settings WHERE key = 'exam_stats_codes'").get()) {
+    const setSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+    setSetting.run("exam_stats_codes", JSON.stringify(demoStats.map((s) => s.code)));
+    setSetting.run("exam_stats_codes_at", new Date().toISOString());
+  }
 
   const news = [
     { slug: "valkommen-till-nya-statlin-se", title: "Välkommen till nya statlin.se", committee: "styrelsen", pinned: 1, days: 0,
