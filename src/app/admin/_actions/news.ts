@@ -87,6 +87,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
     // Bara om nyheten inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const updatedAt = nowIso();
     const res = db.prepare(
       `UPDATE news SET title=@title, slug=@slug, excerpt=@excerpt, body_md=@body_md, committee_id=@committee_id,
         cover_media_id=@cover_media_id, published=@published, pinned=@pinned, published_at=@published_at, updated_at=@updated_at
@@ -98,7 +99,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       cover_media_id: coverMediaId,
       pinned: isEditor(user) ? pinned : existing.pinned,
       published_at: publishedAt,
-      updated_at: nowIso(),
+      updated_at: updatedAt,
       id,
       version: formVersion(fd),
     });
@@ -106,7 +107,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "news", id, d.title);
     revalidateSite();
-    return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast." };
+    return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast.", data: { updated_at: updatedAt } };
   }
 
   if (!isEditor(user) && !user.committee_id) return { error: "Ditt konto är inte kopplat till något utskott." };

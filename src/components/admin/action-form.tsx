@@ -86,9 +86,9 @@ export function ActionForm({
   /** Körs efter en lyckad sparning, t.ex. för att stänga redigeringspanelen. */
   onSuccess?: (state: FormState) => void;
   /**
-   * Radens updated_at när formuläret laddades. Skickas i ett dolt fält så att servern kan neka en sparning ovanpå en
-   * nyare version, och är nyckel för fälten: Activity behåller annars de gamla värdena på en dold sida, så när raden
-   * ändrats (sparad här, i en annan flik eller av någon annan) laddas fälten om från den nya versionen.
+   * Radens updated_at. Skickas i ett dolt fält så att servern kan neka en sparning ovanpå en nyare version, och är nyckel
+   * för fälten: Activity behåller annars de gamla värdena på en dold sida, så när raden ändrats av någon annan (en annan
+   * flik, en annan person) laddas fälten om från den nya versionen. Actionen svarar med sin nya version i data.updated_at.
    */
   version?: string;
 }) {
@@ -170,13 +170,33 @@ export function ActionForm({
   }, []);
   const shown = state === cleared ? NO_STATE : state;
 
-  // Fälten laddas om när versionen ändras – då finns inget osparat kvar.
-  const loadedVersion = useRef(version);
+  // Nyckeln för fälten (fieldsVersion) och värdet i det dolda fältet (submitVersion) är tillstånd och inte propen. När
+  // serverns version ändras efter formulärets egen lyckade sparning är fälten redan det som sparades: då följer bara det
+  // dolda fältet med, och fokus, utfällda detaljer, förhandsgranskningen och det man hann skriva under sparningen står
+  // kvar. Den egna sparningen passerade vakten, så ingen annans ändring ligger emellan. Ändras versionen av något annat
+  // skäl laddas fälten om. Svaret och den nya versionen kan komma i samma rendering eller i valfri ordning: medan
+  // sparningen pågår väntar beslutet på svaret.
+  const [fieldsVersion, setFieldsVersion] = useState(version);
+  const [submitVersion, setSubmitVersion] = useState(version);
+  const [seenVersion, setSeenVersion] = useState(version);
+  if (version !== seenVersion) {
+    if (version !== undefined && state.ok && state.data?.updated_at === version) {
+      setSeenVersion(version);
+      setSubmitVersion(version);
+    } else if (!pending) {
+      setSeenVersion(version);
+      setSubmitVersion(version);
+      setFieldsVersion(version);
+    }
+  }
+
+  // Fälten laddades om från en annan version – då finns inget osparat kvar.
+  const loadedVersion = useRef(fieldsVersion);
   useEffect(() => {
-    if (loadedVersion.current === version) return;
-    loadedVersion.current = version;
+    if (loadedVersion.current === fieldsVersion) return;
+    loadedVersion.current = fieldsVersion;
     setDirty(false);
-  }, [version, setDirty]);
+  }, [fieldsVersion, setDirty]);
 
   // Varna innan man lämnar sidan med osparade ändringar.
   useEffect(() => {
@@ -210,9 +230,9 @@ export function ActionForm({
         noValidate
       >
         <FormStatus />
-        {version !== undefined && <input type="hidden" name="updated_at" value={version} />}
-        {/* Nyckeln sitter på fälten och inte på formuläret, så att statusraden ("Sparat …") står kvar när sparningen ger en ny version. */}
-        <Fragment key={version}>{children}</Fragment>
+        {submitVersion !== undefined && <input type="hidden" name="updated_at" value={submitVersion} />}
+        {/* Nyckeln sitter på fälten och inte på formuläret, så att statusraden står kvar när fälten laddas om. */}
+        <Fragment key={fieldsVersion}>{children}</Fragment>
         <div
           className={cn(
             "flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-5",

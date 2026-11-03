@@ -68,15 +68,16 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
     }
     const assigned = existing.to_user_id === to ? existing.assigned_at : assignedAt(to, user.id);
     // Bara om uppdraget inte ändrats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const updatedAt = nowIso();
     const res = db
       .prepare(
         "UPDATE tasks SET title = ?, description = ?, to_user_id = ?, shared = ?, due_date = ?, event_id = ?, assigned_at = ?, updated_at = ? WHERE id = ? AND updated_at = ?",
       )
-      .run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, nowIso(), d.id, formVersion(fd));
+      .run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, updatedAt, d.id, formVersion(fd));
     if (res.changes === 0) return STALE;
     audit(user.id, "update", "task", d.id, d.title);
     revalidateBoard();
-    return { ok: true, message: "Uppdraget är sparat." };
+    return { ok: true, message: "Uppdraget är sparat.", data: { updated_at: updatedAt } };
   }
 
   const problem = recipientProblem(d.to_user_id);

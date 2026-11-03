@@ -86,16 +86,17 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     // Ändringar från andra än administratörer ska granskas på nytt.
     const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";
     // Bara om evenemanget inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const updatedAt = nowIso();
     const res = db.prepare(
       `UPDATE events SET title=@title, slug=@slug, summary=@summary, body_md=@body_md, starts_at=@starts_at, ends_at=@ends_at,
         all_day=@all_day, location=@location, location_url=@location_url, committee_id=@committee_id, cover_media_id=@cover_media_id,
         signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at${uncheck} WHERE id=@id AND updated_at=@version`,
-    ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: nowIso(), id, version: formVersion(fd) });
+    ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: updatedAt, id, version: formVersion(fd) });
     if (res.changes === 0) return STALE;
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "event", id, d.title);
     revalidateSite();
-    return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast." };
+    return { ok: true, message: d.published ? "Sparat och publicerat." : "Sparat som utkast.", data: { updated_at: updatedAt } };
   }
 
   if (!isEditor(user) && !user.committee_id) return { error: "Ditt konto är inte kopplat till något utskott." };
