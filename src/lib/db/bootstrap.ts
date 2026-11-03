@@ -1,6 +1,25 @@
 import type Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { placeholderProblem } from "../auth/password";
 import { SEED_BOARD, SEED_COMMITTEES, SEED_LINKS, SEED_PAGES } from "../seed-content";
+
+/**
+ * Skapar första administratören om databasen saknar konton – vid första start (bootstrap nedan) och i
+ * npm run seed, som anropar samma funktion. Lösenordet måste bytas vid första inloggningen, och en känd
+ * platshållare vägras med ett fel. Returnerar true om kontot skapades.
+ */
+export function createFirstAdmin(db: Database.Database, email: string, password: string): boolean {
+  if ((db.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number }).n > 0) return false;
+  const problem = placeholderProblem("ADMIN_PASSWORD", password);
+  if (problem) throw new Error(`[statlin] ${problem} Administratören skapades inte.`);
+  const normalized = email.trim().toLowerCase();
+  const styrelsen = db.prepare("SELECT id FROM committees WHERE slug = 'styrelsen'").get() as { id: number } | undefined;
+  db.prepare(
+    "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (?, 'Administratör', 'Webbansvarig', 'admin', ?, ?, 1)",
+  ).run(normalized, styrelsen?.id ?? null, bcrypt.hashSync(password, 11));
+  console.log(`[statlin] Skapade administratören ${normalized} (byt lösenord vid första inloggningen).`);
+  return true;
+}
 
 /**
  * Körs första gången databasen öppnas: lägger in grunddata (utskott, poster, sidtexter, länkar)
@@ -45,13 +64,8 @@ export function bootstrap(db: Database.Database) {
       );
     }
 
-    const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const email = process.env.ADMIN_EMAIL?.trim();
     const password = process.env.ADMIN_PASSWORD;
-    if (count("users") === 0 && email && password) {
-      db.prepare(
-        "INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password) VALUES (?, 'Administratör', 'Webbansvarig', 'admin', ?, ?, 1)",
-      ).run(email, committeeId("styrelsen"), bcrypt.hashSync(password, 11));
-      console.log(`[statlin] Skapade administratören ${email} (byt lösenord vid första inloggningen).`);
-    }
+    if (email && password) createFirstAdmin(db, email, password);
   })();
 }

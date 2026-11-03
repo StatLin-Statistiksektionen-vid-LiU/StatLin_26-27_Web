@@ -84,13 +84,13 @@ Demokonton i Codespaces:
 
 | Konto | Lösenord | Roll |
 | --- | --- | --- |
-| `admin@statlin.se` | `admin-statlin-2026` | Administratör |
-| `info@statlin.se` | `demo-statlin-2026` | Redaktör |
-| `scb@statlin.se` | `demo-statlin-2026` | Utskott (SCB) |
-| `ubu@statlin.se` | `demo-statlin-2026` | Utskott (UBU) |
-| `grafiskt@statlin.se` | `demo-statlin-2026` | Utskott (styrelsen), grafiskt ansvar |
+| `admin@statlin.se` | `lokal-admin-2026` | Administratör |
+| `info@statlin.se` | `lokal-demo-2026` | Redaktör |
+| `scb@statlin.se` | `lokal-demo-2026` | Utskott (SCB) |
+| `ubu@statlin.se` | `lokal-demo-2026` | Utskott (UBU) |
+| `grafiskt@statlin.se` | `lokal-demo-2026` | Utskott (styrelsen), grafiskt ansvar |
 
-Logga in på `/logga-in`. Codespaces är privat för ditt konto, och lösenorden gäller bara där. Stäng av eller ta bort codespacet när du är klar (*Code → Codespaces → … → Delete*) så att du inte förbrukar din gratiskvot.
+Logga in på `/logga-in`. Lösenorden står här i repot, så första gången du loggar in på ett konto väljer du ett eget. Codespaces är privat för ditt konto, och lösenorden gäller bara där. Stäng av eller ta bort codespacet när du är klar (*Code → Codespaces → … → Delete*) så att du inte förbrukar din gratiskvot.
 
 ## Kom igång lokalt
 
@@ -111,13 +111,15 @@ npm rebuild esbuild unrs-resolver
 
 Kör inte ett vanligt `npm rebuild` efteråt – det försöker kompilera better-sqlite3 igen. Alternativt installerar du det node-gyp kräver på Windows (Visual Studio Build Tools med *Desktop development with C++* samt Python 3), så fungerar `npm install` som vanligt.
 
-Seed-skriptet skriver ut inloggningsuppgifterna. Vill du välja lösenorden själv:
+Seed-skriptet skriver ut inloggningsuppgifterna, och varje konto måste byta lösenord vid första inloggningen. Vill du välja lösenorden själv:
 
 ```bash
 ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
 ```
 
-Utan `--demo` läggs bara grunddatan in: utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF. All grunddata läggs också in automatiskt första gången sajten startar.
+Lösenord som står i repot vägras: `byt-mig-till-nagot-langt` ur `.env.example` och de gamla demolösenorden `admin-statlin-2026` och `demo-statlin-2026`.
+
+Utan `--demo` lägger seed in grunddatan (utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF) och, om databasen saknar konton, första administratören. Båda skapas av samma kod som första gången sajten startar (`src/lib/db/bootstrap.ts`), och administratören måste byta lösenord vid första inloggningen. Seed tar adressen ur `ADMIN_EMAIL` (annars `admin@statlin.se`) och lösenordet ur `ADMIN_PASSWORD` (annars slumpas ett, som skrivs ut). Vid första start skapas administratören bara när båda variablerna är satta.
 
 End-to-end-testet (`npm run test:e2e`, se [Kommandon](#kommandon)) styr Chromium med Playwright. Paketet installeras med de andra, men webbläsaren laddas ner för sig, en gång per dator:
 
@@ -136,7 +138,7 @@ cp .env.example .env     # fyll i SITE_URL, ADMIN_EMAIL och ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
+Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar skapas inget konto: sajten svarar med fel, och loggen säger att `ADMIN_PASSWORD` måste bytas. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
 
 Skapa en ny administratör, eller ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras:
 
@@ -179,7 +181,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | --- | --- |
 | `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), som Fly fyller i från `[build.args]` i `fly.toml` och docker compose från `.env`. Bygg om efter att du ändrat den. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. Lösenordet måste bytas vid första inloggningen, och platshållarna som står i repot vägras. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |

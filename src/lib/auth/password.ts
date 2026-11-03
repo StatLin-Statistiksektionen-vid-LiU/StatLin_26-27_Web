@@ -22,6 +22,15 @@ export function generatePassword(): string {
   return `${pick()}-${pick()}-${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 }
 
+/** Lösenord som står i repot (exempelfilen, och förr devcontainern och e2e-testet) och därför är kända för alla. */
+const PLACEHOLDER_PASSWORDS = ["byt-mig-till-nagot-langt", "admin-statlin-2026", "demo-statlin-2026"];
+
+/** Felet om lösenordet i miljövariabeln är en känd platshållare. Konton som skript skapar får aldrig något av dem. */
+export function placeholderProblem(variable: string, password: string | undefined): string | null {
+  if (password === undefined || !PLACEHOLDER_PASSWORDS.includes(password.trim().toLowerCase())) return null;
+  return `${variable} är platshållaren "${password.trim()}", som står i repot och därför är känd för alla – välj ett eget lösenord.`;
+}
+
 export function passwordProblem(password: string): string | null {
   if (password.length < 10) return "Lösenordet måste vara minst 10 tecken.";
   if (password.length > 200) return "Lösenordet är för långt.";

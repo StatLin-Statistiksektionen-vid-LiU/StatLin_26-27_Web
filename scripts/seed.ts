@@ -8,13 +8,20 @@
  */
 import sharp from "sharp";
 import { getDb } from "../src/lib/db";
-import { hashPassword, generatePassword } from "../src/lib/auth/password";
+import { createFirstAdmin } from "../src/lib/db/bootstrap";
+import { hashPassword, generatePassword, placeholderProblem } from "../src/lib/auth/password";
 import { storeImage } from "../src/lib/media-store";
 import { addDaysLocal, nowLocal } from "../src/lib/dates";
 import type { ExamOccasion, ExamStats } from "../src/lib/exam-stats";
 import { mulberry32 } from "../src/lib/utils";
 
 const demo = process.argv.includes("--demo");
+// Ett lösenord som står i repot vägras innan databasen ens öppnas.
+const placeholder = placeholderProblem("ADMIN_PASSWORD", process.env.ADMIN_PASSWORD) ?? (demo ? placeholderProblem("DEMO_PASSWORD", process.env.DEMO_PASSWORD) : null);
+if (placeholder) {
+  console.error(placeholder);
+  process.exit(1);
+}
 const db = getDb();
 
 function committeeId(slug: string): number {
@@ -25,17 +32,12 @@ async function main() {
   // Grunddata (utskott, poster, sidtexter, styrdokument) läggs in av bootstrap() när getDb() öppnar databasen.
 
   /* ---- Första admin ---- */
-  const userCount = (db.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number }).n;
+  // Samma funktion som vid första start (src/lib/db/bootstrap.ts). Har bootstrap() redan skapat kontot från
+  // ADMIN_EMAIL och ADMIN_PASSWORD gör den ingenting; annars gäller standardvärdena för lokal körning.
   const created: { email: string; password: string; role: string }[] = [];
-  if (userCount === 0) {
-    const email = process.env.ADMIN_EMAIL ?? "admin@statlin.se";
-    const password = process.env.ADMIN_PASSWORD ?? generatePassword();
-    db.prepare(
-      `INSERT INTO users (email, name, post, role, committee_id, password_hash, must_change_password)
-       VALUES (?, ?, ?, 'admin', ?, ?, ?)`,
-    ).run(email, "Webbansvarig", "Administratör", committeeId("styrelsen"), await hashPassword(password), process.env.ADMIN_PASSWORD ? 0 : 1);
-    created.push({ email, password, role: "admin" });
-  }
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase() || "admin@statlin.se";
+  const password = process.env.ADMIN_PASSWORD || generatePassword();
+  if (createFirstAdmin(db, email, password)) created.push({ email, password, role: "admin" });
 
   if (demo) await seedDemo(created);
 
@@ -63,9 +65,10 @@ async function seedDemo(created: { email: string; password: string; role: string
   for (const u of demoUsers) {
     const exists = db.prepare("SELECT 1 FROM users WHERE email = ?").get(u.email);
     if (exists) continue;
-    const password = process.env.DEMO_PASSWORD ?? generatePassword();
+    const password = process.env.DEMO_PASSWORD || generatePassword();
+    // Som alla konton som skript skapar måste demokontona byta lösenord vid första inloggningen.
     db.prepare(
-      `INSERT INTO users (email, name, post, role, committee_id, design, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (email, name, post, role, committee_id, design, password_hash, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
     ).run(u.email, u.name, u.post, u.role, committeeId(u.committee), u.design ?? 0, await hashPassword(password));
     created.push({ email: u.email, password, role: u.role });
   }

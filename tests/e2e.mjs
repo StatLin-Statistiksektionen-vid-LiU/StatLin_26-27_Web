@@ -1,8 +1,11 @@
 // End-to-end-test av loggan, inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen och grafiskt ansvar
 // mot en körande server som seedats med demodata och kända lösenord:
 //
-//   ADMIN_PASSWORD=admin-statlin-2026 DEMO_PASSWORD=demo-statlin-2026 npm run seed -- --demo
+//   ADMIN_PASSWORD=lokal-admin-2026 DEMO_PASSWORD=lokal-demo-2026 npm run seed -- --demo
 //   EXAM_STATS_URL=http://127.0.0.1:9 npm run dev
+//
+// Konton som seeden skapar måste byta lösenord vid första inloggningen. login() nedan byter då en gång
+// per konto, som en ny post gör, och loggar sedan in med det nya lösenordet.
 //
 // EXAM_STATS_URL pekar tentastatistiken på en adress som inte svarar, så att testet bara använder
 // demostatistiken i databasen och aldrig frågar den riktiga källan.
@@ -42,11 +45,27 @@ const step = async (name, fn) => {
   }
 };
 
+/** Lösenorden som login() har bytt till, per e-postadress. */
+const changedPasswords = new Map();
+
 async function login(page, email, password) {
+  const current = changedPasswords.get(email) ?? password;
   await page.goto(`${BASE}/logga-in`);
   await page.fill("#email", email);
-  await page.fill("#password", password);
+  await page.fill("#password", current);
   await Promise.all([page.waitForURL(/\/admin/), page.click('button[type="submit"]')]);
+  if (!/\/admin\/konto\?byt=1/.test(page.url())) return;
+  // Första inloggningen: välj ett eget lösenord. Formuläret skickas via React, så vänta tills fälten är hydrerade.
+  const next = `${current}-bytt`;
+  await page.getByText("Välj ett eget lösenord").waitFor();
+  await page.waitForFunction(() => Object.keys(document.querySelector('input[name="current"]') ?? {}).some((k) => k.startsWith("__react")));
+  await page.fill('input[name="current"]', current);
+  await page.fill('input[name="password"]', next);
+  await page.fill('input[name="confirm"]', next);
+  await page.getByRole("button", { name: "Byt lösenord" }).click();
+  await page.getByText("Lösenordet är bytt.").waitFor();
+  changedPasswords.set(email, next);
+  await page.goto(`${BASE}/admin`);
 }
 
 (async () => {
@@ -186,7 +205,7 @@ async function login(page, email, password) {
         assert.match(await glow.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter), color);
       };
       await ringGlow(/255, 7, 7/);
-      await login(glow, "info@statlin.se", "demo-statlin-2026");
+      await login(glow, "info@statlin.se", "lokal-demo-2026");
       // Listan får inte ändras förrän sidan är hydrerad. Annars ritar React om formuläret och klicket försvinner.
       const hydrated = () => glow.waitForFunction(() => Object.keys(document.querySelector("#hero_ring_color") ?? {}).some((k) => k.startsWith("__react")));
       await glow.goto(`${BASE}/admin/installningar`);
@@ -613,7 +632,7 @@ async function login(page, email, password) {
     });
 
     await step("Inloggning som redaktör (info)", async () => {
-      await login(page, "info@statlin.se", "demo-statlin-2026");
+      await login(page, "info@statlin.se", "lokal-demo-2026");
       await page.getByText("Hej Namn").waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-dashboard.png` });
     });
@@ -710,7 +729,7 @@ async function login(page, email, password) {
     });
 
     await step("Utskottskonto (SCB) ser bara sitt utskott", async () => {
-      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/evenemang`);
       const titles = await page.locator("tbody tr td:first-child a span.block.font-semibold").allTextContents();
       assert.ok(titles.includes("Testsittning med galleri"), "SCB ska se SCB-evenemanget");
@@ -831,7 +850,7 @@ async function login(page, email, password) {
 
     await step("Admin skapar konto och får engångslösenord", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.goto(`${BASE}/admin/konton`);
       await page.fill('input[name="name"]', "Test Testsson");
       await page.fill('input[name="email"]', "stig@statlin.se");
@@ -853,7 +872,7 @@ async function login(page, email, password) {
 
     await step("Admin redigerar en sida och ändringen syns publikt", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.goto(`${BASE}/admin/sidor/ny-student`);
       await page.fill('textarea[name="lead"]', "Välkommen till StatLin – testad ingress!");
       await page.getByRole("button", { name: "Spara och publicera" }).click();
@@ -876,7 +895,7 @@ async function login(page, email, password) {
 
     await step("Redaktör (info) kan ändra inställningarna", async () => {
       await page.context().clearCookies();
-      await login(page, "info@statlin.se", "demo-statlin-2026");
+      await login(page, "info@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/installningar`);
       // Nekas man skickas man vidare först efter att sidan laddats, så vänta på själva formuläret.
       await page.getByRole("heading", { name: "Inställningar", exact: true }).waitFor({ timeout: 15000 });
@@ -941,7 +960,7 @@ async function login(page, email, password) {
 
     await step("Utskottskonto nekas inställningarna", async () => {
       await page.context().clearCookies();
-      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/installningar`);
       await page.waitForURL(/\/admin\?nekad=1/);
     });
@@ -974,7 +993,7 @@ async function login(page, email, password) {
 
     await step("Admin ser ogranskade evenemang i översikten och listan", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await toReview().getByText("Pubkväll att granska").waitFor();
       await page.goto(`${BASE}/admin/evenemang?visa=ogranskade`);
       await reviewRow("Pubkväll att granska").getByText("Ej granskad", { exact: true }).waitFor();
@@ -1002,7 +1021,7 @@ async function login(page, email, password) {
 
     await step("Utskottets ändring tar bort granskningen", async () => {
       await page.context().clearCookies();
-      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
       await page.getByText("Granskad", { exact: true }).first().waitFor();
       await page.fill('textarea[name="summary"]', "Ändrad efter granskningen.");
@@ -1014,7 +1033,7 @@ async function login(page, email, password) {
 
     await step("Admin-skapat evenemang är granskat direkt", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Styrelsemöte i testet");
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
@@ -1035,7 +1054,7 @@ async function login(page, email, password) {
 
     await step("Utskottskonto skickar ett privat uppdrag till info", async () => {
       await page.context().clearCookies();
-      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
       taskUrl = await newTask("Affisch till testsittningen", "Informationsansvarig");
       await page.goto(`${BASE}/admin/uppdrag?visa=fran`);
       await page.getByText("Affisch till testsittningen").waitFor();
@@ -1043,7 +1062,7 @@ async function login(page, email, password) {
 
     await step("Mottagaren får en siffra i menyn som nollställs på tavlan", async () => {
       await page.context().clearCookies();
-      await login(page, "info@statlin.se", "demo-statlin-2026");
+      await login(page, "info@statlin.se", "lokal-demo-2026");
       assert.match(await tasksLink().innerText(), /1/, "siffran ska synas i menyn");
       await page.goto(`${BASE}/admin/uppdrag?visa=till`);
       await page.getByText("Affisch till testsittningen").waitFor();
@@ -1062,9 +1081,9 @@ async function login(page, email, password) {
     });
 
     await step("Utskottskonto ser inte andras privata uppdrag", async () => {
-      const secret = await newTask("Hemlig planering i testet", "Administratör");
+      const secret = await newTask("Hemlig planering i testet", "Webbansvarig");
       await page.context().clearCookies();
-      await login(page, "scb@statlin.se", "demo-statlin-2026");
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByText("Affisch till testsittningen").waitFor();
       assert.equal(await page.getByText("Hemlig planering i testet").count(), 0, "privat uppdrag ska inte synas på tavlan");
@@ -1075,7 +1094,7 @@ async function login(page, email, password) {
 
     await step("Admin ser alla uppdrag", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByText("Affisch till testsittningen").waitFor();
       await page.getByText("Hemlig planering i testet").waitFor();
@@ -1097,7 +1116,7 @@ async function login(page, email, password) {
 
     await step("Grafiskt ansvarig byter omslag och laddar upp en galleribild på SCB:s evenemang", async () => {
       await page.context().clearCookies();
-      await login(page, "grafiskt@statlin.se", "demo-statlin-2026");
+      await login(page, "grafiskt@statlin.se", "lokal-demo-2026");
       await Promise.all([page.waitForURL(/\/admin\/bilder$/), page.getByRole("link", { name: /Bilder och omslag/ }).click()]);
       const gallery = page.getByRole("group", { name: "Testsittning med galleri" }).getByRole("link", { name: /Galleri/ });
       assert.equal(await gallery.getAttribute("href"), `/admin/bilder/evenemang/${scbEventId}`);
@@ -1145,7 +1164,7 @@ async function login(page, email, password) {
 
     await step("Omslagsbytet tar bort granskningen och syns i loggen", async () => {
       await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "admin-statlin-2026");
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
       await page.getByText("bytte omslag på").first().waitFor();
       await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
       await page.getByText("Ej granskad", { exact: true }).first().waitFor();
