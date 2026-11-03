@@ -121,6 +121,12 @@ ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
 
 Utan `--demo` läggs bara grunddatan in: utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF. All grunddata läggs också in automatiskt första gången sajten startar.
 
+End-to-end-testet (`npm run test:e2e`, se [Kommandon](#kommandon)) styr Chromium med Playwright. Paketet installeras med de andra, men webbläsaren laddas ner för sig, en gång per dator:
+
+```bash
+npx playwright install chromium
+```
+
 ## Driftsättning
 
 All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker, eller Fly.io/Railway/Render med volym.
@@ -250,7 +256,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run seed [-- --demo]` | Grunddata (och demodata) |
 | `npm run create-admin -- <e-post>` | Skapa admin eller återställ lösenord |
 | `npm run create-accounts` | Skapa ordförande, vice, info och ett konto per utskott (hoppar över befintliga) |
-| `node tests/e2e.mjs <url>` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server – se kommentaren i filen |
+| `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra

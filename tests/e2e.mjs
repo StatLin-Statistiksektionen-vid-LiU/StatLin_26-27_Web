@@ -6,9 +6,9 @@
 //
 // EXAM_STATS_URL pekar tentastatistiken på en adress som inte svarar, så att testet bara använder
 // demostatistiken i databasen och aldrig frågar den riktiga källan.
-// Kräver Playwright (npm i -D playwright && npx playwright install chromium).
+// Playwright är en devDependency. Chromium laddas ner en gång per dator: npx playwright install chromium
 //
-//   node tests/e2e.mjs http://localhost:3000
+//   npm run test:e2e   (eller node tests/e2e.mjs http://localhost:3000)
 import assert from "node:assert";
 import fs from "node:fs";
 import os from "node:os";
