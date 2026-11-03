@@ -6,7 +6,7 @@ import { type FormState, formObject, invalid, zCheckbox, zEmail, zOptionalId, zR
 import { audit } from "@/lib/admin/helpers";
 import { generatePassword, hashPassword } from "@/lib/auth/password";
 import { isAdmin } from "@/lib/auth/permissions";
-import { destroyAllSessionsForUser, requireUser } from "@/lib/auth/session";
+import { actionUser, destroyAllSessionsForUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 
 const forbidden: FormState = { error: "Endast administratörer kan hantera konton." };
@@ -30,7 +30,8 @@ function adminCount(excludeId?: number) {
 }
 
 export async function saveUser(_prev: FormState, fd: FormData): Promise<FormState> {
-  const me = await requireUser();
+  const me = await actionUser();
+  if ("error" in me) return me;
   if (!isAdmin(me)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse({ ...formObject(fd), active: id ? fd.get("active") ?? undefined : "on" });
@@ -72,7 +73,8 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
 }
 
 export async function resetUserPassword(_prev: FormState, fd: FormData): Promise<FormState> {
-  const me = await requireUser();
+  const me = await actionUser();
+  if ("error" in me) return me;
   if (!isAdmin(me)) return forbidden;
   const id = Number(fd.get("id"));
   const db = getDb();
@@ -89,7 +91,8 @@ export async function resetUserPassword(_prev: FormState, fd: FormData): Promise
 }
 
 export async function deleteUser(fd: FormData) {
-  const me = await requireUser();
+  const me = await actionUser();
+  if ("error" in me) return;
   if (!isAdmin(me)) redirect("/admin");
   const id = Number(fd.get("id"));
   if (id === me.id) redirect(`/admin/konton/${id}?fel=sjalv`);

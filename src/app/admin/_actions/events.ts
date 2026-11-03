@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 import type { SessionUser } from "@/lib/types";
@@ -56,7 +56,8 @@ function resolveCommittee(user: SessionUser, requested: number | null): number |
 }
 
 export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -119,7 +120,8 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
 }
 
 export async function deleteEvent(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const existing = loadEvent(id);
   if (!existing || !canEditOwned(user, existing)) redirect("/admin/evenemang");
@@ -136,7 +138,8 @@ export async function deleteEvent(fd: FormData) {
 
 /** Administratörernas granskningsbock. Rör aldrig om evenemanget är publicerat. */
 export async function setEventChecked(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const existing = loadEvent(id);
   if (!existing || !canReviewEvents(user)) redirect("/admin/evenemang");
@@ -150,8 +153,10 @@ export async function setEventChecked(fd: FormData) {
 
 /* ---------- Galleri och omslag (även grafiskt ansvarig, på alla evenemang) ---------- */
 
+/** null när sessionen saknas – då görs ingenting. */
 async function authorizeImage(imageId: number) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return null;
   const row = getDb()
     .prepare("SELECT ei.id, ei.event_id, ei.media_id, e.committee_id FROM event_images ei JOIN events e ON e.id = ei.event_id WHERE ei.id = ?")
     .get(imageId) as { id: number; event_id: number; media_id: number; committee_id: number | null } | undefined;
@@ -160,13 +165,15 @@ async function authorizeImage(imageId: number) {
 }
 
 export async function updateImageCaption(imageId: number, caption: string) {
-  await authorizeImage(imageId);
+  if (!(await authorizeImage(imageId))) return;
   getDb().prepare("UPDATE event_images SET caption = ? WHERE id = ?").run(caption.trim().slice(0, 300), imageId);
   revalidateSite();
 }
 
 export async function deleteEventImage(imageId: number) {
-  const { user, row } = await authorizeImage(imageId);
+  const auth = await authorizeImage(imageId);
+  if (!auth) return;
+  const { user, row } = auth;
   const db = getDb();
   db.prepare("DELETE FROM event_images WHERE id = ?").run(imageId);
   db.prepare("UPDATE events SET cover_media_id = NULL WHERE id = ? AND cover_media_id = ?").run(row.event_id, row.media_id);
@@ -176,7 +183,8 @@ export async function deleteEventImage(imageId: number) {
 }
 
 export async function reorderEventImages(eventId: number, imageIds: number[]) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const event = loadEvent(eventId);
   if (!event || !canEditImages(user, event)) throw new Error("Saknar behörighet.");
   const db = getDb();
@@ -187,7 +195,8 @@ export async function reorderEventImages(eventId: number, imageIds: number[]) {
 
 /** Från stjärnan i galleriet och från sidan Bilder. Ett nytt omslag ska granskas på nytt, precis som andra ändringar. */
 export async function setEventCover(eventId: number, mediaId: number | null) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const event = loadEvent(eventId);
   if (!event || !canEditImages(user, event) || !canUseImage(user, mediaId, eventId)) throw new Error("Saknar behörighet.");
   if (mediaId === event.cover_media_id) return;

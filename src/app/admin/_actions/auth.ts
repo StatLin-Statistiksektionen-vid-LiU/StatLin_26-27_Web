@@ -7,7 +7,7 @@ import { audit } from "@/lib/admin/helpers";
 import { type FormState, invalid } from "@/lib/admin/form";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
 import { clearLoginFailures, clientIp, loginDelayed, loginDelayKey, rateLimitHit, recordLoginFailure } from "@/lib/auth/rate-limit";
-import { createSession, currentToken, destroyAllSessionsForUser, destroySession, requireUser } from "@/lib/auth/session";
+import { actionUser, createSession, currentToken, destroyAllSessionsForUser, destroySession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import type { UserRow } from "@/lib/types";
 
@@ -82,7 +82,8 @@ export async function logout() {
 }
 
 export async function changePassword(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser({ allowTemporaryPassword: true });
+  const user = await actionUser({ allowTemporaryPassword: true });
+  if ("error" in user) return user;
   const current = String(fd.get("current") ?? "");
   const next = String(fd.get("password") ?? "");
   const confirm = String(fd.get("confirm") ?? "");
@@ -103,7 +104,8 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
 }
 
 export async function updateProfile(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser({ allowTemporaryPassword: true });
+  const user = await actionUser({ allowTemporaryPassword: true });
+  if ("error" in user) return user;
   const parsed = z
     .object({
       name: z.string().trim().min(1, "Fyll i ditt namn.").max(120),
@@ -116,7 +118,8 @@ export async function updateProfile(_prev: FormState, fd: FormData): Promise<For
 }
 
 export async function logoutOtherSessions(): Promise<FormState> {
-  const user = await requireUser({ allowTemporaryPassword: true });
+  const user = await actionUser({ allowTemporaryPassword: true });
+  if ("error" in user) return user;
   destroyAllSessionsForUser(user.id, await currentToken());
   return { ok: true, message: "Alla andra enheter har loggats ut." };
 }

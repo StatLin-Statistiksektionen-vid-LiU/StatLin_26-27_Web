@@ -6,7 +6,7 @@ import { z } from "zod";
 import { changedId, type FormState, formObject, invalid, zOptionalId, zRequired, zText } from "@/lib/admin/form";
 import { audit, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/types";
 
@@ -44,7 +44,8 @@ const taskSchema = z.object({
 });
 
 export async function saveTask(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const parsed = taskSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
@@ -85,7 +86,8 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
 }
 
 export async function setTaskStatus(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const status = String(fd.get("status")) as TaskStatus;
   const existing = loadTask(id);
@@ -101,7 +103,8 @@ export async function setTaskStatus(fd: FormData) {
 
 /** Öppna uppdrag (utan mottagare) kan vem som helst som ser dem ta. */
 export async function claimTask(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
   if (!existing || existing.to_user_id !== null || !canSeeTask(user, existing)) redirect("/admin/uppdrag");
@@ -113,7 +116,8 @@ export async function claimTask(fd: FormData) {
 }
 
 export async function addTaskComment(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const parsed = z.object({ task_id: zOptionalId, body: zRequired(2000, "Kommentaren") }).safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const existing = parsed.data.task_id ? loadTask(parsed.data.task_id) : undefined;
@@ -126,7 +130,8 @@ export async function addTaskComment(_prev: FormState, fd: FormData): Promise<Fo
 }
 
 export async function deleteTask(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
   if (!existing || !canEditTask(user, existing)) redirect("/admin/uppdrag");
@@ -138,7 +143,8 @@ export async function deleteTask(fd: FormData) {
 
 /** Nollställer siffran i sidomenyn när tavlan öppnas. */
 export async function markTasksSeen() {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   getDb().prepare("UPDATE users SET tasks_seen_at = ? WHERE id = ?").run(nowIso(), user.id);
   revalidateBoard();
 }

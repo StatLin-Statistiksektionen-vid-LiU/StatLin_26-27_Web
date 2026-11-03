@@ -5,7 +5,7 @@ import { z } from "zod";
 import { changedId, type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 
@@ -45,7 +45,8 @@ function stockholmToIso(local: string): string {
 }
 
 export async function saveNews(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -107,7 +108,8 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
 }
 
 export async function deleteNews(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const db = getDb();
   const existing = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(id) as
@@ -123,7 +125,8 @@ export async function deleteNews(fd: FormData) {
 
 /** Bara omslaget, från sidan Bilder och redigeringsläget – även för grafiskt ansvarig, på alla nyheter. */
 export async function setNewsCover(newsId: number, mediaId: number | null) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const db = getDb();
   const item = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(newsId) as
     | { id: number; committee_id: number | null; title: string; cover_media_id: number | null }

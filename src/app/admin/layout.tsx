@@ -3,8 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
-import { getSessionUser } from "@/lib/auth/session";
+import { Notice } from "@/components/admin/ui";
+import { getSessionUser, sessionExpiresSoon } from "@/lib/auth/session";
 import { countUnseenTasks } from "@/lib/data/tasks";
+import { formatTimestamp } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: { default: "Adminpanel", template: "%s · Admin · StatLin" },
@@ -25,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/logga-in?next=/admin");
-  const unseenTasks = await countUnseenTasks(user.id);
+  const [unseenTasks, expiresAt] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon()]);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
       <AdminSidebar
@@ -49,7 +51,14 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         )}
-        <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">{children}</div>
+        <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">
+          {expiresAt && (
+            <Notice tone="warning">
+              Din inloggning går ut {formatTimestamp(expiresAt)}. Den förlängs när du sparar något – annars behöver du logga in igen.
+            </Notice>
+          )}
+          {children}
+        </div>
       </div>
     </div>
   );

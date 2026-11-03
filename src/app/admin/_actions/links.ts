@@ -5,7 +5,7 @@ import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, revalidateSite } from "@/lib/admin/helpers";
 import { isEditor } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { LINK_CATEGORIES, LINK_ICONS } from "@/lib/links";
 import type { LinkCategory } from "@/lib/types";
@@ -28,7 +28,8 @@ const linkSchema = z.object({
 });
 
 export async function saveLink(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = linkSchema.safeParse(formObject(fd));
@@ -58,7 +59,8 @@ export async function saveLink(_prev: FormState, fd: FormData): Promise<FormStat
 }
 
 export async function deleteLink(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   if (!isEditor(user)) redirect("/admin");
   const id = Number(fd.get("id"));
   const db = getDb();

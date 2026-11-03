@@ -15,7 +15,7 @@ import {
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
 import { deleteMediaIfUnused, MediaError, storeFile } from "@/lib/media-store";
@@ -28,7 +28,8 @@ const forbidden: FormState = { error: "Du har inte behörighet att göra det hä
 /* ---------- Markdown-förhandsvisning ---------- */
 
 export async function previewMarkdown(md: string): Promise<string> {
-  await requireUser();
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return `<p>${user.error}</p>`;
   return renderMarkdown(md.slice(0, 50000));
 }
 
@@ -45,7 +46,8 @@ const boardSchema = z.object({
 });
 
 export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = boardSchema.safeParse(formObject(fd));
@@ -75,7 +77,8 @@ export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<F
 }
 
 export async function deleteBoardMember(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   if (!isEditor(user)) redirect("/admin");
   const id = Number(fd.get("id"));
   const db = getDb();
@@ -90,7 +93,8 @@ export async function deleteBoardMember(fd: FormData) {
 }
 
 export async function moveBoardMember(id: number, direction: -1 | 1) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   if (!isEditor(user)) throw new Error("Saknar behörighet.");
   const db = getDb();
   const rows = db.prepare("SELECT id FROM board_members ORDER BY sort_order, id").all() as { id: number }[];
@@ -120,7 +124,8 @@ const committeeSchema = z.object({
 });
 
 export async function saveCommittee(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   if (!id || !canEditCommittee(user, id)) return forbidden;
   const parsed = committeeSchema.safeParse(formObject(fd));
@@ -145,7 +150,8 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
 
 /** Bara loggan, från sidan Bilder – även för grafiskt ansvarig, på alla utskott. */
 export async function setCommitteeLogo(committeeId: number, mediaId: number | null) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const db = getDb();
   const committee = db.prepare("SELECT id, short_name, logo_url FROM committees WHERE id = ?").get(committeeId) as
     | { id: number; short_name: string; logo_url: string | null }
@@ -167,7 +173,8 @@ export async function setCommitteeLogo(committeeId: number, mediaId: number | nu
 /* ---------- Sidor ---------- */
 
 export async function savePage(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const parsed = z
     .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(60000, "Texten") })
@@ -197,7 +204,8 @@ const docSchema = z.object({
 });
 
 export async function saveDocument(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!canManageDocuments(user)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = docSchema.safeParse(formObject(fd));
@@ -242,7 +250,8 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
 }
 
 export async function deleteDocument(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   if (!canManageDocuments(user)) redirect("/admin");
   const id = Number(fd.get("id"));
   const db = getDb();
@@ -271,7 +280,8 @@ const partnerSchema = z.object({
 });
 
 export async function savePartner(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id")) || null;
   const parsed = partnerSchema.safeParse(formObject(fd));
@@ -297,7 +307,8 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
 }
 
 export async function deletePartner(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   if (!isEditor(user)) redirect("/admin");
   const id = Number(fd.get("id"));
   const db = getDb();
@@ -333,7 +344,8 @@ const settingsSchema = z.object({
 
 /** Sparar bara fälten som finns i formuläret, så att delformulär (t.ex. bara startsidan) inte tömmer resten. */
 export async function saveSettings(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   if (!canManageSettings(user)) return forbidden;
   const raw = formObject(fd);
   type Key = keyof typeof settingsSchema.shape;

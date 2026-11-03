@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, revalidateSite } from "@/lib/admin/helpers";
-import { requireUser } from "@/lib/auth/session";
+import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused, isImageUpload, MediaError, storeFile, storeImage } from "@/lib/media-store";
 import { LAST_TERM } from "@/lib/resources";
@@ -21,7 +21,8 @@ const resourceSchema = z.object({
 });
 
 export async function saveResource(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return user;
   const id = Number(fd.get("id")) || null;
   const parsed = resourceSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -70,7 +71,8 @@ export async function saveResource(_prev: FormState, fd: FormData): Promise<Form
 }
 
 export async function deleteResource(fd: FormData) {
-  const user = await requireUser();
+  const user = await actionUser();
+  if ("error" in user) return;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT title, media_id FROM resources WHERE id = ?").get(id) as { title: string; media_id: number | null } | undefined;
