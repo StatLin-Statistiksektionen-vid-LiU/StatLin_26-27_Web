@@ -308,9 +308,9 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 ## Guide för poster
 
 1. Logga in på **/logga-in** med postens e-postadress.
-2. **Nytt evenemang**: översikten har stora knappar för det vanligaste. Fyll i titel, tid och plats och välj **Publicera** eller **Spara som utkast**. Sluttid, kartlänk, anmälan och pris finns under *Fler detaljer*. Utan omslagsbild genereras ett omslag i utskottets färger med utskottets logga.
+2. **Nytt evenemang**: översikten har stora knappar för det vanligaste. Fyll i titel, tid, plats och en kort sammanfattning (eller en beskrivning) och välj **Publicera** – eller **Spara som utkast**, som också är vad Enter i ett fält gör för ett nytt evenemang. Sluttid, kartlänk, anmälan och pris finns under *Fler detaljer*. Utan omslagsbild genereras ett omslag i utskottets färger med utskottets logga.
 3. **Efter evenemanget**: öppna det under *Evenemang*, scrolla till *Bildgalleri* och dra in bilderna. De dyker upp direkt på sajten och i galleriet. Klicka på ★ för att välja omslag.
-4. **Nyheter** publiceras direkt, eller vid en viss tid om du anger ett framtida datum.
+4. **Nyheter** publiceras direkt när de har en ingress eller en text, eller vid en viss tid om du anger ett framtida datum.
 5. **Uppdragstavlan**: *Nytt uppdrag* skickar ett uppdrag till en annan post, eller lägger upp det öppet så att vem som helst kan ta det. Mottagaren flyttar det mellan Planerat, Pågår, Behöver hjälp och Klart, och båda kan skriva kommentarer, till exempel med en länk till utkastet i Canva.
 6. **Länkar**: under *Länkar* (redaktörer) styrs länksidan – slå på *Genväg* för att länken ska visas överst och på startsidan. Tentastatistiken behöver ingen skötsel: den hämtas automatiskt när någon söker på en kurskod.
 7. **Hjälpmedel**: under *Hjälpmedel* lägger du upp en fil eller en länk och väljer program, termin och kategori. Gäller det flera terminer väljer du *Hela programmet*. Allt blir offentligt, så lägg bara upp sådant ni får dela.
