@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { logout } from "@/app/admin/_actions/auth";
 import {
   ArrowUpRight,
   Board,
@@ -26,6 +25,7 @@ import {
 import { hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
+import { LogoutForm } from "./logout-form";
 
 type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
 
@@ -129,11 +129,11 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         <Link href="/" target="_blank" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.92rem] text-white/70 hover:bg-white/[0.06] hover:text-white">
           <ArrowUpRight size={18} /> Visa sajten
         </Link>
-        <form action={logout}>
+        <LogoutForm>
           <button type="submit" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[0.92rem] text-white/70 hover:bg-white/[0.06] hover:text-white">
             <Logout size={18} /> Logga ut
           </button>
-        </form>
+        </LogoutForm>
       </div>
     </nav>
   );

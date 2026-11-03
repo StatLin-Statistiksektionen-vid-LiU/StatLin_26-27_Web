@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { logout } from "@/app/admin/_actions/auth";
+import { LogoutForm } from "@/components/admin/logout-form";
 import { Check, Edit, Logout, Settings } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { EditDrawer } from "./edit-drawer";
@@ -55,11 +55,11 @@ export function AdminBar({ user }: { user: EditUser }) {
           <Link href="/admin" aria-label="Adminpanel" className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
             <Settings size={17} />
           </Link>
-          <form action={logout}>
+          <LogoutForm>
             <button type="submit" aria-label="Logga ut" className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
               <Logout size={17} />
             </button>
-          </form>
+          </LogoutForm>
         </div>
       </div>
       <EditDrawer />
