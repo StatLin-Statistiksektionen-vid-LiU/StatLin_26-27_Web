@@ -33,7 +33,7 @@ export function MarkdownEditor({
   rows?: number;
   hint?: string;
 }) {
-  const { beginUpload } = useFormCtx();
+  const { beginUpload, markDirty } = useFormCtx();
   const [value, setValue] = useState(defaultValue);
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [html, setHtml] = useState("");
@@ -52,6 +52,7 @@ export function MarkdownEditor({
     if (tool.block && a > 0 && value[a - 1] !== "\n") text = `\n\n${text}`;
     const next = value.slice(0, a) + text + value.slice(b);
     setValue(next);
+    markDirty();
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(a + text.length, a + text.length);
@@ -62,6 +63,7 @@ export function MarkdownEditor({
     const ta = ref.current;
     const pos = ta?.selectionStart ?? value.length;
     setValue((v) => v.slice(0, pos) + text + v.slice(pos));
+    markDirty();
   };
 
   const onImage = async (file: File) => {

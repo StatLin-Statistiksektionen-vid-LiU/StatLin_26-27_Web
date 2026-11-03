@@ -15,12 +15,24 @@ type FormCtxValue = {
   uploading: boolean;
   /** Anropas när en uppladdning börjar; funktionen som returneras anropas när den är klar. */
   beginUpload: () => () => void;
+  /** För ändringar som inte ger någon input-händelse: verktygsknappar, infogade och uppladdade bilder. */
+  markDirty: () => void;
 };
-const FormCtx = createContext<FormCtxValue>({ state: {}, pending: false, submitter: "primary", uploading: false, beginUpload: () => () => {} });
+const FormCtx = createContext<FormCtxValue>({
+  state: {},
+  pending: false,
+  submitter: "primary",
+  uploading: false,
+  beginUpload: () => () => {},
+  markDirty: () => {},
+});
 export const useFormCtx = () => useContext(FormCtx);
 
-/** Redigeringspanelen på sajten följer formulärets uppladdningar, så att den inte stängs mitt i en. */
-export const FormWatchCtx = createContext<{ uploading: (uploading: boolean) => void } | null>(null);
+/**
+ * Redigeringspanelen på sajten följer formulärets osparade ändringar och uppladdningar, så att den frågar innan den
+ * stängs och inte stängs mitt i en uppladdning.
+ */
+export const FormWatchCtx = createContext<{ dirty: (dirty: boolean) => void; uploading: (uploading: boolean) => void } | null>(null);
 
 /** En knapp som skickar formuläret med ett eget värde, t.ex. published=0 för "Spara som utkast". */
 type SubmitOption = { label: string; name?: string; value?: string };
@@ -84,7 +96,20 @@ export function ActionForm({
   const [state, formAction, pending] = useActionState(run, {});
   const [submitter, setSubmitter] = useState<SubmitKind>("primary");
   const formRef = useRef<HTMLFormElement>(null);
+  const watch = useContext(FormWatchCtx);
+
+  // Osparade ändringar skyddar mot att lämna sidan och mot att redigeringspanelen stängs. De nollas först när en
+  // sparning lyckats – misslyckas den står både fälten och skyddet kvar.
   const dirty = useRef(false);
+  const setDirty = useCallback(
+    (next: boolean) => {
+      if (dirty.current === next) return;
+      dirty.current = next;
+      watch?.dirty(next);
+    },
+    [watch],
+  );
+  const markDirty = useCallback(() => setDirty(true), [setDirty]);
 
   // Bilder som laddas upp i fälten. Skickades formuläret under tiden följde det gamla id:t med, och den nya bilden
   // blev föräldralös – därför väntar knapparna (och Enter) tills uppladdningarna är klara.
@@ -99,7 +124,6 @@ export function ActionForm({
       setUploads((n) => n - 1);
     };
   }, []);
-  const watch = useContext(FormWatchCtx);
   useEffect(() => {
     watch?.uploading(uploading);
   }, [watch, uploading]);
@@ -110,19 +134,19 @@ export function ActionForm({
   });
   useEffect(() => {
     if (state.ok) {
-      dirty.current = false;
+      setDirty(false);
       if (resetOnSuccess) formRef.current?.reset();
       onSuccessRef.current?.(state);
     }
-  }, [state, resetOnSuccess]);
+  }, [state, resetOnSuccess, setDirty]);
 
   // Fälten laddas om när versionen ändras – då finns inget osparat kvar.
   const loadedVersion = useRef(version);
   useEffect(() => {
     if (loadedVersion.current === version) return;
     loadedVersion.current = version;
-    dirty.current = false;
-  }, [version]);
+    setDirty(false);
+  }, [version, setDirty]);
 
   // Varna innan man lämnar sidan med osparade ändringar.
   useEffect(() => {
@@ -135,14 +159,14 @@ export function ActionForm({
 
   const secondaryButton = secondary && <SubmitButton kind="secondary" label={secondary.label} name={secondary.name} value={secondary.value} />;
   return (
-    <FormCtx value={{ state, pending, submitter, uploading, beginUpload }}>
+    <FormCtx value={{ state, pending, submitter, uploading, beginUpload, markDirty }}>
       <form
         ref={formRef}
         // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
         method="post"
         // @container: fälten radas om efter formulärets bredd, så samma formulär fungerar i redigeringspanelen.
         className={cn("@container space-y-6", className)}
-        onChange={() => (dirty.current = true)}
+        onChange={markDirty}
         onSubmit={(e) => {
           e.preventDefault();
           // Enter i ett fält medan en bild laddas upp: inget skickas förrän den är klar.
@@ -151,7 +175,6 @@ export function ActionForm({
           const button = (e.nativeEvent as SubmitEvent).submitter;
           setSubmitter(button?.dataset.submit === "secondary" ? "secondary" : "primary");
           const fd = new FormData(e.currentTarget, button);
-          dirty.current = false;
           startTransition(() => formAction(fd));
         }}
         noValidate

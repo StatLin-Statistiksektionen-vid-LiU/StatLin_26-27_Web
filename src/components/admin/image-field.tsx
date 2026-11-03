@@ -26,7 +26,7 @@ export function ImageField({
   /** Körs när en ny bild laddats upp eller bilden tagits bort, t.ex. för att spara direkt. */
   onChange?: (image: ImageRef | null) => void;
 }) {
-  const { beginUpload } = useFormCtx();
+  const { beginUpload, markDirty } = useFormCtx();
   const [image, setImageState] = useState<ImageRef | null>(defaultImage);
   // Bilden fältet laddades med. Sidan ger fältet en ny key när den bytts någon annanstans, så att det börjar om.
   const [loadedId] = useState(defaultImage?.id ?? null);
@@ -34,6 +34,7 @@ export function ImageField({
   const setImage = (img: ImageRef | null) => {
     setImageState(img);
     setChanged(true);
+    markDirty();
     onChange?.(img);
   };
   const [progress, setProgress] = useState<number | null>(null);

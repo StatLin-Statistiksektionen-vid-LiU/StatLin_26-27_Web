@@ -24,12 +24,16 @@ export type EditTarget =
   /** Hjälpmedlen sköts i adminpanelen. Målet styr bara vem som ser länken dit. */
   | { type: "resources" };
 
-/** uploading: ett formulär i panelen laddar upp en bild – panelen stängs inte då. */
-type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null; uploading: boolean };
+/**
+ * dirty: formuläret i panelen har osparade ändringar – panelen frågar innan den stängs.
+ * uploading: ett formulär i panelen laddar upp en bild – panelen stängs inte då.
+ */
+type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null; dirty: boolean; uploading: boolean };
 
 const KEY = "statlin-redigeringslage";
-const SERVER: State = { user: null, editing: false, open: null, flash: null, uploading: false };
+const SERVER: State = { user: null, editing: false, open: null, flash: null, dirty: false, uploading: false };
 const UPLOADING = "En bild laddas fortfarande upp – vänta tills den är klar innan du stänger panelen.";
+const UNSAVED = "Du har osparade ändringar – stäng ändå?";
 let state: State = SERVER;
 const listeners = new Set<() => void>();
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
@@ -54,7 +58,7 @@ export const editStore = {
   },
   get: () => state,
   setUser(user: EditUser | null) {
-    set({ user, editing: user ? readPreference() : false, open: null, uploading: false });
+    set({ user, editing: user ? readPreference() : false, open: null, dirty: false, uploading: false });
   },
   setEditing(editing: boolean) {
     try {
@@ -62,19 +66,20 @@ export const editStore = {
     } catch {
       /* privat läge – valet gäller bara den här sidvisningen */
     }
-    set(editing ? { editing } : { editing, open: null, uploading: false });
+    set(editing ? { editing } : { editing, open: null, dirty: false, uploading: false });
   },
   open(target: EditTarget) {
-    set({ open: target, uploading: false });
+    set({ open: target, dirty: false, uploading: false });
   },
   close(flash?: string) {
     clearTimeout(flashTimer);
-    set({ open: null, flash: flash ?? null, uploading: false });
+    set({ open: null, flash: flash ?? null, dirty: false, uploading: false });
     if (flash) flashTimer = setTimeout(() => set({ flash: null }), 3500);
   },
   /**
    * Stängning som användaren bett om – Escape, klick utanför, stängknappen, länken till adminpanelen eller ett
-   * adressbyte. Under en uppladdning står panelen kvar. Returnerar false om panelen inte stängdes.
+   * adressbyte. Under en uppladdning står panelen kvar, och med osparade ändringar frågar den först.
+   * Returnerar false om panelen inte stängdes.
    */
   requestClose(): boolean {
     if (!state.open) return true;
@@ -82,8 +87,12 @@ export const editStore = {
       window.alert(UPLOADING);
       return false;
     }
+    if (state.dirty && !window.confirm(UNSAVED)) return false;
     editStore.close();
     return true;
+  },
+  setDirty(dirty: boolean) {
+    if (state.dirty !== dirty) set({ dirty });
   },
   setUploading(uploading: boolean) {
     if (state.uploading !== uploading) set({ uploading });

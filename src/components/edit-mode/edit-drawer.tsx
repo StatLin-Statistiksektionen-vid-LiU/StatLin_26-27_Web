@@ -51,8 +51,8 @@ function adminHref(t: EditTarget): string {
   }
 }
 
-/** Formulären i panelen berättar när de laddar upp en bild, så att panelen inte stängs mitt i uppladdningen. */
-const WATCH = { uploading: editStore.setUploading };
+/** Formulären i panelen berättar om osparade ändringar och uppladdningar, så att panelen kan fråga eller vänta. */
+const WATCH = { dirty: editStore.setDirty, uploading: editStore.setUploading };
 
 /** Sidopanelen som pennorna öppnar. Formulären är desamma som i adminpanelen. */
 export function EditDrawer() {

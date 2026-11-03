@@ -19,7 +19,7 @@ export function AdminBar({ user }: { user: EditUser }) {
     return () => editStore.setUser(null);
   }, [user]);
 
-  // Panelen hör till sidan den öppnades på – men den stängs inte mitt i en uppladdning.
+  // Panelen hör till sidan den öppnades på – men den stängs inte mitt i en uppladdning, och frågar om osparade ändringar.
   useEffect(() => {
     editStore.requestClose();
   }, [pathname]);
