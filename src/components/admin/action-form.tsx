@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, startTransition, useActionState, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { unstable_rethrow } from "next/navigation";
+import { createContext, startTransition, useActionState, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Check } from "@/components/icons";
 import type { FormState } from "@/lib/admin/form";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,22 @@ export function ActionForm({
   /** Körs efter en lyckad sparning, t.ex. för att stänga redigeringspanelen. */
   onSuccess?: (state: FormState) => void;
 }) {
-  const [state, formAction, pending] = useActionState(action, {});
+  // En action som kastar (nätverksfel, en action som inte finns efter en deploy, ett fel i servern) avvisar löftet, och
+  // useActionState skickar då felet till närmaste felgräns, som byter ut hela sidan. Felet fångas därför runt själva
+  // anropet och visas som ett vanligt fel, och fälten står kvar. Nexts egna fel (redirect(), notFound()) kastas vidare.
+  const run = useCallback(
+    async (prev: FormState, fd: FormData): Promise<FormState> => {
+      try {
+        return await action(prev, fd);
+      } catch (err) {
+        unstable_rethrow(err);
+        console.error(err);
+        return { error: "Kunde inte spara – försök igen." };
+      }
+    },
+    [action],
+  );
+  const [state, formAction, pending] = useActionState(run, {});
   const [submitter, setSubmitter] = useState<SubmitKind>("primary");
   const formRef = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
