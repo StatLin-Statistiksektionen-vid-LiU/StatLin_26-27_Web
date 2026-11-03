@@ -8,11 +8,8 @@
  *
  * Starta webbplatsen minst en gång först så att databasen finns.
  */
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { generatePassword, openDb } from "./lib.mjs";
 
 const [email, name = "Administratör"] = process.argv.slice(2);
 if (!email || !email.includes("@")) {
@@ -20,19 +17,10 @@ if (!email || !email.includes("@")) {
   process.exit(1);
 }
 
-const dataDir = path.resolve(process.env.DATA_DIR ?? path.join(process.cwd(), "data"));
-const dbPath = path.join(dataDir, "statlin.db");
-if (!fs.existsSync(dbPath)) {
-  console.error(`Hittar ingen databas i ${dbPath}. Starta webbplatsen en gång (eller kör npm run seed) först.`);
-  process.exit(1);
-}
-
-const words = ["median", "kvartil", "varians", "regression", "bayes", "poisson", "residual", "percentil", "stickprov", "hypotes", "konfidens", "korrelation"];
-const pick = () => words[crypto.randomInt(words.length)];
-const password = `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
+const db = openDb();
+const password = generatePassword();
 const hash = bcrypt.hashSync(password, 11);
 
-const db = new Database(dbPath);
 const normalized = email.trim().toLowerCase();
 const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(normalized);
 if (existing) {

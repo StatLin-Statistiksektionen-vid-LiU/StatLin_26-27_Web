@@ -15,11 +15,8 @@
  * Varje nytt konto får ett tillfälligt lösenord som visas en gång och måste bytas vid första
  * inloggningen. Glömda lösenord återställer en administratör under Konton i adminpanelen.
  */
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { generatePassword, openDb } from "./lib.mjs";
 
 /** E-post, namn, post, roll och utskottets slug. Posten är det som visas på uppdragstavlan. */
 const ACCOUNTS = [
@@ -45,18 +42,7 @@ const DESIGN = new Set(["grafiskt@statlin.se"]);
 /** Posten som skriptet tidigare satte på ordförande och vice – byts mot den riktiga posten. */
 const PLACEHOLDER_POSTS = new Set(["", "Styrelsen"]);
 
-const dataDir = path.resolve(process.env.DATA_DIR ?? path.join(process.cwd(), "data"));
-const dbPath = path.join(dataDir, "statlin.db");
-if (!fs.existsSync(dbPath)) {
-  console.error(`Hittar ingen databas i ${dbPath}. Starta webbplatsen en gång (eller kör npm run seed) först.`);
-  process.exit(1);
-}
-
-const words = ["median", "kvartil", "varians", "regression", "bayes", "poisson", "residual", "percentil", "stickprov", "hypotes", "konfidens", "korrelation"];
-const pick = () => words[crypto.randomInt(words.length)];
-const newPassword = () => `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
-
-const db = new Database(dbPath);
+const db = openDb();
 // Kolumnen kommer med webbplatsens migrering 7. Har sajten inte startat sedan uppdateringen hoppas flaggan över.
 const hasDesignColumn = !!db.prepare("SELECT 1 FROM pragma_table_info('users') WHERE name = 'design'").get();
 const findUser = db.prepare(`SELECT id, role, post${hasDesignColumn ? ", design" : ""} FROM users WHERE email = ?`);
@@ -97,7 +83,7 @@ db.transaction(() => {
       skipped.push(`${email} hoppades över – utskottet "${committee}" finns inte`);
       continue;
     }
-    const password = newPassword();
+    const password = generatePassword();
     const { lastInsertRowid } = insert.run(email, name, post, role, committeeRow.id, bcrypt.hashSync(password, 11));
     if (DESIGN.has(email)) setDesign?.run(lastInsertRowid);
     created.push({ email, role, password });

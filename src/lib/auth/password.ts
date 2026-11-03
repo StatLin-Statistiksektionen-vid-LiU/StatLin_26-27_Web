@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+// Ordlistan delas med skripten (scripts/lib.mjs) och ligger hos dem: Docker-imagen har scripts/ men inte src/.
+import WORDS from "../../../scripts/password-words.json";
 
 const COST = 11;
 
@@ -11,14 +13,9 @@ export function verifyPassword(password: string, hash: string): Promise<boolean>
   return bcrypt.compare(password, hash);
 }
 
-/** Läsbart engångslösenord, t.ex. "kvartil-median-4821". */
+/** Läsbart engångslösenord, t.ex. "median-bayes-4821". Skripten gör likadant (scripts/lib.mjs). */
 export function generatePassword(): string {
-  const words = [
-    "median", "kvartil", "varians", "regression", "bayes", "poisson", "kovarians", "residual",
-    "percentil", "stickprov", "hypotes", "konfidens", "korrelation", "fraktil", "modell", "signifikans",
-    "estimator", "bootstrap", "markov", "gauss", "binomial", "histogram", "outlier", "tidsserie",
-  ];
-  const pick = () => words[crypto.randomInt(words.length)];
+  const pick = () => WORDS[crypto.randomInt(WORDS.length)];
   return `${pick()}-${pick()}-${crypto.randomInt(1000, 9999)}`;
 }
 

@@ -34,6 +34,8 @@ COPY --from=build --chown=statlin:statlin /app/.next/static ./.next/static
 COPY --from=build --chown=statlin:statlin /app/public ./public
 COPY --from=build --chown=statlin:statlin /app/scripts/create-admin.mjs ./scripts/create-admin.mjs
 COPY --from=build --chown=statlin:statlin /app/scripts/create-accounts.mjs ./scripts/create-accounts.mjs
+COPY --from=build --chown=statlin:statlin /app/scripts/lib.mjs ./scripts/lib.mjs
+COPY --from=build --chown=statlin:statlin /app/scripts/password-words.json ./scripts/password-words.json
 COPY --from=build --chown=statlin:statlin /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
 # Ingen USER/VOLUME här: startskriptet körs som root, rättar ägarskapet på den monterade
 # volymen (Fly monterar den som root) och släpper sedan till användaren statlin.
