@@ -16,7 +16,7 @@ const RENEW_BELOW_MS = SESSION_MS / 2;
 const WARN_BELOW_MS = 86_400_000;
 
 /** Det actions svarar när sessionen saknas eller gått ut. */
-export const LOGGED_OUT = "Du har loggats ut – logga in i en ny flik och spara igen.";
+const LOGGED_OUT = "Du har loggats ut – logga in i en ny flik och spara igen.";
 
 const hashToken = (token: string) => crypto.createHash("sha256").update(token).digest("hex");
 
