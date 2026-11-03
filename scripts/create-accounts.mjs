@@ -16,7 +16,7 @@
  * inloggningen. Glömda lösenord återställer en administratör under Konton i adminpanelen.
  */
 import bcrypt from "bcryptjs";
-import { generatePassword, openDb } from "./lib.mjs";
+import { generatePassword, inTransaction, openDb } from "./lib.mjs";
 
 /** E-post, namn, post, roll och utskottets slug. Posten är det som visas på uppdragstavlan. */
 const ACCOUNTS = [
@@ -56,7 +56,7 @@ const insert = db.prepare(
 const created = [];
 const skipped = [];
 const updated = [];
-db.transaction(() => {
+inTransaction(db, () => {
   for (const [email, name, post, role, committee] of ACCOUNTS) {
     const existing = findUser.get(email);
     if (existing) {
@@ -87,7 +87,7 @@ db.transaction(() => {
     if (DESIGN.has(email)) setDesign.run(lastInsertRowid);
     created.push({ email, role, password });
   }
-})();
+});
 
 if (created.length) {
   console.log(`\n✓ ${created.length} konton skapades. Lösenorden visas bara nu och måste bytas vid första inloggningen:\n`);

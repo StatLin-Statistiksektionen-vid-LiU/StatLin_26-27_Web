@@ -41,9 +41,24 @@ export function openDb() {
       `Databasen i ${dbPath} har user_version ${version}, men skripten är skrivna för ${EXPECTED_USER_VERSION}. ` +
         (version < EXPECTED_USER_VERSION
           ? "Starta webbplatsen en gång så att databasen uppdateras, och kör skriptet igen."
-          : "Databasen är nyare än skripten: kör skripten från samma version av koden som sajten."),
+          : "Databasen är nyare än skripten: kör skripten från samma version av koden som sajten. Är de redan det har " +
+            "EXPECTED_USER_VERSION i scripts/lib.mjs inte höjts med det senaste migreringssteget i src/lib/db/migrations.ts."),
     );
     process.exit(1);
   }
   return db;
+}
+
+/**
+ * Kör fn i en transaktion som tar skrivlåset direkt (BEGIN IMMEDIATE): allt eller inget. Håller sajten databasen
+ * låst längre än better-sqlite3:s busy-timeout (5 s) avslutar skriptet med ett besked i stället för en stackspårning.
+ */
+export function inTransaction(db, fn) {
+  try {
+    return db.transaction(fn).immediate();
+  } catch (err) {
+    if (err?.code !== "SQLITE_BUSY" && err?.code !== "SQLITE_BUSY_SNAPSHOT") throw err;
+    console.error("\nDatabasen var upptagen (sajten skrev samtidigt) – inget ändrades, försök igen.");
+    process.exit(1);
+  }
 }
