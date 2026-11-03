@@ -35,7 +35,7 @@ export function NewsForm({
   const own = committees.find((c) => c.id === (item?.committee_id ?? user.committee_id));
   const scheduled = !!item && item.published_at > new Date().toISOString();
   return (
-    <ActionForm action={saveNews} {...publishButtons(item)} onSuccess={onSaved}>
+    <ActionForm action={saveNews} {...publishButtons(item)} onSuccess={onSaved} version={item?.updated_at}>
       {item && <input type="hidden" name="id" value={item.id} />}
       <div className="grid gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">

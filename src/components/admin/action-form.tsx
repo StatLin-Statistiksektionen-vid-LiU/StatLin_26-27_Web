@@ -1,7 +1,7 @@
 "use client";
 
 import { unstable_rethrow } from "next/navigation";
-import { createContext, startTransition, useActionState, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, Fragment, startTransition, useActionState, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Check } from "@/components/icons";
 import type { FormState } from "@/lib/admin/form";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export function ActionForm({
   stickyFooter = true,
   resetOnSuccess,
   onSuccess,
+  version,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   children: ReactNode;
@@ -46,6 +47,12 @@ export function ActionForm({
   resetOnSuccess?: boolean;
   /** Körs efter en lyckad sparning, t.ex. för att stänga redigeringspanelen. */
   onSuccess?: (state: FormState) => void;
+  /**
+   * Radens updated_at när formuläret laddades. Skickas i ett dolt fält så att servern kan neka en sparning ovanpå en
+   * nyare version, och är nyckel för fälten: Activity behåller annars de gamla värdena på en dold sida, så när raden
+   * ändrats (sparad här, i en annan flik eller av någon annan) laddas fälten om från den nya versionen.
+   */
+  version?: string;
 }) {
   // En action som kastar (nätverksfel, en action som inte finns efter en deploy, ett fel i servern) avvisar löftet, och
   // useActionState skickar då felet till närmaste felgräns, som byter ut hela sidan. Felet fångas därför runt själva
@@ -79,6 +86,14 @@ export function ActionForm({
     }
   }, [state, resetOnSuccess]);
 
+  // Fälten laddas om när versionen ändras – då finns inget osparat kvar.
+  const loadedVersion = useRef(version);
+  useEffect(() => {
+    if (loadedVersion.current === version) return;
+    loadedVersion.current = version;
+    dirty.current = false;
+  }, [version]);
+
   // Varna innan man lämnar sidan med osparade ändringar.
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -110,7 +125,9 @@ export function ActionForm({
         noValidate
       >
         <FormStatus />
-        {children}
+        {version !== undefined && <input type="hidden" name="updated_at" value={version} />}
+        {/* Nyckeln sitter på fälten och inte på formuläret, så att statusraden ("Sparat …") står kvar när sparningen ger en ny version. */}
+        <Fragment key={version}>{children}</Fragment>
         <div
           className={cn(
             "flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-5",

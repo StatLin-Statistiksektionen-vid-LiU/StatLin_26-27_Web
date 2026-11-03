@@ -2,7 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { changedId, type FormState, formObject, invalid, zCheckbox, zOptionalId, zOptionalLocalDateTime, zRequired, zText } from "@/lib/admin/form";
+import {
+  changedId,
+  type FormState,
+  formObject,
+  formVersion,
+  invalid,
+  STALE,
+  zCheckbox,
+  zOptionalId,
+  zOptionalLocalDateTime,
+  zRequired,
+  zText,
+} from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { actionUser } from "@/lib/auth/session";
@@ -74,9 +86,11 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
     const coverMediaId = changedId(fd, "cover_media_id", d.cover_media_id, existing.cover_media_id);
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId)) return badCover;
     const slug = uniqueSlug("news", d.slug || d.title, id);
-    db.prepare(
+    // Bara om nyheten inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const res = db.prepare(
       `UPDATE news SET title=@title, slug=@slug, excerpt=@excerpt, body_md=@body_md, committee_id=@committee_id,
-        cover_media_id=@cover_media_id, published=@published, pinned=@pinned, published_at=@published_at, updated_at=@updated_at WHERE id=@id`,
+        cover_media_id=@cover_media_id, published=@published, pinned=@pinned, published_at=@published_at, updated_at=@updated_at
+       WHERE id=@id AND updated_at=@version`,
     ).run({
       ...d,
       slug,
@@ -86,7 +100,9 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       published_at: publishedAt,
       updated_at: nowIso(),
       id,
+      version: formVersion(fd),
     });
+    if (res.changes === 0) return STALE;
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "news", id, d.title);
     revalidateSite();

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { changedId, type FormState, formObject, invalid, zOptionalId, zRequired, zText } from "@/lib/admin/form";
+import { changedId, type FormState, formObject, formVersion, invalid, STALE, zOptionalId, zRequired, zText } from "@/lib/admin/form";
 import { audit, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
 import { actionUser } from "@/lib/auth/session";
@@ -67,9 +67,13 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
       if (problem) return problem;
     }
     const assigned = existing.to_user_id === to ? existing.assigned_at : assignedAt(to, user.id);
-    db.prepare(
-      "UPDATE tasks SET title = ?, description = ?, to_user_id = ?, shared = ?, due_date = ?, event_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?",
-    ).run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, nowIso(), d.id);
+    // Bara om uppdraget inte ändrats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const res = db
+      .prepare(
+        "UPDATE tasks SET title = ?, description = ?, to_user_id = ?, shared = ?, due_date = ?, event_id = ?, assigned_at = ?, updated_at = ? WHERE id = ? AND updated_at = ?",
+      )
+      .run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, nowIso(), d.id, formVersion(fd));
+    if (res.changes === 0) return STALE;
     audit(user.id, "update", "task", d.id, d.title);
     revalidateBoard();
     return { ok: true, message: "Uppdraget är sparat." };

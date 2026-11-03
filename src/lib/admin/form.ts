@@ -11,6 +11,12 @@ export type FormState = {
 
 export const initialFormState: FormState = {};
 
+/** Svaret när raden ändrats sedan formuläret laddades (se ActionForm:s version). */
+export const STALE: FormState = { error: "Någon annan har sparat – ladda om sidan." };
+
+/** updated_at som formuläret laddades med – ActionForm skickar det i ett dolt fält. Sparningen sker bara om det står kvar. */
+export const formVersion = (fd: FormData) => String(fd.get("updated_at") ?? "");
+
 /** Plattar ut zod-fel till { fält: första felmeddelandet }. */
 export function zodFieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};

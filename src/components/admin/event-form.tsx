@@ -27,7 +27,7 @@ export function EventForm({
   const own = committees.find((c) => c.id === (event?.committee_id ?? user.committee_id));
   const hasDetails = !!(event?.ends_at || event?.all_day || event?.location_url || event?.signup_url || event?.price);
   return (
-    <ActionForm action={saveEvent} {...publishButtons(event)} onSuccess={onSaved}>
+    <ActionForm action={saveEvent} {...publishButtons(event)} onSuccess={onSaved} version={event?.updated_at}>
       {event && <input type="hidden" name="id" value={event.id} />}
       <div className="grid gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">

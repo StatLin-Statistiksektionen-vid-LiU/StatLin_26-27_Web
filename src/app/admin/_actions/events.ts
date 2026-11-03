@@ -6,7 +6,9 @@ import {
   changedId,
   type FormState,
   formObject,
+  formVersion,
   invalid,
+  STALE,
   zCheckbox,
   zLocalDateTime,
   zOptionalId,
@@ -83,11 +85,13 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
     if (coverMediaId !== existing.cover_media_id && !canUseImage(user, coverMediaId, id)) return badCover;
     // Ändringar från andra än administratörer ska granskas på nytt.
     const uncheck = canReviewEvents(user) ? "" : ", checked_at=NULL, checked_by=NULL";
-    db.prepare(
+    // Bara om evenemanget inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+    const res = db.prepare(
       `UPDATE events SET title=@title, slug=@slug, summary=@summary, body_md=@body_md, starts_at=@starts_at, ends_at=@ends_at,
         all_day=@all_day, location=@location, location_url=@location_url, committee_id=@committee_id, cover_media_id=@cover_media_id,
-        signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at${uncheck} WHERE id=@id`,
-    ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: nowIso(), id });
+        signup_url=@signup_url, price=@price, published=@published, updated_at=@updated_at${uncheck} WHERE id=@id AND updated_at=@version`,
+    ).run({ ...d, slug, committee_id: committeeId, cover_media_id: coverMediaId, updated_at: nowIso(), id, version: formVersion(fd) });
+    if (res.changes === 0) return STALE;
     if (existing.cover_media_id !== coverMediaId) await deleteMediaIfUnused(existing.cover_media_id);
     audit(user.id, "update", "event", id, d.title);
     revalidateSite();

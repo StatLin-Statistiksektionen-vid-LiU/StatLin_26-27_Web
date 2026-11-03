@@ -28,7 +28,7 @@ export function TaskForm({
   const eventDefault = task ? task.event_id : (defaults?.event_id ?? null);
 
   return (
-    <ActionForm action={saveTask} submitLabel={task ? "Spara ändringar" : "Skicka uppdraget"} stickyFooter={!task}>
+    <ActionForm action={saveTask} submitLabel={task ? "Spara ändringar" : "Skicka uppdraget"} stickyFooter={!task} version={task?.updated_at}>
       {task && <input type="hidden" name="id" value={task.id} />}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

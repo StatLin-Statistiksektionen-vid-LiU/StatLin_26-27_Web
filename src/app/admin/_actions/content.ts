@@ -5,7 +5,9 @@ import { z } from "zod";
 import {
   type FormState,
   formObject,
+  formVersion,
   invalid,
+  STALE,
   zCheckbox,
   zOptionalEmail,
   zOptionalId,
@@ -139,10 +141,13 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
   }
   // Utskottskonton får inte dölja sitt utskott eller ändra sorteringen.
   const extra = isEditor(user) ? { visible: d.visible, sort_order: d.sort_order } : (db.prepare("SELECT visible, sort_order FROM committees WHERE id = ?").get(id) as { visible: number; sort_order: number });
-  db.prepare(
+  // Bara om utskottet inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
+  const res = db.prepare(
     `UPDATE committees SET name=@name, short_name=@short_name, tagline=@tagline, description_md=@description_md, logo_url=@logo_url,
-      accent=@accent, email=@email, instagram=@instagram, visible=@visible, sort_order=@sort_order, updated_at=@updated_at WHERE id=@id`,
-  ).run({ ...d, ...extra, logo_url: logoUrl, updated_at: nowIso(), id });
+      accent=@accent, email=@email, instagram=@instagram, visible=@visible, sort_order=@sort_order, updated_at=@updated_at
+     WHERE id=@id AND updated_at=@version`,
+  ).run({ ...d, ...extra, logo_url: logoUrl, updated_at: nowIso(), id, version: formVersion(fd) });
+  if (res.changes === 0) return STALE;
   audit(user.id, "update", "committee", id, d.short_name);
   revalidateSite();
   return { ok: true, message: "Utskottet är sparat." };
@@ -180,10 +185,11 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
     .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(60000, "Texten") })
     .safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
+  // Bara om sidan inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
   const res = getDb()
-    .prepare("UPDATE pages SET title=@title, lead=@lead, body_md=@body_md, updated_at=@updated_at, updated_by=@updated_by WHERE slug=@slug")
-    .run({ ...parsed.data, updated_at: nowIso(), updated_by: user.id });
-  if (res.changes === 0) return { error: "Sidan finns inte." };
+    .prepare("UPDATE pages SET title=@title, lead=@lead, body_md=@body_md, updated_at=@updated_at, updated_by=@updated_by WHERE slug=@slug AND updated_at=@version")
+    .run({ ...parsed.data, updated_at: nowIso(), updated_by: user.id, version: formVersion(fd) });
+  if (res.changes === 0) return getDb().prepare("SELECT 1 FROM pages WHERE slug = ?").get(parsed.data.slug) ? STALE : { error: "Sidan finns inte." };
   audit(user.id, "update", "page", parsed.data.slug, parsed.data.title);
   revalidateSite();
   return { ok: true, message: "Sidan är sparad och publicerad." };

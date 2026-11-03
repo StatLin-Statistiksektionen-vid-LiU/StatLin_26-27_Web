@@ -12,7 +12,7 @@ import { MarkdownEditor } from "./markdown-editor";
 
 export function PageForm({ page, onSaved }: { page: Page; onSaved?: () => void }) {
   return (
-    <ActionForm action={savePage} submitLabel="Spara och publicera" onSuccess={onSaved}>
+    <ActionForm action={savePage} submitLabel="Spara och publicera" onSuccess={onSaved} version={page.updated_at}>
       <input type="hidden" name="slug" value={page.slug} />
       <FormSection title="Sidhuvud" description="Skriv *ord* med stjärnor i titeln för att göra dem röda.">
         <Field label="Titel" name="title" required>
@@ -31,7 +31,7 @@ export function PageForm({ page, onSaved }: { page: Page; onSaved?: () => void }
 
 export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Committee; editor: boolean; onSaved?: () => void }) {
   return (
-    <ActionForm action={saveCommittee} onSuccess={onSaved}>
+    <ActionForm action={saveCommittee} onSuccess={onSaved} version={c.updated_at}>
       <input type="hidden" name="id" value={c.id} />
       <input type="hidden" name="logo_url" value={c.logo_url ?? ""} />
       <div className="grid gap-6 @2xl:grid-cols-3">
