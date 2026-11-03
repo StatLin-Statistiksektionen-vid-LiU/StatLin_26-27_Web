@@ -22,7 +22,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 
 **Adminpanel för poster (`/admin`)**
 
-- Inloggning per post med roller (se nedan). Efter upprepade fel lösenord från samma IP-adress får nästa försök mot kontot vänta, högst en minut, medan inloggning från andra adresser fungerar som vanligt. Misslyckade inloggningar sparas i revisionsloggen i databasen (`audit_log`, åtgärden `login_failed`) med e-postadressen men utan IP, utom de som spärren per IP stoppar.
+- Inloggning per post med roller (se nedan). Efter upprepade fel lösenord från samma IP-adress får nästa försök mot kontot vänta, högst en minut, medan inloggning från andra adresser fungerar som vanligt. Misslyckade inloggningar sparas i revisionsloggen i databasen (`audit_log`, åtgärden `login_failed`) med e-postadressen men utan IP, utom de som spärren per IP stoppar. Försöken mot ett konto syns under *Senaste aktivitet* på kontots sida i *Konton*, men inte i översikten.
 - **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
 - **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
@@ -70,7 +70,7 @@ Ett konto per post i styrelsen, 13 stycken, som `create-accounts` skapar (`scrip
 
 Skriptet ger grafiskt@ *Grafiskt ansvar*. Finns det ett `webb@statlin.se` sedan tidigare lämnar skriptet det orört. Info är webbansvarig, så det kontot kan stängas av under *Konton* när info@ har tagit över.
 
-Lösenord skrivs aldrig in här eller någon annanstans i repot, eftersom alla som kan läsa repot då kan logga in. Kontona skapas med `create-accounts` (se [Fly.io](#flyio)), som visar ett engångslösenord per konto en gång. Lämna över lösenorden personligen eller via en lösenordshanterare. Varje konto måste byta lösenord vid första inloggningen, och en administratör återställer glömda lösenord under *Konton*.
+Lösenord till sektionens konton skrivs aldrig in här eller någon annanstans i repot, eftersom alla som kan läsa repot då kan logga in. Kontona skapas med `create-accounts` (se [Fly.io](#flyio)), som visar ett engångslösenord per konto en gång. Lämna över lösenorden personligen eller via en lösenordshanterare. Varje konto måste byta lösenord vid första inloggningen, och en administratör återställer glömda lösenord under *Konton*.
 
 ## Testa i webbläsaren (utan att installera något)
 
@@ -119,7 +119,7 @@ Seed-skriptet skriver ut inloggningsuppgifterna, och varje konto måste byta lö
 ADMIN_PASSWORD=mitt-losenord DEMO_PASSWORD=demo-losenord npm run seed -- --demo
 ```
 
-Kända platshållare vägras: `byt-mig-till-nagot-langt` ur `.env.example` och de tidigare demolösenorden `admin-statlin-2026` och `demo-statlin-2026`. Devcontainern och e2e-testet seedar med `lokal-admin-2026` och `lokal-demo-2026`, som också står i repot. De är bara till för lokala databaser, och kontona byter lösenord vid första inloggningen.
+Seed vägrar lösenord som är kortare än 10 tecken och de kända platshållarna: `byt-mig-till-nagot-langt` ur `.env.example` och de tidigare demolösenorden `admin-statlin-2026` och `demo-statlin-2026`. Devcontainern seedar med `lokal-admin-2026` och `lokal-demo-2026`, och e2e-testets huvud anger samma seed-kommando. De lösenorden står också i repot och är bara till för lokala databaser, och kontona byter lösenord vid första inloggningen.
 
 Utan `--demo` lägger seed in grunddatan (utskotten från styrdokumentet, styrelseposter, sidtexter och styrdokumentet som PDF) och, om databasen saknar konton, första administratören. Båda skapas av samma kod som första gången sajten startar (`src/lib/db/bootstrap.ts`), och administratören måste byta lösenord vid första inloggningen. Seed tar adressen ur `ADMIN_EMAIL` (annars `admin@statlin.se`) och lösenordet ur `ADMIN_PASSWORD` (annars slumpas ett, som skrivs ut). Vid första start skapas administratören bara när båda variablerna är satta.
 
@@ -140,15 +140,16 @@ cp .env.example .env     # fyll i SITE_URL, ADMIN_EMAIL och ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar skapas inget konto: hälsokontrollen `/api/health` svarar 503 och loggen säger att `ADMIN_PASSWORD` är platshållaren, tills ett eget lösenord är satt. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
+Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar, eller är lösenordet kortare än 10 tecken, skapas inget konto: hälsokontrollen `/api/health` svarar 503, och loggen visar felet (`ADMIN_PASSWORD är platshållaren …` eller `ADMIN_PASSWORD duger inte: …`) när en sida öppnas, tills ett eget lösenord är satt i `.env` och containern startats om (`docker compose up -d`). Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
 
-Skapa en ny administratör, eller ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras:
+Ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras, eller skapa en ny administratör med `--make-admin`:
 
 ```bash
-docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se "Förnamn Efternamn"
+docker compose exec -u statlin web node scripts/create-admin.mjs ordforande@statlin.se
+docker compose exec -u statlin web node scripts/create-admin.mjs ny@statlin.se "Förnamn Efternamn" --make-admin
 ```
 
-Ett befintligt konto blir administratör bara med `--make-admin` (det aktiveras också om det var avstängt). Skriptet skriver ut kontots roll innan något ändras.
+Utan flagga (`--reset`) får bara ett befintligt konto ett nytt lösenord, och en adress som inte finns avbryter skriptet, så att en felskriven adress aldrig blir ett nytt konto. `--make-admin` skapar kontot, eller gör ett befintligt konto till aktiv administratör (det aktiveras också om det var avstängt). Skriptet skriver ut kontots roll innan något ändras.
 
 ### Fly.io
 
@@ -166,7 +167,7 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
 - Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
-- Återställ lösenordet för ett konto, eller skapa en ny administratör: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte; lägg till `--make-admin` för att göra ett befintligt konto till administratör.
+- Återställ lösenordet för ett konto: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte, och en felskriven adress avbryter skriptet i stället för att skapa ett konto. Med `--make-admin` skapas en ny administratör, eller blir ett befintligt konto administratör.
 - **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
 
 ### Utan Docker
@@ -183,7 +184,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | --- | --- |
 | `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), som Fly fyller i från `[build.args]` i `fly.toml` och docker compose från `.env`. Bygg om efter att du ändrat den. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. Lösenordet måste bytas vid första inloggningen, och de kända platshållarna (se [Kom igång lokalt](#kom-igång-lokalt)) vägras. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. Lösenordet måste bytas vid första inloggningen, och lösenord kortare än 10 tecken och de kända platshållarna (se [Kom igång lokalt](#kom-igång-lokalt)) vägras. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
@@ -282,7 +283,7 @@ En volym med ett namn som ingen annan volym har ger varningen `Every volume is p
 Hela sajten är en Node-process på en enda Fly-maskin, med SQLite-databasen på maskinens volym.
 
 - Skala aldrig upp med `fly scale count` eller fler processer: en ny maskin får en egen volym och därmed en egen databas.
-- Det som bara finns i processens minne nollas varje gång maskinen startar, och maskinen stängs av när ingen besöker sajten (`auto_stop_machines` i `fly.toml`). Det gäller spärren mot upprepade inloggningsförsök per IP och fördröjningen efter fel lösenord per konto och IP (båda i `src/lib/auth/rate-limit.ts`) och `inflight`-kartan som samlar samtidiga hämtningar av tentastatistik (`src/lib/data/exam-stats.ts`). Ingen inloggningsspärr ligger i databasen. Där finns bara revisionsloggens rader om misslyckade inloggningar, och de finns kvar.
+- Det som bara finns i processens minne nollas varje gång maskinen startar, och maskinen stängs av när ingen besöker sajten (`auto_stop_machines` i `fly.toml`). Det gäller spärren mot upprepade inloggningsförsök per IP och fördröjningen efter fel lösenord per konto och IP (båda i `src/lib/auth/rate-limit.ts`) och `inflight`-kartan som samlar samtidiga hämtningar av tentastatistik (`src/lib/data/exam-stats.ts`). Ingen inloggningsspärr ligger i databasen. Där finns revisionsloggens rader om misslyckade inloggningar och räknaren `failed_logins` per konto (bara statistik, ingen spärr).
 
 ### Volymen
 
@@ -358,7 +359,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run build` / `npm start` | Produktionsbygge / kör bygget |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm run seed [-- --demo]` | Grunddata och första administratören; med `--demo` även demodata och demokonton – bara lokalt, vägras i produktion |
-| `npm run create-admin -- <e-post> [--make-admin]` | Skapa admin, eller nytt lösenord för ett befintligt konto med rollen orörd; `--make-admin` gör kontot till administratör |
+| `npm run create-admin -- <e-post> ["Namn"] [--reset \| --make-admin]` | Nytt lösenord för ett befintligt konto med rollen orörd (`--reset`, standard – en felskriven adress avbryter i stället för att skapa ett konto); `--make-admin` skapar en administratör eller gör kontot till administratör |
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |

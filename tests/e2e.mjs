@@ -55,6 +55,7 @@ async function login(page, email, password) {
   await page.fill("#password", current);
   await Promise.all([page.waitForURL(/\/admin/), page.click('button[type="submit"]')]);
   if (!/\/admin\/konto\?byt=1/.test(page.url())) return;
+  assert.ok(!changedPasswords.has(email), `${email} tvingades byta lösenord en gång till`);
   // Första inloggningen: välj ett eget lösenord. Formuläret skickas via React, så vänta tills fälten är hydrerade.
   const next = `${current}-bytt`;
   await page.getByText("Välj ett eget lösenord").waitFor();
