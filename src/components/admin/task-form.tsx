@@ -10,19 +10,20 @@ export function TaskForm({
   task,
   recipients,
   events,
-  meId,
   defaults,
 }: {
   task?: Task | null;
   recipients: Recipient[];
   events: Pick<EventItem, "id" | "title" | "starts_at">[];
-  meId: number;
   defaults?: { to_user_id?: number | null; event_id?: number | null };
 }) {
-  const board = recipients.filter((r) => r.kind === "styrelse" && r.id !== meId);
-  const others = recipients.filter((r) => r.kind !== "styrelse" && r.id !== meId);
+  // Den inloggade och den nuvarande mottagaren finns alltid med i listan. Saknades mottagaren föll valet tillbaka på
+  // "Öppet", och en sparning släppte uppdraget. En inaktiverad mottagare finns inte bland de aktiva kontona.
+  const board = recipients.filter((r) => r.kind === "styrelse");
+  const others = recipients.filter((r) => r.kind !== "styrelse");
+  const inactive = task?.to && !recipients.some((r) => r.id === task.to?.id) ? task.to : null;
   const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
-  const label = (r: Recipient) => (r.committee && simplify(r.committee) !== simplify(r.label) ? `${r.label} (${r.committee})` : r.label);
+  const label = (r: TaskPerson) => (r.committee && simplify(r.committee) !== simplify(r.label) ? `${r.label} (${r.committee})` : r.label);
   const toDefault = task ? task.to_user_id : (defaults?.to_user_id ?? null);
   const eventDefault = task ? task.event_id : (defaults?.event_id ?? null);
 
@@ -43,8 +44,9 @@ export function TaskForm({
         <div className="space-y-6">
           <FormSection title="Till vem?">
             <Field label="Mottagare" name="to_user_id">
-              <Select name="to_user_id" defaultValue={toDefault === null ? "" : String(toDefault)}>
+              <Select name="to_user_id" defaultValue={toDefault === null ? "" : String(toDefault)} trackChanges={!!task}>
                 <option value="">Öppet – vem som helst kan ta det</option>
+                {inactive && <option value={inactive.id}>{label(inactive)} (inaktiv)</option>}
                 {board.length > 0 && (
                   <optgroup label="Styrelsen">
                     {board.map((r) => (

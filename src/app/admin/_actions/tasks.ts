@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { type FormState, formObject, invalid, zOptionalId, zRequired, zText } from "@/lib/admin/form";
+import { changedId, type FormState, formObject, invalid, zOptionalId, zRequired, zText } from "@/lib/admin/form";
 import { audit, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -16,6 +16,12 @@ type TaskRow = { id: number; title: string; from_user_id: number | null; to_user
 
 function loadTask(id: number): TaskRow | undefined {
   return getDb().prepare("SELECT id, title, from_user_id, to_user_id, shared, status, assigned_at FROM tasks WHERE id = ?").get(id) as TaskRow | undefined;
+}
+
+/** Uppdrag kan bara ges till aktiva konton. */
+function recipientProblem(to: number | null): FormState | null {
+  if (to === null || getDb().prepare("SELECT 1 FROM users WHERE id = ? AND active = 1").get(to)) return null;
+  return { error: "Mottagaren finns inte längre.", fieldErrors: { to_user_id: "Välj en mottagare i listan." } };
 }
 
 /** Siffran i mottagarens meny tänds bara när någon annan ger uppdraget till hen. */
@@ -44,9 +50,6 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
   const d = parsed.data;
   const db = getDb();
 
-  if (d.to_user_id !== null && !db.prepare("SELECT 1 FROM users WHERE id = ? AND active = 1").get(d.to_user_id)) {
-    return { error: "Mottagaren finns inte längre.", fieldErrors: { to_user_id: "Välj en mottagare i listan." } };
-  }
   if (d.event_id !== null && !db.prepare("SELECT 1 FROM events WHERE id = ?").get(d.event_id)) {
     return { error: "Evenemanget finns inte längre.", fieldErrors: { event_id: "Välj ett evenemang i listan." } };
   }
@@ -55,15 +58,24 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
   if (d.id) {
     const existing = loadTask(d.id);
     if (!existing || !canEditTask(user, existing)) return forbidden;
-    const assigned = existing.to_user_id === d.to_user_id ? existing.assigned_at : assignedAt(d.to_user_id, user.id);
+    // Mottagaren skrivs bara när fältet ändrats, och bara om uppdraget fortfarande har mottagaren som formuläret
+    // laddades med – annars släppte en sparning ett uppdrag som någon tagit under tiden.
+    const to = changedId(fd, "to_user_id", d.to_user_id, existing.to_user_id);
+    if (to !== existing.to_user_id) {
+      const problem = recipientProblem(to);
+      if (problem) return problem;
+    }
+    const assigned = existing.to_user_id === to ? existing.assigned_at : assignedAt(to, user.id);
     db.prepare(
       "UPDATE tasks SET title = ?, description = ?, to_user_id = ?, shared = ?, due_date = ?, event_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?",
-    ).run(d.title, d.description, d.to_user_id, shared, d.due_date, d.event_id, assigned, nowIso(), d.id);
+    ).run(d.title, d.description, to, shared, d.due_date, d.event_id, assigned, nowIso(), d.id);
     audit(user.id, "update", "task", d.id, d.title);
     revalidateBoard();
     return { ok: true, message: "Uppdraget är sparat." };
   }
 
+  const problem = recipientProblem(d.to_user_id);
+  if (problem) return problem;
   const res = db
     .prepare("INSERT INTO tasks (title, description, from_user_id, to_user_id, shared, due_date, event_id, assigned_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
     .run(d.title, d.description, user.id, d.to_user_id, shared, d.due_date, d.event_id, assignedAt(d.to_user_id, user.id));

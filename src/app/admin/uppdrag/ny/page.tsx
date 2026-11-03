@@ -17,7 +17,7 @@ export default function NewTaskPage(props: PageProps<"/admin/uppdrag/ny">) {
 }
 
 async function NewTask({ searchParams }: { searchParams: PageProps<"/admin/uppdrag/ny">["searchParams"] }) {
-  const user = await requireUser();
+  await requireUser();
   const sp = await searchParams;
   const [recipients, events] = await Promise.all([listTaskRecipients(), listEventsForAdmin(null)]);
   const today = todayLocal();
@@ -32,7 +32,6 @@ async function NewTask({ searchParams }: { searchParams: PageProps<"/admin/uppdr
       <TaskForm
         recipients={recipients}
         events={events.filter((e) => e.starts_at.slice(0, 10) >= today).reverse()}
-        meId={user.id}
         defaults={{ to_user_id: num(sp.till), event_id: num(sp.evenemang) }}
       />
     </>

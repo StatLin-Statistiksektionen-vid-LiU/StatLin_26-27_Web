@@ -48,19 +48,38 @@ export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return <textarea id={props.name} className={cn(inputBase, "min-h-24 resize-y leading-relaxed", className)} {...props} />;
 }
 
-export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { name: string }) {
+/**
+ * Med trackChanges skickar listan `<namn>__changed` med värdet den laddades med när någon ändrat valet. Servern
+ * rör då bara fältet om det ändrats (changedId) – ett val som inte rörts skriver aldrig över något.
+ */
+export function Select({
+  className,
+  children,
+  trackChanges,
+  onChange,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & { name: string; trackChanges?: boolean }) {
+  const [changed, setChanged] = useState(false);
+  const [loaded] = useState(() => String(props.defaultValue ?? ""));
   return (
-    <select
-      id={props.name}
-      className={cn(
-        inputBase,
-        "appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%230a0a0a%22 stroke-width=%222%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.9rem_center] bg-no-repeat pr-10",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </select>
+    <>
+      <select
+        id={props.name}
+        className={cn(
+          inputBase,
+          "appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%230a0a0a%22 stroke-width=%222%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.9rem_center] bg-no-repeat pr-10",
+          className,
+        )}
+        onChange={(e) => {
+          if (trackChanges) setChanged(true);
+          onChange?.(e);
+        }}
+        {...props}
+      >
+        {children}
+      </select>
+      {trackChanges && changed && <input type="hidden" name={`${props.name}__changed`} value={loaded} />}
+    </>
   );
 }
 

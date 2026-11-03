@@ -189,7 +189,6 @@ async function TaskDetail({
             task={task}
             recipients={recipients}
             events={events.filter((e) => e.starts_at.slice(0, 10) >= today || e.id === task.event_id).reverse()}
-            meId={user.id}
           />
         </details>
       )}
