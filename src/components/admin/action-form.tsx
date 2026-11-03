@@ -1,7 +1,19 @@
 "use client";
 
 import { unstable_rethrow } from "next/navigation";
-import { createContext, Fragment, startTransition, useActionState, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  Fragment,
+  startTransition,
+  useActionState,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Check } from "@/components/icons";
 import type { FormState } from "@/lib/admin/form";
 import { cn } from "@/lib/utils";
@@ -33,6 +45,8 @@ export const useFormCtx = () => useContext(FormCtx);
  * stängs och inte stängs mitt i en uppladdning.
  */
 export const FormWatchCtx = createContext<{ dirty: (dirty: boolean) => void; uploading: (uploading: boolean) => void } | null>(null);
+
+const NO_STATE: FormState = {};
 
 /** En knapp som skickar formuläret med ett eget värde, t.ex. published=0 för "Spara som utkast". */
 type SubmitOption = { label: string; name?: string; value?: string };
@@ -132,13 +146,29 @@ export function ActionForm({
   useEffect(() => {
     onSuccessRef.current = onSuccess;
   });
+  // Effekter körs om varje gång Activity visar en dold sida igen. En lyckad sparning hanteras därför bara en gång –
+  // annars körde samma svar onSuccess igen (panelens router.refresh(), kommentarsfältets reset() av ett nytt utkast).
+  const handled = useRef<FormState | null>(null);
+  const shouldReset = useRef(false);
   useEffect(() => {
-    if (state.ok) {
-      setDirty(false);
-      if (resetOnSuccess) formRef.current?.reset();
-      onSuccessRef.current?.(state);
-    }
+    if (!state.ok || handled.current === state) return;
+    handled.current = state;
+    shouldReset.current = true;
+    setDirty(false);
+    if (resetOnSuccess) formRef.current?.reset();
+    onSuccessRef.current?.(state);
   }, [state, resetOnSuccess, setDirty]);
+  // När formuläret göms efter en lyckad sparning (sidan lämnas, Activity) tas statusraden bort – med ett
+  // engångslösenord, som annars låg kvar på skärmen när man kom tillbaka (preserving-ui-state.md).
+  const [cleared, setCleared] = useState<FormState | null>(null);
+  useLayoutEffect(() => {
+    return () => {
+      if (!shouldReset.current) return;
+      shouldReset.current = false;
+      setCleared(handled.current);
+    };
+  }, []);
+  const shown = state === cleared ? NO_STATE : state;
 
   // Fälten laddas om när versionen ändras – då finns inget osparat kvar.
   const loadedVersion = useRef(version);
@@ -159,7 +189,7 @@ export function ActionForm({
 
   const secondaryButton = secondary && <SubmitButton kind="secondary" label={secondary.label} name={secondary.name} value={secondary.value} />;
   return (
-    <FormCtx value={{ state, pending, submitter, uploading, beginUpload, markDirty }}>
+    <FormCtx value={{ state: shown, pending, submitter, uploading, beginUpload, markDirty }}>
       <form
         ref={formRef}
         // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
@@ -206,8 +236,12 @@ export function ActionForm({
 function FormStatus() {
   const { state } = useFormCtx();
   const ref = useRef<HTMLDivElement>(null);
+  // En gång per svar – inte igen varje gång Activity visar sidan.
+  const scrolled = useRef<FormState | null>(null);
   useEffect(() => {
-    if (state.error || state.ok) ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if ((!state.error && !state.ok) || scrolled.current === state) return;
+    scrolled.current = state;
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [state]);
   if (!state.error && !state.ok) return null;
   return (
