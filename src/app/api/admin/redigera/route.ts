@@ -1,5 +1,5 @@
 import { canEditCommittee, canEditImages, canEditOwned, canManageSettings, isEditor } from "@/lib/auth/permissions";
-import { getSessionUser } from "@/lib/auth/session";
+import { getSessionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getBoardMember, getCommitteeById, getPage, getSettings, listCommittees } from "@/lib/data/content";
 import { getEventById, listEventImages } from "@/lib/data/events";
 import { getNewsById } from "@/lib/data/news";
@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const user = await getSessionUser();
   if (!user) return json({ error: "Du är inte inloggad." }, 401);
   if (user.must_change_password) return json({ error: "Byt ditt tillfälliga lösenord i adminpanelen först." }, 403);
+  await renewSessionIfDue();
 
   const params = new URL(request.url).searchParams;
   const id = Number(params.get("id"));

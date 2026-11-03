@@ -112,11 +112,27 @@ export async function sessionExpiresSoon(): Promise<string | null> {
   return Date.parse(session.expiresAt) - Date.now() < WARN_BELOW_MS ? session.expiresAt : null;
 }
 
+/** Förlänger sessionen – databasen och kakan – när mindre än hälften av tiden återstår. Kakor kan bara sättas i actions och route handlers. */
+async function renew(session: Session) {
+  if (Date.parse(session.expiresAt) - Date.now() >= RENEW_BELOW_MS) return;
+  const expires = new Date(Date.now() + SESSION_MS);
+  getDb().prepare("UPDATE sessions SET expires_at = ? WHERE id = ?").run(expires.toISOString(), hashToken(session.token));
+  await setSessionCookie(session.token, expires);
+}
+
+/**
+ * För route handlers: att öppna redigeringspanelen räknas som aktivitet. En kaka som sätts i en action renderar om
+ * sidan (och stänger i dag panelen, SB-30) – förlängs sessionen redan här behöver sparningen i panelen inte göra det.
+ */
+export async function renewSessionIfDue() {
+  const session = await getSession();
+  if (session) await renew(session);
+}
+
 /**
  * Inloggad användare i en server action. Sidorna använder requireUser och omdirigerar, men en omdirigering från en
  * action monterar om sidan, och det som stod i formuläret försvinner. Här returneras i stället ett fel som formuläret
- * visar. En action räknas som aktivitet: sessionen förlängs (databasen och kakan) när mindre än hälften av tiden återstår.
- * renew: false för actions som bara läser.
+ * visar. En action räknas som aktivitet och förlänger sessionen (renew). renew: false för actions som bara läser.
  */
 export async function actionUser(opts: { allowTemporaryPassword?: boolean; renew?: boolean } = {}): Promise<SessionUser | { error: string }> {
   const session = await getSession();
@@ -124,11 +140,7 @@ export async function actionUser(opts: { allowTemporaryPassword?: boolean; renew
   if (session.user.must_change_password && !opts.allowTemporaryPassword) {
     return { error: "Byt ditt tillfälliga lösenord under Mitt konto innan du sparar." };
   }
-  if (opts.renew !== false && Date.parse(session.expiresAt) - Date.now() < RENEW_BELOW_MS) {
-    const expires = new Date(Date.now() + SESSION_MS);
-    getDb().prepare("UPDATE sessions SET expires_at = ? WHERE id = ?").run(expires.toISOString(), hashToken(session.token));
-    await setSessionCookie(session.token, expires);
-  }
+  if (opts.renew !== false) await renew(session);
   return session.user;
 }
 
