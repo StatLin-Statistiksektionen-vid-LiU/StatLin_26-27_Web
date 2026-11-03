@@ -229,11 +229,11 @@ Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar. En �
 **Rulla tillbaka koden.** Om den nya versionen inte ändrade databasen räcker det att driftsätta den förra imagen igen:
 
 ```bash
-fly releases --image                                         # versionerna med sina images – välj den senaste som fungerade
-fly deploy --image registry.fly.io/statlin-web:deployment-…  # imagen ur kolumnen Docker Image
+fly releases --image          # versionerna med sina images – välj den senaste som fungerade
+fly deploy --image <image>    # ur kolumnen Docker Image, t.ex. registry.fly.io/statlin-web:deployment-01…
 ```
 
-Har den nya versionen ett nytt steg i `src/lib/db/migrations.ts` har den migrerat databasen, och då räcker det inte. Den äldre koden vägrar starta mot en nyare databas: hälsokontrollen svarar 503, `fly deploy` väntar förgäves på den, och `fly logs` visar `databasen är nyare än koden` när någon öppnar en sida. Databasen återställs därför först till en ögonblicksbild från före driftsättningen, och `fly deploy --image` med den förra imagen kommer sist, enligt nästa stycke.
+Har den nya versionen ett nytt steg i `src/lib/db/migrations.ts` har den migrerat databasen, och då räcker det inte. Den äldre koden vägrar använda en nyare databas: hälsokontrollen svarar 503, `fly deploy` väntar förgäves på den, och `fly logs` visar `databasen är nyare än koden` när någon öppnar en sida. Databasen återställs därför först till en ögonblicksbild från före driftsättningen, och `fly deploy --image` med den förra imagen kommer sist, enligt nästa stycke.
 
 **Återställ databasen**, också när data har försvunnit eller blivit fel. `<image>` är imagen som ska köras efteråt: den nuvarande om bara datan återställs, den förra (ur `fly releases --image`) vid en rollback.
 
@@ -242,30 +242,34 @@ fly volumes list                              # den levande volymens id (vol_…
 fly volumes snapshots list <vol-id>           # välj en ögonblicksbild (vs_…) från före felet och notera VOL SIZE
 fly volumes snapshots create <vol-id>         # spara läget just nu, så att inget går förlorat
 fly volumes create statlin_data --snapshot-id <vs-id> --region arn --size 3   # minst VOL SIZE; ger en ny vol_…
+fly machine stop <maskin-id>                  # stoppar den gamla maskinen; kör härifrån till destroy i ett svep
 fly machine update <maskin-id> --image <image> --skip-start                    # ger maskinen imagen utan att starta den
+fly machine list                              # den gamla maskinen ska stå som stopped
 fly machine clone <maskin-id> --attach-volume <ny-vol-id>:/data                # en ny maskin på den återställda volymen
 fly machine destroy <maskin-id> --force       # den gamla maskinen; dess volym ligger kvar okopplad
 fly deploy --image <image>                    # återställningen blir en release med inställningarna i fly.toml
 ```
 
+- Kör stegen från `fly machine stop` till `fly machine destroy` direkt efter varandra. Den gamla maskinen har kvar sina tjänster, och med `auto_start_machines = true` i `fly.toml` kan en begäran väcka den igen ända tills den är borttagen. Det som sparas på sajten under de minuterna hamnar på den gamla volymen och kommer inte med. Står maskinen inte som `stopped` i `fly machine list`, stoppa den igen innan du klonar.
+- `fly machine update` visar ändringarna och frågar `Apply changes?` – svara y. Är imagen redan densamma, som när bara datan återställs, avbryter kommandot med felet `no config changes found`. Gå då bara vidare.
+- Klonen får imagen från maskinen den klonas från. Därför byts imagen innan maskinen klonas: kod som är nyare än ögonblicksbilden får aldrig öppna den återställda databasen, för då migrerar den den igen.
 - Den nya volymen måste heta `statlin_data`, annars byter `fly deploy` ut maskinen.
 - `fly volumes create` lägger som standard volymen i en annan hårdvaruzon än volymerna med samma namn (`--require-unique-zone`). Saknas en ledig zon, lägg till `--require-unique-zone=false`.
-- Klonen får imagen från maskinen den klonas från. Därför byts imagen innan maskinen klonas: kod som är nyare än ögonblicksbilden får aldrig öppna den återställda databasen, för då migrerar den den igen.
 - Kontrollera sedan sajten med `node tests/smoke.mjs https://statlin-web.fly.dev`, logga in och se att det senaste innehållet finns. `fly volumes list` ska visa den nya volymen som kopplad.
-- När allt fungerar tar du bort den gamla volymen med `fly volumes destroy <gamla-vol-id>`, så att bara en `statlin_data` finns kvar, och skriver in den nya volymens id under [Volymen](#volymen).
+- När allt fungerar tar du bort den gamla volymen med `fly volumes destroy <gamla-vol-id>`, så att bara en `statlin_data` finns kvar, och skriver in den nya volymens id under [Volymen](#volymen). Kommandot varnar att det inte går att ångra och frågar `Are you sure you want to destroy this volume?` – svara y.
 
 **Öva** återställningen en gång om året, i juni (se [Årshjul](#årshjul)), så att den inte prövas första gången under press. Övningen görs mot en testvolym med ett eget namn, som `fly deploy` aldrig monterar, och en maskin utan `--port`, som inte får någon publik trafik:
 
 ```bash
-fly volumes create statlin_ovning --snapshot-id <vs-id> --region arn --size 3
+fly volumes create statlin_ovning --snapshot-id <vs-id> --region arn --size 3   # varnar och frågar, se nedan
 fly machine run <image> --volume <test-vol-id>:/data --region arn
 fly ssh console --machine <test-maskin-id>
 #   i skalet: node -e "fetch('http://127.0.0.1:3000/api/health').then(r => r.text()).then(console.log)"
 fly machine destroy <test-maskin-id> --force
-fly volumes destroy <test-vol-id>
+fly volumes destroy <test-vol-id>             # frågar Are you sure you want to destroy this volume? – svara y
 ```
 
-Hälsokontrollen ska svara `{"ok":true}`. Senast övad: `<fyll i datum>` (ingen övning är gjord än).
+En volym med ett namn som ingen annan volym har ger varningen `Every volume is pinned to a specific physical host…` och frågan `Do you still want to use the volumes feature?` – svara y, eller lägg till `--yes`. Hälsokontrollen ska svara `{"ok":true}`. Senast övad: `<fyll i datum>` (ingen övning är gjord än).
 
 ### En process och en maskin
 
