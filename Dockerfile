@@ -14,7 +14,7 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 # Adressen bakas in i förrenderade sidor (delningsbilder, robots.txt) och måste finnas vid bygget.
-# Railway skickar tjänstens variabler som byggargument när de deklareras här.
+# Fly skickar den från [build.args] i fly.toml och docker compose från .env.
 ARG SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -36,8 +36,8 @@ COPY --from=build --chown=statlin:statlin /app/scripts/create-admin.mjs ./script
 COPY --from=build --chown=statlin:statlin /app/scripts/create-accounts.mjs ./scripts/create-accounts.mjs
 COPY --from=build --chown=statlin:statlin /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
 # Ingen USER/VOLUME här: startskriptet körs som root, rättar ägarskapet på den monterade
-# volymen (Railway/Fly monterar den som root) och släpper sedan till användaren statlin.
-# Volymen monteras av docker-compose eller värdens inställningar (Railway tillåter inte VOLUME).
+# volymen (Fly monterar den som root) och släpper sedan till användaren statlin.
+# Volymen monteras av docker-compose eller värdens inställningar ([[mounts]] i fly.toml).
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "scripts/docker-entrypoint.mjs"]

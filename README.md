@@ -50,11 +50,9 @@ Behörigheten kontrolleras på servern i varje sida, server action och uppladdni
 
 ### Konton på sajten
 
-| Konto | Roll | Används av |
-| --- | --- | --- |
-Ett konto per post i styrelsen, 13 stycken. Kontot hör till posten och lämnas över varje år. Posten är det som visas på uppdragstavlan.
+Ett konto per post i styrelsen, 13 stycken, som `create-accounts` skapar (`scripts/create-accounts.mjs`). Kontot hör till posten och lämnas över varje år. Posten i kolumnen *Används av* är det som visas på uppdragstavlan.
 
-| Konto | Roll | Post |
+| Konto | Roll | Används av |
 | --- | --- | --- |
 | `ordforande@statlin.se` | Administratör | Ordförande |
 | `vice@statlin.se` | Administratör | Vice ordförande / sekreterare |
@@ -129,7 +127,7 @@ npx playwright install chromium
 
 ## Driftsättning
 
-All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker, eller Fly.io/Railway/Render med volym.
+All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker eller en värd med Docker och volym. Produktionen kör på [Fly.io](#flyio) från grenen `Main-Real`. Hur den sköts står under [Överlämning](#överlämning), och andra värdar finns i [bilagan](#bilaga-andra-värdar) sist.
 
 ### Docker (rekommenderat)
 
@@ -139,14 +137,6 @@ docker compose up -d --build
 ```
 
 Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
-
-### Railway (eller annan värd med Docker och volym)
-
-1. Skapa ett projekt från GitHub-repot (gren `main`). Dockerfilen används automatiskt, och varje merge till `main` driftsätts.
-2. Lägg till en volym med monteringssökvägen `/data`. Utan den försvinner databasen och alla uppladdningar vid nästa driftsättning.
-3. Sätt variablerna `ADMIN_EMAIL`, `ADMIN_PASSWORD` och `SITE_URL`. Railway skickar dem även till bygget, där `SITE_URL` behövs.
-4. Slå på schemalagda säkerhetskopior av volymen och, om värden har det, hälsokontroll på `/api/health`.
-5. Kontrollera driftsättningen med `node tests/smoke.mjs https://din-adress`.
 
 Skapa en ny administratör eller återställ lösenordet för en befintlig:
 
@@ -164,11 +154,11 @@ fly volumes create statlin_data --region arn --size 3
 fly deploy --ha=false
 ```
 
-Därefter räcker `fly deploy` för att driftsätta en ny version.
+Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, se [Driftsätta en ny version](#driftsätta-en-ny-version).
 
 - Appen måste köra på **exakt en maskin**, eftersom SQLite-databasen ligger på volymen. Skala aldrig upp med `fly scale count`.
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
-- Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Volymen växer automatiskt upp till 10 GB.
+- Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
 - Skapa sektionens konton (ordförande, vice, info och ett per utskott) med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Skapa en ny administratör eller återställ lösenordet: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`.
 - **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
@@ -185,13 +175,13 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 
 | Variabel | Beskrivning |
 | --- | --- |
-| `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), och Railway skickar tjänstens variabler dit automatiskt. Bygg om efter att du ändrat den. |
+| `SITE_URL` | Publik adress. Används i kalenderflöde, sitemap och delningsbilder. Måste finnas redan när sajten byggs, eftersom den bakas in i förrenderade sidor: Docker-bilden tar den som byggargument (`ARG SITE_URL`), som Fly fyller i från `[build.args]` i `fly.toml` och docker compose från `.env`. Bygg om efter att du ändrat den. |
 | `DATA_DIR` | Katalog för databas och uppladdningar (standard `./data`, `/data` i Docker). |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Skapar första administratören om databasen saknar konton. |
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
-| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `x-real-ip` (Railway) eller `fly-client-ip` (Fly.io). |
+| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `fly-client-ip` på Fly.io (redan satt i `fly.toml`). |
 
 ### Säkerhetskopiering
 
@@ -200,6 +190,109 @@ Kopiera `DATA_DIR`. För en säker kopia av databasen medan sajten kör används
 ```bash
 node -e "require('fs').mkdirSync('backups',{recursive:true});require('better-sqlite3')('data/statlin.db',{fileMustExist:true}).backup('backups/statlin-'+new Date().toISOString().slice(0,10)+'.db').then(()=>console.log('Kopian ligger i backups/'))"
 ```
+
+Hur produktionens databas återställs ur Flys ögonblicksbilder står under [Återställning och rollback](#återställning-och-rollback).
+
+## Överlämning
+
+Det här behöver nästa webbansvarig (info@) veta. Gå igenom avsnittet tillsammans när posten lämnas över, och fyll i det som saknas.
+
+### Ägarskap
+
+Kolla vem som står på varje tjänst och på betalkortet, och flytta dem till ett konto som följer posten, med minst två personer per tjänst. Domänen ska förnyas automatiskt.
+
+| Tjänst | Vad | Står på |
+| --- | --- | --- |
+| Fly.io | Appen `statlin-web`: maskinen, volymen och fakturorna | `<fyll i>` |
+| Name.com | Domänen `statlin.se` | `<fyll i>` |
+| Betalkort | Kortet som tjänsterna dras från | `<fyll i>` |
+| GitHub | Repot `StatLin-Statistiksektionen-vid-LiU/StatLin_26-27_Web` (publikt) | `<fyll i>` |
+
+Kontona på själva sajten står under [Konton på sajten](#konton-på-sajten).
+
+### Driftsätta en ny version
+
+Sajten driftsätts för hand från en dator där `fly` är inloggat på Fly-kontot. `fly deploy` skickar med allt i arbetskatalogen, också ändringar som inte är committade, så arbetsträdet ska vara rent och stå på `Main-Real`:
+
+```bash
+git status                                         # "On branch Main-Real" och "nothing to commit, working tree clean"
+fly deploy
+node tests/smoke.mjs https://statlin-web.fly.dev   # läser bara, säker mot produktionen
+```
+
+Ett deploy-skript (SN-03 i `docs/atgardsplan.md`) kommer när beslut B-1 är taget.
+
+### Återställning och rollback
+
+Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar. En ögonblicksbild återställs alltid till en ny volym, som en ny maskin får. Skriv aldrig över databasen med `fly ssh sftp put` medan sajten kör.
+
+**Rulla tillbaka koden.** Om den nya versionen inte ändrade databasen räcker det att driftsätta den förra imagen igen:
+
+```bash
+fly releases --image                                         # versionerna med sina images – välj den senaste som fungerade
+fly deploy --image registry.fly.io/statlin-web:deployment-…  # imagen ur kolumnen Docker Image
+```
+
+Har den nya versionen ett nytt steg i `src/lib/db/migrations.ts` har den migrerat databasen, och då räcker det inte. Den äldre koden vägrar starta mot en nyare databas: hälsokontrollen svarar 503, `fly deploy` väntar förgäves på den, och `fly logs` visar `databasen är nyare än koden` när någon öppnar en sida. Databasen återställs därför först till en ögonblicksbild från före driftsättningen, och `fly deploy --image` med den förra imagen kommer sist, enligt nästa stycke.
+
+**Återställ databasen**, också när data har försvunnit eller blivit fel. `<image>` är imagen som ska köras efteråt: den nuvarande om bara datan återställs, den förra (ur `fly releases --image`) vid en rollback.
+
+```bash
+fly volumes list                              # den levande volymens id (vol_…) och maskinen under ATTACHED VM
+fly volumes snapshots list <vol-id>           # välj en ögonblicksbild (vs_…) från före felet och notera VOL SIZE
+fly volumes snapshots create <vol-id>         # spara läget just nu, så att inget går förlorat
+fly volumes create statlin_data --snapshot-id <vs-id> --region arn --size 3   # minst VOL SIZE; ger en ny vol_…
+fly machine update <maskin-id> --image <image> --skip-start                    # ger maskinen imagen utan att starta den
+fly machine clone <maskin-id> --attach-volume <ny-vol-id>:/data                # en ny maskin på den återställda volymen
+fly machine destroy <maskin-id> --force       # den gamla maskinen; dess volym ligger kvar okopplad
+fly deploy --image <image>                    # återställningen blir en release med inställningarna i fly.toml
+```
+
+- Den nya volymen måste heta `statlin_data`, annars byter `fly deploy` ut maskinen.
+- `fly volumes create` lägger som standard volymen i en annan hårdvaruzon än volymerna med samma namn (`--require-unique-zone`). Saknas en ledig zon, lägg till `--require-unique-zone=false`.
+- Klonen får imagen från maskinen den klonas från. Därför byts imagen innan maskinen klonas: kod som är nyare än ögonblicksbilden får aldrig öppna den återställda databasen, för då migrerar den den igen.
+- Kontrollera sedan sajten med `node tests/smoke.mjs https://statlin-web.fly.dev`, logga in och se att det senaste innehållet finns. `fly volumes list` ska visa den nya volymen som kopplad.
+- När allt fungerar tar du bort den gamla volymen med `fly volumes destroy <gamla-vol-id>`, så att bara en `statlin_data` finns kvar, och skriver in den nya volymens id under [Volymen](#volymen).
+
+**Öva** återställningen en gång om året, i juni (se [Årshjul](#årshjul)), så att den inte prövas första gången under press. Övningen görs mot en testvolym med ett eget namn, som `fly deploy` aldrig monterar, och en maskin utan `--port`, som inte får någon publik trafik:
+
+```bash
+fly volumes create statlin_ovning --snapshot-id <vs-id> --region arn --size 3
+fly machine run <image> --volume <test-vol-id>:/data --region arn
+fly ssh console --machine <test-maskin-id>
+#   i skalet: node -e "fetch('http://127.0.0.1:3000/api/health').then(r => r.text()).then(console.log)"
+fly machine destroy <test-maskin-id> --force
+fly volumes destroy <test-vol-id>
+```
+
+Hälsokontrollen ska svara `{"ok":true}`. Senast övad: `<fyll i datum>` (ingen övning är gjord än).
+
+### En process och en maskin
+
+Hela sajten är en Node-process på en enda Fly-maskin, med SQLite-databasen på maskinens volym.
+
+- Skala aldrig upp med `fly scale count` eller fler processer: en ny maskin får en egen volym och därmed en egen databas.
+- Det som bara finns i processens minne nollas varje gång maskinen startar, och maskinen stängs av när ingen besöker sajten (`auto_stop_machines` i `fly.toml`). Det gäller spärren mot upprepade inloggningsförsök per IP (`src/lib/auth/rate-limit.ts`) och `inflight`-kartan som samlar samtidiga hämtningar av tentastatistik (`src/lib/data/exam-stats.ts`). Kontospärren efter för många fel lösenord ligger i databasen och finns kvar.
+
+### Volymen
+
+Databasen och uppladdningarna ligger på volymen `statlin_data` i `arn`. Fly väljer volym efter namnet i `fly.toml` (`source = "statlin_data"`), inte efter id. Finns det två volymer med samma namn kan en ny maskin – efter `fly machine destroy`, `fly scale count` eller en flytt – få fel volym: sajten startar då som ny med bara grunddata, och nya ändringar hamnar på fel volym.
+
+Läget enligt en anteckning från 2026-10-31, inte kontrollerat sedan dess:
+
+| Volym | Läge |
+| --- | --- |
+| `vol_v3g8q8wewx6q3jx4` | Kopplad till maskinen – den levande volymen |
+| `vol_491j0dldgmng2x5r` | Okopplad, samma namn |
+
+Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy vol_491j0dldgmng2x5r`. Det går inte att ångra, så kontrollera först att den är tom eller äldre: CREATED AT i listan, eller innehållet med en maskin utan publik trafik som i övningen ovan.
+
+### Årshjul
+
+| När | Vad |
+| --- | --- |
+| Vid överlämningen | Gå igenom det här avsnittet, fyll i [Ägarskap](#ägarskap) och kontrollera [Volymen](#volymen). |
+| Juni | Större uppgraderingar (Next.js, Node, beroenden) och den årliga övningen i [återställning](#återställning-och-rollback). |
 
 ## Guide för poster
 
@@ -266,3 +359,14 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 - Anmälningar direkt på sajten i stället för externa formulär.
 
 Exempelinnehållet (evenemang, nyheter, styrelsenamn, e-postadresser på `@statlin.se` och exempelbilder i galleriet) är platshållare. Byt ut det i adminpanelen innan sajten publiceras.
+
+## Bilaga: Andra värdar
+
+Produktionen kör på Fly.io. Det här behövs om sajten flyttas till en annan värd med Docker och volym, till exempel Railway:
+
+1. Skapa ett projekt från GitHub-repot (gren `Main-Real`). Dockerfilen används automatiskt, och varje merge till `Main-Real` driftsätts.
+2. Lägg till en volym med monteringssökvägen `/data`. Utan den försvinner databasen och alla uppladdningar vid nästa driftsättning. Railway monterar volymen som root, vilket startskriptet `scripts/docker-entrypoint.mjs` rättar, och tillåter inte `VOLUME` i Dockerfile – lägg därför inte till någon.
+3. Sätt variablerna `ADMIN_EMAIL`, `ADMIN_PASSWORD` och `SITE_URL`. Railway skickar tjänstens variabler som byggargument när Dockerfile deklarerar dem, och `SITE_URL` behövs vid bygget (`ARG SITE_URL`).
+4. Spärren mot upprepade inloggningsförsök kan använda Railways rubrik med besökarens IP: sätt `CLIENT_IP_HEADER=x-real-ip` (på Fly.io är det `fly-client-ip`, som redan står i `fly.toml`).
+5. Slå på schemalagda säkerhetskopior av volymen och, om värden har det, hälsokontroll på `/api/health`.
+6. Kontrollera driftsättningen med `node tests/smoke.mjs https://din-adress`.
