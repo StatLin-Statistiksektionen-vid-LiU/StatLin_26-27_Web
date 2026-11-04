@@ -51,7 +51,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
           />
         )}
         <div className="absolute left-4 top-4 flex items-center gap-2">
-          <span className="chip bg-white/95 text-ink backdrop-blur pointer-coarse:backdrop-filter-none">{relativeDay(event.starts_at)}</span>
+          <span className="chip bg-white/95 text-ink backdrop-blur pointer-coarse:backdrop-filter-none">{relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
         </div>
         <div className="absolute bottom-4 left-4 flex flex-col items-center rounded-2xl bg-ink/85 px-3.5 py-2 text-white backdrop-blur-md tabular pointer-coarse:bg-ink/95 pointer-coarse:backdrop-filter-none">
           <span className="kicker text-[0.6rem] text-red">{p.monthShort}</span>

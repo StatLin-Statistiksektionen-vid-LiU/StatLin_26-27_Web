@@ -106,10 +106,18 @@ export function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** "om 3 dagar", "i morgon", "i dag" – relativt dagens datum i Stockholm. */
-export function relativeDay(local: string): string {
+/**
+ * "Pågår", "om 3 dagar", "i morgon", "i dag" – relativt klockan i Stockholm. Pågår gäller bara när slutet är känt: en heldag, eller
+ * ett klockslag med sluttid. Utan sluttid går det inte att veta när evenemanget är slut, så det förblir "I dag".
+ */
+export function relativeDay(start: string, end: string | null = null, allDay = false): string {
+  if (allDay || end) {
+    const now = nowLocal();
+    const from = allDay ? `${start.slice(0, 10)}T00:00` : start;
+    if (from <= now && now <= eventEnd(start, end, allDay)) return "Pågår";
+  }
   const today = asUtc(todayLocal());
-  const target = asUtc(local.slice(0, 10));
+  const target = asUtc(start.slice(0, 10));
   const diff = Math.round((target.getTime() - today.getTime()) / 86_400_000);
   if (diff === 0) return "I dag";
   if (diff === 1) return "I morgon";

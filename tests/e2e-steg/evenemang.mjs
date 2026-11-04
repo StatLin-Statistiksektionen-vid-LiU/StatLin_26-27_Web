@@ -62,6 +62,15 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await Promise.all([page.waitForURL(/\/admin\/evenemang\?/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
   };
 
+  const assertOngoing = async (slug) => {
+    await site.goto(`${BASE}/evenemang`);
+    const card = site.locator(`main a[href="/evenemang/${slug}"]:has(h3)`);
+    await card.getByText("Pågår", { exact: true }).waitFor();
+    await site.goto(`${BASE}/evenemang/${slug}`);
+    await site.locator("main .chip", { hasText: "Pågår" }).waitFor();
+    for (const wrong of ["I går", "Har varit"]) assert.equal(await site.locator("main .chip", { hasText: wrong }).count(), 0, `sidan ska inte säga "${wrong}"`);
+  };
+
   await step("SB-32: en tid som inte finns ger fältfel på start och slut och sparas inte, och en giltig tid sparas", async () => {
     await switchAccount(page, ADMIN);
     const title = `E2E-datum ${uniqueId()}`;
@@ -165,6 +174,19 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await save("");
     await removeEvent(massan.url);
     await removeEvent(starta.url);
+  });
+
+  await step("SB-07: ett evenemang som startade i går och slutar i morgon visar Pågår på kortet och sidan", async () => {
+    await switchAccount(page, ADMIN);
+    const { url, slug } = await createEvent({ title: `E2E-pågår ${uniqueId()}`, startsAt: `${dayOffset(-1)}T18:00`, endsAt: `${dayOffset(1)}T15:00` });
+    await assertOngoing(slug);
+    await removeEvent(url);
+  });
+
+  await step("SB-07: en heldag visar Pågår hela sista dagen, inte Har varit", async () => {
+    const { url, slug } = await createEvent({ title: `E2E-pågår ${uniqueId()}`, startsAt: `${dayOffset(-4)}T00:00`, endsAt: `${dayOffset(0)}T00:00`, allDay: true });
+    await assertOngoing(slug);
+    await removeEvent(url);
   });
 
   await visitor.context.close();

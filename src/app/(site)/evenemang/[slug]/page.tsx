@@ -81,7 +81,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
             <ArrowLeft size={14} /> Alla evenemang
           </Link>
           <div className="mt-8 flex flex-wrap items-center gap-2">
-            <span className={`chip ${isPast ? "bg-white/15 text-white" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at)}</span>
+            <span className={`chip ${isPast ? "bg-white/15 text-white" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
             {event.committee && (
               <Link href={`/utskott/${event.committee.slug}`} className="chip border border-white/20 text-white/85 hover:border-white/60">
                 {event.committee.short_name}
