@@ -6,7 +6,7 @@
 //
 // Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att uppladdningen nekar andra ursprung, att mediaadresser
-// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, att sitemapen och kalenderfilerna får cachas, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
+// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, att sitemapen och kalenderfilerna får cachas, att evenemangens kalendervy och filter inte indexeras, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
 // SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
 // kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
@@ -114,6 +114,20 @@ await check("Kanonisk adress (canonical)", async () => {
   const href = link.match(/\shref="([^"]+)"/)?.[1] ?? "";
   expect(onSite(href), `pekar på ${href}, inte ${SITE_URL} – ${REMEDY}`);
   return href;
+});
+
+await check("Evenemangens kalendervy och filter indexeras inte", async () => {
+  const canonical = (body) => new URL(body.match(/<link[^>]*\srel="canonical"[^>]*>/)?.[0].match(/\shref="([^"]+)"/)?.[1] ?? "/saknas", BASE).pathname;
+  const noindex = (body) => /<meta[^>]*\sname="robots"[^>]*\scontent="[^"]*noindex/.test(body);
+  const { body: plain } = await get("/evenemang");
+  expect(canonical(plain) === "/evenemang", `/evenemang har canonical ${canonical(plain)}`);
+  expect(!noindex(plain), "/evenemang ska gå att indexera");
+  expect(/<link[^>]*\stype="text\/calendar"[^>]*>/.test(plain), "/evenemang har tappat länken till kalenderflödet");
+  for (const query of ["?vy=kalender", "?vy=kalender&manad=1999-01", "?utskott=sasu"]) {
+    const { body } = await get(`/evenemang${query}`);
+    expect(canonical(body) === "/evenemang", `${query} har canonical ${canonical(body)}`);
+    expect(noindex(body), `${query} saknar noindex`);
+  }
 });
 
 await check("Flikikon (rel=icon)", async () => {

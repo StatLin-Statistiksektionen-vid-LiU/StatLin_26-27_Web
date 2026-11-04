@@ -9,14 +9,21 @@ import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { listCommittees } from "@/lib/data/content";
 import { listEventsBetween, listPastEvents, listUpcomingEvents } from "@/lib/data/events";
-import { monthGrid, monthLabel, todayLocal } from "@/lib/dates";
+import { calendarMonth, calendarMonthInRange, monthGrid, monthLabel, todayLocal } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Evenemang",
-  description: "Sittningar, pubar, idrott, föreläsningar och sektionsmöten – allt som händer på StatLin.",
-};
+export async function generateMetadata({ searchParams }: PageProps<"/evenemang">): Promise<Metadata> {
+  const { vy, manad, utskott } = await searchParams;
+  return {
+    title: "Evenemang",
+    description: "Sittningar, pubar, idrott, föreläsningar och sektionsmöten – allt som händer på StatLin.",
+    // Metadata slås ihop ytligt, så länken till kalenderflödet från roten måste stå med här.
+    alternates: { canonical: "/evenemang", types: { "text/calendar": "/kalender.ics" } },
+    // Kalendervyn och filtren är samma innehåll under andra adresser.
+    robots: vy !== undefined || manad !== undefined || utskott !== undefined ? { index: false } : undefined,
+  };
+}
 
 export default function EventsPage(props: PageProps<"/evenemang">) {
   return (
@@ -48,7 +55,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
   await connection();
   const view = sp.vy === "kalender" ? "kalender" : "lista";
   const filter = typeof sp.utskott === "string" ? sp.utskott : undefined;
-  const month = typeof sp.manad === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.manad) ? sp.manad : todayLocal().slice(0, 7);
+  const month = calendarMonth(sp.manad);
 
   const committees = (await listCommittees({ visibleOnly: true })).filter((c) => c.kind !== "ovrigt");
   const active = committees.find((c) => c.slug === filter);
@@ -176,6 +183,23 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
   );
 }
 
+/** Bläddringen i kalendern. En månad utanför gränsen skulle visa innevarande månad, så där går det inte att gå vidare. */
+function MonthStep({ month, href, label, children }: { month: string; href: string; label: string; children: React.ReactNode }) {
+  const className = "grid size-11 place-items-center rounded-full border border-ink/15 bg-white";
+  if (!calendarMonthInRange(month)) {
+    return (
+      <button type="button" disabled aria-label={label} className={cn(className, "opacity-40")}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <Link href={href} rel="nofollow" aria-label={label} className={cn(className, "hover:border-ink")}>
+      {children}
+    </Link>
+  );
+}
+
 async function MonthView({
   month,
   committeeId,
@@ -206,15 +230,15 @@ async function MonthView({
       <div className="flex items-center justify-between">
         <h2 className="display-tight text-[clamp(1.6rem,3vw,2.4rem)]">{monthLabel(y, m)}</h2>
         <div className="flex gap-2">
-          <Link href={href({ manad: prev })} className="grid size-11 place-items-center rounded-full border border-ink/15 bg-white hover:border-ink" aria-label="Föregående månad">
+          <MonthStep month={prev} href={href({ manad: prev })} label="Föregående månad">
             <ChevronLeft size={18} />
-          </Link>
+          </MonthStep>
           <Link href={href({ manad: undefined })} className="hidden h-11 items-center rounded-full border border-ink/15 bg-white px-4 text-sm font-semibold hover:border-ink sm:inline-flex">
             I dag
           </Link>
-          <Link href={href({ manad: next })} className="grid size-11 place-items-center rounded-full border border-ink/15 bg-white hover:border-ink" aria-label="Nästa månad">
+          <MonthStep month={next} href={href({ manad: next })} label="Nästa månad">
             <ChevronRight size={18} />
-          </Link>
+          </MonthStep>
         </div>
       </div>
 

@@ -230,5 +230,32 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await removeEvent(heldag.url);
   });
 
+  await step("SB-23: kalendern visar bara månader inom två år, och bläddringen stannar vid gränsen", async () => {
+    const [year, month] = today.split("-").map(Number);
+    const manad = `${String(month).padStart(2, "0")}`;
+    const heading = (y) => {
+      const name = new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", month: "long" }).format(new Date(Date.UTC(y, month - 1, 1)));
+      return site.getByRole("heading", { level: 2, name: `${name[0].toUpperCase()}${name.slice(1)} ${y}`, exact: true });
+    };
+    const next = site.getByRole("link", { name: "Nästa månad" });
+    const previous = site.getByRole("link", { name: "Föregående månad" });
+
+    await site.goto(`${BASE}/evenemang?vy=kalender&manad=1999-01`);
+    await heading(year).waitFor();
+    assert.equal(await next.getAttribute("rel"), "nofollow");
+    assert.equal(await previous.getAttribute("rel"), "nofollow");
+
+    await site.goto(`${BASE}/evenemang?vy=kalender&manad=${year + 2}-${manad}`);
+    await heading(year + 2).waitFor();
+    assert.equal(await next.count(), 0, "nästa månad ligger utanför gränsen");
+    await site.getByRole("button", { name: "Nästa månad", disabled: true }).waitFor();
+    await previous.waitFor();
+
+    await site.goto(`${BASE}/evenemang?vy=kalender&manad=${year - 2}-${manad}`);
+    await heading(year - 2).waitFor();
+    assert.equal(await previous.count(), 0, "förra månaden ligger utanför gränsen");
+    await next.waitFor();
+  });
+
   await visitor.context.close();
 }

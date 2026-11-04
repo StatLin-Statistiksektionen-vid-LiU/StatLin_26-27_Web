@@ -2,7 +2,7 @@
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { eventEnd, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
+import { calendarMonth, calendarMonthInRange, eventEnd, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 
 // V8 rullar de två första utan fel (2 mars, 1 mars). De två sista ger Invalid Date, och då kastar en rundtur utan vakt (R-21).
@@ -150,4 +150,29 @@ test("SB-22: tider i strukturerad data har tidszon", () => {
 test("SB-22: heldag har bara datum, eftersom klockslaget inte säger något om en heldag", () => {
   assert.deepEqual(eventSchemaDates("2026-08-17T00:00", "2026-08-21T00:00", true), { startDate: "2026-08-17", endDate: "2026-08-21" });
   assert.deepEqual(eventSchemaDates("2026-08-17T18:00", null, true), { startDate: "2026-08-17", endDate: undefined });
+});
+
+test("SB-23: kalendern visar månader inom två år från i dag, också exakt två år bort", () => {
+  at("2026-11-04T12:00", () => {
+    assert.equal(calendarMonth("2027-02"), "2027-02");
+    assert.equal(calendarMonth("2028-11"), "2028-11");
+    assert.equal(calendarMonth("2024-11"), "2024-11");
+  });
+});
+
+test("SB-23: en månad utanför gränsen eller ett trasigt värde ger innevarande månad", () => {
+  at("2026-11-04T12:00", () => {
+    for (const bad of ["2028-12", "2024-10", "1999-01", "2026-13", "2026-00", "2026-1", "x", "", undefined, ["2027-01", "2027-02"]]) {
+      assert.equal(calendarMonth(bad), "2026-11", String(bad));
+    }
+  });
+});
+
+test("SB-23: bläddringen stannar vid gränsen", () => {
+  at("2026-11-04T12:00", () => {
+    assert.equal(calendarMonthInRange("2028-11"), true);
+    assert.equal(calendarMonthInRange("2028-12"), false);
+    assert.equal(calendarMonthInRange("2024-11"), true);
+    assert.equal(calendarMonthInRange("2024-10"), false);
+  });
 });

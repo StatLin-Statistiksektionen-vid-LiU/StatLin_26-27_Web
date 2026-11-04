@@ -189,6 +189,20 @@ export function monthGrid(year: number, month: number) {
   return days;
 }
 
+/** Så många månader från i dag går kalendern att visa. Utan gräns blir varje månad i all framtid en egen adress att indexera. */
+const CALENDAR_RANGE = 24;
+const monthNumber = (month: string) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7));
+
+export function calendarMonthInRange(month: string): boolean {
+  return Math.abs(monthNumber(month) - monthNumber(todayLocal())) <= CALENDAR_RANGE;
+}
+
+/** Månaden kalendern visar, "YYYY-MM": värdet ur adressen om det är en månad inom gränsen, annars innevarande månad. */
+export function calendarMonth(value: unknown): string {
+  if (typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && calendarMonthInRange(value)) return value;
+  return todayLocal().slice(0, 7);
+}
+
 export function monthLabel(year: number, month: number) {
   return capitalize(monthLong.format(new Date(Date.UTC(year, month - 1, 1)))) + " " + year;
 }
