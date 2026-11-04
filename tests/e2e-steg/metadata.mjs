@@ -119,4 +119,79 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     assert.match(swedish, /(mån|tis|ons|tors|fre|lör|sön)/i, `Ingen svensk veckodag i: ${swedish}`);
     await context.close();
   });
+
+  await step("Innehållet syns också när sidans JavaScript inte laddas (SB-03)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    await visitor.route("**/_next/static/**/*.js", (route) => route.abort());
+    for (const path of ["/", "/evenemang"]) {
+      await visitor.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
+      await visitor.locator(".reveal").first().waitFor({ state: "attached" });
+      // Hålen i skalet byts in av Reacts inline-skript, som körs också utan sidans egna filer.
+      await visitor.waitForTimeout(1000);
+      const hidden = await visitor.locator(".reveal").evaluateAll((els) => els.filter((el) => getComputedStyle(el).opacity !== "1").length);
+      assert.equal(hidden, 0, `${path}: ${hidden} block är dolda`);
+    }
+    await context.close();
+  });
+
+  await step("Det besökaren redan ser försvinner inte när långsamt JavaScript tar över (SB-03)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    // Räknar varje bildruta där ett block i bild som redan har synts inte längre syns helt.
+    await context.addInitScript(() => {
+      window.__dips = [];
+      const seen = new WeakSet();
+      const tick = () => {
+        for (const el of document.querySelectorAll(".reveal")) {
+          const box = el.getBoundingClientRect();
+          if (box.height === 0 || box.top >= innerHeight) continue;
+          const opacity = Number(getComputedStyle(el).opacity);
+          if (opacity === 1) seen.add(el);
+          else if (seen.has(el)) window.__dips.push(opacity);
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await visitor.route("**/_next/static/**/*.js", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await route.continue();
+    });
+    await visitor.goto(`${BASE}/evenemang`, { waitUntil: "domcontentloaded" });
+    const first = visitor.locator(".reveal").first();
+    await first.waitFor();
+    assert.equal(await first.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__react"))), false, "Sidan hann hydreras: fördröjningen prövar inget");
+    assert.equal(await first.evaluate((el) => getComputedStyle(el).opacity), "1", "Innehållet är dolt innan JavaScript har laddats");
+    await waitForHydration(visitor, first);
+    await visitor.waitForTimeout(500);
+    const dips = await visitor.evaluate(() => window.__dips.length);
+    assert.equal(dips, 0, `Innehåll i bild blinkade till i ${dips} bildrutor`);
+    await context.close();
+  });
+
+  await step("Längre ner på sidan tonar innehållet in när man scrollar dit (SB-03)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    await visitor.goto(`${BASE}/`);
+    const last = visitor.locator(".reveal").last();
+    await last.waitFor({ state: "attached" });
+    await waitForHydration(visitor, last);
+    await visitor.waitForFunction((el) => el.dataset.hydrated !== undefined, await last.elementHandle());
+    assert.equal(await last.evaluate((el) => getComputedStyle(el).opacity), "0", "Blocket under sidans slut ska vara dolt");
+    await last.scrollIntoViewIfNeeded();
+    await visitor.waitForFunction((el) => el.dataset.shown === "true", await last.elementHandle());
+    await visitor.waitForFunction((el) => getComputedStyle(el).opacity === "1", await last.elementHandle());
+    await context.close();
+  });
+
+  await step("Vid sidbyte inom sajten tonar också det som syns direkt in (SB-03)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    await visitor.goto(`${BASE}/dokument`);
+    const link = visitor.locator('footer a[href="/nyheter"]');
+    await waitForHydration(visitor, link);
+    await link.click();
+    await visitor.waitForURL(/\/nyheter$/);
+    const inView = visitor.locator('main:has(a[href^="/nyheter/"]) .reveal:visible').first();
+    await inView.waitFor();
+    await visitor.waitForFunction((el) => el.dataset.hydrated !== undefined, await inView.elementHandle());
+    await context.close();
+  });
 }

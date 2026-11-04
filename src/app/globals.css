@@ -347,20 +347,21 @@
   }
 
   /* Reveal-animation som triggas av <Reveal> (IntersectionObserver). */
-  .js .reveal {
+  .reveal[data-hydrated] {
     opacity: 0;
     transform: translate3d(0, 28px, 0);
+  }
+  /* Övergången står här så att bara intoningen animeras, inte när blocket göms. */
+  .reveal[data-hydrated][data-shown="true"] {
+    opacity: 1;
+    transform: none;
     transition:
       opacity 0.9s var(--ease-out-expo),
       transform 1.1s var(--ease-out-expo);
     transition-delay: var(--reveal-delay, 0ms);
   }
-  .js .reveal[data-shown="true"] {
-    opacity: 1;
-    transform: none;
-  }
   @media (prefers-reduced-motion: reduce) {
-    .js .reveal {
+    .reveal[data-hydrated] {
       opacity: 1;
       transform: none;
     }
