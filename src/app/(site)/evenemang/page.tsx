@@ -277,7 +277,7 @@ async function MonthView({
                         style={{ background: e.committee?.accent ?? "#0a0a0a" }}
                         title={e.title}
                       >
-                        <span className="font-mono font-normal opacity-80">{e.all_day ? "" : e.starts_at.slice(11, 16)} </span>
+                        <span className="font-mono font-normal opacity-80">{e.all_day || e.starts_at.slice(0, 10) !== d.date ? "" : e.starts_at.slice(11, 16)} </span>
                         {e.title}
                       </Link>
                     </li>

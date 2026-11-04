@@ -294,6 +294,12 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     const cells = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).count();
     assert.ok(cells >= 3, `resan ska synas på sina dagar i rutnätet, syns på ${cells}`);
 
+    // Klockslaget hör till startdagen. De andra dagarna pågår resan redan.
+    await site.goto(`${BASE}/evenemang?vy=kalender&manad=${before}`);
+    await site.getByRole("tablist", { name: "Vy" }).waitFor();
+    const times = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).evaluateAll((links) => links.flatMap((a) => a.textContent.match(/\d\d:\d\d/) ?? []));
+    assert.deepEqual(times, ["10:00"], `klockslaget ska bara stå på startdagen, i rutnätet står: ${times}`);
+
     await removeItem(pub.url);
     await removeItem(trip.url);
   });
