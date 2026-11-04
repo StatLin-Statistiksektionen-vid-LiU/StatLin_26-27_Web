@@ -69,6 +69,16 @@ async function login(page, email, password) {
   await page.goto(`${BASE}/admin`);
 }
 
+/** Klickar Ta bort på en sida i adminpanelen och väntar in bekräftelsen. Knappen gör inget förrän den hydrerats. */
+async function openDeleteConfirm(page) {
+  const button = page.getByRole("button", { name: "Ta bort" });
+  await page.waitForFunction((el) => Object.keys(el).some((k) => k.startsWith("__react")), await button.elementHandle());
+  await button.click();
+  const dialog = page.getByRole("alertdialog");
+  await dialog.waitFor();
+  return dialog;
+}
+
 (async () => {
   await makeTestImages();
   const browser = await chromium.launch();
@@ -949,9 +959,15 @@ async function login(page, email, password) {
       assert.equal(await list.getByRole("heading", { name: /Termin 3/ }).count(), 0);
 
       await page.goto(editUrl);
-      await page.waitForLoadState("networkidle");
-      page.once("dialog", (d) => d.accept());
-      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?raderad=1/), page.getByRole("button", { name: "Ta bort" }).click()]);
+      // Utloggad svarar actionen ingenting och skickar ingen vidare. Den som klickade ska ändå få ett besked, och inget raderas.
+      const signedOut = await openDeleteConfirm(page);
+      await page.context().clearCookies();
+      await signedOut.getByRole("button", { name: "Ta bort" }).click();
+      await signedOut.getByRole("alert").waitFor();
+      await login(page, "info@statlin.se", "lokal-demo-2026");
+      await page.goto(editUrl);
+      const dialog = await openDeleteConfirm(page);
+      await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?raderad=1/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
       await page.goto(`${BASE}/admin`);
       await page.getByText(/tog bort hjälpmedel/).waitFor();
       await page.goto(`${BASE}/studenter/hjalpmedel`);
@@ -1102,6 +1118,76 @@ async function login(page, email, password) {
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByText("Affisch till testsittningen").waitFor();
       await page.getByText("Hemlig planering i testet").waitFor();
+    });
+
+    // Radering: avsändaren, redaktörerna och administratörerna får ta bort ett uppdrag. Den som klickar ser alltid vad som hände.
+    const heading = (title) => page.getByRole("heading", { name: title });
+    const confirmDelete = async (dialog) => {
+      await Promise.all([page.waitForURL(/\/admin\/uppdrag\?raderat=1$/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
+      await page.getByText("Uppdraget är borttaget.").waitFor();
+    };
+    let assignedUrl;
+
+    await step("Mottagaren får ingen knapp för att ta bort uppdraget", async () => {
+      assignedUrl = await newTask("Uppdrag till SCB i testet", "Ordförande SCB");
+      await page.context().clearCookies();
+      await login(page, "scb@statlin.se", "lokal-demo-2026");
+      await page.goto(assignedUrl);
+      await heading("Uppdrag till SCB i testet").waitFor();
+      assert.equal(await page.getByRole("button", { name: "Ta bort" }).count(), 0, "mottagaren ska inte kunna ta bort uppdraget");
+    });
+
+    await step("Avbryt och Escape i bekräftelsen låter uppdraget stå kvar", async () => {
+      await page.goto(taskUrl);
+      const dialog = await openDeleteConfirm(page);
+      await dialog.getByRole("button", { name: "Avbryt" }).click();
+      await dialog.waitFor({ state: "hidden" });
+      await openDeleteConfirm(page);
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      await page.reload();
+      await heading("Affisch till testsittningen").waitFor();
+    });
+
+    await step("Bekräftelsen stängs när man går tillbaka i webbläsaren", async () => {
+      // Sidan göms bara (Activity). Stod dialogen kvar öppen i den dolda sidan gick inget annat att klicka på.
+      await page.goto(`${BASE}/admin/uppdrag`);
+      await page.getByRole("link", { name: /Affisch till testsittningen/ }).click();
+      await heading("Affisch till testsittningen").waitFor();
+      await openDeleteConfirm(page);
+      await page.goBack();
+      await page.waitForURL(/\/admin\/uppdrag$/);
+      await Promise.all([page.waitForURL(/visa=fran/), page.getByRole("link", { name: "Från dig" }).click()]);
+      assert.equal(await page.locator("dialog[open]").count(), 0, "ingen dialog ska stå kvar öppen");
+    });
+
+    await step("Avsändaren tar bort sitt uppdrag och ser beskedet", async () => {
+      await page.goto(taskUrl);
+      await confirmDelete(await openDeleteConfirm(page));
+      assert.equal(await page.getByRole("link", { name: /Affisch till testsittningen/ }).count(), 0, "uppdraget ska vara borta från tavlan");
+      // Bekräftelsen får inte ligga kvar: en öppen modal i en dold sida gör hela sidan oklickbar.
+      await Promise.all([page.waitForURL(/visa=fran/), page.getByRole("link", { name: "Från dig" }).click()]);
+      await page.goto(taskUrl);
+      await page.getByText("Sidan du letar efter finns inte").waitFor();
+    });
+
+    await step("Redaktören tar bort ett uppdrag som någon annan skickat", async () => {
+      await page.context().clearCookies();
+      await login(page, "info@statlin.se", "lokal-demo-2026");
+      await page.goto(assignedUrl);
+      await confirmDelete(await openDeleteConfirm(page));
+    });
+
+    await step("Administratören tar bort en annans privata uppdrag, och rubriken står kvar i loggen", async () => {
+      await page.context().clearCookies();
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
+      await page.goto(`${BASE}/admin/uppdrag`);
+      await page.getByRole("link", { name: /Hemlig planering i testet/ }).click();
+      await heading("Hemlig planering i testet").waitFor();
+      await confirmDelete(await openDeleteConfirm(page));
+      assert.equal(await page.getByRole("link", { name: /Hemlig planering i testet/ }).count(), 0, "uppdraget ska vara borta från tavlan");
+      await page.goto(`${BASE}/admin`);
+      await page.locator("li", { hasText: "tog bort uppdraget" }).getByText("Hemlig planering i testet").waitFor();
     });
 
     // Grafiskt ansvar: bilderna på alla evenemang och nyheter, men inte texterna.
