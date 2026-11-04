@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
-import { isAllowedOrigin } from "@/lib/allowed-origins";
+import { isSameOriginRequest } from "@/lib/allowed-origins";
 import { canEditImages, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -9,14 +9,6 @@ import { fileHref, toImageRef } from "@/lib/media-url";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
-function originHost(origin: string): string {
-  try {
-    return new URL(origin).host;
-  } catch {
-    return "";
-  }
-}
-
 /**
  * Uppladdning från adminpanelen (bilder och dokument).
  * purpose = "image"   → fristående bild (omslag, porträtt, logga); kopplas när formuläret sparas
@@ -24,11 +16,8 @@ function originHost(origin: string): string {
  *         = "file"    → dokument (PDF m.m.), endast redaktörer
  */
 export async function POST(request: Request) {
-  // CSRF-skydd utöver SameSite-cookien: kräv samma ursprung.
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  // Ett ogiltigt ursprung (t.ex. "null" från en sandlådad sida) nekas, i stället för att krascha URL-tolkningen.
-  if (origin && !isAllowedOrigin(originHost(origin), host)) return json({ error: "Otillåtet ursprung." }, 403);
+  // CSRF-skydd utöver SameSite-cookien: kräv samma ursprung – också när Origin saknas.
+  if (!isSameOriginRequest(request.headers)) return json({ error: "Otillåtet ursprung." }, 403);
 
   const user = await getSessionUser();
   if (!user) return json({ error: "Du är inte inloggad." }, 401);
