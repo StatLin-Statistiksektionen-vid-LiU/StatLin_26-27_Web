@@ -51,15 +51,17 @@ export default function PrivacyPage() {
           </p>
           <p>
             Uppdragstavlan sparar uppdrag och kommentarer med vem som skrivit dem, vem uppdraget gäller och när. De syns bara för
-            inloggade poster – ett privat uppdrag bara för avsändaren, mottagaren och redaktörerna – och finns kvar tills uppdraget
-            raderas; då raderas kommentarerna med det. Raderas ett konto står texten kvar, utan namn.
+            inloggade poster – ett privat uppdrag bara för avsändaren, mottagaren, administratörerna och redaktörerna – och finns
+            kvar tills uppdraget raderas (rubriken står kvar i revisionsloggen); då raderas kommentarerna med det. Raderas ett konto
+            står texten kvar, utan namn.
           </p>
 
           <h2>Revisionsloggen</h2>
           <p>
-            Sajten loggar vem som skapat, ändrat eller tagit bort något i adminpanelen och när, varje inloggning och varje
-            misslyckat inloggningsförsök – med den e-postadress som skrevs in, men utan IP-adress. Inloggningar och misslyckade
-            försök raderas efter 90 dagar, allt annat i loggen efter 24 månader.
+            Sajten loggar vem som skapat, ändrat eller tagit bort något i adminpanelen och när – med rubriken eller namnet på det
+            som ändrades, för konton e-postadressen –, varje inloggning och varje misslyckat inloggningsförsök – med den
+            e-postadress som skrevs in, men utan IP-adress. Inloggningar och misslyckade försök raderas efter 90 dagar, allt annat
+            i loggen efter 24 månader.
           </p>
 
           <h2>Innehåll och bilder</h2>

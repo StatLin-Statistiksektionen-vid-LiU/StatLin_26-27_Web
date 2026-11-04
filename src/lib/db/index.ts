@@ -22,12 +22,17 @@ declare global {
 const PRUNE_CHECK_MS = 60 * 60 * 1000;
 let pruneCheckedAt = 0;
 
+/**
+ * Serverkomponenter läser via readDb() (src/lib/data/db.ts) eller efter cookies(), som getSession. better-sqlite3 är synkront, så ett
+ * anrop direkt under förrenderingen bakar in byggets data i sidan – och bygget stoppar det inte.
+ */
 export function getDb(): Database.Database {
   if (globalThis.__statlinDb) {
-    // Den vanliga vägen kostar ett Date.now(). En gång i timmen tittar gallringen på sin tidsstämpel (en primärnyckelsuppslagning)
-    // och gallrar om senaste gallringen är äldre än ett dygn – så att en process som kör länge också gallrar.
-    if (Date.now() - pruneCheckedAt >= PRUNE_CHECK_MS) {
-      pruneCheckedAt = Date.now();
+    // Den vanliga vägen kostar ett performance.now(). En gång i timmen tittar gallringen på sin tidsstämpel (en primärnyckelsuppslagning)
+    // och gallrar om senaste gallringen är äldre än ett dygn – så att en process som kör länge också gallrar. performance.now() och inte
+    // Date.now(), eftersom Next räknar Date.now() som IO i förrenderingen (cacheComponents) och avbryter en förrendering som anropar den.
+    if (performance.now() - pruneCheckedAt >= PRUNE_CHECK_MS) {
+      pruneCheckedAt = performance.now();
       pruneAuditLog(globalThis.__statlinDb, { onlyIfDue: true });
     }
   } else {
@@ -41,7 +46,7 @@ export function getDb(): Database.Database {
       migrate(db);
       bootstrap(db);
       pruneAuditLog(db);
-      pruneCheckedAt = Date.now();
+      pruneCheckedAt = performance.now();
     } catch (err) {
       // Nästa begäran försöker igen med ett nytt handtag, så det här måste stängas – annars läcker varje försök filhandtag.
       db.close();
