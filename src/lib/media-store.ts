@@ -195,10 +195,11 @@ export function isSameUpload(m: Pick<Media, "original_name" | "size">, file: Fil
 export async function replaceFile(old: Media, file: File, userId: number | null): Promise<Media> {
   if (old.kind !== "file" || old.ext !== fileExt(file)) return storeFile(file, userId);
   const { ext, mime, buffer } = await readDocument(file);
-  const target = path.join(UPLOADS_DIR, `${old.path_base}.${ext}`);
+  // turbopackIgnore: renameSync nedan får annars bygget att spåra hela projektet in i .next/standalone (.claude, .git, Dockerfile, ...).
+  const target = path.join(/* turbopackIgnore: true */ UPLOADS_DIR, `${old.path_base}.${ext}`);
   // Den nya filen skrivs bredvid och byter sedan plats med den gamla, så att ingen laddar ner en halvskriven fil. Blir den
   // kvar efter ett avbrott är den en fil utan rad, som gallringen tar bort.
-  const temp = path.join(path.dirname(target), `${crypto.randomUUID()}.${ext}`);
+  const temp = path.join(/* turbopackIgnore: true */ path.dirname(target), `${crypto.randomUUID()}.${ext}`);
   try {
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(temp, buffer);
