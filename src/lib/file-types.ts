@@ -11,3 +11,11 @@ export const FILE_TYPES: Record<string, string> = {
   txt: "text/plain; charset=utf-8",
   zip: "application/zip",
 };
+
+/**
+ * MIME-typen för en tillåten filändelse, annars undefined. Bara listans egna nycklar räknas – FILE_TYPES["constructor"]
+ * eller ["__proto__"] ger annars något från Object.prototype, och filen x.constructor släpptes igenom.
+ */
+export function fileMime(ext: string): string | undefined {
+  return Object.hasOwn(FILE_TYPES, ext) ? FILE_TYPES[ext] : undefined;
+}

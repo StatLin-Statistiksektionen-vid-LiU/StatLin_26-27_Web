@@ -4,7 +4,7 @@ import path from "node:path";
 import sharp, { type Metadata } from "sharp";
 import { getDb, UPLOADS_DIR } from "./db";
 import type { Media } from "./types";
-import { FILE_TYPES } from "./file-types";
+import { FILE_TYPES, fileMime } from "./file-types";
 
 export { FILE_TYPES };
 
@@ -27,6 +27,11 @@ function newBase(): string {
 
 export function isImageUpload(file: File): boolean {
   return IMAGE_MIME.has(file.type) || /\.(jpe?g|png|webp|gif|avif|heic|heif)$/i.test(file.name);
+}
+
+/** Filerna som hunnit skrivas när något senare i sparningen misslyckas – annars blev de kvar utan rad (SD-21). */
+async function removeFiles(files: string[]) {
+  await Promise.all(files.map((f) => fs.rm(f, { force: true })));
 }
 
 /**
@@ -57,53 +62,71 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
   const unique = [...new Set(widths)].sort((a, b) => a - b);
 
   const base = newBase();
-  await fs.mkdir(path.join(UPLOADS_DIR, path.dirname(base)), { recursive: true });
+  const written: string[] = [];
+  try {
+    await fs.mkdir(path.join(UPLOADS_DIR, path.dirname(base)), { recursive: true });
 
-  let outW = srcWidth;
-  let outH = srcHeight;
-  for (const w of unique) {
-    const info = await sharp(buffer, { animated: false })
-      .rotate()
-      .resize({ width: w, withoutEnlargement: true })
-      .webp({ quality: w <= 480 ? 72 : 80, effort: 4 })
-      .toFile(path.join(UPLOADS_DIR, `${base}-${w}.webp`));
-    outW = info.width;
-    outH = info.height;
+    let outW = srcWidth;
+    let outH = srcHeight;
+    for (const w of unique) {
+      const out = path.join(UPLOADS_DIR, `${base}-${w}.webp`);
+      written.push(out);
+      const info = await sharp(buffer, { animated: false })
+        .rotate()
+        .resize({ width: w, withoutEnlargement: true })
+        .webp({ quality: w <= 480 ? 72 : 80, effort: 4 })
+        .toFile(out);
+      outW = info.width;
+      outH = info.height;
+    }
+
+    const { dominant } = await sharp(buffer).rotate().resize(64).stats();
+    const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+
+    const db = getDb();
+    return db.transaction(() => {
+      const res = db
+        .prepare(
+          `INSERT INTO media (kind, path_base, ext, variants, original_name, mime, size, width, height, color, alt, uploaded_by)
+           VALUES ('image', ?, 'webp', ?, ?, 'image/webp', ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(base, unique.join(","), file.name.slice(0, 200), file.size, outW, outH, color, alt.slice(0, 300), userId);
+      return db.prepare("SELECT * FROM media WHERE id = ?").get(res.lastInsertRowid) as Media;
+    })();
+  } catch (err) {
+    await removeFiles(written);
+    throw err;
   }
-
-  const { dominant } = await sharp(buffer).rotate().resize(64).stats();
-  const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
-
-  const db = getDb();
-  const res = db
-    .prepare(
-      `INSERT INTO media (kind, path_base, ext, variants, original_name, mime, size, width, height, color, alt, uploaded_by)
-       VALUES ('image', ?, 'webp', ?, ?, 'image/webp', ?, ?, ?, ?, ?, ?)`,
-    )
-    .run(base, unique.join(","), file.name.slice(0, 200), file.size, outW, outH, color, alt.slice(0, 300), userId);
-  return db.prepare("SELECT * FROM media WHERE id = ?").get(res.lastInsertRowid) as Media;
 }
 
 export async function storeFile(file: File, userId: number | null): Promise<Media> {
   if (file.size > MAX_FILE_BYTES) throw new MediaError("Filen är för stor (max 30 MB).");
   const ext = (file.name.split(".").pop() ?? "").toLowerCase();
-  const mime = FILE_TYPES[ext];
+  const mime = fileMime(ext);
   if (!mime) throw new MediaError(`Filtypen .${ext} stöds inte. Tillåtna: ${Object.keys(FILE_TYPES).join(", ")}.`);
   const buffer = Buffer.from(await file.arrayBuffer());
   if (ext === "pdf" && buffer.subarray(0, 5).toString() !== "%PDF-") {
     throw new MediaError("Filen ser inte ut att vara en giltig PDF.");
   }
   const base = newBase();
-  await fs.mkdir(path.join(UPLOADS_DIR, path.dirname(base)), { recursive: true });
-  await fs.writeFile(path.join(UPLOADS_DIR, `${base}.${ext}`), buffer);
-  const db = getDb();
-  const res = db
-    .prepare(
-      `INSERT INTO media (kind, path_base, ext, variants, original_name, mime, size, uploaded_by)
-       VALUES ('file', ?, ?, '', ?, ?, ?, ?)`,
-    )
-    .run(base, ext, file.name.slice(0, 200), mime, file.size, userId);
-  return db.prepare("SELECT * FROM media WHERE id = ?").get(res.lastInsertRowid) as Media;
+  const target = path.join(UPLOADS_DIR, `${base}.${ext}`);
+  try {
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, buffer);
+    const db = getDb();
+    return db.transaction(() => {
+      const res = db
+        .prepare(
+          `INSERT INTO media (kind, path_base, ext, variants, original_name, mime, size, uploaded_by)
+           VALUES ('file', ?, ?, '', ?, ?, ?, ?)`,
+        )
+        .run(base, ext, file.name.slice(0, 200), mime, file.size, userId);
+      return db.prepare("SELECT * FROM media WHERE id = ?").get(res.lastInsertRowid) as Media;
+    })();
+  } catch (err) {
+    await removeFiles([target]);
+    throw err;
+  }
 }
 
 /** Tar bort mediefilen om den inte längre används någonstans. */

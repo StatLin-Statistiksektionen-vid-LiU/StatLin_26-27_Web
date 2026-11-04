@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { UPLOADS_DIR } from "@/lib/db";
-import { FILE_TYPES } from "@/lib/file-types";
+import { fileMime } from "@/lib/file-types";
 
 const SAFE_PATH = /^\d{4}\/\d{2}\/[a-f0-9-]{36}(-\d{2,5})?\.([a-z0-9]{2,5})$/;
 
@@ -14,7 +14,7 @@ export async function GET(request: Request, ctx: RouteContext<"/media/[...path]"
   if (!match) return new Response("Hittades inte", { status: 404 });
 
   const ext = match[2];
-  const type = ext === "webp" ? "image/webp" : FILE_TYPES[ext];
+  const type = ext === "webp" ? "image/webp" : fileMime(ext);
   if (!type) return new Response("Hittades inte", { status: 404 });
 
   const abs = path.join(UPLOADS_DIR, rel);

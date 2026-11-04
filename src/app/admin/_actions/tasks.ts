@@ -100,7 +100,8 @@ export async function setTaskStatus(fd: FormData) {
   const id = Number(fd.get("id"));
   const status = String(fd.get("status")) as TaskStatus;
   const existing = loadTask(id);
-  if (!existing || !(status in TASK_STATUSES) || !canUpdateTask(user, existing)) redirect("/admin/uppdrag");
+  // Object.hasOwn och inte `in`: "constructor" och "toString" finns på alla objekt och hade räknats som giltiga statusar.
+  if (!existing || !Object.hasOwn(TASK_STATUSES, status) || !canUpdateTask(user, existing)) redirect("/admin/uppdrag");
   if (existing.status === status) return;
   // updated_at skrivs inte: statusknapparna ligger på samma sida som uppdragets formulär, som inte skriver status eller
   // completed_at. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
