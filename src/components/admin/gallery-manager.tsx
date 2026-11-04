@@ -161,7 +161,7 @@ export function GalleryManager({
         </span>
         <div>
           <p className="font-semibold">Dra in bilder här</p>
-          <p className="text-sm text-stone">eller välj flera på en gång – de optimeras automatiskt och platsdata tas bort.</p>
+          <p className="text-sm text-stone">eller välj flera på en gång – de optimeras automatiskt, och bilderna på sajten saknar platsdata (originalet sparas internt, utan att vara åtkomligt från webben).</p>
         </div>
         <button type="button" onClick={() => inputRef.current?.click()} className="btn btn-ink btn-sm">
           <ImageIcon size={15} /> Välj bilder
