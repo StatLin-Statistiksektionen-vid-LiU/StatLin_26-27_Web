@@ -378,6 +378,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
 | `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, och att delningsbild, `canonical`, sitemap och `robots.txt` pekar på `SITE_URL` (miljövariabeln, annars `<url>`). Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
+| `npm audit --omit=dev` | Sårbarheter i det som körs i produktion. Det är sajtens mått och ska ge 0. `npm audit` utan flaggan räknar också utvecklingsverktygen. Där lyfter `overrides` i `package.json` `minimatch` till version 11, eftersom ESLints kedja annars ger 16 varningar. Lint fungerar så länge ingen regel anropar `minimatch` som en funktion, vilket inga av de regler vi har på gör. Slår någon på en sådan regel, till exempel `react/no-danger` med `customComponentNames`, kraschar lint med `minimatch is not a function`. Ta bort overriden när ESLint-paketen själva kräver version 11. Kör aldrig `npm audit fix --force`: den vill byta `eslint-config-next` mot version 0.2.4. |
 
 ## Att göra
 
