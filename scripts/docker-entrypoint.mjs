@@ -41,4 +41,14 @@ try {
   process.exit(1);
 }
 
+// Utan CLIENT_IP_HEADER kan inloggningsspärren inte skilja besökarna åt i produktionen (clientIp i src/lib/auth/rate-limit.ts, SD-23).
+if (process.env.NODE_ENV === "production" && !process.env.CLIENT_IP_HEADER?.trim()) {
+  console.warn(
+    "[statlin] Varning: CLIENT_IP_HEADER är inte satt, så inloggningsspärren räknar alla besökare som en: 20 inloggningsförsök " +
+      "på en kvart, från vem som helst, spärrar inloggningen för alla resten av kvarten. Sätt CLIENT_IP_HEADER till rubriken " +
+      "med besökarens IP som värden eller proxyn framför sajten skriver – fly-client-ip på Fly.io, x-real-ip bakom nginx " +
+      "(README → Miljövariabler).",
+  );
+}
+
 await import(path.join(process.cwd(), "server.js"));

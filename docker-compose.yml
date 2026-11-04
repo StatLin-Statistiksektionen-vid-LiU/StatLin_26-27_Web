@@ -8,7 +8,8 @@ services:
     image: statlin-web
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Bara på servern själv: besökare når sajten genom den omvända proxyn (README → Docker), aldrig direkt på port 3000.
+      - "127.0.0.1:3000:3000"
     env_file: .env
     volumes:
       # Databas och uppladdade bilder/dokument – säkerhetskopiera den här volymen.

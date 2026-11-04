@@ -62,14 +62,15 @@ export function clearLoginFailures(key: string) {
 }
 
 /**
- * Besökarens IP-adress. X-Forwarded-For kan besökaren fylla i själv, så bara det sista värdet –
- * det som den närmaste proxyn lade till – går att lita på. Sätter värden en egen rubrik som
- * besökaren inte kan påverka anges den i CLIENT_IP_HEADER (t.ex. x-real-ip eller fly-client-ip).
+ * Besökarens IP-adress. Den går bara att lita på i rubriken som CLIENT_IP_HEADER anger, som värden eller proxyn framför sajten
+ * skriver (fly-client-ip på Fly.io, x-real-ip bakom nginx). Nås appen förbi proxyn är både X-Forwarded-For och X-Real-IP besökarens
+ * egna rubriker (SD-23). I produktionen utan CLIENT_IP_HEADER räknas därför alla besökare som "okänd" och delar spärren
+ * (docker-entrypoint.mjs varnar vid start); bara i utvecklingsläget, t.ex. bakom Codespaces, används det sista värdet i X-Forwarded-For.
  */
 export function clientIp(h: Pick<Headers, "get">): string {
   const header = process.env.CLIENT_IP_HEADER?.trim().toLowerCase();
-  const fromHeader = header ? h.get(header)?.split(",")[0]?.trim() : undefined;
-  if (fromHeader) return fromHeader;
+  if (header) return h.get(header)?.split(",")[0]?.trim() || "okänd";
+  if (process.env.NODE_ENV === "production") return "okänd";
   const forwarded = (h.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  return forwarded.at(-1) || h.get("x-real-ip")?.trim() || "okänd";
+  return forwarded.at(-1) || "okänd";
 }

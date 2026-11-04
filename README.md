@@ -140,7 +140,7 @@ cp .env.example .env     # fyll i SITE_URL, ADMIN_EMAIL och ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar, eller är lösenordet kortare än 10 tecken, skapas inget konto: hälsokontrollen `/api/health` svarar 503, och loggen visar felet (`ADMIN_PASSWORD är platshållaren …` eller `ADMIN_PASSWORD duger inte: …`) när en sida öppnas, tills ett eget lösenord är satt i `.env` och containern startats om (`docker compose up -d`). Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx.
+Vid första start skapas grunddata och administratören från `.env`. Logga in på `/logga-in` och byt lösenord. Står platshållarlösenordet ur `.env.example` kvar, eller är lösenordet kortare än 10 tecken, skapas inget konto: hälsokontrollen `/api/health` svarar 503, och loggen visar felet (`ADMIN_PASSWORD är platshållaren …` eller `ADMIN_PASSWORD duger inte: …`) när en sida öppnas, tills ett eget lösenord är satt i `.env` och containern startats om (`docker compose up -d`). Lägg en omvänd proxy med HTTPS framför, till exempel Caddy eller nginx, på samma server: `docker-compose.yml` publicerar port 3000 bara på `127.0.0.1`, så sajten går inte att nå utifrån förbi proxyn. Låt proxyn skriva besökarens IP i en egen rubrik och ange den som `CLIENT_IP_HEADER` i `.env` – med nginx `proxy_set_header X-Real-IP $remote_addr;` och med Caddy `header_up X-Real-IP {remote_host}` i `reverse_proxy`, båda med `CLIENT_IP_HEADER=x-real-ip`. Utan den räknar inloggningsspärren alla besökare som en, och loggen varnar när containern startar (se [Miljövariabler](#miljövariabler)).
 
 Ge ett befintligt konto ett nytt tillfälligt lösenord utan att rollen ändras, eller skapa en ny administratör med `--make-admin`:
 
@@ -175,8 +175,10 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 ```bash
 npm ci && npm run build
 cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
-DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/server.js
+DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se CLIENT_IP_HEADER=x-real-ip node .next/standalone/server.js
 ```
+
+Bakom en omvänd proxy som skriver `X-Real-IP`, som under [Docker](#docker-rekommenderat). Utan Docker-bildens startskript varnar ingenting om `CLIENT_IP_HEADER` saknas.
 
 ### Miljövariabler
 
@@ -188,7 +190,7 @@ DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se node .next/standalone/serv
 | `COOKIE_SECURE` | Behövs normalt inte: inloggningskakan blir automatiskt `Secure` när sajten nås via HTTPS (även bakom en proxy som skickar `X-Forwarded-Proto`). Sätt `true` för att alltid kräva HTTPS. |
 | `ALLOWED_ORIGINS` | Extra värdar som får skicka formulär, kommaseparerade (t.ex. `statlin.se,*.statlin.se`). Behövs bara om en proxy inte skickar vidare rätt `Host`/`X-Forwarded-Host`. I GitHub Codespaces sätts `*.app.github.dev` automatiskt. |
 | `EXAM_STATS_URL` | Behövs normalt inte. Källan för tentastatistiken, standard `https://liutentor.lukasabbe.com` (samma öppna API som liustats.se). En adress som inte svarar stänger av hämtningen – då visas bara det som redan är sparat, som i e2e-testet. |
-| `CLIENT_IP_HEADER` | Behövs normalt inte. Spärren mot upprepade inloggningsförsök och fördröjningen efter fel lösenord räknar per IP och använder det sista värdet i `X-Forwarded-For`, det som proxyn framför sajten lade till (besökaren kan själv fylla i de tidigare). Sätter värden en egen rubrik med besökarens IP kan den anges här, till exempel `fly-client-ip` på Fly.io (redan satt i `fly.toml`). |
+| `CLIENT_IP_HEADER` | Krävs i produktion. Rubriken med besökarens IP som värden eller proxyn framför sajten skriver och som besökaren inte kan påverka: `fly-client-ip` på Fly.io (redan satt i `fly.toml`), `x-real-ip` bakom nginx eller Caddy (se [Docker](#docker-rekommenderat)). Spärren mot upprepade inloggningsförsök och fördröjningen efter fel lösenord räknar per IP. Utan variabeln räknas alla besökare i produktionen som en – 20 försök på en kvart, från vem som helst, spärrar då inloggningen för alla resten av kvarten – och Docker-bildens startskript varnar i loggen. Ange inte `x-forwarded-for`: där kan besökaren fylla i det första värdet själv. Lokalt (`npm run dev`) används det sista värdet i `X-Forwarded-For` när variabeln saknas. |
 
 ### Säkerhetskopiering
 
@@ -379,6 +381,6 @@ Produktionen kör på Fly.io. Det här behövs om sajten flyttas till en annan v
 1. Skapa ett projekt från GitHub-repot (gren `Main-Real`). Dockerfilen används automatiskt, och varje merge till `Main-Real` driftsätts.
 2. Lägg till en volym med monteringssökvägen `/data`. Utan den försvinner databasen och alla uppladdningar vid nästa driftsättning. Railway monterar volymen som root, vilket startskriptet `scripts/docker-entrypoint.mjs` rättar, och tillåter inte `VOLUME` i Dockerfile – lägg därför inte till någon.
 3. Sätt variablerna `ADMIN_EMAIL`, `ADMIN_PASSWORD` och `SITE_URL`. Railway skickar tjänstens variabler som byggargument när Dockerfile deklarerar dem, och `SITE_URL` behövs vid bygget (`ARG SITE_URL`).
-4. Spärren mot upprepade inloggningsförsök kan använda Railways rubrik med besökarens IP: sätt `CLIENT_IP_HEADER=x-real-ip` (på Fly.io är det `fly-client-ip`, som redan står i `fly.toml`).
+4. Spärren mot upprepade inloggningsförsök behöver Railways rubrik med besökarens IP: sätt `CLIENT_IP_HEADER=x-real-ip` (på Fly.io är det `fly-client-ip`, som redan står i `fly.toml`).
 5. Slå på schemalagda säkerhetskopior av volymen och, om värden har det, hälsokontroll på `/api/health`.
 6. Kontrollera driftsättningen med `node tests/smoke.mjs https://din-adress`.
