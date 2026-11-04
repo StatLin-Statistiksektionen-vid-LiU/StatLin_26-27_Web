@@ -157,7 +157,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
           <ol className="space-y-1">
             {rows.map((o, i) => (
               <li
-                key={o.date}
+                key={`${o.date}-${i}`}
                 tabIndex={0}
                 onPointerEnter={(e) => setTip({ index: i, top: e.currentTarget.offsetTop + e.currentTarget.offsetHeight })}
                 onFocus={(e) => setTip({ index: i, top: e.currentTarget.offsetTop + e.currentTarget.offsetHeight })}
@@ -208,8 +208,8 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/[0.07]">
-              {rows.map((o) => (
-                <tr key={o.date}>
+              {rows.map((o, i) => (
+                <tr key={`${o.date}-${i}`}>
                   <th scope="row" className="tabular whitespace-nowrap px-4 py-2.5 text-left font-normal">
                     {formatDateShort(o.date)}
                   </th>

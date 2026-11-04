@@ -37,3 +37,6 @@ export const PROGRAMS: { value: Program; label: string; name: string }[] = [
 export const normalizeSearch = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export const isExternalUrl = (url: string) => /^https?:\/\//i.test(url);
+
+/** En adress på sajten som slutar på en filändelse, till exempel /kalender.ics eller /media/stadgar.pdf. */
+export const isFileUrl = (url: string) => url.startsWith("/") && /\.[a-z0-9]{2,5}$/i.test(url.split(/[?#]/)[0]);

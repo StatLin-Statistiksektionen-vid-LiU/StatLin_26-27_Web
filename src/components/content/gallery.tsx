@@ -43,12 +43,14 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
     };
   }, [index, close, step]);
 
-  // Förinläs grannbilder för snabb bläddring.
+  // Förinläs grannbilder för snabb bläddring, med samma srcset och sizes som visaren så att webbläsaren väljer samma storlek.
   useEffect(() => {
     if (index === null) return;
     for (const d of [1, -1]) {
       const it = items[(index + d + items.length) % items.length];
       const img = new window.Image();
+      img.sizes = "100vw";
+      img.srcset = it.image.srcSet;
       img.src = it.image.src;
     }
   }, [index, items]);

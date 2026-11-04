@@ -9,7 +9,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { listCommittees } from "@/lib/data/content";
 import { listEventsBetween, listPastEvents, listUpcomingEvents } from "@/lib/data/events";
-import { calendarMonth, calendarMonthInRange, monthGrid, monthLabel, todayLocal } from "@/lib/dates";
+import { calendarMonth, calendarMonthInRange, eventInMonth, eventLastDay, monthGrid, monthLabel, todayLocal } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -216,14 +216,9 @@ async function MonthView({
   const today = todayLocal();
   const prev = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
   const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
-  // Kvällsevenemang som slutar efter midnatt visas bara på startdagen; flerdagars heldagsevenemang på alla dagar.
-  const byDay = (date: string) =>
-    events.filter((e) => {
-      const start = e.starts_at.slice(0, 10);
-      if (start === date) return true;
-      return !!e.all_day && !!e.ends_at && start < date && e.ends_at.slice(0, 10) >= date;
-    });
-  const monthEvents = events.filter((e) => e.starts_at.slice(0, 7) === month);
+  // Rutnätet och mobillistan går på samma regel: flerdagars evenemang syns på alla sina dagar, kvällar som slutar efter midnatt bara på startdagen.
+  const byDay = (date: string) => events.filter((e) => e.starts_at.slice(0, 10) <= date && date <= eventLastDay(e.starts_at, e.ends_at, !!e.all_day));
+  const monthEvents = events.filter((e) => eventInMonth(e.starts_at, e.ends_at, !!e.all_day, month));
 
   return (
     <div className="mt-12">

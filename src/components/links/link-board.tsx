@@ -11,6 +11,7 @@ import { EditModeLink } from "@/components/edit-mode/editable";
 import { CourseSearch } from "@/components/exam/course-search";
 import { LinkIcon } from "./link-icon";
 import { pinStore, usePins } from "./pins";
+import { SiteLink } from "./site-link";
 
 /**
  * Länksidan: sök, fästa favoriter, genvägar, sökning i tentastatistiken och alla länkar per grupp.
@@ -226,9 +227,9 @@ function LinkTile({ link }: { link: LinkItem }) {
       {body}
     </a>
   ) : (
-    <Link href={href} className={className}>
+    <SiteLink href={href} className={className}>
       {body}
-    </Link>
+    </SiteLink>
   );
 }
 
@@ -255,9 +256,9 @@ function LinkRow({ link, pinned }: { link: LinkItem; pinned: boolean }) {
           {body}
         </a>
       ) : (
-        <Link href={href} className={linkClass}>
+        <SiteLink href={href} className={linkClass}>
           {body}
-        </Link>
+        </SiteLink>
       )}
       <PinButton id={`l${link.id}`} label={link.label} pinned={pinned} />
     </li>

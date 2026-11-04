@@ -5,6 +5,7 @@ import { isExternalUrl } from "@/lib/links";
 import type { LinkItem } from "@/lib/types";
 import { safeExternalUrl } from "@/lib/utils";
 import { LinkIcon } from "./link-icon";
+import { SiteLink } from "./site-link";
 
 /** Genvägarna är länkarna som är markerade som genväg under Admin → Länkar – samma som överst på länksidan. */
 
@@ -14,9 +15,9 @@ function AnyLink({ href, className, children }: { href: string; className: strin
       {children}
     </a>
   ) : (
-    <Link href={href} className={className}>
+    <SiteLink href={href} className={className}>
       {children}
-    </Link>
+    </SiteLink>
   );
 }
 

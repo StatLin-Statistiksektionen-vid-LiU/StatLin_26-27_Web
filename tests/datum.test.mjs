@@ -1,9 +1,10 @@
-// Datumhanteringen i src/lib/dates.ts och formulärdelarna i src/lib/admin/form.ts. Kräver ingen server eller databas.
+// Datumhanteringen i src/lib/dates.ts, formulärdelarna i src/lib/admin/form.ts och länkhjälparen i src/lib/links.ts. Kräver ingen server eller databas.
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { calendarMonth, calendarMonthInRange, eventEnd, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
+import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
+import { isFileUrl } from "../src/lib/links.ts";
 
 // V8 rullar de två första utan fel (2 mars, 1 mars). De två sista ger Invalid Date, och då kastar en rundtur utan vakt (R-21).
 const FINNS_INTE = ["2025-02-30T12:00", "2025-02-28T24:00", "2025-13-01T12:00", "2025-02-28T12:60"];
@@ -175,4 +176,46 @@ test("SB-23: bläddringen stannar vid gränsen", () => {
     assert.equal(calendarMonthInRange("2024-11"), true);
     assert.equal(calendarMonthInRange("2024-10"), false);
   });
+});
+
+test("SB-25: ett evenemang över flera dagar syns till och med sista dagen, med eller utan klockslag", () => {
+  assert.equal(eventLastDay("2026-08-28T00:00", "2026-09-03T00:00", true), "2026-09-03");
+  assert.equal(eventLastDay("2026-08-28T10:00", "2026-09-03T16:00", false), "2026-09-03");
+  assert.equal(eventLastDay("2026-08-28T18:00", "2026-08-29T07:00", false), "2026-08-29", "slutar på morgonen dagen efter");
+});
+
+test("SB-25: en kväll som slutar efter midnatt hör till startdagen", () => {
+  assert.equal(eventLastDay("2026-10-31T20:00", "2026-11-01T01:00", false), "2026-10-31");
+  assert.equal(eventLastDay("2026-12-31T20:00", "2027-01-01T02:00", false), "2026-12-31", "över ett årsskifte");
+  assert.equal(eventLastDay("2026-08-28T00:00", "2026-08-29T00:00", true), "2026-08-29", "en heldag räknas hela slutdagen");
+});
+
+test("SB-25: utan sluttid är startdagen den sista", () => {
+  assert.equal(eventLastDay("2026-08-28T18:00", null, false), "2026-08-28");
+  assert.equal(eventLastDay("2026-08-28T00:00", null, true), "2026-08-28");
+  assert.equal(eventLastDay("2026-08-28T18:00", "2026-08-27T21:00", false), "2026-08-28", "en gammal rad med sluttiden före starten");
+});
+
+test("SB-25: nollningen 28 aug–3 sep listas under båda månaderna, men inte under månaderna runt om", () => {
+  const nollning = (month) => eventInMonth("2026-08-28T10:00", "2026-09-03T16:00", false, month);
+  assert.equal(nollning("2026-07"), false);
+  assert.equal(nollning("2026-08"), true);
+  assert.equal(nollning("2026-09"), true);
+  assert.equal(nollning("2026-10"), false);
+});
+
+test("SB-25: en pub natten mot den 1:a listas bara under månaden den börjar i", () => {
+  const pub = (month) => eventInMonth("2026-10-31T20:00", "2026-11-01T01:00", false, month);
+  assert.equal(pub("2026-10"), true);
+  assert.equal(pub("2026-11"), false);
+});
+
+test("SB-25: adresser på sajten som slutar på en filändelse är filer", () => {
+  for (const url of ["/kalender.ics", "/evenemang/star/kalender.ics", "/media/stadgar.pdf", "/kalender.ics?a=1", "/kalender.ics#x"]) assert.equal(isFileUrl(url), true, url);
+});
+
+test("SB-25: sidor och externa adresser är inte filer", () => {
+  for (const url of ["/", "/evenemang", "/studenter/lankar", "/tentastatistik/732G33", "/v1.2/om", "/lankar?fil=a.pdf", "https://liu.se/a.pdf", "mailto:info@statlin.se"]) {
+    assert.equal(isFileUrl(url), false, url);
+  }
 });

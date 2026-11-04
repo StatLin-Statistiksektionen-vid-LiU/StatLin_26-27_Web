@@ -65,7 +65,7 @@ async function Albums() {
                       </div>
                     );
                   })}
-                <span className="chip absolute bottom-4 left-4 z-10 bg-white/95 text-ink">{event.image_count} bilder</span>
+                <span className="chip absolute bottom-4 left-4 z-10 bg-white/95 text-ink">{event.image_count} {event.image_count === 1 ? "bild" : "bilder"}</span>
               </div>
               <p className="kicker mt-6 text-stone">
                 {formatDate(event.starts_at, true)} · {event.committee?.short_name ?? "StatLin"}

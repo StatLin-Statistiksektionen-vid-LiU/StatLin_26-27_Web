@@ -109,6 +109,24 @@ export function eventEnd(start: string, end: string | null, allDay: boolean): st
   return end ?? `${start.slice(0, 10)}T23:59`;
 }
 
+/**
+ * Sista dagen ett evenemang syns i kalendern. En kväll som slutar natten efter, före kl. 06, hör till startdagen: annars skulle en pub
+ * natten mot den 1:a också stå under nästa månad. Heldag räknas t.o.m. slutdagen. En sluttid före starten räknas inte.
+ */
+export function eventLastDay(start: string, end: string | null, allDay: boolean): string {
+  const first = start.slice(0, 10);
+  if (!end) return first;
+  const last = end.slice(0, 10);
+  if (last <= first) return first;
+  if (allDay) return last;
+  return last === addDaysLocal(first, 1).slice(0, 10) && end.slice(11, 16) < "06:00" ? first : last;
+}
+
+/** Syns evenemanget i månaden, "YYYY-MM"? Ett evenemang över en månadsgräns hör till båda månaderna. */
+export function eventInMonth(start: string, end: string | null, allDay: boolean, month: string): boolean {
+  return start.slice(0, 7) <= month && month <= eventLastDay(start, end, allDay).slice(0, 7);
+}
+
 /** startDate och endDate för schema.org: bara datum vid heldag, annars klockslag med tidszon. */
 export function eventSchemaDates(start: string, end: string | null, allDay: boolean) {
   const format = (local: string) => (allDay ? local.slice(0, 10) : `${local}:00${stockholmOffset(local)}`);

@@ -1,5 +1,6 @@
 // Evenemang, kalendern och datumen, så som en redaktör och en besökare möter dem.
 import assert from "node:assert";
+import sharp from "sharp";
 import { newVisitor, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 
 const ADMIN = "admin@statlin.se";
@@ -13,7 +14,7 @@ const dayOffset = (days) => new Date(Date.parse(`${today}T00:00:00Z`) + days * 8
 const longDate = (date, withYear = false) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", day: "numeric", month: "long", ...(withYear ? { year: "numeric" } : {}) }).format(new Date(`${date}T00:00:00Z`));
 
-export default async function evenemangSteg({ BASE, browser, page, step, switchAccount, openDeleteConfirm }) {
+export default async function evenemangSteg({ BASE, browser, page, step, switchAccount }) {
   // Sajten läses av en besökare som inte är inloggad.
   const visitor = await newVisitor(browser);
   const site = visitor.page;
@@ -60,7 +61,12 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
   };
   const removeEvent = async (url) => {
     await openForm(url);
-    const dialog = await openDeleteConfirm(page);
+    // Knapparna i galleriet heter också Ta bort, men genom sin title. Evenemangets egen knapp har namnet som text.
+    const button = page.getByRole("button", { name: "Ta bort" }).and(page.locator("button:not([title])"));
+    await waitForHydration(page, button);
+    await button.click();
+    const dialog = page.getByRole("alertdialog");
+    await dialog.waitFor();
     await Promise.all([page.waitForURL(/\/admin\/evenemang\?/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
   };
 
@@ -255,6 +261,95 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await heading(year - 2).waitFor();
     assert.equal(await previous.count(), 0, "förra månaden ligger utanför gränsen");
     await next.waitFor();
+  });
+
+  await step("SB-25: ett evenemang över en månadsgräns syns i båda månaderna, men en kväll som slutar efter midnatt bara i den första", async () => {
+    await switchAccount(page, ADMIN);
+    const [year, month] = today.split("-").map(Number);
+    // Första dagen i månaden efter nästa: båda månaderna ligger framåt och inom kalenderns gräns.
+    const first = new Date(Date.UTC(year, month + 1, 1));
+    const day = (offset) => new Date(first.getTime() + offset * 86_400_000).toISOString().slice(0, 10);
+    const [before, after] = [day(-1).slice(0, 7), day(0).slice(0, 7)];
+    const trip = await createEvent({ title: `E2E-resa ${uniqueId()}`, startsAt: `${day(-3)}T10:00`, endsAt: `${day(2)}T16:00` });
+    const pub = await createEvent({ title: `E2E-pub ${uniqueId()}`, startsAt: `${day(-1)}T20:00`, endsAt: `${day(0)}T01:00` });
+
+    // Under md visas månaden som en lista i stället för ett rutnät.
+    const phone = await newVisitor(browser);
+    await phone.page.setViewportSize({ width: 390, height: 844 });
+    const listed = async (manad, { slug }) => {
+      await phone.page.goto(`${BASE}/evenemang?vy=kalender&manad=${manad}`);
+      // Innehållet strömmas och visas strax efter load, så vänta på det innan något räknas.
+      await phone.page.getByRole("tablist", { name: "Vy" }).waitFor();
+      return phone.page.locator(`main a[href="/evenemang/${slug}"]:visible`).count();
+    };
+    assert.equal(await listed(before, trip), 1, "resan ska listas under månaden den börjar i");
+    assert.equal(await listed(after, trip), 1, "resan ska listas under månaden den slutar i");
+    assert.equal(await listed(before, pub), 1, "puben ska listas under månaden den börjar i");
+    assert.equal(await listed(after, pub), 0, "puben ska inte listas under månaden efter");
+    await phone.context.close();
+
+    // Rutnätet ska säga samma sak: resan ligger på månadens tre första dagar.
+    await site.goto(`${BASE}/evenemang?vy=kalender&manad=${after}`);
+    await site.getByRole("tablist", { name: "Vy" }).waitFor();
+    const cells = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).count();
+    assert.ok(cells >= 3, `resan ska synas på sina dagar i rutnätet, syns på ${cells}`);
+
+    await removeEvent(pub.url);
+    await removeEvent(trip.url);
+  });
+
+  await step("SB-25: ett album med en bild visar 1 bild, och bildvisaren förinläser samma bild som den sedan visar", async () => {
+    const image = (background) => sharp({ create: { width: 2400, height: 1600, channels: 3, background } }).jpeg({ quality: 80 }).toBuffer();
+    const upload = async (buffers, total) => {
+      await page.locator('input[type="file"][multiple]').setInputFiles(buffers.map((buffer, i) => ({ name: `e2e-${total}-${i}.jpg`, mimeType: "image/jpeg", buffer })));
+      await page.waitForFunction((n) => document.querySelectorAll('input[aria-label="Bildtext"]').length === n, total, { timeout: 30000 });
+    };
+    const album = await createEvent({ title: `E2E-album ${uniqueId()}`, startsAt: `${dayOffset(-30)}T18:00` });
+    await upload([await image("#2e3192")], 1);
+
+    await site.goto(`${BASE}/galleri`);
+    await site.locator(`main a[href^="/evenemang/${album.slug}"]`).getByText("1 bild", { exact: true }).waitFor();
+
+    await upload([await image("#fbb03b"), await image("#ff0707")], 3);
+    await site.goto(`${BASE}/galleri`);
+    await site.locator(`main a[href^="/evenemang/${album.slug}"]`).getByText("3 bilder", { exact: true }).waitFor();
+
+    await site.goto(`${BASE}/evenemang/${album.slug}`);
+    const thumbnail = site.locator('#galleri button[aria-label^="Visa bild 1"]');
+    await waitForHydration(site, thumbnail);
+    await thumbnail.click();
+    const dialog = site.getByRole("dialog");
+    await dialog.waitFor();
+    await site.waitForLoadState("networkidle");
+    const fetched = await site.evaluate(() => performance.getEntriesByType("resource").map((r) => new URL(r.name).pathname));
+    const shownBefore = await dialog.locator("img").evaluate((img) => img.currentSrc);
+    await site.keyboard.press("ArrowRight");
+    await site.waitForFunction((before) => {
+      const img = document.querySelector('[role="dialog"] img');
+      return img && img.complete && img.currentSrc && img.currentSrc !== before;
+    }, shownBefore);
+    const shown = new URL(await dialog.locator("img").evaluate((img) => img.currentSrc)).pathname;
+    assert.ok(fetched.includes(shown), `bilden som visas, ${shown}, ska redan vara hämtad`);
+    await site.keyboard.press("Escape");
+
+    await removeEvent(album.url);
+  });
+
+  await step("SB-25: Kalenderflöde i länklistan laddas direkt, utan att Next först försöker hämta filen som en sida", async () => {
+    const pageRequests = [];
+    const onRequest = (request) => {
+      if (request.url().includes("/kalender.ics") && request.url().includes("_rsc=")) pageRequests.push(request.url());
+    };
+    site.on("request", onRequest);
+    await site.goto(`${BASE}/studenter/lankar`);
+    const link = site.locator('main a[href="/kalender.ics"]').first();
+    await waitForHydration(site, link);
+    assert.equal(await link.getAttribute("target"), null, "filen är inte en extern sida och ska inte öppnas i en ny flik");
+    const fetched = site.waitForRequest((request) => new URL(request.url()).pathname === "/kalender.ics" && !request.url().includes("_rsc="));
+    await link.click();
+    await fetched;
+    site.off("request", onRequest);
+    assert.equal(pageRequests.length, 0, `Next hämtade filen som en sida: ${pageRequests[0]}`);
   });
 
   await visitor.context.close();

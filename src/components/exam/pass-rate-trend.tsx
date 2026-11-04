@@ -106,7 +106,7 @@ export function PassRateTrend({ occasions }: { occasions: ExamOccasion[] }) {
         {occasion && <span className="absolute inset-y-0 w-px -translate-x-1/2 bg-ink/40" style={{ left: `${x(times[active!])}%` }} />}
         {sorted.map((o, i) => (
           <span
-            key={o.date}
+            key={`${o.date}-${i}`}
             className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white"
             style={{ left: `${x(times[i])}%`, top: `${y(o)}%`, background: i === active ? LINE : DOT }}
           />
