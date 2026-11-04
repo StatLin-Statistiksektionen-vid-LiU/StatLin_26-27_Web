@@ -74,8 +74,16 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
   const srcHeight = (rotated ? meta.width : meta.height) ?? 0;
   if (!srcWidth || !srcHeight) throw new MediaError("Bilden saknar giltiga mått.");
 
-  const widths = IMAGE_WIDTHS.filter((w) => w < srcWidth);
-  widths.push(Math.min(srcWidth, IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1]));
+  // Största storleken: högst 2000 px bred. Höjden följer med, och WebP klarar högst 16 383 px – en högre bild (t.ex. en
+  // helsidesskärmdump på 1440 × 20 000) nekas här, före avkodningen, i stället för att fela i sharp efter en stor allokering.
+  let largest = Math.min(srcWidth, IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1]);
+  const outH = Math.round((srcHeight * largest) / srcWidth);
+  if (outH > 16383) throw new MediaError("Bilden är för hög (högst 16 383 pixlar efter förminskning). Beskär den och försök igen.");
+  // Mellanbufferten har en egen gräns: 12 Mpx × 4 B = 48 MB råpixlar per uppladdning, tre parallella ≈ 150 MB. En hög bild
+  // godtas, men dess största storlek blir smalare än 2000 px.
+  if (largest * outH > 12e6) largest = Math.floor(12e6 / outH);
+  const widths = IMAGE_WIDTHS.filter((w) => w < largest);
+  widths.push(largest);
   const unique = [...new Set(widths)].sort((a, b) => a - b);
 
   const base = newBase();
@@ -88,7 +96,7 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
     // var för sig och körda parallellt höjer toppminnet (R-28).
     const { data, info } = await sharp(buffer, { animated: false, ...PIXEL_LIMIT })
       .rotate()
-      .resize({ width: unique[unique.length - 1], withoutEnlargement: true })
+      .resize({ width: largest, withoutEnlargement: true })
       .raw()
       .toBuffer({ resolveWithObject: true });
     const pixels = { raw: { width: info.width, height: info.height, channels: info.channels }, ...PIXEL_LIMIT };
