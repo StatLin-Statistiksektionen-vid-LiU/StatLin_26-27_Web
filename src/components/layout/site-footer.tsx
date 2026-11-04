@@ -5,6 +5,7 @@ import { NAV } from "@/lib/navigation";
 import type { SiteSettings } from "@/lib/types";
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Mail, Rss } from "@/components/icons";
 import { Editable } from "@/components/edit-mode/editable";
+import { AccentText } from "@/components/ui/accent-text";
 
 /** Normalfördelningens täthetsfunktion som dekor – med medelvärdet markerat i rött. */
 function BellCurve() {
@@ -46,7 +47,11 @@ function FooterContactView({ s }: { s: SiteSettings }) {
   ].filter((x) => x.href);
   return (
     <div className="space-y-5">
-      {s.tagline && <p className="max-w-md leading-relaxed text-white/60">{s.tagline}</p>}
+      {s.tagline && (
+        <p className="max-w-md leading-relaxed text-white/60">
+          <AccentText text={s.tagline} accentClassName="text-red" />
+        </p>
+      )}
       <a href={`mailto:${s.contact_email}`} className="group flex items-center gap-3 text-lg font-semibold text-white">
         <Mail size={18} className="text-red" />
         <span className="link-underline">{s.contact_email}</span>

@@ -303,4 +303,35 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     await site.context.close();
     await admin.context.close();
   });
+
+  await step("Sloganen i sidfoten visar *ord* i rött och utan stjärnor (SB-28)", async () => {
+    await switchAccount(page, ADMIN);
+    const admin = await newVisitor(browser);
+    await admin.context.addCookies(await page.context().cookies());
+    const setTagline = async (text) => {
+      await admin.page.goto(`${BASE}/admin/installningar`);
+      const field = admin.page.locator('input[name="tagline"]');
+      await waitForHydration(admin.page, field);
+      const before = await field.inputValue();
+      await field.fill(text);
+      await admin.page.locator('form:has(input[name="tagline"]) button[type="submit"]').click();
+      await admin.page.getByText("Inställningarna är sparade.").waitFor();
+      return before;
+    };
+    const original = await setTagline("Sektionen för dig som läser *Statistics* vid LiU.");
+    try {
+      assert.equal(await admin.page.getByText(/Visas i sidfoten.*stjärnor/).count(), 1, "Fältet ska berätta om stjärnorna");
+      const site = await newVisitor(browser);
+      await site.page.goto(`${BASE}/`);
+      const tagline = site.page.locator("footer p", { hasText: "Sektionen för dig" });
+      await tagline.waitFor();
+      assert.equal(await tagline.innerText(), "Sektionen för dig som läser Statistics vid LiU.");
+      const red = tagline.getByText("Statistics", { exact: true });
+      assert.equal(await red.evaluate((el) => getComputedStyle(el).color), "rgb(255, 7, 7)");
+      await site.context.close();
+    } finally {
+      await setTagline(original);
+    }
+    await admin.context.close();
+  });
 }

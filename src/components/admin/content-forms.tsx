@@ -242,7 +242,7 @@ export function StarSection({ s, events }: { s: SiteSettings; events: Pick<Event
 export function TaglineSection({ s }: { s: SiteSettings }) {
   return (
     <FormSection title="Beskrivning">
-      <Field label="Slogan" name="tagline" hint="Visas i sidfoten under kontaktuppgifterna.">
+      <Field label="Slogan" name="tagline" hint="Visas i sidfoten. Skriv *ord* med stjärnor för att göra dem röda.">
         <TextInput name="tagline" defaultValue={s.tagline} maxLength={200} />
       </Field>
     </FormSection>
