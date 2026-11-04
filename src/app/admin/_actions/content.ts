@@ -257,19 +257,23 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
 
   let mediaId: number | null = null;
   const file = fd.get("file");
-  if (file instanceof File && file.size > 0 && fd.get("remove_file") === "on") return FILE_AND_REMOVE;
-  if (file instanceof File && file.size > 0) {
-    const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
+  const remove = fd.get("remove_file") === "on";
+  const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
+  // Samma fil som redan finns laddas inte upp igen (SD-35) – den kan stå kvar i fältet om något ändrades under förra
+  // sparningen. Med "Ta bort filen" betyder den då "ta bort"; bara en ny fil och rutan säger emot varandra.
+  const upload = file instanceof File && file.size > 0 && !(current && isSameUpload(current, file)) ? file : null;
+  if (upload && remove) return FILE_AND_REMOVE;
+  if (upload) {
     try {
-      // Samma fil som redan finns laddas inte upp igen, och en ny version med samma filändelse behåller adressen (SD-35).
-      mediaId = current && isSameUpload(current, file) ? current.id : (current ? await replaceFile(current, file, user.id) : await storeFile(file, user.id)).id;
+      // En ny version med samma filändelse behåller adressen (SD-35).
+      mediaId = (current ? await replaceFile(current, upload, user.id) : await storeFile(upload, user.id)).id;
     } catch (err) {
       return { error: err instanceof MediaError ? err.message : "Filen kunde inte sparas.", fieldErrors: { file: "Kontrollera filen." } };
     }
   }
 
   if (id && old) {
-    const nextMedia = mediaId ?? (fd.get("remove_file") === "on" ? null : old.media_id);
+    const nextMedia = mediaId ?? (remove ? null : old.media_id);
     db.prepare(
       "UPDATE documents SET title=@title, category=@category, description=@description, url=@url, doc_date=@doc_date, published=@published, media_id=@media_id WHERE id=@id",
     ).run({ ...d, media_id: nextMedia, id });

@@ -36,20 +36,22 @@ export async function saveResource(_prev: FormState, fd: FormData): Promise<Form
   if (id && !old) return { error: "Hjälpmedlet finns inte längre." };
 
   const file = fd.get("file");
-  const upload = file instanceof File && file.size > 0 ? file : null;
-  if (upload && fd.get("remove_file") === "on") return FILE_AND_REMOVE;
-  const kept = old && fd.get("remove_file") !== "on" ? old.media_id : null;
+  const remove = fd.get("remove_file") === "on";
+  const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
+  // Samma fil som redan finns laddas inte upp igen (SD-35) – den kan stå kvar i fältet om något ändrades under förra
+  // sparningen. Med "Ta bort filen" betyder den då "ta bort"; bara en ny fil och rutan säger emot varandra.
+  const upload = file instanceof File && file.size > 0 && !(current && isSameUpload(current, file)) ? file : null;
+  if (upload && remove) return FILE_AND_REMOVE;
+  const kept = old && !remove ? old.media_id : null;
   // Varje rad på sidan ska leda någonstans, även efter en ändring.
   if (!upload && !kept && !d.url) return { error: "Ladda upp en fil eller ange en länk.", fieldErrors: { file: "Välj en fil eller ange en länk." } };
 
   let mediaId = kept;
   if (upload) {
-    const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
     try {
-      // Samma fil som redan finns laddas inte upp igen, och en ny version med samma filändelse behåller adressen (SD-35).
-      // En fusklapp är ofta ett foto eller en skanning; en bild får alltid en ny rad.
-      if (current && isSameUpload(current, upload)) mediaId = current.id;
-      else if (isImageUpload(upload)) mediaId = (await storeImage(upload, user.id, d.title)).id;
+      // En ny version med samma filändelse behåller adressen (SD-35). En fusklapp är ofta ett foto eller en skanning; en bild
+      // får alltid en ny rad.
+      if (isImageUpload(upload)) mediaId = (await storeImage(upload, user.id, d.title)).id;
       else mediaId = (current ? await replaceFile(current, upload, user.id) : await storeFile(upload, user.id)).id;
     } catch (err) {
       return { error: err instanceof MediaError ? err.message : "Filen kunde inte sparas.", fieldErrors: { file: "Kontrollera filen." } };
