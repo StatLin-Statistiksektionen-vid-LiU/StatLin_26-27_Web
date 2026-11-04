@@ -111,12 +111,22 @@ export async function moveBoardMember(id: number, direction: -1 | 1) {
 
 /* ---------- Utskott ---------- */
 
+/** Sajtens egna loggor (public/brand/…), som utskotten har från början. Inga "..": adressen ska stanna under /brand/. */
+const BRAND_LOGO = /^\/brand\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.(?:svg|png|webp)$/;
+
+/** Mediaraden som en logga pekar på. Loggan sparas som adress (ST-01), så raden hittas baklänges ur /media/-adressen. */
+function logoMediaId(url: string | null): number | undefined {
+  if (!url?.startsWith("/media/")) return undefined;
+  return (getDb().prepare("SELECT id FROM media WHERE ? LIKE '/media/' || path_base || '-%'").get(url) as { id: number } | undefined)?.id;
+}
+
 const committeeSchema = z.object({
   name: zRequired(120, "Namnet"),
   short_name: zRequired(30, "Förkortningen"),
   tagline: zText(200, "Slogan"),
   description_md: zText(20000, "Beskrivningen"),
   logo_media_id: zOptionalId,
+  // Finns inte i formuläret (SD-10). Skickas den ändå godtas bara en av sajtens egna loggor, eller adressen som redan står.
   logo_url: zText(300),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Ange en färg som #RRGGBB.").default("#ff0707"),
   email: zOptionalEmail,
@@ -135,13 +145,25 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
   if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
   const db = getDb();
-  let logoUrl = d.logo_url || null;
+  const current = db.prepare("SELECT logo_url, visible, sort_order FROM committees WHERE id = ?").get(id) as
+    | { logo_url: string | null; visible: number; sort_order: number }
+    | undefined;
+  if (!current) return { error: "Utskottet finns inte längre." };
+  // Loggan (SD-10) sätts bara på servern: ur en uppladdad bild som kontot får använda (canUseImage – för ett utskottskonto
+  // bara egna uppladdningar), eller till en av sajtens loggor under /brand/. En extern adress eller någon annans
+  // /media/-bild nekas – annars blev den utskottets logga, och raderades när loggan byttes nästa gång.
+  if (d.logo_url && d.logo_url !== current.logo_url && !BRAND_LOGO.test(d.logo_url)) {
+    return { error: "Loggan kan bara bytas genom att ladda upp en bild." };
+  }
+  let logoUrl = d.logo_url || current.logo_url;
   if (d.logo_media_id) {
-    const m = db.prepare("SELECT * FROM media WHERE id = ?").get(d.logo_media_id) as Media | undefined;
-    logoUrl = toImageRef(m)?.src ?? logoUrl;
+    const m = canUseImage(user, d.logo_media_id) ? (db.prepare("SELECT * FROM media WHERE id = ?").get(d.logo_media_id) as Media | undefined) : undefined;
+    const src = toImageRef(m)?.src;
+    if (!src) return { error: "Du kan bara använda en bild som du själv har laddat upp som logga." };
+    logoUrl = src;
   }
   // Utskottskonton får inte dölja sitt utskott eller ändra sorteringen.
-  const extra = isEditor(user) ? { visible: d.visible, sort_order: d.sort_order } : (db.prepare("SELECT visible, sort_order FROM committees WHERE id = ?").get(id) as { visible: number; sort_order: number });
+  const extra = isEditor(user) ? { visible: d.visible, sort_order: d.sort_order } : { visible: current.visible, sort_order: current.sort_order };
   // Bara om utskottet inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
   const updatedAt = nowIso();
   const res = db.prepare(
@@ -150,6 +172,8 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
      WHERE id=@id AND updated_at=@version`,
   ).run({ ...d, ...extra, logo_url: logoUrl, updated_at: updatedAt, id, version: formVersion(fd) });
   if (res.changes === 0) return STALE;
+  // Den tidigare loggan raderas bara om inget annat använder den (deleteMediaIfUnused).
+  if (logoUrl !== current.logo_url) await deleteMediaIfUnused(logoMediaId(current.logo_url));
   audit(user.id, "update", "committee", id, d.short_name);
   await renewSessionIfDue();
   revalidateSite();
@@ -170,11 +194,9 @@ export async function setCommitteeLogo(committeeId: number, mediaId: number | nu
   const logoUrl = toImageRef(media)?.src ?? null;
   if (logoUrl === committee.logo_url) return;
   // Loggan sparas som adress. En uppladdad logga som ersätts tas bort om inget annat använder den.
-  const old = committee.logo_url?.startsWith("/media/")
-    ? (db.prepare("SELECT id FROM media WHERE ? LIKE '/media/' || path_base || '-%'").get(committee.logo_url) as { id: number } | undefined)
-    : undefined;
+  const old = logoMediaId(committee.logo_url);
   db.prepare("UPDATE committees SET logo_url = ?, updated_at = ? WHERE id = ?").run(logoUrl, nowIso(), committeeId);
-  await deleteMediaIfUnused(old?.id);
+  await deleteMediaIfUnused(old);
   audit(user.id, "logo", "committee", committeeId, committee.short_name);
   revalidateSite();
 }

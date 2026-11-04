@@ -33,7 +33,7 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
   return (
     <ActionForm action={saveCommittee} onSuccess={onSaved} version={c.updated_at}>
       <input type="hidden" name="id" value={c.id} />
-      <input type="hidden" name="logo_url" value={c.logo_url ?? ""} />
+      {/* Ingen logo_url här: loggan byts genom att ladda upp en bild (SD-10). */}
       <div className="grid gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Presentation">
