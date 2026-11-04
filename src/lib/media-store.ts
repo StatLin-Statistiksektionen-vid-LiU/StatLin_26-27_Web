@@ -297,15 +297,15 @@ export async function pruneOrphanMedia({ olderThanDays = 7 }: { olderThanDays?: 
   }
   const known = new Set((db.prepare("SELECT path_base FROM media").all() as { path_base: string }[]).map((r) => r.path_base));
   let files = 0;
-  const entries = await fs.readdir(UPLOADS_DIR, { recursive: true, withFileTypes: true }).catch(() => []);
-  for (const entry of entries) {
-    if (!entry.isFile()) continue;
-    const abs = path.join(entry.parentPath, entry.name);
-    const base = UPLOAD_NAME.exec(path.relative(UPLOADS_DIR, abs).split(path.sep).join("/"))?.[1];
-    // Bara filer med uppladdningarnas namn – något annat i katalogen har sajten inte lagt dit.
+  // Relativa sökvägar (readdir med recursive, Node 20.1+); Dirent.parentPath finns först i Node 20.12.
+  const entries = await fs.readdir(UPLOADS_DIR, { recursive: true }).catch(() => [] as string[]);
+  for (const rel of entries) {
+    // Bara filer med uppladdningarnas namn – något annat i katalogen har sajten inte lagt dit. Windows ger \ i sökvägen.
+    const base = UPLOAD_NAME.exec(rel.split(path.sep).join("/"))?.[1];
     if (!base || known.has(base)) continue;
+    const abs = path.join(UPLOADS_DIR, rel);
     const stat = await fs.stat(abs).catch(() => null);
-    if (!stat || stat.mtimeMs >= cutoff) continue;
+    if (!stat?.isFile() || stat.mtimeMs >= cutoff) continue;
     await fs.rm(abs, { force: true });
     files++;
   }
