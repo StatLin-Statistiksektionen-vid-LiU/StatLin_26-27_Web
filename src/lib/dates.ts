@@ -30,6 +30,17 @@ function asUtc(local: string): Date {
   return new Date(`${d}T${t.slice(0, 5)}:00Z`);
 }
 
+/**
+ * Finns tiden i kalendern? V8 rullar 02-30 och T24:00 till en annan dag utan fel, så tiden måste formateras tillbaka till
+ * samma sträng. 13-01 och 12:60 blir Invalid Date, och då kastar formateringen – vakten står därför före den.
+ */
+export function isValidLocalDateTime(local: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local)) return false;
+  const d = asUtc(local);
+  if (!Number.isFinite(d.getTime())) return false;
+  return d.toISOString().slice(0, 16) === local;
+}
+
 const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", ...opts });
 
 const weekdayLong = fmt({ weekday: "long" });

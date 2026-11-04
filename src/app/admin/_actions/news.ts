@@ -30,7 +30,7 @@ const schema = z.object({
   cover_media_id: zOptionalId,
   published: zCheckbox,
   pinned: zCheckbox,
-  published_at: zOptionalLocalDateTime,
+  published_at: zOptionalLocalDateTime("Publiceringsdatumet"),
 });
 
 const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };

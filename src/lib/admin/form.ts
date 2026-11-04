@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidLocalDateTime } from "@/lib/dates";
 
 export type FormState = {
   ok?: boolean;
@@ -72,11 +73,14 @@ export const zOptionalId = z
   .optional()
   .transform((v) => (v && /^\d+$/.test(v) ? Number(v) : null));
 export const zLocalDateTime = (label: string) =>
-  z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, `${label} måste vara ett giltigt datum och klockslag.`);
-export const zOptionalLocalDateTime = z
-  .string()
-  .optional()
-  .transform((v) => (v && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) ? v : null));
+  z.string().refine(isValidLocalDateTime, `${label} måste vara ett giltigt datum och klockslag.`);
+/** Tomt fält blir null. Ett ifyllt fält som inte är en giltig tid ger fältfel – det får inte tyst bli tomt. */
+export const zOptionalLocalDateTime = (label: string) =>
+  z
+    .string()
+    .optional()
+    .refine((v) => !v || isValidLocalDateTime(v), `${label} måste vara ett giltigt datum och klockslag.`)
+    .transform((v) => v || null);
 export const zUrl = z
   .string()
   .trim()
