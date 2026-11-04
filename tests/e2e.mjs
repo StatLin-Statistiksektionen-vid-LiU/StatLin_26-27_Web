@@ -1,5 +1,5 @@
-// End-to-end-test av loggan, inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen och grafiskt ansvar
-// mot en körande server som seedats med demodata och kända lösenord:
+// End-to-end-test av loggan, inloggning, behörigheter, evenemang, bildgalleri, länksidan, tentastatistiken, hjälpmedlen, grafiskt ansvar,
+// och i tests/e2e-steg/ nyheter och kontoskydden, mot en körande server som seedats med demodata och kända lösenord:
 //
 //   ADMIN_PASSWORD=lokal-admin-2026 DEMO_PASSWORD=lokal-demo-2026 npm run seed -- --demo
 //   EXAM_STATS_URL=http://127.0.0.1:9 npm run dev
@@ -9,6 +9,7 @@
 //
 // EXAM_STATS_URL pekar tentastatistiken på en adress som inte svarar, så att testet bara använder
 // demostatistiken i databasen och aldrig frågar den riktiga källan.
+// Mot `npm start` krävs också CLIENT_IP_HEADER=x-forwarded-for, eftersom stegen i tests/e2e-steg/ loggar in från egna IP-adresser.
 // Playwright är en devDependency. Chromium laddas ner en gång per dator: npx playwright install chromium
 //
 //   npm run test:e2e   (eller node tests/e2e.mjs http://localhost:3000)
@@ -1416,6 +1417,14 @@ async function openDeleteConfirm(page) {
       await page.goto(`${BASE}/admin/evenemang/${scbEventId}`);
       await page.getByText("Ej granskad", { exact: true }).first().waitFor();
     });
+
+    // Nya steg läggs i en egen fil i tests/e2e-steg/, en fil per område, så att två områden inte skriver på samma rader.
+    // Filerna körs i bokstavsordning. Varje fil exporterar en funktion som får samma verktyg som stegen här.
+    const stepDir = new URL("./e2e-steg/", import.meta.url);
+    for (const file of fs.readdirSync(stepDir).filter((f) => f.endsWith(".mjs")).sort()) {
+      const { default: addSteps } = await import(new URL(file, stepDir));
+      await addSteps({ BASE, browser, page, step, switchAccount, openDeleteConfirm });
+    }
   } catch (e) {
     aborted = true;
     abortReason = String(e?.message ?? e).split("\n")[0];

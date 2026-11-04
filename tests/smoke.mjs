@@ -1,11 +1,12 @@
-// Snabbkontroll av en körande sajt: läser bara, ändrar ingenting och är därför säker att köra
-// mot produktion – efter varje driftsättning, uppgradering eller byte av värd. Kräver bara Node.
+// Snabbkontroll av en körande sajt: ändrar ingenting och är därför säker att köra mot produktion – efter varje
+// driftsättning, uppgradering eller byte av värd. Kräver bara Node. Det enda den skickar är tomma POST-anrop utan inloggning
+// till uppladdningen, och de nekas innan något händer.
 //
 //   node tests/smoke.mjs https://statlin.se
 //
 // Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
-// sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att fliken har en ikon,
-// och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
+// sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att uppladdningen nekar andra ursprung, att mediaadresser
+// inte leder ut ur uppladdningsmappen, att fliken har en ikon, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
 // SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
 // kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
@@ -166,6 +167,30 @@ await check("Adminpanelen kräver inloggning", async () => {
 await check("Okänd sida ger 404", async () => {
   const { res } = await get("/finns-inte-" + Date.now());
   expect(res.status === 404, `status ${res.status}`);
+});
+
+await check("Uppladdning utan rätt ursprung nekas", async () => {
+  const upload = async (headers) => (await get("/api/admin/upload", { method: "POST", headers })).res.status;
+  expect((await upload({})) === 403, "ett anrop utan Origin släpptes igenom");
+  expect((await upload({ origin: "https://example.com" })) === 403, "ett anrop från en annan sajt släpptes igenom");
+  expect((await upload({ origin: "null" })) === 403, "ett anrop från en sandlådad sida släpptes igenom");
+  // Från sajten själv kommer anropet förbi spärren och nekas först för att ingen är inloggad.
+  const own = await upload({ origin: new URL(BASE).origin });
+  expect(own === 401, `ett anrop från sajten själv gav status ${own}, inte 401`);
+});
+
+await check("Mediaadresser kan inte leda ut ur uppladdningsmappen", async () => {
+  const paths = [
+    "/media/..%2f..%2fetc%2fpasswd",
+    "/media/..%2fstatlin.db",
+    "/media/%2e%2e%2fstatlin.db",
+    "/media/..%5cstatlin.db",
+    "/media/2026/01/..%2f..%2f..%2fstatlin.db",
+  ];
+  for (const path of paths) {
+    const { res } = await get(path);
+    expect(res.status === 404, `${path} gav status ${res.status}`);
+  }
 });
 
 console.log(`Snabbkontroll av ${BASE}\n`);
