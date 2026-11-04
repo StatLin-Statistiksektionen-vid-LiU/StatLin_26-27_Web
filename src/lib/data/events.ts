@@ -45,6 +45,13 @@ export async function listUpcomingEvents(limit = 50, committeeId?: number): Prom
   return rows.map(map);
 }
 
+/** Antalet kommande evenemang, utan listans tak. Samma urval som listUpcomingEvents. */
+export async function countUpcomingEvents(): Promise<number> {
+  const db = await readDb();
+  const row = db.prepare(`SELECT COUNT(*) AS n FROM events e WHERE e.published = 1 AND ${EVENT_END} >= @now`).get({ now: nowLocal() }) as { n: number };
+  return row.n;
+}
+
 export async function listPastEvents(limit = 24, committeeId?: number): Promise<EventItem[]> {
   const db = await readDb();
   const now = nowLocal();

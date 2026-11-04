@@ -9,13 +9,14 @@ import { Editable } from "@/components/edit-mode/editable";
 import { AccentText } from "@/components/ui/accent-text";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/data/content";
-import { listUpcomingEvents } from "@/lib/data/events";
+import { countUpcomingEvents, listUpcomingEvents } from "@/lib/data/events";
 import { listFeaturedLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
 
 export async function HomeSections() {
-  const [events, news, committees, board, settings, shortcuts] = await Promise.all([
+  const [events, upcomingCount, news, committees, board, settings, shortcuts] = await Promise.all([
     listUpcomingEvents(6),
+    countUpcomingEvents(),
     listNews(4),
     listCommittees({ visibleOnly: true }),
     listBoard(),
@@ -26,7 +27,7 @@ export async function HomeSections() {
   const stats = [
     { value: utskott.length, label: "Utskott & grupper", note: "från SCB till eSTIG" },
     { value: board.length, label: "Poster i styrelsen", note: "väljs varje år" },
-    { value: events.length, label: "Kommande evenemang", note: "just nu i kalendern" },
+    { value: upcomingCount, label: "Kommande evenemang", note: "just nu i kalendern" },
     { value: 2, label: "Program", note: "kandidat och master" },
   ];
 
