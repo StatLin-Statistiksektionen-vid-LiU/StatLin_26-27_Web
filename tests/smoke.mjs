@@ -86,6 +86,13 @@ await check("Kurskoder med gemener skickas till versaler", async () => {
   expect(res.status === 308 && location.endsWith("/tentastatistik/732G33"), `status ${res.status} ${location}`);
 });
 
+await check("Webbläsarens egen fråga efter /favicon.ico leder till ikonen", async () => {
+  // PDF-visaren i Chrome och Edge frågar efter den, eftersom en PDF inte kan säga var ikonen finns.
+  const { res } = await get("/favicon.ico");
+  const location = res.headers.get("location") ?? "";
+  expect(res.status === 308 && location.endsWith("/icon.svg"), `status ${res.status} ${location}`);
+});
+
 await check("Kurskoderna till sökrutan /api/tentastatistik/koder", async () => {
   const { res, body } = await get("/api/tentastatistik/koder");
   expect(res.status === 200, `status ${res.status}`);
