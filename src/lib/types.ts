@@ -117,7 +117,7 @@ export interface EventItem {
   /** Satt när en administratör granskat evenemanget. Styr aldrig om det visas på sajten. */
   checked_at: string | null;
   checked_by: number | null;
-  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent"> | null;
+  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent" | "visible" | "kind"> | null;
   cover: ImageRef | null;
   image_count: number;
 }
@@ -146,7 +146,7 @@ export interface NewsItem {
   author_post: string | null;
   created_at: string;
   updated_at: string;
-  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent"> | null;
+  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent" | "visible" | "kind"> | null;
   cover: ImageRef | null;
 }
 

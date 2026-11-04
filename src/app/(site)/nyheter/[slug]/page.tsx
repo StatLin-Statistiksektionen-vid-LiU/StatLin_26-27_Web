@@ -8,6 +8,7 @@ import { SmartImage } from "@/components/content/smart-image";
 import { ArrowLeft } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getNewsBySlug, listNews } from "@/lib/data/news";
+import { committeeHref } from "@/lib/navigation";
 import { SITE_OG } from "@/lib/site-metadata";
 import { fitHeading, stripMarkdown } from "@/lib/utils";
 import { EditModeButton, Editable } from "@/components/edit-mode/editable";
@@ -36,6 +37,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
   const item = await getNewsBySlug(slug);
   if (!item) notFound();
   const more = (await listNews(4)).filter((n) => n.id !== item.id).slice(0, 3);
+  const committeeLink = item.committee && committeeHref(item.committee);
 
   return (
     <article>
@@ -51,9 +53,13 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
             {item.committee && (
               <>
                 <span className="h-px w-5 bg-white/30" aria-hidden />
-                <Link href={`/utskott/${item.committee.slug}`} className="hover:text-white">
-                  {item.committee.short_name}
-                </Link>
+                {committeeLink ? (
+                  <Link href={committeeLink} className="hover:text-white">
+                    {item.committee.short_name}
+                  </Link>
+                ) : (
+                  <span>{item.committee.short_name}</span>
+                )}
               </>
             )}
           </p>

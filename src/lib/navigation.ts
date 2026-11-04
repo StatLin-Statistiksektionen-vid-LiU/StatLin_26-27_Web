@@ -1,3 +1,5 @@
+import type { Committee } from "@/lib/types";
+
 export type NavItem = { href: string; label: string; description?: string };
 export type NavGroup = { label: string; href: string; children?: NavItem[] };
 
@@ -61,4 +63,10 @@ export function languageSwitch(pathname: string | null) {
     return { href: LANGUAGE_PAIRS.find(([, en]) => en === pathname)?.[0] ?? "/", short: "SV", label: "På svenska", lang: "sv" };
   }
   return { href: LANGUAGE_PAIRS.find(([sv]) => sv === pathname)?.[1] ?? "/en", short: "EN", label: "In English", lang: "en" };
+}
+
+/** Sidan en arrangör länkar till. Styrelsen har sin sida under sektionen, och ett dolt utskott har ingen alls. */
+export function committeeHref(committee: Pick<Committee, "slug" | "kind" | "visible">): string | null {
+  if (committee.kind === "styrelse") return "/sektionen/styrelsen";
+  return committee.visible ? `/utskott/${committee.slug}` : null;
 }

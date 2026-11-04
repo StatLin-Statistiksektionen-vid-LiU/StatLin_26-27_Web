@@ -14,8 +14,10 @@ import { getSettings } from "@/lib/data/content";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
 import { eventEnd, eventSchemaDates, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
 import { googleCalendarUrl } from "@/lib/ics";
+import { committeeHref } from "@/lib/navigation";
 import { siteUrl } from "@/lib/site-url";
-import { fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
+import type { EventItem } from "@/lib/types";
+import { cn, fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
 import { EditModeButton, Editable } from "@/components/edit-mode/editable";
 
 export async function generateMetadata({ params }: PageProps<"/evenemang/[slug]">): Promise<Metadata> {
@@ -50,6 +52,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
   ]);
   const others = more.filter((e) => e.id !== event.id).slice(0, 3);
   const isPast = eventEnd(event.starts_at, event.ends_at, !!event.all_day) < nowLocal();
+  const committeeLink = event.committee && committeeHref(event.committee);
   const signup = safeExternalUrl(event.signup_url);
   const mapUrl = safeExternalUrl(event.location_url) ?? (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location + ", Linköping")}` : null);
 
@@ -85,11 +88,14 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
           </Link>
           <div className="mt-8 flex flex-wrap items-center gap-2">
             <span className={`chip ${isPast ? "bg-white/15 text-white" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
-            {event.committee && (
-              <Link href={`/utskott/${event.committee.slug}`} className="chip border border-white/20 text-white/85 hover:border-white/60">
-                {event.committee.short_name}
-              </Link>
-            )}
+            {event.committee &&
+              (committeeLink ? (
+                <Link href={committeeLink} className="chip border border-white/20 text-white/85 hover:border-white/60">
+                  {event.committee.short_name}
+                </Link>
+              ) : (
+                <span className="chip border border-white/20 text-white/85">{event.committee.short_name}</span>
+              ))}
           </div>
           <h1 className="display mt-6 max-w-5xl [overflow-wrap:break-word]" style={fitHeading(event.title, { maxRem: 5.6, maxVw: 6.5 })}>
             {event.title}
@@ -145,22 +151,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
               </div>
             </div>
           </div>
-          {event.committee && (
-            <Link
-              href={`/utskott/${event.committee.slug}`}
-              className="group mt-4 flex items-center gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-4 transition-colors hover:border-ink/30"
-            >
-              {event.committee.logo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={event.committee.logo_url} alt="" className="size-14 object-contain transition-transform duration-500 group-hover:rotate-[-8deg]" />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="kicker block text-stone">Arrangör</span>
-                <span className="block truncate font-semibold">{event.committee.name}</span>
-              </span>
-              <ArrowUpRight size={18} className="text-red" />
-            </Link>
-          )}
+          {event.committee && <Organizer committee={event.committee} href={committeeLink} />}
         </aside>
 
         <div className="lg:col-span-7 lg:row-start-1">
@@ -193,6 +184,31 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
         </section>
       )}
     </article>
+  );
+}
+
+/** Arrangören i sidospalten. Ett dolt utskott har ingen sida att länka till, så då står bara namnet där. */
+function Organizer({ committee, href }: { committee: NonNullable<EventItem["committee"]>; href: string | null }) {
+  const box = "mt-4 flex items-center gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-4";
+  const content = (
+    <>
+      {committee.logo_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={committee.logo_url} alt="" className="size-14 object-contain transition-transform duration-500 group-hover:rotate-[-8deg]" />
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="kicker block text-stone">Arrangör</span>
+        <span className="block truncate font-semibold">{committee.name}</span>
+      </span>
+      {href && <ArrowUpRight size={18} className="text-red" />}
+    </>
+  );
+  return href ? (
+    <Link href={href} className={cn("group transition-colors hover:border-ink/30", box)}>
+      {content}
+    </Link>
+  ) : (
+    <div className={box}>{content}</div>
   );
 }
 

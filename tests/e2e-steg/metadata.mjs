@@ -254,4 +254,53 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     await option.waitFor({ timeout: 5000 });
     await context.close();
   });
+
+  await step("Evenemang och nyheter länkar inte till ett dolt utskott, och dess sida röjer inte namnet (SB-20)", async () => {
+    await switchAccount(page, ADMIN);
+    const admin = await newVisitor(browser);
+    await admin.context.addCookies(await page.context().cookies());
+    const setVisible = async (visible) => {
+      await admin.page.goto(`${BASE}/admin/utskott`);
+      await admin.page.locator('a[href^="/admin/utskott/"]', { hasText: "SASU" }).click();
+      const toggle = admin.page.locator('input[name="visible"]');
+      await waitForHydration(admin.page, toggle);
+      if ((await toggle.isChecked()) !== visible) await admin.page.locator('label:has(input[name="visible"])').click();
+      await admin.page.getByRole("button", { name: "Spara", exact: true }).click();
+      await admin.page.getByText("Utskottet är sparat.").waitFor();
+    };
+
+    const site = await newVisitor(browser);
+    const links = async (path, href) => {
+      await site.page.goto(`${BASE}${path}`);
+      await site.page.locator("article h1").waitFor();
+      return site.page.locator(`article a[href="${href}"]`).count();
+    };
+    const titleOf = async (path) => (await (await fetch(`${BASE}${path}`)).text()).match(/<title>([^<]*)/)?.[1] ?? "";
+
+    assert.match(await titleOf("/utskott/sasu"), /SASU/);
+    assert.equal(await links("/evenemang/star", "/utskott/sasu"), 2, "Evenemanget ska länka till ett synligt utskott");
+    assert.equal(await links("/nyheter/star-anmalan-foretag", "/utskott/sasu"), 1, "Nyheten ska länka till ett synligt utskott");
+
+    await setVisible(false);
+    try {
+      assert.equal(await links("/evenemang/star", "/utskott/sasu"), 0, "Evenemanget länkar till det dolda utskottet");
+      assert.match(await site.page.locator("article header").innerText(), /SASU/, "Evenemanget ska visa arrangören");
+      assert.equal(await site.page.locator("aside").getByText("Arrangör").count(), 1, "Evenemanget ska visa arrangören");
+      assert.equal(await links("/nyheter/star-anmalan-foretag", "/utskott/sasu"), 0, "Nyheten länkar till det dolda utskottet");
+      assert.match(await site.page.locator("article header").innerText(), /SASU/, "Nyheten ska visa arrangören");
+      const title = await titleOf("/utskott/sasu");
+      assert.equal(title, await titleOf("/utskott/finns-inte"), "Ett dolt utskott ska svara som ett som inte finns");
+      assert.doesNotMatch(title, /SASU/);
+    } finally {
+      await setVisible(true);
+    }
+    assert.equal(await links("/evenemang/star", "/utskott/sasu"), 2, "Länkarna ska komma tillbaka");
+
+    for (const path of ["/evenemang/hostmote", "/nyheter/valkommen-till-nya-statlin-se"]) {
+      assert.ok((await links(path, "/sektionen/styrelsen")) > 0, `${path} ska länka till styrelsens sida`);
+      assert.equal(await site.page.locator('article a[href="/utskott/styrelsen"]').count(), 0, `${path} länkar till /utskott/styrelsen`);
+    }
+    await site.context.close();
+    await admin.context.close();
+  });
 }
