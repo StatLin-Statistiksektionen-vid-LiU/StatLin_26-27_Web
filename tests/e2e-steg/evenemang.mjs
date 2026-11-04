@@ -59,7 +59,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
     return { url: page.url().split("?")[0], slug: await page.inputValue('input[name="slug"]') };
   };
-  const removeEvent = async (url) => {
+  const removeItem = async (url) => {
     await openForm(url);
     // Knapparna i galleriet heter också Ta bort, men genom sin title. Evenemangets egen knapp har namnet som text.
     const button = page.getByRole("button", { name: "Ta bort" }).and(page.locator("button:not([title])"));
@@ -67,7 +67,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await button.click();
     const dialog = page.getByRole("alertdialog");
     await dialog.waitFor();
-    await Promise.all([page.waitForURL(/\/admin\/evenemang\?/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
+    await Promise.all([page.waitForURL(/\/admin\/(evenemang|nyheter)\?/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
   };
 
   const assertOngoing = async (slug) => {
@@ -108,7 +108,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
 
     const feed = await site.request.get(`${BASE}/kalender.ics`);
     assert.equal(feed.status(), 200, "kalenderflödet ska svara");
-    await removeEvent(url);
+    await removeItem(url);
   });
 
   await step("SB-32: en nyhets publiceringsdatum som inte finns ger fältfel och sparas inte", async () => {
@@ -145,7 +145,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     assert.ok(event, "evenemanget ska finnas i kalenderfilen");
     assert.ok(event.includes(`DTSTART;VALUE=DATE:${first.replaceAll("-", "")}`), "DTSTART ska vara första dagen");
     assert.ok(event.includes(`DTEND;VALUE=DATE:${dayOffset(1).replaceAll("-", "")}`), "DTEND ska vara dagen efter sista dagen");
-    await removeEvent(url);
+    await removeItem(url);
   });
 
   await step("SB-01: en heldag jämför bara datumen, så slut 00:00 samma dag går att spara och visas som Heldag", async () => {
@@ -153,7 +153,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     const { url, slug } = await createEvent({ title: `E2E-heldag ${uniqueId()}`, startsAt: `${day}T18:00`, endsAt: `${day}T00:00`, allDay: true });
     await site.goto(`${BASE}/evenemang/${slug}`);
     await site.getByText("Heldag", { exact: true }).first().waitFor();
-    await removeEvent(url);
+    await removeItem(url);
   });
 
   await step("SB-06: starta-terminen räknas inte som STAR, och mässan som valts i Inställningar visas på företagssidan", async () => {
@@ -180,21 +180,21 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await site.locator(`main a[href="/evenemang/${massan.slug}"]`).waitFor();
 
     await save("");
-    await removeEvent(massan.url);
-    await removeEvent(starta.url);
+    await removeItem(massan.url);
+    await removeItem(starta.url);
   });
 
   await step("SB-07: ett evenemang som startade i går och slutar i morgon visar Pågår på kortet och sidan", async () => {
     await switchAccount(page, ADMIN);
     const { url, slug } = await createEvent({ title: `E2E-pågår ${uniqueId()}`, startsAt: `${dayOffset(-1)}T18:00`, endsAt: `${dayOffset(1)}T15:00` });
     await assertOngoing(slug);
-    await removeEvent(url);
+    await removeItem(url);
   });
 
   await step("SB-07: en heldag visar Pågår hela sista dagen, inte Har varit", async () => {
     const { url, slug } = await createEvent({ title: `E2E-pågår ${uniqueId()}`, startsAt: `${dayOffset(-4)}T00:00`, endsAt: `${dayOffset(0)}T00:00`, allDay: true });
     await assertOngoing(slug);
-    await removeEvent(url);
+    await removeItem(url);
   });
 
   await step("SB-08: rutan Kommande evenemang räknar alla kommande, inte bara de sex som visas på startsidan", async () => {
@@ -225,7 +225,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     assert.equal(sommar.endDate, "2031-07-10T21:00:00+02:00");
     assert.equal(sommar.location.address, address, "utan plats ska sektionens adress användas");
     assert.equal(sommar.description, "Hela texten om kvällen.", "utan sammanfattning ska beskrivningen användas");
-    await removeEvent(kvall.url);
+    await removeItem(kvall.url);
 
     const heldag = await createEvent({ title: `E2E-data ${uniqueId()}`, startsAt: "2031-12-10T00:00", endsAt: "2031-12-12T00:00", allDay: true, location: "Kårallen" });
     const vinter = await schemaEvent(heldag.slug);
@@ -233,7 +233,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     assert.equal(vinter.endDate, "2031-12-12");
     assert.equal(vinter.location.address, "Kårallen");
     assert.equal(vinter.description, "Skapat av det automatiska testet.");
-    await removeEvent(heldag.url);
+    await removeItem(heldag.url);
   });
 
   await step("SB-23: kalendern visar bara månader inom två år, och bläddringen stannar vid gränsen", async () => {
@@ -294,8 +294,8 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     const cells = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).count();
     assert.ok(cells >= 3, `resan ska synas på sina dagar i rutnätet, syns på ${cells}`);
 
-    await removeEvent(pub.url);
-    await removeEvent(trip.url);
+    await removeItem(pub.url);
+    await removeItem(trip.url);
   });
 
   await step("SB-25: ett album med en bild visar 1 bild, och bildvisaren förinläser samma bild som den sedan visar", async () => {
@@ -332,7 +332,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     assert.ok(fetched.includes(shown), `bilden som visas, ${shown}, ska redan vara hämtad`);
     await site.keyboard.press("Escape");
 
-    await removeEvent(album.url);
+    await removeItem(album.url);
   });
 
   await step("SB-25: Kalenderflöde i länklistan laddas direkt, utan att Next först försöker hämta filen som en sida", async () => {
@@ -350,6 +350,32 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await fetched;
     site.off("request", onRequest);
     assert.equal(pageRequests.length, 0, `Next hämtade filen som en sida: ${pageRequests[0]}`);
+  });
+
+  await step("ST-02: en nyhets publiceringstid visas lika i admin och på sajten, runt sommartidens hopp och midnatt", async () => {
+    await switchAccount(page, ADMIN);
+    const cases = [
+      // Klockan hoppar från 02:00 till 03:00 den här natten, så 02:30 finns inte och är samma ögonblick som 03:30.
+      { typed: "2026-03-29T02:30", shown: "2026-03-29T03:30", iso: "2026-03-29T01:30:00.000Z" },
+      // I UTC är det fortfarande dagen innan, men på sajten ska datumet vara det som står i Sverige.
+      { typed: "2026-03-29T00:30", shown: "2026-03-29T00:30", iso: "2026-03-28T23:30:00.000Z" },
+    ];
+    for (const { typed, shown, iso } of cases) {
+      await openForm(`${BASE}/admin/nyheter/ny`);
+      await page.fill('input[name="title"]', `E2E-nyhet ${uniqueId()}`);
+      await page.fill('textarea[name="excerpt"]', "Skapad av det automatiska testet.");
+      await openDetails();
+      await page.fill('input[name="published_at"]', typed);
+      await Promise.all([page.waitForURL(/\/admin\/nyheter\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
+      const url = page.url().split("?")[0];
+      const slug = await page.inputValue('input[name="slug"]');
+      assert.equal(await page.inputValue('input[name="published_at"]'), shown, "tiden i formuläret");
+
+      await site.goto(`${BASE}/nyheter/${slug}`);
+      await site.locator(`main time[datetime="${iso}"]`, { hasText: "29 mars 2026" }).first().waitFor();
+
+      await removeItem(url);
+    }
   });
 
   await visitor.context.close();

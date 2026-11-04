@@ -4,21 +4,8 @@ import { Field, FixedCommittee, FormSection, MoreDetails, Select, TextArea, Text
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
+import { isoToLocalInput } from "@/lib/dates";
 import type { Committee, NewsItem, SessionUser } from "@/lib/types";
-
-function isoToLocalInput(iso: string) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Stockholm",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  })
-    .format(new Date(iso))
-    .replace(" ", "T");
-}
 
 export function NewsForm({
   item,

@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { CoverArt } from "./cover-art";
 import { SmartImage } from "./smart-image";
-import { formatDate } from "@/lib/dates";
+import { formatDate, isoToLocal } from "@/lib/dates";
 import type { NewsItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function isoToLocalDate(iso: string) {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
-}
-
 export function newsDate(n: Pick<NewsItem, "published_at">) {
-  return formatDate(isoToLocalDate(n.published_at), true);
+  return formatDate(isoToLocal(n.published_at), true);
 }
 
 export function NewsCard({ item, featured, className }: { item: NewsItem; featured?: boolean; className?: string }) {

@@ -59,6 +59,20 @@ export function isValidLocalDateTime(local: string): boolean {
   return d.toISOString().slice(0, 16) === local;
 }
 
+/** ISO-tidsstämpel (UTC, från databasen) → lokal tid i Stockholm, "YYYY-MM-DDTHH:mm". */
+export function isoToLocal(iso: string): string {
+  return toLocal(new Date(iso));
+}
+
+/** Värdet till ett datetime-local-fält, som har samma format som den lokala tiden. */
+export const isoToLocalInput = isoToLocal;
+
+/** Lokal tid i Stockholm → ISO (UTC), med förskjutningen från stockholmOffset. En tid som inte finns i kalendern är ett programfel: den ska ha stoppats i formuläret. */
+export function localToIso(local: string): string {
+  if (!isValidLocalDateTime(local)) throw new RangeError(`Tiden finns inte: ${local}`);
+  return new Date(`${local}:00${stockholmOffset(local)}`).toISOString();
+}
+
 const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", ...opts });
 
 const weekdayLong = fmt({ weekday: "long" });

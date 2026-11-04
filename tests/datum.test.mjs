@@ -2,7 +2,7 @@
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
+import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatTimeRange, isoToLocal, isoToLocalInput, isValidLocalDateTime, localToIso, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 import { isFileUrl } from "../src/lib/links.ts";
 
@@ -218,4 +218,39 @@ test("SB-25: sidor och externa adresser är inte filer", () => {
   for (const url of ["/", "/evenemang", "/studenter/lankar", "/tentastatistik/732G33", "/v1.2/om", "/lankar?fil=a.pdf", "https://liu.se/a.pdf", "mailto:info@statlin.se"]) {
     assert.equal(isFileUrl(url), false, url);
   }
+});
+
+test("ST-02: lokal tid blir UTC med en timme på vintern och två på sommaren", () => {
+  assert.equal(localToIso("2026-01-15T12:00"), "2026-01-15T11:00:00.000Z");
+  assert.equal(localToIso("2026-07-15T12:00"), "2026-07-15T10:00:00.000Z");
+});
+
+test("ST-02: 02:30 sista söndagen i mars finns inte, och blir samma ögonblick som 03:30", () => {
+  assert.equal(localToIso("2026-03-29T02:30"), "2026-03-29T01:30:00.000Z");
+  assert.equal(localToIso("2026-03-29T03:30"), "2026-03-29T01:30:00.000Z");
+  assert.equal(isoToLocal("2026-03-29T01:30:00.000Z"), "2026-03-29T03:30");
+});
+
+test("ST-02: 02:30 sista söndagen i oktober finns två gånger, och blir den på vintertid", () => {
+  assert.equal(localToIso("2026-10-25T02:30"), "2026-10-25T01:30:00.000Z");
+  assert.equal(isoToLocal("2026-10-25T01:30:00.000Z"), "2026-10-25T02:30");
+  assert.equal(isoToLocal("2026-10-25T00:30:00.000Z"), "2026-10-25T02:30", "samma klockslag en timme tidigare, på sommartid");
+});
+
+test("ST-02: datumet följer klockan i Stockholm, också när UTC fortfarande är kvar på föregående år", () => {
+  assert.equal(isoToLocal("2026-12-31T23:30:00.000Z"), "2027-01-01T00:30");
+});
+
+test("ST-02: tider som finns kommer tillbaka oförändrade", () => {
+  for (const local of ["2026-01-15T00:00", "2026-03-29T01:59", "2026-03-29T03:00", "2026-07-15T23:59", "2026-10-25T03:00", "2028-02-29T12:00"]) {
+    assert.equal(isoToLocal(localToIso(local)), local);
+  }
+});
+
+test("ST-02: ett datetime-local-fält får tiden i Stockholm", () => {
+  assert.equal(isoToLocalInput("2026-07-15T10:00:00.000Z"), "2026-07-15T12:00");
+});
+
+test("ST-02: en tid som inte finns i kalendern går inte att räkna om", () => {
+  for (const d of FINNS_INTE) assert.throws(() => localToIso(d), RangeError, d);
 });

@@ -18,6 +18,7 @@ import {
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
+import { localToIso } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 
@@ -34,27 +35,6 @@ const schema = z.object({
 });
 
 const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };
-
-/** Lokal Stockholmstid "YYYY-MM-DDTHH:mm" → ISO (UTC). */
-function stockholmToIso(local: string): string {
-  // Prova båda möjliga UTC-förskjutningarna (CET/CEST) och välj den som formaterar tillbaka till samma lokala tid.
-  for (const offset of ["+01:00", "+02:00"]) {
-    const d = new Date(`${local}:00${offset}`);
-    const back = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Europe/Stockholm",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    })
-      .format(d)
-      .replace(" ", "T");
-    if (back === local) return d.toISOString();
-  }
-  return new Date(`${local}:00+01:00`).toISOString();
-}
 
 export async function saveNews(_prev: FormState, fd: FormData): Promise<FormState> {
   // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
@@ -73,7 +53,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
   }
   const committeeId = isEditor(user) ? d.committee_id : user.committee_id;
   const pinned = isEditor(user) ? d.pinned : 0;
-  const publishedAt = d.published_at ? stockholmToIso(d.published_at) : nowIso();
+  const publishedAt = d.published_at ? localToIso(d.published_at) : nowIso();
   const db = getDb();
 
   if (id) {
