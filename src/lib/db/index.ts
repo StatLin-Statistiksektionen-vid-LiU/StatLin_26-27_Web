@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { bootstrap } from "./bootstrap";
 import { migrate } from "./migrations";
+import { pruneAuditLog } from "./prune-audit-log";
 
 /**
  * All data (databas + uppladdade filer) ligger i DATA_DIR så att en enda volym
@@ -28,6 +29,7 @@ export function getDb(): Database.Database {
       db.pragma("synchronous = NORMAL");
       migrate(db);
       bootstrap(db);
+      pruneAuditLog(db);
     } catch (err) {
       // Nästa begäran försöker igen med ett nytt handtag, så det här måste stängas – annars läcker varje försök filhandtag.
       db.close();

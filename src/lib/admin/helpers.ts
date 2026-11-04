@@ -2,14 +2,24 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { isEditor } from "@/lib/auth/permissions";
 import { getDb } from "@/lib/db";
+import { pruneAuditLog } from "@/lib/db/prune-audit-log";
 import type { SessionUser } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
-/** userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. */
+/**
+ * userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. Gallrar loggen högst en gång per
+ * dygn (SD-31), så att en process som kör länge också gallrar – annars görs det när databasen öppnas.
+ */
 export function audit(userId: number | null, action: string, entity: string, entityId: string | number | null, summary = "") {
-  getDb()
-    .prepare("INSERT INTO audit_log (user_id, action, entity, entity_id, summary) VALUES (?, ?, ?, ?, ?)")
-    .run(userId, action, entity, entityId === null ? null : String(entityId), summary.slice(0, 300));
+  const db = getDb();
+  db.prepare("INSERT INTO audit_log (user_id, action, entity, entity_id, summary) VALUES (?, ?, ?, ?, ?)").run(
+    userId,
+    action,
+    entity,
+    entityId === null ? null : String(entityId),
+    summary.slice(0, 300),
+  );
+  pruneAuditLog(db, { onlyIfDue: true });
 }
 
 /**

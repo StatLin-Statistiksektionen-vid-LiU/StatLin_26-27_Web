@@ -31,6 +31,7 @@ const PAGES = [
   "/kontakt",
   "/en",
   "/en/masters",
+  "/integritet",
   "/logga-in",
 ];
 

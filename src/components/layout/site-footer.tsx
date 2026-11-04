@@ -146,7 +146,12 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/10 py-8 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
-          <p>© StatLin – Statistiksektionen i Linköping</p>
+          <p>
+            © StatLin – Statistiksektionen i Linköping ·{" "}
+            <Link href="/integritet" className="link-underline text-white/70 hover:text-white">
+              Integritet
+            </Link>
+          </p>
           <p className="font-mono text-xs">p &lt; 0,05 sedan länge</p>
         </div>
       </div>
