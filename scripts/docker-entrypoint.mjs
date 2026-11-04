@@ -25,8 +25,10 @@ function chownTree(p) {
 fs.mkdirSync(dataDir, { recursive: true });
 
 if (process.getuid?.() === 0) {
-  // DATA_DIR själv får vara en symlänk: den sätts av den som driftsätter, inte av appen.
-  chownTree(fs.realpathSync(dataDir));
+  // DATA_DIR själv får vara en symlänk, men bara en som root äger – den har den som driftsätter lagt dit. En länk som
+  // appanvändaren äger (DATA_DIR i en katalog den kan skriva i) kan peka vart som helst och behandlas som alla andra symlänkar.
+  const top = fs.lstatSync(dataDir);
+  chownTree(top.isSymbolicLink() && top.uid !== 0 ? dataDir : fs.realpathSync(dataDir));
   // Ordningen spelar roll: tilläggsgrupperna (t.ex. root) måste bort innan gid/uid byts.
   process.setgroups([gid]);
   process.setgid(gid);
