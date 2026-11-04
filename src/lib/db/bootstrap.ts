@@ -21,48 +21,70 @@ export function createFirstAdmin(db: Database.Database, email: string, password:
   return true;
 }
 
+/** Tabellerna som får grundinnehåll av bootstrap(). */
+export type SeededTable = "committees" | "board_members" | "pages" | "documents" | "links";
+
 /**
- * Körs första gången databasen öppnas: lägger in grunddata (utskott, poster, sidtexter, länkar)
- * om databasen är tom, och skapar ett administratörskonto från ADMIN_EMAIL/ADMIN_PASSWORD
- * om det inte finns några konton. Gör en ny installation körbar utan manuella steg.
+ * Markerar att tabellen har fått sitt grundinnehåll (`seeded_<tabell>` = "1" i settings), så att bootstrap() aldrig lägger in det
+ * igen (SD-17). Sätts när tabellen seedas och när en rad raderas i adminpanelen: en tabell som tömts med flit ska förbli tom.
+ */
+export function markSeeded(db: Database.Database, table: SeededTable) {
+  db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, '1')").run(`seeded_${table}`);
+}
+
+/**
+ * Lägger in tabellens grundinnehåll en gång. Har tabellen flaggan händer ingenting, inte ens om den är tom – då har den tömts med
+ * flit. Utan flaggan seedas bara en tom tabell (en ny databas); en tabell med rader men utan flagga kommer från en databas från
+ * före flaggorna och får bara flaggan.
+ */
+function seedOnce(db: Database.Database, table: SeededTable, seed: () => void) {
+  if (db.prepare("SELECT 1 FROM settings WHERE key = ?").get(`seeded_${table}`)) return;
+  if (!db.prepare(`SELECT 1 FROM ${table} LIMIT 1`).get()) seed();
+  markSeeded(db, table);
+}
+
+/**
+ * Körs första gången databasen öppnas i en process: lägger in grunddata (utskott, poster, sidtexter, länkar, styrdokumentet) en
+ * gång per tabell (seedOnce), och skapar ett administratörskonto från ADMIN_EMAIL/ADMIN_PASSWORD om det inte finns några konton.
+ * Gör en ny installation körbar utan manuella steg. Nytt grundinnehåll når därför bara nya databaser – en befintlig databas får det
+ * med ett migreringssteg, som steg 9 gör för länken Hjälpmedel.
  */
 export function bootstrap(db: Database.Database) {
-  const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
-
   db.transaction(() => {
-    const insertCommittee = db.prepare(
-      `INSERT OR IGNORE INTO committees (slug, name, short_name, kind, logo_url, accent, email, tagline, description_md, sort_order)
-       VALUES (@slug, @name, @short_name, @kind, @logo_url, @accent, @email, @tagline, @description_md, @sort_order)`,
-    );
-    if (count("committees") === 0) SEED_COMMITTEES.forEach((c, i) => insertCommittee.run({ ...c, sort_order: i * 10 }));
+    seedOnce(db, "committees", () => {
+      const insertCommittee = db.prepare(
+        `INSERT INTO committees (slug, name, short_name, kind, logo_url, accent, email, tagline, description_md, sort_order)
+         VALUES (@slug, @name, @short_name, @kind, @logo_url, @accent, @email, @tagline, @description_md, @sort_order)`,
+      );
+      SEED_COMMITTEES.forEach((c, i) => insertCommittee.run({ ...c, sort_order: i * 10 }));
+    });
 
-    const committeeId = (slug: string) => (db.prepare("SELECT id FROM committees WHERE slug = ?").get(slug) as { id: number } | undefined)?.id ?? null;
-
-    if (count("board_members") === 0) {
+    seedOnce(db, "board_members", () => {
+      const committeeId = (slug: string) => (db.prepare("SELECT id FROM committees WHERE slug = ?").get(slug) as { id: number } | undefined)?.id ?? null;
       const insertBoard = db.prepare("INSERT INTO board_members (post, name, email, bio, committee_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
       SEED_BOARD.forEach((b, i) => insertBoard.run(b.post, "", b.email, b.bio, committeeId(b.committee), i * 10));
-    }
+    });
 
-    const insertPage = db.prepare("INSERT OR IGNORE INTO pages (slug, title, lead, body_md) VALUES (@slug, @title, @lead, @body_md)");
-    SEED_PAGES.forEach((p) => insertPage.run(p));
+    seedOnce(db, "pages", () => {
+      const insertPage = db.prepare("INSERT INTO pages (slug, title, lead, body_md) VALUES (@slug, @title, @lead, @body_md)");
+      SEED_PAGES.forEach((p) => insertPage.run(p));
+    });
 
-    // Länkarna läggs in en gång (även i befintliga databaser). Tar någon bort dem kommer de inte tillbaka.
-    if (!db.prepare("SELECT 1 FROM settings WHERE key = 'seeded_links'").get()) {
+    seedOnce(db, "links", () => {
       const insertLink = db.prepare(
         "INSERT INTO links (label, description, url, keywords, category, icon, featured, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       );
       SEED_LINKS.forEach((l, i) => insertLink.run(l.label, l.description, l.url, l.keywords ?? "", l.category, l.icon ?? "link", l.featured ? 1 : 0, i * 10));
-      db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_links', '1')").run();
-    }
+    });
 
-    if (count("documents") === 0) {
+    seedOnce(db, "documents", () => {
       db.prepare("INSERT INTO documents (title, category, description, url, doc_date, sort_order) VALUES (?, 'grafiskt', ?, ?, ?, 0)").run(
         "Grafiskt styrdokument",
         "Logotyper, färgkoder, typsnitt och klädregler för StatLin och utskotten.",
         "/brand/download/grafiskt-styrdokument.pdf",
         "2021-04-26",
       );
-    }
+    });
 
     const email = process.env.ADMIN_EMAIL?.trim();
     const password = process.env.ADMIN_PASSWORD;

@@ -20,6 +20,7 @@ import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers"
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
+import { markSeeded } from "@/lib/db/bootstrap";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
 import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
@@ -88,6 +89,8 @@ export async function deleteBoardMember(fd: FormData) {
   const row = db.prepare("SELECT post, photo_media_id FROM board_members WHERE id = ?").get(id) as { post: string; photo_media_id: number | null } | undefined;
   if (row) {
     db.prepare("DELETE FROM board_members WHERE id = ?").run(id);
+    // En styrelse som tömts inför ett nytt verksamhetsår ska inte få grundposterna tillbaka vid nästa start (SD-17).
+    markSeeded(db, "board_members");
     await deleteMediaIfUnused(row.photo_media_id);
     audit(user.id, "delete", "board", id, row.post);
     revalidateSite();
@@ -303,6 +306,7 @@ export async function deleteDocument(fd: FormData) {
     | undefined;
   if (row && canManageDocument(user, row.category)) {
     db.prepare("DELETE FROM documents WHERE id = ?").run(id);
+    markSeeded(db, "documents"); // SD-17: tömda dokument fylls inte på igen vid nästa start
     await deleteMediaIfUnused(row.media_id);
     audit(user.id, "delete", "document", id, row.title);
     revalidateSite();

@@ -7,6 +7,7 @@ import { audit, revalidateSite } from "@/lib/admin/helpers";
 import { isEditor } from "@/lib/auth/permissions";
 import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
+import { markSeeded } from "@/lib/db/bootstrap";
 import { LINK_CATEGORIES, LINK_ICONS } from "@/lib/links";
 import type { LinkCategory } from "@/lib/types";
 
@@ -67,6 +68,7 @@ export async function deleteLink(fd: FormData) {
   const row = db.prepare("SELECT label FROM links WHERE id = ?").get(id) as { label: string } | undefined;
   if (row) {
     db.prepare("DELETE FROM links WHERE id = ?").run(id);
+    markSeeded(db, "links"); // SD-17: tömda länkar fylls inte på igen vid nästa start
     audit(user.id, "delete", "link", id, row.label);
     revalidateSite();
   }
