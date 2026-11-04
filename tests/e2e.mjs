@@ -178,34 +178,63 @@ async function openDeleteConfirm(page) {
     });
 
     await step("Formelringen sveper efter 2,6 sekunder och sedan var 4:e minut", async () => {
+      // Helt fejkad tid: klockan står still och flyttas bara av testet, så en upptagen dator ändrar inte resultatet (ST-25).
       const clockCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       const clocked = await clockCtx.newPage();
+      // Ringen börjar räkna när den börjar bevaka loggan. Då sparas tiden, och en egen bevakning visar när webbläsaren sett en scroll.
+      await clocked.addInitScript(() => {
+        const observe = IntersectionObserver.prototype.observe;
+        IntersectionObserver.prototype.observe = function (target) {
+          observe.call(this, target);
+          if (!target.matches(".floating-logo") || window.ringMountedAt !== undefined) return;
+          window.ringMountedAt = performance.now();
+          observe.call(new IntersectionObserver(([entry]) => (window.logoOnScreen = entry.isIntersecting)), target);
+        };
+      });
       await clocked.clock.install();
+      await clocked.clock.pauseAt(Date.now() + 60_000);
       await clocked.goto(`${BASE}/`);
-      await clocked.locator(".logo-formler").waitFor({ state: "attached" });
-      assert.equal(await ringRadius(clocked), "0", "formlerna ska vara dolda när sidan laddats");
-      await clocked.waitForFunction(ringIsVisible, null, { timeout: 10000 });
-      const sweptAt = await clocked.evaluate(() => performance.now());
-      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
-      // Spolar fram till en tid räknat från första svepet och ger ringen en sekund på sig att rita.
-      const forwardTo = async (ms) => {
-        await clocked.clock.fastForward(ms - (await clocked.evaluate(() => performance.now())));
-        await clocked.waitForTimeout(1000);
+      // Sidan behöver sina egna timers för att komma på plats, så klockan stegas fram tills ringen har startat.
+      const deadline = Date.now() + 60_000;
+      while ((await clocked.evaluate(() => window.ringMountedAt)) === undefined) {
+        assert.ok(Date.now() < deadline, "ringen startade inte");
+        await clocked.clock.runFor(20);
+      }
+      const mountedAt = await clocked.evaluate(() => window.ringMountedAt);
+      const now = () => clocked.evaluate(() => performance.now());
+      // Hoppar fram till en tid, som när datorn sovit, och kör sedan 0,4 sekunder bild för bild. Under hoppet ritas inga bilder,
+      // så ett svep som startat, för tidigt eller i tid, syns först efteråt.
+      const jumpTo = async (ms) => {
+        await clocked.clock.fastForward(ms - (await now()));
+        await clocked.clock.runFor(400);
       };
-      await forwardTo(sweptAt + 235_000);
+
+      await clocked.clock.runFor(mountedAt + 2500 - (await now()));
+      assert.equal(await ringRadius(clocked), "0", "formlerna ska vara dolda före 2,6 sekunder");
+      await clocked.clock.runFor(500);
+      assert.ok(await clocked.evaluate(ringIsVisible), "svepet ska ha börjat efter 2,6 sekunder");
+      let sweep = mountedAt + 2600;
+      await jumpTo(sweep + 7100);
+      assert.equal(await ringRadius(clocked), "0", "svepet ska vara över efter 7 sekunder");
+      await jumpTo(sweep + 239_000);
       assert.equal(await ringRadius(clocked), "0", "inget nytt svep före 4 minuter");
-      await forwardTo(sweptAt + 241_000);
-      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
-      await clocked.waitForFunction(ringIsHidden, null, { timeout: 15000 });
+      sweep += 240_000;
+      await jumpTo(sweep);
+      assert.ok(await clocked.evaluate(ringIsVisible), "nästa svep ska komma efter 4 minuter");
+      await jumpTo(sweep + 7100);
+      assert.equal(await ringRadius(clocked), "0", "även det svepet ska vara över efter 7 sekunder");
       // Är loggan utanför skärmen när svepet ska gå hoppas det över. Nästa kommer 4 minuter senare, inte när man scrollar tillbaka.
       await clocked.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-      await clocked.waitForTimeout(500);
-      await forwardTo(sweptAt + 482_000);
+      await clocked.waitForFunction(() => window.logoOnScreen === false);
+      sweep += 240_000;
+      await jumpTo(sweep);
       await clocked.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-      await clocked.waitForTimeout(1000);
+      await clocked.waitForFunction(() => window.logoOnScreen === true);
+      await clocked.clock.runFor(1000);
       assert.equal(await ringRadius(clocked), "0", "svepet som hoppades över ska inte komma i efterhand");
-      await forwardTo(sweptAt + 723_000);
-      await clocked.waitForFunction(ringIsVisible, null, { timeout: 5000 });
+      sweep += 240_000;
+      await jumpTo(sweep);
+      assert.ok(await clocked.evaluate(ringIsVisible), "svepet efter det som hoppades över ska komma i tid");
       await clockCtx.close();
     });
 
