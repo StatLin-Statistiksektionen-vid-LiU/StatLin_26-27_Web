@@ -25,7 +25,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - Inloggning per post med roller (se nedan). Efter upprepade fel lösenord från samma IP-adress får nästa försök mot kontot vänta, högst en minut, medan inloggning från andra adresser fungerar som vanligt. Misslyckade inloggningar sparas i revisionsloggen i databasen (`audit_log`, åtgärden `login_failed`) med e-postadressen men utan IP, utom de som spärren per IP stoppar. Försöken mot ett konto syns under *Senaste aktivitet* på kontots sida i *Konton*, men inte i översikten.
 - **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
-- **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
+- **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Originalet sparas orört – med sin metadata – i `DATA_DIR/originals`, som inte går att nå från webben. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
 - **Bilder**: en sida med alla omslag, galleribilder och utskottsloggor. En bild sparas så fort den har laddats upp. Kontot med **grafiskt ansvar** byter bilderna på alla evenemang, nyheter och utskott men inte texterna, ser kommande evenemang som saknar omslag i sin översikt och lägger upp mallar som visas under *Mallar och material* på sidan Grafisk profil.
 - **Nyheter**, **sidtexter**, **styrelsen** (namn, porträtt, ordning), **utskott** (beskrivning, logga, färg), **dokument** (PDF och liknande) och **partners**.
 - **Länkar**: redaktörerna sköter länksidan och väljer vilka länkar som är genvägar.
@@ -323,7 +323,7 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 
 - **Next.js 16** (App Router, Cache Components, Partial Prerendering, server actions) och **React 19**.
 - **SQLite** via `better-sqlite3`, med versionerade migreringar i `src/lib/db/migrations.ts`.
-- **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen).
+- **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen; originalet sparas i `DATA_DIR/originals`).
 - **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`).
 - Sessioner i databasen (slumpad token, endast SHA-256-hashen lagras), lösenord med bcrypt, CSRF-skydd via SameSite-cookies och kontroll av ursprung.
 - Typsnitt (Archivo, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs. Citat och formler använder systemtypsnittet Georgia.

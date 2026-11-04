@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp, { type Metadata } from "sharp";
-import { getDb, UPLOADS_DIR } from "./db";
+import { getDb, ORIGINALS_DIR, UPLOADS_DIR } from "./db";
 import type { Media } from "./types";
 import { FILE_TYPES, fileMime } from "./file-types";
 
@@ -37,6 +37,13 @@ export function isImageUpload(file: File): boolean {
   return IMAGE_MIME.has(file.type) || /\.(jpe?g|png|webp|gif|avif|heic|heif)$/i.test(file.name);
 }
 
+/** Filändelsen för originalet efter formatet sharp läste, inte efter filnamnet. */
+function originalExt(meta: Metadata): string {
+  if (meta.format === "jpeg") return "jpg";
+  if (meta.format === "heif") return meta.compression === "av1" ? "avif" : "heic";
+  return meta.format ?? "bin";
+}
+
 /** Filerna som hunnit skrivas när något senare i sparningen misslyckas – annars blev de kvar utan rad (SD-21). */
 async function removeFiles(files: string[]) {
   await Promise.all(files.map((f) => fs.rm(f, { force: true })));
@@ -45,6 +52,7 @@ async function removeFiles(files: string[]) {
 /**
  * Sparar en bild i flera bredder som WebP. Bilden roteras enligt EXIF och all
  * metadata (t.ex. GPS-position från mobilkameror) tas bort. Bilden avkodas en gång (ST-06).
+ * Originalet sparas orört (med sin metadata) i ORIGINALS_DIR/<base>.<ext>, utanför /media/ (SD-30).
  */
 export async function storeImage(file: File, userId: number | null, alt = ""): Promise<Media> {
   if (file.size > MAX_IMAGE_BYTES) throw new MediaError("Bilden är för stor (max 25 MB).");
@@ -95,6 +103,13 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
     // sharp(buffer).rotate().resize(64).stats() avkodade därför hela originalet en gång till.
     const { dominant } = await sharp(data, pixels).stats();
     const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+
+    // Huvudkopian: de publicerade storlekarna är förlustkomprimerade och högst 2000 px, så utan den går en bild inte att
+    // trycka eller generera om i efterhand.
+    const original = path.join(ORIGINALS_DIR, `${base}.${originalExt(meta)}`);
+    await fs.mkdir(path.dirname(original), { recursive: true });
+    written.push(original);
+    await fs.writeFile(original, buffer);
 
     const db = getDb();
     return db.transaction(() => {
@@ -179,14 +194,21 @@ function mediaInUse(m: Pick<Media, "id" | "path_base">): boolean {
   return (db.prepare(USED_BY_ADDRESS).get({ pattern: `%${m.path_base}%` }) as { n: number }).n > 0;
 }
 
-/** Raden och filerna. Anroparen har kontrollerat att inget använder dem. */
+/** Originalet till en bild: ORIGINALS_DIR/<base>.<ext>. Filändelsen står inte i raden, så det hittas på namnet. */
+async function originalFiles(base: string): Promise<string[]> {
+  const dir = path.join(ORIGINALS_DIR, path.dirname(base));
+  const names = await fs.readdir(dir).catch(() => [] as string[]);
+  return names.filter((n) => n.startsWith(`${path.basename(base)}.`)).map((n) => path.join(dir, n));
+}
+
+/** Raden, filerna och originalet. Anroparen har kontrollerat att inget använder dem. */
 async function removeMedia(m: Media) {
   getDb().prepare("DELETE FROM media WHERE id = ?").run(m.id);
   const files =
     m.kind === "image"
       ? m.variants.split(",").filter(Boolean).map((w) => `${m.path_base}-${w}.webp`)
       : [`${m.path_base}.${m.ext}`];
-  await removeFiles(files.map((f) => path.join(UPLOADS_DIR, f)));
+  await removeFiles([...files.map((f) => path.join(UPLOADS_DIR, f)), ...(await originalFiles(m.path_base))]);
 }
 
 /** Tar bort mediefilen om den inte längre används någonstans – varken med id eller med adressen i en text eller länk. */
