@@ -394,6 +394,11 @@
   margin-top: 1.8em;
   color: var(--color-ink);
 }
+.prose-statlin h4 {
+  font-weight: 700;
+  margin-top: 1.5em;
+  color: var(--color-ink);
+}
 .prose-statlin a {
   color: var(--color-red-deep);
   text-decoration: underline;
@@ -511,7 +516,8 @@
   color: rgb(255 255 255 / 0.78);
 }
 .prose-dark h2,
-.prose-dark h3 {
+.prose-dark h3,
+.prose-dark h4 {
   color: #fff;
 }
 .prose-dark a {

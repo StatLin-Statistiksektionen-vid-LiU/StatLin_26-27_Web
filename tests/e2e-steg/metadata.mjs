@@ -194,4 +194,21 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     await visitor.waitForFunction((el) => el.dataset.hydrated !== undefined, await inView.elementHandle());
     await context.close();
   });
+
+  await step("Rubriker på nivå fem och sex blir h4 i förhandsgranskningen (SB-17)", async () => {
+    await switchAccount(page, ADMIN);
+    const { context, page: tab } = await newVisitor(browser);
+    await context.addCookies(await page.context().cookies());
+    await tab.goto(`${BASE}/admin/nyheter/ny`);
+    await waitForHydration(tab, tab.locator('input[name="title"]'));
+    await tab.fill('textarea[name="body_md"]', "##### Femma\n\n###### Sexa\n\nBrödtext");
+    await tab.getByRole("button", { name: "Förhandsgranska" }).click();
+    const preview = tab.locator("form .prose-statlin");
+    await preview.getByText("Brödtext").waitFor();
+    assert.deepEqual(await preview.locator("h4").allTextContents(), ["Femma", "Sexa"]);
+    const weight = (locator) => locator.evaluate((el) => Number(getComputedStyle(el).fontWeight));
+    const [heading, text] = [await weight(preview.locator("h4").first()), await weight(preview.getByText("Brödtext"))];
+    assert.ok(heading > text, `Rubriken ser ut som vanlig text: vikt ${heading} mot ${text}`);
+    await context.close();
+  });
 }
