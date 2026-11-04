@@ -6,7 +6,7 @@
 //
 // Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att uppladdningen nekar andra ursprung, att mediaadresser
-// inte leder ut ur uppladdningsmappen, att fliken har en ikon, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
+// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
 // SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
 // kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
@@ -191,6 +191,19 @@ await check("Mediaadresser kan inte leda ut ur uppladdningsmappen", async () => 
     const { res } = await get(path);
     expect(res.status === 404, `${path} gav status ${res.status}`);
   }
+});
+
+await check("Säkerhetsrubriker", async () => {
+  const { res } = await get("/");
+  const csp = res.headers.get("content-security-policy") ?? "";
+  for (const part of ["default-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"]) {
+    expect(csp.includes(part), `Content-Security-Policy saknar ${part}: ${csp || "ingen rubrik"}`);
+  }
+  expect(/max-age=[1-9]/.test(res.headers.get("strict-transport-security") ?? ""), "Strict-Transport-Security saknas");
+  expect(res.headers.get("x-content-type-options") === "nosniff", "X-Content-Type-Options saknas");
+  // Uppladdade filer har en egen, striktare policy i media-rutten. Sajtens policy (next.config.ts) får inte gälla där.
+  const media = (await get("/media/finns/inte.webp")).res.headers.get("content-security-policy") ?? "";
+  expect(!media.includes("default-src 'self'"), `/media har sajtens policy: ${media}`);
 });
 
 console.log(`Snabbkontroll av ${BASE}\n`);
