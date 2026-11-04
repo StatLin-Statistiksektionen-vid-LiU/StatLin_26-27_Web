@@ -142,30 +142,57 @@ export async function storeFile(file: File, userId: number | null): Promise<Medi
   }
 }
 
-/** Tar bort mediefilen om den inte längre används någonstans. */
-export async function deleteMediaIfUnused(mediaId: number | null | undefined) {
-  if (!mediaId) return;
+/** Kolumnerna som pekar på en rad i media med dess id. */
+const USED_BY_ID = `SELECT
+  (SELECT COUNT(*) FROM event_images WHERE media_id = @id) +
+  (SELECT COUNT(*) FROM events WHERE cover_media_id = @id) +
+  (SELECT COUNT(*) FROM news WHERE cover_media_id = @id) +
+  (SELECT COUNT(*) FROM board_members WHERE photo_media_id = @id) +
+  (SELECT COUNT(*) FROM partners WHERE logo_media_id = @id) +
+  (SELECT COUNT(*) FROM documents WHERE media_id = @id) +
+  (SELECT COUNT(*) FROM resources WHERE media_id = @id) AS n`;
+
+/**
+ * Ställena där adressen (/media/<path_base>…) kan stå i stället för id:t (SD-09): utskottens loggor, som sparas som adress,
+ * Markdown-texterna – där redigeraren lägger in bilder – och länkfälten som godtar adresser som börjar med / (zUrl), samt
+ * uppdragens texter och inställningarna (meddelandets länk).
+ */
+const USED_BY_ADDRESS = `SELECT
+  (SELECT COUNT(*) FROM committees WHERE logo_url LIKE @pattern OR description_md LIKE @pattern OR instagram LIKE @pattern) +
+  (SELECT COUNT(*) FROM news WHERE body_md LIKE @pattern) +
+  (SELECT COUNT(*) FROM events WHERE body_md LIKE @pattern OR signup_url LIKE @pattern OR location_url LIKE @pattern) +
+  (SELECT COUNT(*) FROM pages WHERE body_md LIKE @pattern) +
+  (SELECT COUNT(*) FROM links WHERE url LIKE @pattern) +
+  (SELECT COUNT(*) FROM resources WHERE url LIKE @pattern) +
+  (SELECT COUNT(*) FROM documents WHERE url LIKE @pattern) +
+  (SELECT COUNT(*) FROM partners WHERE url LIKE @pattern) +
+  (SELECT COUNT(*) FROM tasks WHERE description LIKE @pattern) +
+  (SELECT COUNT(*) FROM task_comments WHERE body LIKE @pattern) +
+  (SELECT COUNT(*) FROM settings WHERE value LIKE @pattern) AS n`;
+
+/** Används bilden eller filen någonstans – med id eller med sin adress? Samma räkning gäller borttagning och gallring. */
+function mediaInUse(m: Pick<Media, "id" | "path_base">): boolean {
   const db = getDb();
-  const used = db
-    .prepare(
-      `SELECT
-        (SELECT COUNT(*) FROM event_images WHERE media_id = @id) +
-        (SELECT COUNT(*) FROM events WHERE cover_media_id = @id) +
-        (SELECT COUNT(*) FROM news WHERE cover_media_id = @id) +
-        (SELECT COUNT(*) FROM board_members WHERE photo_media_id = @id) +
-        (SELECT COUNT(*) FROM partners WHERE logo_media_id = @id) +
-        (SELECT COUNT(*) FROM documents WHERE media_id = @id) +
-        (SELECT COUNT(*) FROM resources WHERE media_id = @id) +
-        (SELECT COUNT(*) FROM committees WHERE logo_url LIKE '%' || (SELECT path_base FROM media WHERE id = @id) || '%') AS n`,
-    )
-    .get({ id: mediaId }) as { n: number };
-  if (used.n > 0) return;
-  const m = db.prepare("SELECT * FROM media WHERE id = ?").get(mediaId) as Media | undefined;
-  if (!m) return;
-  db.prepare("DELETE FROM media WHERE id = ?").run(mediaId);
+  if ((db.prepare(USED_BY_ID).get({ id: m.id }) as { n: number }).n > 0) return true;
+  // path_base är "ÅÅÅÅ/MM/<uuid>" (newBase): siffror, a–f, - och /. LIKE:s jokertecken % och _ kan inte förekomma, och
+  // gjorde de det skulle mönstret bara träffa fler rader – bilden räknades då som använd och stod kvar.
+  return (db.prepare(USED_BY_ADDRESS).get({ pattern: `%${m.path_base}%` }) as { n: number }).n > 0;
+}
+
+/** Raden och filerna. Anroparen har kontrollerat att inget använder dem. */
+async function removeMedia(m: Media) {
+  getDb().prepare("DELETE FROM media WHERE id = ?").run(m.id);
   const files =
     m.kind === "image"
       ? m.variants.split(",").filter(Boolean).map((w) => `${m.path_base}-${w}.webp`)
       : [`${m.path_base}.${m.ext}`];
-  await Promise.all(files.map((f) => fs.rm(path.join(UPLOADS_DIR, f), { force: true })));
+  await removeFiles(files.map((f) => path.join(UPLOADS_DIR, f)));
+}
+
+/** Tar bort mediefilen om den inte längre används någonstans – varken med id eller med adressen i en text eller länk. */
+export async function deleteMediaIfUnused(mediaId: number | null | undefined) {
+  if (!mediaId) return;
+  const m = getDb().prepare("SELECT * FROM media WHERE id = ?").get(mediaId) as Media | undefined;
+  if (!m || mediaInUse(m)) return;
+  await removeMedia(m);
 }
