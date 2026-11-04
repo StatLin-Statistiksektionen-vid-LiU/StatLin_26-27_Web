@@ -168,7 +168,15 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
 - Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Återställ lösenordet för ett konto: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte, och en felskriven adress avbryter skriptet i stället för att skapa ett konto. Med `--make-admin` skapas en ny administratör, eller blir ett befintligt konto administratör.
-- **Egen domän:** kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Byt sedan `SITE_URL` på båda ställena i `fly.toml` och kör `fly deploy`.
+- **Egen domän** (från `statlin-web.fly.dev` till `statlin.se`), i den här ordningen:
+  1. Kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Låt MX-posterna för e-posten stå kvar. Vänta tills `fly certs check statlin.se` visar att certifikatet är utfärdat.
+  2. Byt `SITE_URL` till `https://statlin.se` på båda ställena i `fly.toml`, under `[build.args]` och `[env]`. Adressen bakas in i förrenderade sidor (delningsbild, `canonical`, `robots.txt`) när sajten byggs, så `fly secrets set` räcker inte – sajten måste byggas om.
+  3. Lägg den här regeln först i `redirects()` i `next.config.ts`, så att den gamla adressen skickar vidare till den nya i stället för att visa samma innehåll en gång till (dubblettinnehåll för sökmotorerna). Flys hälsokontroll anropar maskinen över det privata nätet, inte `statlin-web.fly.dev`, och påverkas inte.
+     ```ts
+     { source: "/:path*", has: [{ type: "host", value: "statlin-web.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true },
+     ```
+  4. Kalenderhändelsernas UID innehåller värden (`event-<id>@<värd>`, `src/lib/ics.ts`) och byter värd samtidigt. Bestäm före bytet hur det ska hanteras för dem som prenumererar på kalendern eller har lagt in evenemang i sin egen.
+  5. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se/`, `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
 
 ### Utan Docker
 
@@ -364,7 +372,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run create-admin -- <e-post> ["Namn"] [--reset \| --make-admin]` | Nytt lösenord för ett befintligt konto med rollen orörd (`--reset`, standard – en felskriven adress avbryter i stället för att skapa ett konto); `--make-admin` skapar en administratör eller gör kontot till administratör |
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
 | `npm run test:e2e [-- <url>]` | End-to-end-test (inloggning, roller, evenemang, bildgalleri, granskning, uppdragstavla, länksidan, tentastatistik, hjälpmedel, grafiskt ansvar) mot en nyseedad server, som standard `http://localhost:3000` – se kommentaren i `tests/e2e.mjs`. Kräver `npx playwright install chromium` en gång per dator. |
-| `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, delningsbilder. Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
+| `node tests/smoke.mjs <url>` | Snabbkontroll av en körande sajt: sidor, hälsokontroll, kalenderflöde, sitemap, och att delningsbild, `canonical`, sitemap och `robots.txt` pekar på `SITE_URL` (miljövariabeln, annars `<url>`). Läser bara, så den är säker att köra mot produktion. Kräver bara Node. |
 
 ## Att göra
 
