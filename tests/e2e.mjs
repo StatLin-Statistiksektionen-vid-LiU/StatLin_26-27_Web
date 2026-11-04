@@ -1161,6 +1161,23 @@ async function openDeleteConfirm(page) {
       assert.equal(await page.locator("dialog[open]").count(), 0, "ingen dialog ska stå kvar öppen");
     });
 
+    await step("Servern nekar den som inte får ta bort, och beskedet syns", async () => {
+      // Egen sida men ett annat uppdrags id i formuläret: det är så ett förfalskat anrop ser ut för servern.
+      await page.goto(taskUrl);
+      const dialog = await openDeleteConfirm(page);
+      await dialog.locator('input[name="id"]').evaluate((input, id) => (input.value = id), assignedUrl.split("/").pop());
+      await dialog.getByRole("button", { name: "Ta bort" }).click();
+      await dialog.getByRole("alert").getByText("Du har inte behörighet att göra det här.").waitFor();
+      assert.equal(page.url().split("?")[0], taskUrl, "den som nekas ska stå kvar på sidan");
+      // Beskedet gäller det försöket. Öppnas bekräftelsen igen börjar den utan det.
+      await dialog.getByRole("button", { name: "Avbryt" }).click();
+      await dialog.waitFor({ state: "hidden" });
+      await openDeleteConfirm(page);
+      assert.equal(await dialog.getByRole("alert").count(), 0, "det gamla beskedet ska vara borta");
+      await page.goto(assignedUrl);
+      await heading("Uppdrag till SCB i testet").waitFor();
+    });
+
     await step("Avsändaren tar bort sitt uppdrag och ser beskedet", async () => {
       await page.goto(taskUrl);
       await confirmDelete(await openDeleteConfirm(page));
@@ -1188,6 +1205,28 @@ async function openDeleteConfirm(page) {
       assert.equal(await page.getByRole("link", { name: /Hemlig planering i testet/ }).count(), 0, "uppdraget ska vara borta från tavlan");
       await page.goto(`${BASE}/admin`);
       await page.locator("li", { hasText: "tog bort uppdraget" }).getByText("Hemlig planering i testet").waitFor();
+    });
+
+    await step("Ett uppdrag som redan är borttaget ger ett besked", async () => {
+      const url = await newTask("Flikprov i testet", "Ordförande SCB");
+      const tab = await page.context().newPage();
+      await tab.goto(url);
+      const stale = await openDeleteConfirm(tab);
+      await confirmDelete(await openDeleteConfirm(page));
+      await stale.getByRole("button", { name: "Ta bort" }).click();
+      await stale.getByRole("alert").getByText("Uppdraget finns inte längre.").waitFor();
+      await tab.close();
+    });
+
+    await step("Den som loggats ut ser ett besked, och uppdraget står kvar", async () => {
+      const url = await newTask("Utloggningsprov i testet", "Ordförande SCB");
+      const dialog = await openDeleteConfirm(page);
+      await page.context().clearCookies();
+      await dialog.getByRole("button", { name: "Ta bort" }).click();
+      await dialog.getByRole("alert").getByText("Du har loggats ut").waitFor();
+      await login(page, "admin@statlin.se", "lokal-admin-2026");
+      await page.goto(url);
+      await heading("Utloggningsprov i testet").waitFor();
     });
 
     // Grafiskt ansvar: bilderna på alla evenemang och nyheter, men inte texterna.

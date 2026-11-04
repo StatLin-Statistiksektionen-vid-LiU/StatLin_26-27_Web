@@ -143,14 +143,17 @@ export async function addTaskComment(_prev: FormState, fd: FormData): Promise<Fo
   return { ok: true, message: "Kommentaren är skickad." };
 }
 
-export async function deleteTask(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
+export async function deleteTask(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom: en kaka i ett felsvar renderar om sidan.
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
-  if (!existing || !canEditTask(user, existing)) redirect("/admin/uppdrag");
+  if (!existing) return { error: "Uppdraget finns inte längre." };
+  if (!canEditTask(user, existing)) return forbidden;
   getDb().prepare("DELETE FROM tasks WHERE id = ?").run(id);
   audit(user.id, "delete", "task", id, existing.title);
+  await renewSessionIfDue();
   revalidateBoard();
   redirect("/admin/uppdrag?raderat=1");
 }
