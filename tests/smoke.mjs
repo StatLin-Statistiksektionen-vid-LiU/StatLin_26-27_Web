@@ -6,7 +6,7 @@
 //
 // Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att uppladdningen nekar andra ursprung, att mediaadresser
-// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
+// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, att sitemapen och kalenderfilerna får cachas, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
 // SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
 // kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
@@ -204,6 +204,20 @@ await check("Säkerhetsrubriker", async () => {
   // Uppladdade filer har en egen, striktare policy i media-rutten. Sajtens policy (next.config.ts) får inte gälla där.
   const media = (await get("/media/finns/inte.webp")).res.headers.get("content-security-policy") ?? "";
   expect(!media.includes("default-src 'self'"), `/media har sajtens policy: ${media}`);
+});
+
+await check("Sitemapen och kalenderfilerna får cachas", async () => {
+  const expectCached = async (path) => {
+    const { res } = await get(path);
+    expect(res.status === 200, `${path} gav status ${res.status}`);
+    const value = res.headers.get("cache-control") ?? "";
+    expect(/\bpublic\b.*\bmax-age=[1-9]/.test(value), `${path} har cache-control: ${value || "ingen rubrik"}`);
+  };
+  await expectCached("/sitemap.xml");
+  await expectCached("/kalender.ics");
+  const slug = (await get("/evenemang")).body.match(/href="\/evenemang\/([^"/]+)"/)?.[1];
+  if (!slug) return "inget evenemang att prova kalenderfilen på";
+  await expectCached(`/evenemang/${slug}/kalender.ics`);
 });
 
 console.log(`Snabbkontroll av ${BASE}\n`);
