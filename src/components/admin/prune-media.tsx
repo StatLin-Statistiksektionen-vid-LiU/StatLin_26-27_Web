@@ -9,7 +9,8 @@ export function PruneMedia({ action }: { action: () => Promise<FormState> }) {
   const [state, setState] = useState<FormState>({});
   const [pending, startTransition] = useTransition();
   const run = () => {
-    if (!confirm("Ta bort uppladdningar som inte har använts någonstans på minst en vecka? Det går inte att ångra.")) return;
+    // Gallringen väljer på uppladdningsdatum och på om något använder filen just nu – inte på hur länge den varit oanvänd.
+    if (!confirm("Ta bort uppladdningar som är äldre än en vecka och inte används någonstans just nu? Det går inte att ångra.")) return;
     startTransition(async () => {
       try {
         setState(await action());
