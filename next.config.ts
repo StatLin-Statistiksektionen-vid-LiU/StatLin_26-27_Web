@@ -66,6 +66,9 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // /media/ har en egen, strängare CSP med sandbox (src/app/media/[...path]/route.ts) – där ska inte två CSP-rubriker skickas.
       { source: "/((?!media(?:/|$)).*)", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }] },
+      // Sitemapen läser tre tabeller per anrop; Nexts standard för en dynamisk metadatarutt är max-age=0 (ST-22). Rubriken härifrån
+      // vinner: Next lägger inte på ruttens egen Cache-Control när rubriken redan är satt (next/dist/server/send-response.js).
+      { source: "/sitemap.xml", headers: [{ key: "Cache-Control", value: "public, max-age=3600" }] },
     ];
   },
   // Utbildning och Ny student flyttade under Studenter – gamla länkar ska fortsätta fungera.

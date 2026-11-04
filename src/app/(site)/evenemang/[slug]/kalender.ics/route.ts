@@ -10,6 +10,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/evenemang/[slug]/ka
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": `attachment; filename="${event.slug}.ics"`,
+      // Som flödet /kalender.ics: kalenderprogram som prenumererar på evenemanget hämtar inte om det vid varje uppdatering.
+      "Cache-Control": "public, max-age=900",
     },
   });
 }
