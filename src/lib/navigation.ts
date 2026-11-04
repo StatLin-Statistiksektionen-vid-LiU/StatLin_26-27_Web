@@ -48,3 +48,17 @@ export const PAGE_PATHS: Record<string, string> = {
 
 /** Engelska sidor ligger under /en – resten av sajten är på svenska. */
 export const isEnglishPath = (pathname: string) => pathname === "/en" || pathname.startsWith("/en/");
+
+/** Sidor som finns på båda språken: svenska, engelska. */
+const LANGUAGE_PAIRS = [
+  ["/", "/en"],
+  ["/studenter/master", "/en/masters"],
+] as const;
+
+/** Språkväxlaren: motsvarande sida på det andra språket, annars /en från svenska sidor och startsidan från engelska. */
+export function languageSwitch(pathname: string | null) {
+  if (pathname !== null && isEnglishPath(pathname)) {
+    return { href: LANGUAGE_PAIRS.find(([, en]) => en === pathname)?.[0] ?? "/", short: "SV", label: "På svenska", lang: "sv" };
+  }
+  return { href: LANGUAGE_PAIRS.find(([sv]) => sv === pathname)?.[1] ?? "/en", short: "EN", label: "In English", lang: "en" };
+}

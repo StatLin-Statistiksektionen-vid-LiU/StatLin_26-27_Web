@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { isEnglishPath, NAV, type NavGroup } from "@/lib/navigation";
+import { languageSwitch, NAV, type NavGroup } from "@/lib/navigation";
 import { ArrowUpRight, ChevronDown, Close, Menu } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -28,11 +28,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isHome = pathname === "/";
-  // Språkväxlaren leder till de engelska sidorna – eller tillbaka till startsidan från dem.
-  const language =
-    pathname !== null && isEnglishPath(pathname)
-      ? { href: "/", short: "SV", label: "På svenska", lang: "sv" }
-      : { href: "/en", short: "EN", label: "In English", lang: "en" };
+  const language = languageSwitch(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > (isHome ? window.innerHeight * 0.55 : 24));

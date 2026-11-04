@@ -10,11 +10,12 @@ import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
 import { listFeaturedLinks } from "@/lib/data/links";
+import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Masterprogrammet",
   description: "Statistics and Machine Learning, 120 hp, vid Linköpings universitet – StatLin är sektionen för masterstudenterna också.",
-  alternates: { languages: { sv: "/studenter/master", en: "/en/masters" } },
+  alternates: { ...SITE_ALTERNATES, languages: { sv: "/studenter/master", en: "/en/masters" } },
 };
 
 const LINKS = [

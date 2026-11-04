@@ -84,4 +84,24 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     await visitor.locator('main li a[target="_blank"]:visible').first().waitFor();
     await context.close();
   });
+
+  await step("Språkväxlaren leder till motsvarande sida på det andra språket (SB-21)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    const pairs = [
+      ["/", "/en"],
+      ["/en", "/"],
+      ["/studenter/master", "/en/masters"],
+      ["/en/masters", "/studenter/master"],
+      ["/evenemang", "/en"],
+    ];
+    for (const [from, to] of pairs) {
+      await visitor.goto(`${BASE}${from}`);
+      // Rubriken är ett av hålen i skalet, så när den syns har sidhuvudet också fått adressen.
+      await visitor.locator("main h1").first().waitFor();
+      const link = visitor.locator("header a[hreflang]").first();
+      await waitForHydration(visitor, link);
+      assert.equal(await link.getAttribute("href"), to, `Från ${from}`);
+    }
+    await context.close();
+  });
 }

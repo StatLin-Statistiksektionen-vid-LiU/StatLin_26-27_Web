@@ -9,6 +9,7 @@ import { Markdown } from "@/components/content/markdown";
 import { SmartImage } from "@/components/content/smart-image";
 import { ArrowLeft, ArrowUpRight, Calendar, Clock, Image as ImageIcon, MapPin, Ticket } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
+import { SITE_OG } from "@/lib/site-metadata";
 import { getSettings } from "@/lib/data/content";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
 import { eventEnd, eventSchemaDates, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/evenemang/[slug]"
   return {
     title: event.title,
     description: event.summary || stripMarkdown(event.body_md),
-    openGraph: event.cover ? { images: [{ url: event.cover.src, width: event.cover.width, height: event.cover.height }] } : undefined,
+    openGraph: event.cover ? { ...SITE_OG, images: [{ url: event.cover.src, width: event.cover.width, height: event.cover.height }] } : SITE_OG,
   };
 }
 

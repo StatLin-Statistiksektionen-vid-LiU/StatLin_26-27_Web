@@ -8,11 +8,13 @@ import { ArrowRight, Mail } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
+import { SITE_ALTERNATES, SITE_OG_EN } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Master's students",
   description: "For students on the master's programme Statistics and Machine Learning at Linköping University: events, contacts and how to get involved in StatLin.",
-  alternates: { canonical: "/en/masters" },
+  alternates: { ...SITE_ALTERNATES, canonical: "/en/masters", languages: { sv: "/studenter/master", en: "/en/masters" } },
+  openGraph: SITE_OG_EN,
 };
 
 export default function MastersPage() {

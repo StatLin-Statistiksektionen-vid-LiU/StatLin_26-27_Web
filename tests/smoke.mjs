@@ -6,7 +6,7 @@
 //
 // Kontrollerar att de publika sidorna svarar utan fel (även länksidan och tentastatistiken), att hälsokontrollen, kalenderflödet,
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att uppladdningen nekar andra ursprung, att mediaadresser
-// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att sidorna skickar säkerhetsrubrikerna, att sitemapen och kalenderfilerna får cachas, att evenemangens kalendervy och filter inte indexeras, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
+// inte leder ut ur uppladdningsmappen, att fliken har en ikon, att delningsmetadatan, kalenderlänken och språkversionerna finns kvar på sidor med egna block, att sidorna skickar säkerhetsrubrikerna, att sitemapen och kalenderfilerna får cachas, att evenemangens kalendervy och filter inte indexeras, och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
 // SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
 // kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
@@ -128,6 +128,58 @@ await check("Evenemangens kalendervy och filter indexeras inte", async () => {
     expect(canonical(body) === "/evenemang", `${query} har canonical ${canonical(body)}`);
     expect(noindex(body), `${query} saknar noindex`);
   }
+});
+
+// Metadatan slås inte ihop på djupet: en sida som sätter openGraph eller alternates ersätter hela blocket från rotlayouten (SB-02).
+const metaProperty = (body, property) => body.match(new RegExp(`<meta[^>]*\\sproperty="${property}"[^>]*\\scontent="([^"]*)"`))?.[1];
+
+await check("Sajtnamn, språk och delningsbild på evenemang och nyheter", async () => {
+  const missing = [];
+  for (const list of ["/evenemang", "/nyheter"]) {
+    const slug = (await get(list)).body.match(new RegExp(`href="${list}/([^"/]+)"`))?.[1];
+    if (!slug) {
+      missing.push(`inget under ${list} att prova på`);
+      continue;
+    }
+    const { body } = await get(`${list}/${slug}`);
+    for (const property of ["og:site_name", "og:locale", "og:image"]) {
+      expect(metaProperty(body, property), `${list}/${slug} saknar ${property}`);
+    }
+  }
+  return missing.join(", ");
+});
+
+await check("Alla sidor länkar till kalenderflödet", async () => {
+  for (const path of PAGES) {
+    const { body } = await get(path);
+    expect(/<link[^>]*\stype="text\/calendar"[^>]*>/.test(body), `${path} har tappat länken till kalenderflödet`);
+  }
+});
+
+await check("Masterprogrammets två språkversioner pekar på varandra", async () => {
+  const languages = (body) => new Map([...body.matchAll(/<link[^>]*\shreflang="[^"]*"[^>]*>/gi)].map(([link]) => [link.match(/hreflang="([^"]*)"/i)[1], new URL(link.match(/\shref="([^"]*)"/)[1], BASE).pathname]));
+  for (const path of ["/en/masters", "/studenter/master"]) {
+    const found = languages((await get(path)).body);
+    expect(found.get("sv") === "/studenter/master", `${path}: hreflang sv pekar på ${found.get("sv")}`);
+    expect(found.get("en") === "/en/masters", `${path}: hreflang en pekar på ${found.get("en")}`);
+  }
+});
+
+await check("De engelska sidorna säger att de är engelska när de delas", async () => {
+  for (const path of ["/en", "/en/masters"]) {
+    const { body } = await get(path);
+    expect(metaProperty(body, "og:locale") === "en_GB", `${path} har og:locale ${metaProperty(body, "og:locale")}`);
+    expect(metaProperty(body, "og:site_name"), `${path} saknar og:site_name`);
+    expect(metaProperty(body, "og:image"), `${path} saknar og:image`);
+  }
+  const { body } = await get("/");
+  expect(metaProperty(body, "og:locale") === "sv_SE", `/ har og:locale ${metaProperty(body, "og:locale")}`);
+});
+
+await check("Datumen på /en/masters är på engelska", async () => {
+  const { body } = await get("/en/masters");
+  const swedish = body.match(/>(mån|tis|ons|tors|fre|lör|sön|Heldag[^<]*)</)?.[1];
+  expect(!swedish, `/en/masters visar "${swedish}"`);
 });
 
 await check("Flikikon (rel=icon)", async () => {

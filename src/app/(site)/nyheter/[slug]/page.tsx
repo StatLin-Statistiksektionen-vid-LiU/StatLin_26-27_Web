@@ -8,6 +8,7 @@ import { SmartImage } from "@/components/content/smart-image";
 import { ArrowLeft } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getNewsBySlug, listNews } from "@/lib/data/news";
+import { SITE_OG } from "@/lib/site-metadata";
 import { fitHeading, stripMarkdown } from "@/lib/utils";
 import { EditModeButton, Editable } from "@/components/edit-mode/editable";
 
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/nyheter/[slug]">)
   return {
     title: item.title,
     description: item.excerpt || stripMarkdown(item.body_md),
-    openGraph: { type: "article", publishedTime: item.published_at, images: item.cover ? [{ url: item.cover.src }] : undefined },
+    openGraph: { ...SITE_OG, type: "article", publishedTime: item.published_at, images: item.cover ? [{ url: item.cover.src }] : SITE_OG.images },
   };
 }
 

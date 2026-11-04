@@ -9,6 +9,7 @@ import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getExamStats } from "@/lib/data/exam-stats";
 import { formatTimestamp, todayLocal } from "@/lib/dates";
 import { normalizeCourseCode, visibleOccasions } from "@/lib/exam-stats";
+import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
 type Params = PageProps<"/tentastatistik/[kod]">["params"];
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/tentastatistik/[k
   return {
     title: `Tentastatistik ${course}`,
     description: `Betyg och andel godkända på varje tentatillfälle i ${course} vid Linköpings universitet.`,
-    alternates: { canonical: `/tentastatistik/${data.code}` },
+    alternates: { ...SITE_ALTERNATES, canonical: `/tentastatistik/${data.code}` },
   };
 }
 
