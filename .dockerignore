@@ -1,8 +1,11 @@
 .git
 .claude
+.superpowers
 .next
 node_modules
 data
+docs
+tests
 *.db
 *.db-wal
 *.db-shm

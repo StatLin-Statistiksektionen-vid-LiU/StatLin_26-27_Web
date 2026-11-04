@@ -47,9 +47,21 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // bcryptjs måste ligga som eget paket i standalone-bygget: scripts/create-admin.mjs importerar det i Docker.
   serverExternalPackages: ["better-sqlite3", "sharp", "bcryptjs"],
-  // Databasen och uppladdningar läses från DATA_DIR vid körning – de ska aldrig följa med i bygget.
+  // Databasen och uppladdningar läses från DATA_DIR vid körning – de ska aldrig följa med i bygget. Inte heller projektets källkod,
+  // dokument och prov: spårningen tar i dag med hela projektet (Turbopack-varningen om media-store.ts), men servern läser inga av
+  // de filerna när den kör – den kör det som byggts till .next/.
   outputFileTracingExcludes: {
-    "/*": ["./data/**/*", "./scripts/**/*", "./.git/**/*", "./README.md", "./AGENTS.md"],
+    "/*": [
+      "./data/**/*",
+      "./scripts/**/*",
+      "./.git/**/*",
+      "./README.md",
+      "./AGENTS.md",
+      "./docs/**/*",
+      "./tests/**/*",
+      "./src/**/*",
+      "./.superpowers/**/*",
+    ],
   },
   experimental: {
     serverActions: {
