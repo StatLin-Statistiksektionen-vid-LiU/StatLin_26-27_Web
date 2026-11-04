@@ -7,12 +7,16 @@
 // sitemap och robots.txt fungerar, att adminpanelen kräver inloggning, att fliken har en ikon,
 // och att delningsbilden, canonical, sitemap och robots.txt pekar på sajtens adress, SITE_URL (ST-20). Adressen är
 // miljövariabeln SITE_URL om den är satt, annars adressen som provas. Fel adress betyder att sajten byggdes med en annan
-// SITE_URL – den bakas in vid bygget, se README. Lokalt utan SITE_URL bakar sajten in http://localhost:3000.
+// SITE_URL – den bakas in vid bygget, se README – eller att smoke körs mot en annan adress än den sajten byggdes med:
+// kör då smoke med SITE_URL=<adressen sajten byggdes med>. Lokalt utan SITE_URL bakar layouten in reservadressen
+// http://localhost:3000 (src/app/layout.tsx), medan sitemapen tar adressen ur Host – båda godtas då.
 
 const BASE = (process.argv[2] ?? "http://localhost:3000").replace(/\/$/, "");
 const IS_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE);
 const SITE_URL = (process.env.SITE_URL || BASE).replace(/\/$/, "");
-const onSite = (url) => url === SITE_URL || url.startsWith(`${SITE_URL}/`);
+const bases = [SITE_URL, ...(IS_LOCAL && !process.env.SITE_URL ? ["http://localhost:3000"] : [])];
+const onSite = (url) => bases.some((b) => url === b || url.startsWith(`${b}/`));
+const REMEDY = "kör smoke med SITE_URL=<adressen sajten byggdes med>, eller bygg om med rätt SITE_URL";
 
 const PAGES = [
   "/",
@@ -98,7 +102,7 @@ await check("Delningsbild (og:image)", async () => {
   const { body } = await get("/");
   const og = body.match(/property="og:image" content="([^"]+)"/)?.[1];
   expect(og, "og:image saknas");
-  expect(onSite(og), `pekar på ${og}, inte ${SITE_URL} – sätt SITE_URL och bygg om`);
+  expect(onSite(og), `pekar på ${og}, inte ${SITE_URL} – ${REMEDY}`);
   return og;
 });
 
@@ -107,7 +111,7 @@ await check("Kanonisk adress (canonical)", async () => {
   const link = body.match(/<link[^>]*\srel="canonical"[^>]*>/)?.[0];
   expect(link, 'länk med rel="canonical" saknas');
   const href = link.match(/\shref="([^"]+)"/)?.[1] ?? "";
-  expect(onSite(href), `pekar på ${href}, inte ${SITE_URL} – sätt SITE_URL och bygg om`);
+  expect(onSite(href), `pekar på ${href}, inte ${SITE_URL} – ${REMEDY}`);
   return href;
 });
 
@@ -137,7 +141,7 @@ await check("Sitemap /sitemap.xml", async () => {
   const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
   expect(locs.length > 0, "sitemapen har inga adresser");
   const off = locs.filter((u) => !onSite(u));
-  expect(off.length === 0, `${off.length} av ${locs.length} adresser börjar inte med ${SITE_URL}, t.ex. ${off[0]} – sätt SITE_URL`);
+  expect(off.length === 0, `${off.length} av ${locs.length} adresser börjar inte med ${SITE_URL}, t.ex. ${off[0]} – ${REMEDY}`);
   return `${locs.length} adresser`;
 });
 
@@ -147,8 +151,10 @@ await check("robots.txt", async () => {
   expect(body.includes("Disallow: /admin"), "adminpanelen är inte undantagen");
   // Raden finns bara när sajten byggdes med SITE_URL – lokalt utan SITE_URL får den saknas.
   const sitemap = body.match(/^Sitemap: (.+)$/m)?.[1]?.trim();
-  expect(sitemap || (IS_LOCAL && !process.env.SITE_URL), "Sitemap-raden saknas – sätt SITE_URL och bygg om");
-  if (sitemap) expect(sitemap === `${SITE_URL}/sitemap.xml`, `Sitemap-raden är ${sitemap}, inte ${SITE_URL}/sitemap.xml – sätt SITE_URL och bygg om`);
+  expect(sitemap || (IS_LOCAL && !process.env.SITE_URL), "Sitemap-raden saknas – bygg om med SITE_URL");
+  if (sitemap) {
+    expect(bases.some((b) => sitemap === `${b}/sitemap.xml`), `Sitemap-raden är ${sitemap}, inte ${SITE_URL}/sitemap.xml – ${REMEDY}`);
+  }
 });
 
 await check("Adminpanelen kräver inloggning", async () => {

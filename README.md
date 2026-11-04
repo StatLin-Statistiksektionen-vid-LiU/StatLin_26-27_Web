@@ -169,19 +169,20 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 - Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Återställ lösenordet för ett konto: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte, och en felskriven adress avbryter skriptet i stället för att skapa ett konto. Med `--make-admin` skapas en ny administratör, eller blir ett befintligt konto administratör.
 - **Egen domän** (från `statlin-web.fly.dev` till `statlin.se`), i den här ordningen:
-  1. Kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Låt MX-posterna för e-posten stå kvar. Vänta tills `fly certs check statlin.se` visar att certifikatet är utfärdat.
-  2. Byt `SITE_URL` till `https://statlin.se` på båda ställena i `fly.toml`, under `[build.args]` och `[env]`. Adressen bakas in i förrenderade sidor (delningsbild, `canonical`, `robots.txt`) när sajten byggs, så `fly secrets set` räcker inte – sajten måste byggas om.
-  3. Lägg den här regeln först i `redirects()` i `next.config.ts`, så att den gamla adressen skickar vidare till den nya i stället för att visa samma innehåll en gång till (dubblettinnehåll för sökmotorerna). Flys hälsokontroll anropar maskinen över det privata nätet, inte `statlin-web.fly.dev`, och påverkas inte.
+  1. Kontrollera först att varje underdomän till statlin.se som öppnas i en webbläsare, till exempel `www.statlin.se`, svarar över HTTPS. Sajten skickar `Strict-Transport-Security` med `includeSubDomains` (`next.config.ts`): den som har besökt statlin.se får sedan bara https mot alla underdomäner i två år, och en underdomän som bara klarar http – till exempel `www` genom registratorns vidarebefordran – blir oåtkomlig för den besökaren. Ska `www` peka hit: `fly certs add www.statlin.se` och DNS-posterna som kommandot visar.
+  2. Kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Låt MX-posterna för e-posten stå kvar. Vänta tills `fly certs check statlin.se` visar att certifikatet är utfärdat.
+  3. Byt `SITE_URL` till `https://statlin.se` på båda ställena i `fly.toml`, under `[build.args]` och `[env]`. Adressen bakas in i förrenderade sidor (delningsbild, `canonical`, `robots.txt`) när sajten byggs, så `fly secrets set` räcker inte – sajten måste byggas om.
+  4. Lägg den här regeln först i `redirects()` i `next.config.ts`, så att den gamla adressen skickar vidare till den nya i stället för att visa samma innehåll en gång till (dubblettinnehåll för sökmotorerna). Flys hälsokontroll anropar maskinen över det privata nätet, inte `statlin-web.fly.dev`, och påverkas inte.
      ```ts
      { source: "/:path*", has: [{ type: "host", value: "statlin-web.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true },
      ```
-  4. Kalenderhändelsernas UID innehåller värden (`event-<id>@<värd>`, `src/lib/ics.ts`) och byter värd samtidigt. Bestäm före bytet hur det ska hanteras för dem som prenumererar på kalendern eller har lagt in evenemang i sin egen.
-  5. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se/`, `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
+  5. Kalenderhändelsernas UID innehåller värden (`event-<id>@<värd>`, `src/lib/ics.ts`) och byter värd samtidigt. Bestäm före bytet hur det ska hanteras för dem som prenumererar på kalendern eller har lagt in evenemang i sin egen.
+  6. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se/`, `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
 
 ### Utan Docker
 
 ```bash
-npm ci && npm run build
+npm ci && SITE_URL=https://statlin.se npm run build
 cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 HOSTNAME=127.0.0.1 DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se CLIENT_IP_HEADER=x-real-ip node .next/standalone/server.js
 ```
