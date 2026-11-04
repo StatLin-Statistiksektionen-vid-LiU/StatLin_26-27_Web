@@ -269,3 +269,37 @@ export async function deleteMediaIfUnused(mediaId: number | null | undefined) {
   if (!m || mediaInUse(m)) return;
   await removeMedia(m);
 }
+
+/** En uppladdad fil: ÅÅÅÅ/MM/<uuid>, med -<bredd> för bilderna, och en filändelse – samma mönster som /media/-rutten. */
+const UPLOAD_NAME = /^(\d{4}\/\d{2}\/[0-9a-f-]{36})(?:-\d{2,5})?\.[a-z0-9]{2,5}$/;
+
+/**
+ * Gallring (ST-17): rader som inget använder (mediaInUse, samma räkning som deleteMediaIfUnused) och filer i uploads/ som
+ * saknar rad – båda först när de är äldre än olderThanDays. En bild laddas upp så fort den väljs i ett formulär, så
+ * åldersgränsen skyddar det någon håller på med. Originalen gallras med sina rader, aldrig på egen hand.
+ */
+export async function pruneOrphanMedia({ olderThanDays = 7 }: { olderThanDays?: number } = {}): Promise<{ rows: number; files: number }> {
+  const db = getDb();
+  const cutoff = Date.now() - olderThanDays * 86_400_000;
+  let rows = 0;
+  for (const m of db.prepare("SELECT * FROM media WHERE created_at < ? ORDER BY id").all(new Date(cutoff).toISOString()) as Media[]) {
+    if (mediaInUse(m)) continue;
+    await removeMedia(m);
+    rows++;
+  }
+  const known = new Set((db.prepare("SELECT path_base FROM media").all() as { path_base: string }[]).map((r) => r.path_base));
+  let files = 0;
+  const entries = await fs.readdir(UPLOADS_DIR, { recursive: true, withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const abs = path.join(entry.parentPath, entry.name);
+    const base = UPLOAD_NAME.exec(path.relative(UPLOADS_DIR, abs).split(path.sep).join("/"))?.[1];
+    // Bara filer med uppladdningarnas namn – något annat i katalogen har sajten inte lagt dit.
+    if (!base || known.has(base)) continue;
+    const stat = await fs.stat(abs).catch(() => null);
+    if (!stat || stat.mtimeMs >= cutoff) continue;
+    await fs.rm(abs, { force: true });
+    files++;
+  }
+  return { rows, files };
+}

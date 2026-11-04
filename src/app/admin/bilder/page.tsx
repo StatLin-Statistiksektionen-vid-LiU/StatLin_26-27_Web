@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { setCommitteeLogo } from "@/app/admin/_actions/content";
 import { setEventCover } from "@/app/admin/_actions/events";
+import { pruneUnusedMedia } from "@/app/admin/_actions/media";
 import { setNewsCover } from "@/app/admin/_actions/news";
 import { CoverSlot } from "@/components/admin/cover-slot";
+import { PruneMedia } from "@/components/admin/prune-media";
 import { AdminHeader } from "@/components/admin/ui";
 import { ArrowRight } from "@/components/icons";
 import { canManageImages } from "@/lib/auth/permissions";
@@ -95,6 +97,14 @@ async function Images({ searchParams }: { searchParams: PageProps<"/admin/bilder
             </ImageCard>
           ))}
         </ul>
+      </Section>
+
+      <Section
+        id="oanvanda"
+        title="Oanvända filer"
+        description="En bild laddas upp redan när den väljs i ett formulär. Det som aldrig sparades, eller som inget längre använder, tas bort här när det är äldre än en vecka. En bild som bara står i en text räknas som använd."
+      >
+        <PruneMedia action={pruneUnusedMedia} />
       </Section>
     </>
   );

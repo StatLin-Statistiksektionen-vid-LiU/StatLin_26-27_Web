@@ -27,6 +27,7 @@ const ENTITY_LABELS: Record<string, string> = {
   user: "konto",
   settings: "inställningar",
   task: "uppdraget",
+  media: "oanvända filer",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",
@@ -39,6 +40,7 @@ const ACTION_LABELS: Record<string, string> = {
   claim: "tog",
   cover: "bytte omslag på",
   logo: "bytte logga på",
+  prune: "rensade",
 };
 
 export default function Dashboard(props: PageProps<"/admin">) {
