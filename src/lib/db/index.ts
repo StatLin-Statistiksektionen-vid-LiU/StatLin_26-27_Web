@@ -24,15 +24,16 @@ let pruneCheckedAt = 0;
 
 /**
  * Serverkomponenter läser via readDb() (src/lib/data/db.ts) eller efter cookies(), som getSession. better-sqlite3 är synkront, så ett
- * anrop direkt under förrenderingen bakar in byggets data i sidan – och bygget stoppar det inte.
+ * anrop direkt under förrenderingen skulle baka in byggets data i sidan – Date.now() nedan gör att bygget stoppar det i stället.
  */
 export function getDb(): Database.Database {
   if (globalThis.__statlinDb) {
-    // Den vanliga vägen kostar ett performance.now(). En gång i timmen tittar gallringen på sin tidsstämpel (en primärnyckelsuppslagning)
-    // och gallrar om senaste gallringen är äldre än ett dygn – så att en process som kör länge också gallrar. performance.now() och inte
-    // Date.now(), eftersom Next räknar Date.now() som IO i förrenderingen (cacheComponents) och avbryter en förrendering som anropar den.
-    if (performance.now() - pruneCheckedAt >= PRUNE_CHECK_MS) {
-      pruneCheckedAt = performance.now();
+    // Den vanliga vägen kostar ett Date.now(). En gång i timmen tittar gallringen på sin tidsstämpel (en primärnyckelsuppslagning)
+    // och gallrar om senaste gallringen är äldre än ett dygn – så att en process som kör länge också gallrar. Date.now() med avsikt, inte
+    // performance.now(): Next räknar Date.now() som IO i förrenderingen (cacheComponents), så en serverkomponent som anropar getDb()
+    // direkt under förrenderingen stoppar bygget med en stack hit – i stället för att tyst baka in byggets databas i sidan.
+    if (Date.now() - pruneCheckedAt >= PRUNE_CHECK_MS) {
+      pruneCheckedAt = Date.now();
       pruneAuditLog(globalThis.__statlinDb, { onlyIfDue: true });
     }
   } else {
@@ -46,7 +47,7 @@ export function getDb(): Database.Database {
       migrate(db);
       bootstrap(db);
       pruneAuditLog(db);
-      pruneCheckedAt = performance.now();
+      pruneCheckedAt = Date.now();
     } catch (err) {
       // Nästa begäran försöker igen med ett nytt handtag, så det här måste stängas – annars läcker varje försök filhandtag.
       db.close();
