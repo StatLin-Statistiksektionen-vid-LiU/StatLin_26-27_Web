@@ -36,7 +36,10 @@ COPY --from=build --chown=statlin:statlin /app/scripts/create-admin.mjs ./script
 COPY --from=build --chown=statlin:statlin /app/scripts/create-accounts.mjs ./scripts/create-accounts.mjs
 COPY --from=build --chown=statlin:statlin /app/scripts/lib.mjs ./scripts/lib.mjs
 COPY --from=build --chown=statlin:statlin /app/scripts/password-words.json ./scripts/password-words.json
-COPY --from=build --chown=statlin:statlin /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+# Startskriptet körs som root vid varje start. Det ägs därför av root och är bara läsbart för andra, och katalogerna det
+# ligger i ägs av root, så att appanvändaren varken kan ändra det eller byta ut det mot ett eget (SD-18).
+COPY --from=build --chown=root:root /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+RUN chmod 0644 scripts/docker-entrypoint.mjs && chown root:root /app /app/scripts && chmod 0755 /app /app/scripts
 # Ingen USER/VOLUME här: startskriptet körs som root, rättar ägarskapet på den monterade
 # volymen (Fly monterar den som root) och släpper sedan till användaren statlin.
 # Volymen monteras av docker-compose eller värdens inställningar ([[mounts]] i fly.toml).
