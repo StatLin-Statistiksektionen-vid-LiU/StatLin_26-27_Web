@@ -7,8 +7,8 @@ import type { SessionUser } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
 /**
- * userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. Gallrar loggen högst en gång per
- * dygn (SD-31), så att en process som kör länge också gallrar – annars görs det när databasen öppnas.
+ * userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. Gallrar loggen om senaste
+ * gallringen är äldre än ett dygn (SD-31); det görs också när databasen öppnas och timvis från getDb() (src/lib/db/prune-audit-log.ts).
  */
 export function audit(userId: number | null, action: string, entity: string, entityId: string | number | null, summary = "") {
   const db = getDb();

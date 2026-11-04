@@ -18,8 +18,19 @@ declare global {
   var __statlinDb: Database.Database | undefined;
 }
 
+/** Högst så ofta frågar getDb() om revisionsloggen behöver gallras (SD-31) – ett sidbesök räcker för att sätta i gång den. */
+const PRUNE_CHECK_MS = 60 * 60 * 1000;
+let pruneCheckedAt = 0;
+
 export function getDb(): Database.Database {
-  if (!globalThis.__statlinDb) {
+  if (globalThis.__statlinDb) {
+    // Den vanliga vägen kostar ett Date.now(). En gång i timmen tittar gallringen på sin tidsstämpel (en primärnyckelsuppslagning)
+    // och gallrar om senaste gallringen är äldre än ett dygn – så att en process som kör länge också gallrar.
+    if (Date.now() - pruneCheckedAt >= PRUNE_CHECK_MS) {
+      pruneCheckedAt = Date.now();
+      pruneAuditLog(globalThis.__statlinDb, { onlyIfDue: true });
+    }
+  } else {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     const db = new Database(path.join(DATA_DIR, "statlin.db"));
     try {
@@ -30,6 +41,7 @@ export function getDb(): Database.Database {
       migrate(db);
       bootstrap(db);
       pruneAuditLog(db);
+      pruneCheckedAt = Date.now();
     } catch (err) {
       // Nästa begäran försöker igen med ett nytt handtag, så det här måste stängas – annars läcker varje försök filhandtag.
       db.close();

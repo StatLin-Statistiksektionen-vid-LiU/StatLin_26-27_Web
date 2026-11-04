@@ -2,8 +2,9 @@ import type Database from "better-sqlite3";
 
 /**
  * Gallrar revisionsloggen (SD-31): inloggningar och misslyckade inloggningar efter 90 dagar, övriga rader efter 24 månader – det
- * som integritetssidan (/integritet) lovar. Körs när databasen öppnas (getDb) och från audit() högst en gång per dygn, så att en
- * process som kör länge också gallrar; tidpunkten står i settings (audit_pruned_at). Ett fel loggas men stoppar aldrig sajten.
+ * som integritetssidan (/integritet) lovar. Körs vid tre tillfällen: alltid när en process öppnar databasen (getDb), och med
+ * onlyIfDue – bara om senaste gallringen är äldre än ett dygn – från getDb() högst en gång i timmen och från audit(), så att en
+ * process som kör länge också gallrar. Tidpunkten står i settings (audit_pruned_at). Ett fel loggas men stoppar aldrig sajten.
  */
 export function pruneAuditLog(db: Database.Database, { onlyIfDue = false } = {}) {
   try {

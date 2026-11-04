@@ -49,6 +49,11 @@ export default function PrivacyPage() {
             IP-adressen används bara i serverns minne, för spärren mot upprepade inloggningsförsök. Den sparas aldrig i
             databasen, och minnet töms när servern startar om.
           </p>
+          <p>
+            Uppdragstavlan sparar uppdrag och kommentarer med vem som skrivit dem, vem uppdraget gäller och när. De syns bara för
+            inloggade poster – ett privat uppdrag bara för avsändaren, mottagaren och redaktörerna – och finns kvar tills uppdraget
+            raderas; då raderas kommentarerna med det. Raderas ett konto står texten kvar, utan namn.
+          </p>
 
           <h2>Revisionsloggen</h2>
           <p>
