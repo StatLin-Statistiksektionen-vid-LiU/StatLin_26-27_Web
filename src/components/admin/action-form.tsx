@@ -162,7 +162,9 @@ export function ActionForm({
     // Skyddet står kvar om något skrevs under sparningen (fälten laddas inte om efter en egen sparning).
     setDirty(!resetOnSuccess && editedSinceSubmit.current);
     if (resetOnSuccess) formRef.current?.reset();
-    else {
+    // Ändrades något under sparningen (t.ex. en ny fil) står fälten kvar – isSameUpload hindrar att en sparad fil laddas upp
+    // igen.
+    else if (!editedSinceSubmit.current) {
       // En fil som redan sparats skickas inte med igen nästa gång formuläret sparas (SD-35). reset() tömmer den också.
       for (const input of formRef.current?.querySelectorAll<HTMLInputElement>('input[type="file"]') ?? []) input.value = "";
       // "Ta bort filen" är verkställd eller överkörd i och med den lyckade sparningen – ikryssad kvar hade nästa sparning
