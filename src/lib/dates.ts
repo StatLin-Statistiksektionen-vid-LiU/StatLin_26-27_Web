@@ -7,7 +7,7 @@ export const TZ = "Europe/Stockholm";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function nowLocal(): string {
+function toLocal(date: Date): string {
   const parts = new Intl.DateTimeFormat("sv-SE", {
     timeZone: TZ,
     year: "numeric",
@@ -16,9 +16,27 @@ export function nowLocal(): string {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).formatToParts(new Date());
+  }).formatToParts(date);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+export function nowLocal(): string {
+  return toLocal(new Date());
+}
+
+const OFFSETS = ["+01:00", "+02:00"] as const;
+
+/**
+ * UTC-förskjutningen i Stockholm för en lokal tid. En tid som inte finns (klockan hoppar från 02:00 till 03:00 sista söndagen i mars)
+ * eller som finns två gånger (sista söndagen i oktober) blir vintertid.
+ */
+export function stockholmOffset(local: string): (typeof OFFSETS)[number] {
+  for (const offset of OFFSETS) {
+    const d = new Date(`${local}:00${offset}`);
+    if (Number.isFinite(d.getTime()) && toLocal(d) === local) return offset;
+  }
+  return OFFSETS[0];
 }
 
 export function todayLocal(): string {
@@ -89,6 +107,12 @@ export function formatDateLong(local: string): string {
 export function eventEnd(start: string, end: string | null, allDay: boolean): string {
   if (allDay) return `${(end ?? start).slice(0, 10)}T23:59`;
   return end ?? `${start.slice(0, 10)}T23:59`;
+}
+
+/** startDate och endDate för schema.org: bara datum vid heldag, annars klockslag med tidszon. */
+export function eventSchemaDates(start: string, end: string | null, allDay: boolean) {
+  const format = (local: string) => (allDay ? local.slice(0, 10) : `${local}:00${stockholmOffset(local)}`);
+  return { startDate: format(start), endDate: end ? format(end) : undefined };
 }
 
 export function formatTimeRange(start: string, end: string | null, allDay: boolean): string {

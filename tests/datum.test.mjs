@@ -2,7 +2,7 @@
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { eventEnd, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay } from "../src/lib/dates.ts";
+import { eventEnd, eventSchemaDates, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 
 // V8 rullar de två första utan fel (2 mars, 1 mars). De två sista ger Invalid Date, och då kastar en rundtur utan vakt (R-21).
@@ -122,4 +122,32 @@ test("SB-10: en vecka med någon dag i månaden behålls", () => {
   assert.equal(november.length, 42);
   assert.equal(november[0].date, "2026-10-26");
   assert.equal(november.at(-1).date, "2026-12-06");
+});
+
+test("SB-22: förskjutningen följer svensk sommartid, också runt omställningarna", () => {
+  assert.equal(stockholmOffset("2026-01-15T12:00"), "+01:00");
+  assert.equal(stockholmOffset("2026-07-15T12:00"), "+02:00");
+  // Den 28 mars 2027 går klockan från 02:00 till 03:00.
+  assert.equal(stockholmOffset("2027-03-28T01:59"), "+01:00");
+  assert.equal(stockholmOffset("2027-03-28T03:00"), "+02:00");
+  // Den 25 oktober 2026 går klockan från 03:00 till 02:00.
+  assert.equal(stockholmOffset("2026-10-25T01:59"), "+02:00");
+  assert.equal(stockholmOffset("2026-10-25T03:00"), "+01:00");
+});
+
+test("SB-22: en tid som inte finns eller som finns två gånger får vintertid", () => {
+  assert.equal(stockholmOffset("2027-03-28T02:30"), "+01:00", "02:30 hoppas över den 28 mars");
+  assert.equal(stockholmOffset("2026-10-25T02:30"), "+01:00", "02:30 kommer två gånger den 25 oktober, den senare är vintertid");
+});
+
+test("SB-22: tider i strukturerad data har tidszon", () => {
+  assert.deepEqual(eventSchemaDates("2026-07-15T18:00", "2026-07-15T21:00", false), { startDate: "2026-07-15T18:00:00+02:00", endDate: "2026-07-15T21:00:00+02:00" });
+  assert.deepEqual(eventSchemaDates("2026-12-15T18:00", null, false), { startDate: "2026-12-15T18:00:00+01:00", endDate: undefined });
+  // Natten då klockan ställs om: starten är sommartid och slutet vintertid.
+  assert.deepEqual(eventSchemaDates("2026-10-24T22:00", "2026-10-25T04:00", false), { startDate: "2026-10-24T22:00:00+02:00", endDate: "2026-10-25T04:00:00+01:00" });
+});
+
+test("SB-22: heldag har bara datum, eftersom klockslaget inte säger något om en heldag", () => {
+  assert.deepEqual(eventSchemaDates("2026-08-17T00:00", "2026-08-21T00:00", true), { startDate: "2026-08-17", endDate: "2026-08-21" });
+  assert.deepEqual(eventSchemaDates("2026-08-17T18:00", null, true), { startDate: "2026-08-17", endDate: undefined });
 });

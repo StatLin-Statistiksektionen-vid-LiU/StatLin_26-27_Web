@@ -9,8 +9,9 @@ import { Markdown } from "@/components/content/markdown";
 import { SmartImage } from "@/components/content/smart-image";
 import { ArrowLeft, ArrowUpRight, Calendar, Clock, Image as ImageIcon, MapPin, Ticket } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
+import { getSettings } from "@/lib/data/content";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
-import { eventEnd, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
+import { eventEnd, eventSchemaDates, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
 import { googleCalendarUrl } from "@/lib/ics";
 import { siteUrl } from "@/lib/site-url";
 import { fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
@@ -40,25 +41,26 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const [images, more, base] = await Promise.all([
+  const [images, more, base, settings] = await Promise.all([
     listEventImages(event.id),
     listUpcomingEvents(4, event.committee_id ?? undefined),
     siteUrl(),
+    getSettings(),
   ]);
   const others = more.filter((e) => e.id !== event.id).slice(0, 3);
   const isPast = eventEnd(event.starts_at, event.ends_at, !!event.all_day) < nowLocal();
   const signup = safeExternalUrl(event.signup_url);
   const mapUrl = safeExternalUrl(event.location_url) ?? (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location + ", Linköping")}` : null);
 
+  const place = event.location || settings.address;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Event",
     name: event.title,
-    startDate: `${event.starts_at}:00`,
-    endDate: event.ends_at ? `${event.ends_at}:00` : undefined,
+    ...eventSchemaDates(event.starts_at, event.ends_at, !!event.all_day),
     eventStatus: "https://schema.org/EventScheduled",
-    location: event.location ? { "@type": "Place", name: event.location, address: event.location } : undefined,
-    description: event.summary,
+    location: place ? { "@type": "Place", name: place, address: place } : undefined,
+    description: event.summary || stripMarkdown(event.body_md) || undefined,
     organizer: { "@type": "Organization", name: event.committee?.name ?? "StatLin", url: base },
     image: event.cover ? [`${base}${event.cover.src}`] : undefined,
   };

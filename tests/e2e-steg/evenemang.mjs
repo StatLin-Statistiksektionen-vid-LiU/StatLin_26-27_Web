@@ -45,10 +45,12 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await page.locator(`[id$="-error"]:visible`, { hasText: message }).waitFor();
   };
   /** Publicerar ett evenemang genom formuläret. Svarar med adressen i admin och sluggen. */
-  const createEvent = async ({ title, startsAt, endsAt, allDay }) => {
+  const createEvent = async ({ title, startsAt, endsAt, allDay, location, body, summary = "Skapat av det automatiska testet." }) => {
     await openForm(`${BASE}/admin/evenemang/ny`);
     await page.fill('input[name="title"]', title);
-    await page.fill('textarea[name="summary"]', "Skapat av det automatiska testet.");
+    await page.fill('textarea[name="summary"]', summary);
+    if (location) await page.fill('input[name="location"]', location);
+    if (body) await page.fill('textarea[name="body_md"]', body);
     await page.fill('input[name="starts_at"]', startsAt);
     await openDetails();
     if (endsAt) await page.fill('input[name="ends_at"]', endsAt);
@@ -197,6 +199,35 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     assert.ok(upcoming > 6, `seeden ska ha fler än sex kommande för att testet ska säga något, är ${upcoming}`);
     await site.goto(BASE);
     await site.locator('dt:has-text("Kommande evenemang") + dd').filter({ hasText: new RegExp(`^${upcoming}$`) }).waitFor();
+  });
+
+  await step("SB-22: strukturerad data har tidszon, bara datum vid heldag, och sektionens adress och beskrivningen som reserv", async () => {
+    const schemaEvent = async (slug) => {
+      await site.goto(`${BASE}/evenemang/${slug}`);
+      const blocks = await site.locator('script[type="application/ld+json"]').evaluateAll((els) => els.map((s) => JSON.parse(s.textContent)));
+      return blocks.find((b) => b["@type"] === "Event");
+    };
+    await switchAccount(page, ADMIN);
+    await page.goto(`${BASE}/admin/installningar`);
+    const address = await page.inputValue('input[name="address"]');
+    assert.ok(address, "sektionen ska ha en adress");
+
+    // Fasta datum långt fram, så att tidszonen inte beror på när testet körs.
+    const kvall = await createEvent({ title: `E2E-data ${uniqueId()}`, startsAt: "2031-07-10T18:00", endsAt: "2031-07-10T21:00", summary: "", body: "Hela **texten** om kvällen." });
+    const sommar = await schemaEvent(kvall.slug);
+    assert.equal(sommar.startDate, "2031-07-10T18:00:00+02:00");
+    assert.equal(sommar.endDate, "2031-07-10T21:00:00+02:00");
+    assert.equal(sommar.location.address, address, "utan plats ska sektionens adress användas");
+    assert.equal(sommar.description, "Hela texten om kvällen.", "utan sammanfattning ska beskrivningen användas");
+    await removeEvent(kvall.url);
+
+    const heldag = await createEvent({ title: `E2E-data ${uniqueId()}`, startsAt: "2031-12-10T00:00", endsAt: "2031-12-12T00:00", allDay: true, location: "Kårallen" });
+    const vinter = await schemaEvent(heldag.slug);
+    assert.equal(vinter.startDate, "2031-12-10");
+    assert.equal(vinter.endDate, "2031-12-12");
+    assert.equal(vinter.location.address, "Kårallen");
+    assert.equal(vinter.description, "Skapat av det automatiska testet.");
+    await removeEvent(heldag.url);
   });
 
   await visitor.context.close();
