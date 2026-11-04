@@ -5,7 +5,31 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // Webbläsaren går direkt till https i två år efter första besöket (Fly omdirigerar redan http, fly.toml: force_https).
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
+
+// Läses när konfigurationen laddas: next dev kör development, next build (och därmed standalone-bygget) production.
+const isDev = process.env.NODE_ENV !== "production";
+
+/**
+ * CSP utan nonce enligt Nexts vägledning (node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md, "Without
+ * Nonces"; nonce kräver dynamisk rendering av varje sida, R-26). 'unsafe-inline' behövs för Nexts egna inline-skript och skriptet i
+ * src/app/layout.tsx, blob: för galleriets förhandsvisningar. I utvecklingsläget behöver React 'unsafe-eval' (samma sida,
+ * "Development Environment"), och upgrade-insecure-requests utelämnas: dev-servern körs över http.
+ */
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data:",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+].join("; ");
 
 // Extra värdar som får anropa server actions – se src/lib/allowed-origins.ts.
 const allowedOrigins = [
@@ -38,7 +62,11 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "32mb",
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // /media/ har en egen, strängare CSP med sandbox (src/app/media/[...path]/route.ts) – där ska inte två CSP-rubriker skickas.
+      { source: "/((?!media(?:/|$)).*)", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }] },
+    ];
   },
   // Utbildning och Ny student flyttade under Studenter – gamla länkar ska fortsätta fungera.
   async redirects() {
