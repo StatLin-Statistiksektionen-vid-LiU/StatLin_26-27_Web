@@ -341,6 +341,11 @@
     white-space: nowrap;
   }
 
+  /* Utan JavaScript kommer innehållet aldrig i skelettets ställe, så då ska det inte heller pulsera. */
+  html:not(.js) .animate-pulse {
+    display: none;
+  }
+
   /* Reveal-animation som triggas av <Reveal> (IntersectionObserver). */
   .js .reveal {
     opacity: 0;

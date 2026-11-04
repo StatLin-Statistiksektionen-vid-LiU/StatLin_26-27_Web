@@ -23,7 +23,7 @@ const LINKS = [
 export default function EnglishPage() {
   return (
     <div lang="en">
-      <Suspense fallback={<HeroSkeleton />}>
+      <Suspense fallback={<HeroSkeleton english />}>
         <English />
       </Suspense>
     </div>

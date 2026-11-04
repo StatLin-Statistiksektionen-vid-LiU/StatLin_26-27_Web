@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getSettings } from "@/lib/data/content";
+import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { NAV } from "@/lib/navigation";
+import type { SiteSettings } from "@/lib/types";
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Mail, Rss } from "@/components/icons";
 import { Editable } from "@/components/edit-mode/editable";
 
@@ -34,7 +35,10 @@ function BellCurve() {
 }
 
 async function FooterContact() {
-  const s = await getSettings();
+  return <FooterContactView s={await getSettings()} />;
+}
+
+function FooterContactView({ s }: { s: SiteSettings }) {
   const socials = [
     { href: s.instagram, label: "Instagram", Icon: Instagram },
     { href: s.facebook, label: "Facebook", Icon: Facebook },
@@ -85,7 +89,16 @@ export function SiteFooter() {
               Allt blir mer <span className="mono-accent text-red">signifikant</span> tillsammans.
             </p>
             <Editable target={{ type: "footer" }} label="Redigera kontakt" className="mt-8">
-              <Suspense fallback={<div className="h-24" />}>
+              {/* Utan JavaScript ersätts fallbacken aldrig, så där står standardvärdena. De kan skilja sig från det som är sparat i Admin (SB-27). */}
+              <Suspense
+                fallback={
+                  <div className="min-h-24">
+                    <noscript>
+                      <FooterContactView s={DEFAULT_SETTINGS} />
+                    </noscript>
+                  </div>
+                }
+              >
                 <FooterContact />
               </Suspense>
             </Editable>

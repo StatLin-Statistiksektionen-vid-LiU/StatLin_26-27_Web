@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="sv" suppressHydrationWarning>
       <head>
-        {/* Markerar att JS körs, så att scroll-animationer inte döljer innehåll utan JS. */}
+        {/* Markerar att JS körs. Utan klassen döljs skeletten i globals.css, eftersom innehållet aldrig kommer i deras ställe. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>
       <body className="min-h-dvh">{children}</body>

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function MastersPage() {
   return (
     <div lang="en">
-      <Suspense fallback={<HeroSkeleton />}>
+      <Suspense fallback={<HeroSkeleton english />}>
         <Masters />
       </Suspense>
     </div>
