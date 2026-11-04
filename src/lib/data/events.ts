@@ -26,6 +26,10 @@ function map(r: Row): EventItem {
   };
 }
 
+/** Sista minuten ett evenemang pågår – samma regel som eventEnd i src/lib/dates.ts. */
+const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
+  ELSE COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') END`;
+
 /** Kommande = ej avslutade (pågående räknas som kommande). */
 export async function listUpcomingEvents(limit = 50, committeeId?: number): Promise<EventItem[]> {
   const db = await readDb();
@@ -33,7 +37,7 @@ export async function listUpcomingEvents(limit = 50, committeeId?: number): Prom
   const rows = db
     .prepare(
       `${SELECT}
-       WHERE e.published = 1 AND COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') >= @now
+       WHERE e.published = 1 AND ${EVENT_END} >= @now
        ${committeeId ? "AND e.committee_id = @committeeId" : ""}
        ORDER BY e.starts_at ASC LIMIT @limit`,
     )
@@ -47,7 +51,7 @@ export async function listPastEvents(limit = 24, committeeId?: number): Promise<
   const rows = db
     .prepare(
       `${SELECT}
-       WHERE e.published = 1 AND COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') < @now
+       WHERE e.published = 1 AND ${EVENT_END} < @now
        ${committeeId ? "AND e.committee_id = @committeeId" : ""}
        ORDER BY e.starts_at DESC LIMIT @limit`,
     )

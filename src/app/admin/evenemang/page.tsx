@@ -5,7 +5,7 @@ import { ArrowUpRight, Edit, Image as ImageIcon, Plus } from "@/components/icons
 import { canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listEventsForAdmin } from "@/lib/data/events";
-import { formatDate, nowLocal } from "@/lib/dates";
+import { eventEnd, formatDate, nowLocal } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Evenemang" };
@@ -25,7 +25,7 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
   const tab = sp.visa === "tidigare" ? "tidigare" : sp.visa === "ogranskade" && reviewer ? "ogranskade" : "kommande";
   const events = await listEventsForAdmin(user.role === "committee" ? user.committee_id : null);
   const now = nowLocal();
-  const isUpcoming = (e: (typeof events)[number]) => (e.ends_at ?? `${e.starts_at.slice(0, 10)}T23:59`) >= now;
+  const isUpcoming = (e: (typeof events)[number]) => eventEnd(e.starts_at, e.ends_at, !!e.all_day) >= now;
   const list =
     tab === "kommande"
       ? events.filter(isUpcoming).reverse()

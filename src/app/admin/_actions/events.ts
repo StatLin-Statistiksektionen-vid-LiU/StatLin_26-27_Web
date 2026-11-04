@@ -20,6 +20,7 @@ import {
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
 import { canEditImages, canEditOwned, canReviewEvents, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
+import { eventEnd } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 import type { SessionUser } from "@/lib/types";
@@ -41,7 +42,8 @@ const schema = z
     price: zText(80, "Priset"),
     published: zCheckbox,
   })
-  .refine((d) => !d.ends_at || d.ends_at >= d.starts_at, { message: "Sluttiden måste vara efter starttiden.", path: ["ends_at"] });
+  // Vid heldag räknas bara datumen: 18:00 samma dag och slut 00:00 är en giltig heldag.
+  .refine((d) => !d.ends_at || eventEnd(d.starts_at, d.ends_at, !!d.all_day) >= d.starts_at, { message: "Sluttiden måste vara efter starttiden.", path: ["ends_at"] });
 
 const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };
 

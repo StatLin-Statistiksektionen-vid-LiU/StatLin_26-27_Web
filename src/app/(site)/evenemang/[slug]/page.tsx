@@ -10,7 +10,7 @@ import { SmartImage } from "@/components/content/smart-image";
 import { ArrowLeft, ArrowUpRight, Calendar, Clock, Image as ImageIcon, MapPin, Ticket } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
-import { formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
+import { eventEnd, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
 import { googleCalendarUrl } from "@/lib/ics";
 import { siteUrl } from "@/lib/site-url";
 import { fitHeading, safeExternalUrl, stripMarkdown } from "@/lib/utils";
@@ -46,7 +46,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
     siteUrl(),
   ]);
   const others = more.filter((e) => e.id !== event.id).slice(0, 3);
-  const isPast = (event.ends_at ?? `${event.starts_at.slice(0, 10)}T23:59`) < nowLocal();
+  const isPast = eventEnd(event.starts_at, event.ends_at, !!event.all_day) < nowLocal();
   const signup = safeExternalUrl(event.signup_url);
   const mapUrl = safeExternalUrl(event.location_url) ?? (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location + ", Linköping")}` : null);
 

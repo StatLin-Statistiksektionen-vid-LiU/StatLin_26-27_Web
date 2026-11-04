@@ -53,7 +53,7 @@ export function EventForm({
             defaultOpen={hasDetails}
           >
             <div className="grid gap-5 @md:grid-cols-2">
-              <Field label="Slut" name="ends_at" hint="Valfritt.">
+              <Field label="Slut" name="ends_at" hint="Valfritt. Vid heldag räknas hela slutdagen, oavsett klockslag.">
                 <TextInput type="datetime-local" name="ends_at" defaultValue={event?.ends_at ?? ""} />
               </Field>
               <div className="@md:pt-8">

@@ -82,8 +82,20 @@ export function formatDateLong(local: string): string {
   return p.year === thisYear ? base : `${base} ${p.year}`;
 }
 
+/**
+ * Sista minuten ett evenemang pågår. Heldag räknas t.o.m. slutdagens sista minut, oavsett klockslaget i slutfältet (datumfältet
+ * ger ofta 00:00). Utan sluttid gäller startdagens sista minut. Samma regel står i SQL i src/lib/data/events.ts.
+ */
+export function eventEnd(start: string, end: string | null, allDay: boolean): string {
+  if (allDay) return `${(end ?? start).slice(0, 10)}T23:59`;
+  return end ?? `${start.slice(0, 10)}T23:59`;
+}
+
 export function formatTimeRange(start: string, end: string | null, allDay: boolean): string {
-  if (allDay) return "Heldag";
+  if (allDay) {
+    if (!end || end.slice(0, 10) === start.slice(0, 10)) return "Heldag";
+    return `Heldag t.o.m. ${formatDate(end, end.slice(0, 4) !== start.slice(0, 4))}`;
+  }
   const s = start.slice(11, 16);
   if (!end) return s;
   if (end.slice(0, 10) === start.slice(0, 10)) return `${s}–${end.slice(11, 16)}`;
