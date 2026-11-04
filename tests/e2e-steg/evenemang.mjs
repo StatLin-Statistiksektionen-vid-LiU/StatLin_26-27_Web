@@ -139,5 +139,33 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await removeEvent(url);
   });
 
+  await step("SB-06: starta-terminen räknas inte som STAR, och mässan som valts i Inställningar visas på företagssidan", async () => {
+    await switchAccount(page, ADMIN);
+    const starLinks = () => site.locator('main a[href^="/evenemang/"]');
+
+    // Evenemanget ligger före den seedade mässan och har "star" i adressen.
+    const starta = await createEvent({ title: `Starta terminen ${uniqueId()}`, startsAt: `${dayOffset(1)}T18:00` });
+    await site.goto(`${BASE}/foretag`);
+    await starLinks().first().waitFor();
+    assert.deepEqual(await starLinks().evaluateAll((els) => els.map((a) => a.getAttribute("href"))), ["/evenemang/star"]);
+
+    // Långt bort och utan "star" i adressen: bara valet i Inställningar kan peka ut det.
+    const massan = await createEvent({ title: `E2E-mässan ${uniqueId()}`, startsAt: `${dayOffset(400)}T10:00` });
+    const save = async (value) => {
+      await page.goto(`${BASE}/admin/installningar`);
+      await waitForHydration(page, page.locator('select[name="star_event_id"]'));
+      await page.selectOption('select[name="star_event_id"]', value);
+      await page.getByRole("button", { name: "Spara" }).first().click();
+      await page.getByText("Inställningarna är sparade.").waitFor();
+    };
+    await save(massan.url.split("/").pop());
+    await site.goto(`${BASE}/foretag`);
+    await site.locator(`main a[href="/evenemang/${massan.slug}"]`).waitFor();
+
+    await save("");
+    await removeEvent(massan.url);
+    await removeEvent(starta.url);
+  });
+
   await visitor.context.close();
 }

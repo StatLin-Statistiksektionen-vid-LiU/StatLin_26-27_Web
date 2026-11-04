@@ -6,8 +6,8 @@ import { StarField } from "@/components/home/home-sections";
 import { ArrowUpRight, Mail } from "@/components/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { HeroSkeleton } from "@/components/ui/skeletons";
-import { getCommitteeBySlug, listPartners } from "@/lib/data/content";
-import { listUpcomingEvents } from "@/lib/data/events";
+import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
+import { getStarEvent } from "@/lib/data/events";
 import { STAR_COPY } from "@/lib/seed-content";
 import { formatDateLong } from "@/lib/dates";
 import { safeExternalUrl } from "@/lib/utils";
@@ -27,8 +27,8 @@ export default function CompaniesPage() {
 }
 
 async function Companies() {
-  const [partners, sasu, upcoming] = await Promise.all([listPartners({ activeOnly: true }), getCommitteeBySlug("sasu"), listUpcomingEvents(20)]);
-  const star = upcoming.find((e) => /star/i.test(e.slug));
+  const [partners, sasu, settings] = await Promise.all([listPartners({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings()]);
+  const star = await getStarEvent(Number(settings.star_event_id) || null);
   const contact = sasu?.email || "sasu@statlin.se";
 
   return (

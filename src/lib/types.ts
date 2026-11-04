@@ -290,4 +290,6 @@ export interface SiteSettings {
   home_intro: string;
   announcement: string;
   announcement_url: string;
+  /** Evenemanget vars datum visas som STAR på företagssidan. Tomt: väljs med adressen, se getStarEvent. */
+  star_event_id: string;
 }

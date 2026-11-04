@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   home_intro: "Vi är statistikstudenternas sektion i Linköping. Här möts *gemenskap*, *utbildning* och vägen ut i *arbetslivet*.",
   announcement: "",
   announcement_url: "",
+  star_event_id: "",
 };
 
 export async function getSettings(): Promise<SiteSettings> {

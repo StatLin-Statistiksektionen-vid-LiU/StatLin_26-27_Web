@@ -76,6 +76,23 @@ export async function listAllPublishedEvents(): Promise<EventItem[]> {
   return (db.prepare(`${SELECT} WHERE e.published = 1 ORDER BY e.starts_at DESC`).all() as Row[]).map(map);
 }
 
+/**
+ * STAR-mässans kommande evenemang, oberoende av hur många som ligger före: det som valts i Inställningar, annars nästa med
+ * adressen star eller star-<år>. Mönstret är strikt, så att starta-terminen och hostarsmote inte räknas som mässan.
+ */
+export async function getStarEvent(chosenId: number | null): Promise<EventItem | null> {
+  const db = await readDb();
+  const row = db
+    .prepare(
+      `${SELECT}
+       WHERE e.published = 1 AND ${EVENT_END} >= @now
+         AND (e.id = @chosenId OR e.slug = 'star' OR e.slug GLOB 'star-[0-9][0-9][0-9][0-9]')
+       ORDER BY e.id = @chosenId DESC, e.starts_at ASC LIMIT 1`,
+    )
+    .get({ now: nowLocal(), chosenId }) as Row | undefined;
+  return row ? map(row) : null;
+}
+
 export async function getEventBySlug(slug: string, includeDrafts = false): Promise<EventItem | null> {
   const db = await readDb();
   const row = db
