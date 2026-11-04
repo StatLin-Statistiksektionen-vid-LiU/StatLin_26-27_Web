@@ -64,7 +64,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
-      // /media/ har en egen, strängare CSP med sandbox (src/app/media/[...path]/route.ts) – där ska inte två CSP-rubriker skickas.
+      // /media/ har en egen, strängare CSP med sandbox (src/app/media/[...path]/route.ts). Den här regeln får inte gälla där: Next
+      // skriver inte över en rubrik som redan är satt (next/dist/server/send-response.js), så ruttens CSP skulle försvinna.
       { source: "/((?!media(?:/|$)).*)", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }] },
       // Sitemapen läser tre tabeller per anrop; Nexts standard för en dynamisk metadatarutt är max-age=0 (ST-22). Rubriken härifrån
       // vinner: Next lägger inte på ruttens egen Cache-Control när rubriken redan är satt (next/dist/server/send-response.js).
