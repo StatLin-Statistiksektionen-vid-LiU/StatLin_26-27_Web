@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { renameSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import type Database from "better-sqlite3";
 import sharp, { type Metadata } from "sharp";
 import { getDb, ORIGINALS_DIR, UPLOADS_DIR } from "./db";
 import type { Media } from "./types";
@@ -217,14 +218,18 @@ export async function replaceFile(old: Media, file: File, userId: number | null)
 }
 
 /** Kolumnerna som pekar på en rad i media med dess id. */
-const USED_BY_ID = `SELECT
-  (SELECT COUNT(*) FROM event_images WHERE media_id = @id) +
-  (SELECT COUNT(*) FROM events WHERE cover_media_id = @id) +
-  (SELECT COUNT(*) FROM news WHERE cover_media_id = @id) +
-  (SELECT COUNT(*) FROM board_members WHERE photo_media_id = @id) +
-  (SELECT COUNT(*) FROM partners WHERE logo_media_id = @id) +
-  (SELECT COUNT(*) FROM documents WHERE media_id = @id) +
-  (SELECT COUNT(*) FROM resources WHERE media_id = @id) AS n`;
+const ID_COLUMNS = [
+  ["event_images", "media_id"],
+  ["events", "cover_media_id"],
+  ["news", "cover_media_id"],
+  ["board_members", "photo_media_id"],
+  ["partners", "logo_media_id"],
+  ["documents", "media_id"],
+  ["resources", "media_id"],
+] as const;
+const USED_BY_ID = `SELECT ${ID_COLUMNS.map(([t, c]) => `(SELECT COUNT(*) FROM ${t} WHERE ${c} = @id)`).join(" + ")} AS n`;
+/** Alla id som kolumnerna pekar på, för gallringen: en fråga i stället för en per rad. */
+const REFERENCED_IDS = ID_COLUMNS.map(([t, c]) => `SELECT ${c} FROM ${t} WHERE ${c} IS NOT NULL`).join(" UNION ");
 
 /**
  * Ställena där adressen (/media/<path_base>…) kan stå i stället för id:t (SD-09): utskottens loggor, som sparas som adress,
@@ -244,13 +249,18 @@ const USED_BY_ADDRESS = `SELECT
   (SELECT COUNT(*) FROM task_comments WHERE body LIKE @pattern) +
   (SELECT COUNT(*) FROM settings WHERE value LIKE @pattern) AS n`;
 
+/** Frågorna förbereds en gång per databashandtag, inte en gång per rad. */
+const usageStatements = new WeakMap<Database.Database, { byId: Database.Statement; byAddress: Database.Statement }>();
+
 /** Används bilden eller filen någonstans – med id eller med sin adress? Samma räkning gäller borttagning och gallring. */
 function mediaInUse(m: Pick<Media, "id" | "path_base">): boolean {
   const db = getDb();
-  if ((db.prepare(USED_BY_ID).get({ id: m.id }) as { n: number }).n > 0) return true;
+  let s = usageStatements.get(db);
+  if (!s) usageStatements.set(db, (s = { byId: db.prepare(USED_BY_ID), byAddress: db.prepare(USED_BY_ADDRESS) }));
+  if ((s.byId.get({ id: m.id }) as { n: number }).n > 0) return true;
   // path_base är "ÅÅÅÅ/MM/<uuid>" (newBase): siffror, a–f, - och /. LIKE:s jokertecken % och _ kan inte förekomma, och
   // gjorde de det skulle mönstret bara träffa fler rader – bilden räknades då som använd och stod kvar.
-  return (db.prepare(USED_BY_ADDRESS).get({ pattern: `%${m.path_base}%` }) as { n: number }).n > 0;
+  return (s.byAddress.get({ pattern: `%${m.path_base}%` }) as { n: number }).n > 0;
 }
 
 /** Originalet till en bild: ORIGINALS_DIR/<base>.<ext>. Filändelsen står inte i raden, så det hittas på namnet. */
@@ -260,14 +270,18 @@ async function originalFiles(base: string): Promise<string[]> {
   return names.filter((n) => n.startsWith(`${path.basename(base)}.`)).map((n) => path.join(dir, n));
 }
 
-/** Raden, filerna och originalet. Anroparen har kontrollerat att inget använder dem. */
-async function removeMedia(m: Media) {
-  getDb().prepare("DELETE FROM media WHERE id = ?").run(m.id);
+/**
+ * Raden, filerna och originalet. Anroparen har kontrollerat att inget använder dem, i samma synkrona steg som raden tas bort
+ * här. Svarar false om raden redan var borta (då har den som tog bort den också tagit filerna).
+ */
+async function removeMedia(m: Media): Promise<boolean> {
+  if (getDb().prepare("DELETE FROM media WHERE id = ?").run(m.id).changes === 0) return false;
   const files =
     m.kind === "image"
       ? m.variants.split(",").filter(Boolean).map((w) => `${m.path_base}-${w}.webp`)
       : [`${m.path_base}.${m.ext}`];
   await removeFiles([...files.map((f) => path.join(UPLOADS_DIR, f)), ...(await originalFiles(m.path_base))]);
+  return true;
 }
 
 /** Tar bort mediefilen om den inte längre används någonstans – varken med id eller med adressen i en text eller länk. */
@@ -289,11 +303,15 @@ const UPLOAD_NAME = /^(\d{4}\/\d{2}\/[0-9a-f-]{36})(?:-\d{2,5})?\.[a-z0-9]{2,5}$
 export async function pruneOrphanMedia({ olderThanDays = 7 }: { olderThanDays?: number } = {}): Promise<{ rows: number; files: number }> {
   const db = getDb();
   const cutoff = Date.now() - olderThanDays * 86_400_000;
+  // Det som någon kolumn pekade på när gallringen började står kvar. Övriga rader räknas på nytt (mediaInUse) i samma
+  // synkrona steg som de tas bort, så en sparning som hinner peka på en rad under gallringen syns.
+  const referenced = new Set(db.prepare(REFERENCED_IDS).pluck().all() as number[]);
   let rows = 0;
   for (const m of db.prepare("SELECT * FROM media WHERE created_at < ? ORDER BY id").all(new Date(cutoff).toISOString()) as Media[]) {
-    if (mediaInUse(m)) continue;
-    await removeMedia(m);
-    rows++;
+    // Händelseloopen släpps mellan raderna, så att sajten svarar medan en lång gallring pågår.
+    await new Promise((resolve) => setImmediate(resolve));
+    if (referenced.has(m.id) || mediaInUse(m)) continue;
+    if (await removeMedia(m)) rows++;
   }
   const known = new Set((db.prepare("SELECT path_base FROM media").all() as { path_base: string }[]).map((r) => r.path_base));
   let files = 0;
