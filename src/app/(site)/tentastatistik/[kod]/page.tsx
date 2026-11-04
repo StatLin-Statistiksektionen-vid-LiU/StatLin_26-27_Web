@@ -23,6 +23,8 @@ async function load(params: Params) {
 
 export async function generateMetadata({ params }: PageProps<"/tentastatistik/[kod]">): Promise<Metadata> {
   const data = await load(params);
+  // Att källan inte svarar säger inget om kursen, så sidan ska inte försvinna ur sökmotorerna för det.
+  if (data?.unavailable) return { title: `Tentastatistik ${data.code}`, alternates: { ...SITE_ALTERNATES, canonical: `/tentastatistik/${data.code}` } };
   if (!data?.stats) return { title: "Hittade ingen tentastatistik", robots: { index: false } };
   const name = data.stats.title.sv || data.stats.title.en;
   const course = `${data.code}${name ? ` ${name}` : ""}`;

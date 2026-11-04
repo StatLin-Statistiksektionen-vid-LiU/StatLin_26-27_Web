@@ -94,6 +94,15 @@ await check("Kurskoderna till sökrutan /api/tentastatistik/koder", async () => 
   return codes.length ? `${codes.length} koder` : "tom lista – källan svarar inte just nu";
 });
 
+await check("En kurskod som inte finns kan inte indexeras, men en kurs kan det", async () => {
+  // Seedens kodlista gäller också när källan är nere. Att en kurs utan sparad statistik inte får noindex när källan inte svarar kräver en egen källa (SB-19).
+  const noindex = (body) => /<meta[^>]*name="robots"[^>]*content="[^"]*noindex/.test(body);
+  const { body: unknown } = await get("/tentastatistik/XYZ123");
+  expect(noindex(unknown), "/tentastatistik/XYZ123 saknar noindex");
+  const { body: known } = await get("/tentastatistik/732G33");
+  expect(!noindex(known), "/tentastatistik/732G33 har noindex");
+});
+
 await check("Språkväxlare till /en på startsidan", async () => {
   const { body } = await get("/");
   expect(/href="\/en"[^>]*hrefLang="en"|hrefLang="en"[^>]*href="\/en"/i.test(body), "länken till /en saknas");
