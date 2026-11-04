@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 import { FloatingLogo } from "@/components/brand/floating-logo";
 import { ArrowLeft } from "@/components/icons";
@@ -18,8 +19,7 @@ export const metadata: Metadata = {
 export const instant = false;
 
 export default async function LoginPage(props: PageProps<"/logga-in">) {
-  const [user, { utloggad, next, fel }] = await Promise.all([getSessionUser(), props.searchParams]);
-  if (user) redirect("/admin");
+  const { utloggad, next, fel } = await props.searchParams;
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <section className="noise relative hidden overflow-hidden bg-ink text-white lg:flex lg:flex-col">
@@ -45,7 +45,10 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
           <p className="kicker text-red-deep">StatLin · Poster</p>
           <h1 className="display mt-3 text-[2.6rem]">Logga in</h1>
           <p className="mt-3 text-stone">Använd e-postadressen för din post. Saknar du konto? Fråga sektionens webbansvariga.</p>
-          {utloggad && <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
+          <Suspense fallback={null}>
+            <LoggedInRedirect />
+          </Suspense>
+          {utloggad &&<p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
           <LoginForm error={loginErrorText(fel)}>
             {/* Sidan man skickades från, så att man hamnar rätt efter inloggningen. */}
             {typeof next === "string" && <input type="hidden" name="next" value={next} />}
@@ -55,4 +58,10 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
       </section>
     </main>
   );
+}
+
+/** Redan inloggad → vidare till adminpanelen. Egen Suspense-gräns: högst upp i sidan ger omdirigeringen en helt tom sida utan JavaScript (SB-27). */
+async function LoggedInRedirect() {
+  if (await getSessionUser()) redirect("/admin");
+  return null;
 }

@@ -368,6 +368,12 @@
   }
 }
 
+/* Den mörka toppen kan ligga i det som aldrig kommer utan JavaScript, och då syns inte sidhuvudets vita text mot den ljusa sidan.
+   Regeln står utanför lagren, eftersom sidhuvudets bg-transparent annars vinner oavsett specificitet. */
+html:not(.js) header.fixed {
+  background-color: var(--color-ink);
+}
+
 /* ---------- Markdown-innehåll ---------- */
 
 .prose-statlin {

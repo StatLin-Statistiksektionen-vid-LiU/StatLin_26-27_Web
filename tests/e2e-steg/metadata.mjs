@@ -27,6 +27,16 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     await visitor.fill("#password", password);
     await visitor.click('button[type="submit"]');
     await visitor.waitForURL(/\/admin\/konto\?byt=1/, { timeout: 15_000 });
+
+    // Redan inloggad på inloggningssidan: utan JavaScript får sidan inte bli tom, och med JavaScript går besökaren vidare.
+    const session = await context.cookies();
+    await visitor.goto(`${BASE}/logga-in`);
+    assert.notEqual((await visitor.locator("body").innerText()).trim(), "", "Inloggad utan JavaScript gav en tom sida");
+    const withScript = await newVisitor(browser);
+    await withScript.context.addCookies(session);
+    await withScript.page.goto(`${BASE}/logga-in`);
+    await withScript.page.waitForURL(/\/admin/, { timeout: 15_000 });
+    await withScript.context.close();
     await context.close();
   });
 
@@ -70,6 +80,11 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     assert.equal(shown, 0, `${shown} skelettblock pulserar för evigt`);
     await visitor.goto(`${BASE}/en/masters`);
     assert.match(await visitor.locator("main").innerText(), /needs JavaScript/, "De engelska sidorna ska säga det på engelska");
+
+    // Den mörka toppen ligger i det som saknas, så sidhuvudets vita text behöver en egen bakgrund för att synas.
+    await visitor.goto(`${BASE}/kontakt`);
+    const headerBackground = await visitor.locator("header").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    assert.notEqual(headerBackground, "rgba(0, 0, 0, 0)", "Sidhuvudet är genomskinligt, och menyn syns inte mot den ljusa sidan");
     await context.close();
   });
 
