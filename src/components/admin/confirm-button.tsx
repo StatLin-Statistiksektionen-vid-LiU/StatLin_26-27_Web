@@ -44,7 +44,7 @@ export function ConfirmButton({
   const [dismissed, setDismissed] = useState(NO_STATE);
   const error = state === dismissed ? undefined : state.error;
 
-  // Activity döljer sidan utan att ta bort den, och en öppen modal i en dold sida hade lämnat resten av dokumentet oklickbart.
+  // Activity gömmer sidan utan att ta bort den. Stängdes inte dialogen stod frågan öppen igen när man kom tillbaka till sidan.
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
     return () => dialog?.close();

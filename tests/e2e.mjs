@@ -1150,15 +1150,16 @@ async function openDeleteConfirm(page) {
     });
 
     await step("Bekräftelsen stängs när man går tillbaka i webbläsaren", async () => {
-      // Sidan göms bara (Activity). Stod dialogen kvar öppen i den dolda sidan gick inget annat att klicka på.
+      // Sidan göms bara (Activity). Stängdes inte dialogen stod frågan öppen igen när man kom tillbaka till sidan.
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByRole("link", { name: /Affisch till testsittningen/ }).click();
       await heading("Affisch till testsittningen").waitFor();
       await openDeleteConfirm(page);
       await page.goBack();
-      await page.waitForURL(/\/admin\/uppdrag$/);
-      await Promise.all([page.waitForURL(/visa=fran/), page.getByRole("link", { name: "Från dig" }).click()]);
-      assert.equal(await page.locator("dialog[open]").count(), 0, "ingen dialog ska stå kvar öppen");
+      await page.getByRole("link", { name: "Från dig" }).waitFor();
+      await page.goForward();
+      await heading("Affisch till testsittningen").waitFor();
+      assert.equal(await page.getByRole("alertdialog").count(), 0, "frågan ska inte stå öppen när man kommer tillbaka");
     });
 
     await step("Servern nekar den som inte får ta bort, och beskedet syns", async () => {
@@ -1182,8 +1183,7 @@ async function openDeleteConfirm(page) {
       await page.goto(taskUrl);
       await confirmDelete(await openDeleteConfirm(page));
       assert.equal(await page.getByRole("link", { name: /Affisch till testsittningen/ }).count(), 0, "uppdraget ska vara borta från tavlan");
-      // Bekräftelsen får inte ligga kvar: en öppen modal i en dold sida gör hela sidan oklickbar.
-      await Promise.all([page.waitForURL(/visa=fran/), page.getByRole("link", { name: "Från dig" }).click()]);
+      assert.equal(await page.locator("dialog[open]").count(), 0, "bekräftelsen ska vara stängd efter raderingen");
       await page.goto(taskUrl);
       await page.getByText("Sidan du letar efter finns inte").waitFor();
     });
