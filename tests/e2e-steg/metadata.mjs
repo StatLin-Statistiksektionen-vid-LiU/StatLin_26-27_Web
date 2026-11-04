@@ -211,4 +211,47 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     assert.ok(heading > text, `Rubriken ser ut som vanlig text: vikt ${heading} mot ${text}`);
     await context.close();
   });
+
+  await step("Sökrutan hämtar kurskoderna igen efter ett tomt svar eller ett fel, utan omladdning (SB-18)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    let answer;
+    let requests = 0;
+    await visitor.route("**/api/tentastatistik/koder", (route) => {
+      requests++;
+      return route.fulfill(answer);
+    });
+    const codes = { json: ["732G33", "732G34", "TATA24"] };
+    const open = async (first) => {
+      answer = first;
+      requests = 0;
+      await visitor.goto(`${BASE}/tentastatistik`);
+      const input = visitor.getByRole("combobox", { name: "Kurskod" });
+      await waitForHydration(visitor, input);
+      const answered = visitor.waitForResponse("**/api/tentastatistik/koder");
+      await input.focus();
+      await answered;
+      return input;
+    };
+    const option = visitor.getByRole("option", { name: "732G33" });
+
+    // Det tomma svaret: rutan har fortfarande fokus när källan är tillbaka, så nästa tecken ska försöka igen.
+    let input = await open({ json: [] });
+    answer = codes;
+    await input.pressSequentially("73");
+    await option.waitFor({ timeout: 5000 });
+    assert.equal(requests, 2, "Ett fungerande svar ska inte hämtas igen");
+    await input.pressSequentially("2G");
+    await option.waitFor();
+    assert.equal(requests, 2, "Listan ska hämtas en gång per sidvisning när den väl har kommit");
+
+    // Felsvaret: besökaren lämnar rutan och kommer tillbaka.
+    input = await open({ status: 500, body: "" });
+    await input.pressSequentially("73");
+    assert.equal(await option.count(), 0, "Inga förslag när hämtningen misslyckades");
+    await input.blur();
+    answer = codes;
+    await input.focus();
+    await option.waitFor({ timeout: 5000 });
+    await context.close();
+  });
 }
