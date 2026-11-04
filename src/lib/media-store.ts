@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { renameSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp, { type Metadata } from "sharp";
@@ -127,15 +128,23 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
   }
 }
 
-export async function storeFile(file: File, userId: number | null): Promise<Media> {
+const fileExt = (file: File) => (file.name.split(".").pop() ?? "").toLowerCase();
+
+/** Kontrollerna för ett dokument: storlek, tillåten filändelse och PDF-huvud. */
+async function readDocument(file: File): Promise<{ ext: string; mime: string; buffer: Buffer }> {
   if (file.size > MAX_FILE_BYTES) throw new MediaError("Filen är för stor (max 30 MB).");
-  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  const ext = fileExt(file);
   const mime = fileMime(ext);
   if (!mime) throw new MediaError(`Filtypen .${ext} stöds inte. Tillåtna: ${Object.keys(FILE_TYPES).join(", ")}.`);
   const buffer = Buffer.from(await file.arrayBuffer());
   if (ext === "pdf" && buffer.subarray(0, 5).toString() !== "%PDF-") {
     throw new MediaError("Filen ser inte ut att vara en giltig PDF.");
   }
+  return { ext, mime, buffer };
+}
+
+export async function storeFile(file: File, userId: number | null): Promise<Media> {
+  const { ext, mime, buffer } = await readDocument(file);
   const base = newBase();
   const target = path.join(UPLOADS_DIR, `${base}.${ext}`);
   try {
@@ -153,6 +162,48 @@ export async function storeFile(file: File, userId: number | null): Promise<Medi
     })();
   } catch (err) {
     await removeFiles([target]);
+    throw err;
+  }
+}
+
+/**
+ * Samma fil som raden redan har – namn och storlek (SD-35)? Filväljaren skickar den igen vid nästa sparning om den inte
+ * tömts, och då ska den inte laddas upp på nytt.
+ */
+export function isSameUpload(m: Pick<Media, "original_name" | "size">, file: File): boolean {
+  return m.original_name === file.name.slice(0, 200) && m.size === file.size;
+}
+
+/**
+ * Ersätter dokumentet bakom en befintlig rad (SD-35). Med samma filändelse skrivs filen över och adressen består, så länkar
+ * som redan delats – i nyhetsbrev, på Lisam, i protokoll – leder till den nya versionen. Med en annan filändelse, eller när
+ * raden är en bild, blir det en ny rad med ny adress, som förut.
+ */
+export async function replaceFile(old: Media, file: File, userId: number | null): Promise<Media> {
+  if (old.kind !== "file" || old.ext !== fileExt(file)) return storeFile(file, userId);
+  const { ext, mime, buffer } = await readDocument(file);
+  const target = path.join(UPLOADS_DIR, `${old.path_base}.${ext}`);
+  // Den nya filen skrivs bredvid och byter sedan plats med den gamla, så att ingen laddar ner en halvskriven fil. Blir den
+  // kvar efter ett avbrott är den en fil utan rad, som gallringen tar bort.
+  const temp = path.join(path.dirname(target), `${crypto.randomUUID()}.${ext}`);
+  try {
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(temp, buffer);
+    const db = getDb();
+    return db.transaction(() => {
+      db.prepare("UPDATE media SET original_name = ?, mime = ?, size = ?, uploaded_by = ? WHERE id = ?").run(
+        file.name.slice(0, 200),
+        mime,
+        file.size,
+        userId,
+        old.id,
+      );
+      // I transaktionen: misslyckas bytet rullas raden tillbaka.
+      renameSync(temp, target);
+      return db.prepare("SELECT * FROM media WHERE id = ?").get(old.id) as Media;
+    })();
+  } catch (err) {
+    await removeFiles([temp]);
     throw err;
   }
 }

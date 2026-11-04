@@ -6,7 +6,10 @@ import { fileMime } from "@/lib/file-types";
 
 const SAFE_PATH = /^\d{4}\/\d{2}\/[a-f0-9-]{36}(-\d{2,5})?\.([a-z0-9]{2,5})$/;
 
-/** Serverar uppladdade filer från DATA_DIR. Filnamnen är unika, så de kan cachas för evigt. */
+/**
+ * Serverar uppladdade filer från DATA_DIR. En bild får ett nytt filnamn när den byts och cachas för evigt. Ett dokument kan
+ * ersättas under samma adress (SD-35), så webbläsaren frågar om det ändrats (Last-Modified) i stället för att spara det ett år.
+ */
 export async function GET(request: Request, ctx: RouteContext<"/media/[...path]">) {
   const { path: segments } = await ctx.params;
   const rel = segments.join("/");
@@ -28,14 +31,19 @@ export async function GET(request: Request, ctx: RouteContext<"/media/[...path]"
   const download = new URL(request.url).searchParams.has("ladda-ner");
   const headers = new Headers({
     "Content-Type": type,
-    "Content-Length": String(stat.size),
-    "Cache-Control": "public, max-age=31536000, immutable",
+    "Cache-Control": ext === "webp" ? "public, max-age=31536000, immutable" : "public, no-cache",
     "X-Content-Type-Options": "nosniff",
   });
   if (ext !== "webp") {
+    headers.set("Last-Modified", stat.mtime.toUTCString());
     headers.set("Content-Disposition", `${download ? "attachment" : "inline"}; filename="statlin-${path.basename(rel)}"`);
     headers.set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    // Last-Modified har hela sekunder.
+    if (Date.parse(request.headers.get("if-modified-since") ?? "") >= Math.floor(stat.mtimeMs / 1000) * 1000) {
+      return new Response(null, { status: 304, headers });
+    }
   }
+  headers.set("Content-Length", String(stat.size));
   const stream = Readable.toWeb(fs.createReadStream(abs)) as ReadableStream;
   return new Response(stream, { headers });
 }

@@ -20,7 +20,7 @@ import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments,
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
-import { deleteMediaIfUnused, MediaError, storeFile } from "@/lib/media-store";
+import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
 import type { DocumentCategory, Media } from "@/lib/types";
@@ -257,8 +257,10 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
   let mediaId: number | null = null;
   const file = fd.get("file");
   if (file instanceof File && file.size > 0) {
+    const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
     try {
-      mediaId = (await storeFile(file, user.id)).id;
+      // Samma fil som redan finns laddas inte upp igen, och en ny version med samma filändelse behåller adressen (SD-35).
+      mediaId = current && isSameUpload(current, file) ? current.id : (current ? await replaceFile(current, file, user.id) : await storeFile(file, user.id)).id;
     } catch (err) {
       return { error: err instanceof MediaError ? err.message : "Filen kunde inte sparas.", fieldErrors: { file: "Kontrollera filen." } };
     }

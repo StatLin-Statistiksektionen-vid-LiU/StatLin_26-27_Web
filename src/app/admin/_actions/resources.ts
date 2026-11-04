@@ -6,8 +6,9 @@ import { type FormState, formObject, invalid, zRequired, zText, zUrl } from "@/l
 import { audit, revalidateSite } from "@/lib/admin/helpers";
 import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
-import { deleteMediaIfUnused, isImageUpload, MediaError, storeFile, storeImage } from "@/lib/media-store";
+import { deleteMediaIfUnused, isImageUpload, isSameUpload, MediaError, replaceFile, storeFile, storeImage } from "@/lib/media-store";
 import { LAST_TERM } from "@/lib/resources";
+import type { Media } from "@/lib/types";
 
 /* Alla konton är styrelseposter och sköter hjälpmedlen gemensamt, så det räcker att vara inloggad. Loggen visar vem som gjort vad. */
 
@@ -42,9 +43,13 @@ export async function saveResource(_prev: FormState, fd: FormData): Promise<Form
 
   let mediaId = kept;
   if (upload) {
+    const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
     try {
-      // En fusklapp är ofta ett foto eller en skanning.
-      mediaId = (isImageUpload(upload) ? await storeImage(upload, user.id, d.title) : await storeFile(upload, user.id)).id;
+      // Samma fil som redan finns laddas inte upp igen, och en ny version med samma filändelse behåller adressen (SD-35).
+      // En fusklapp är ofta ett foto eller en skanning; en bild får alltid en ny rad.
+      if (current && isSameUpload(current, upload)) mediaId = current.id;
+      else if (isImageUpload(upload)) mediaId = (await storeImage(upload, user.id, d.title)).id;
+      else mediaId = (current ? await replaceFile(current, upload, user.id) : await storeFile(upload, user.id)).id;
     } catch (err) {
       return { error: err instanceof MediaError ? err.message : "Filen kunde inte sparas.", fieldErrors: { file: "Kontrollera filen." } };
     }
