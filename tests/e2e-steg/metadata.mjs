@@ -104,4 +104,19 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     }
     await context.close();
   });
+
+  await step("Datumen på /en/masters är på engelska och på /studenter/master på svenska (SB-29)", async () => {
+    const { context, page: visitor } = await newVisitor(browser);
+    await visitor.goto(`${BASE}/en/masters`);
+    const rows = visitor.locator('main a[href^="/evenemang/"]:not([href$=".ics"])');
+    await rows.first().waitFor();
+    const english = (await rows.allInnerTexts()).join(" ");
+    assert.match(english, /\b(mon|tue|wed|thu|fri|sat|sun)\b/i, `Ingen engelsk veckodag i: ${english}`);
+    assert.doesNotMatch(english, /\b(mån|tis|ons|tors|fre|lör|sön|heldag)\b/i, `Svenska i: ${english}`);
+    await visitor.goto(`${BASE}/studenter/master`);
+    await rows.first().waitFor();
+    const swedish = (await rows.allInnerTexts()).join(" ");
+    assert.match(swedish, /(mån|tis|ons|tors|fre|lör|sön)/i, `Ingen svensk veckodag i: ${swedish}`);
+    await context.close();
+  });
 }

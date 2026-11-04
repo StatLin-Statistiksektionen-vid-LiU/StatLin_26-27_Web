@@ -73,17 +73,26 @@ export function localToIso(local: string): string {
   return new Date(`${local}:00${stockholmOffset(local)}`).toISOString();
 }
 
-const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", ...opts });
+/** Språket på veckodagar, månader och tider. De engelska sidorna under /en använder en-GB, allt annat svenska. */
+export type DateLocale = "sv-SE" | "en-GB";
 
-const weekdayLong = fmt({ weekday: "long" });
-const weekdayShort = fmt({ weekday: "short" });
-const monthShort = fmt({ month: "short" });
-const monthLong = fmt({ month: "long" });
-const dayMonth = fmt({ day: "numeric", month: "long" });
-const dayMonthYear = fmt({ day: "numeric", month: "long", year: "numeric" });
+function formatters(locale: DateLocale) {
+  const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { timeZone: "UTC", ...opts });
+  return {
+    weekdayLong: fmt({ weekday: "long" }),
+    weekdayShort: fmt({ weekday: "short" }),
+    monthShort: fmt({ month: "short" }),
+    monthLong: fmt({ month: "long" }),
+    dayMonth: fmt({ day: "numeric", month: "long" }),
+    dayMonthYear: fmt({ day: "numeric", month: "long", year: "numeric" }),
+  };
+}
 
-export function parts(local: string) {
+const FORMATS = { "sv-SE": formatters("sv-SE"), "en-GB": formatters("en-GB") };
+
+export function parts(local: string, locale: DateLocale = "sv-SE") {
   const d = asUtc(local);
+  const { weekdayLong, weekdayShort, monthShort, monthLong } = FORMATS[locale];
   return {
     day: d.getUTCDate(),
     month: d.getUTCMonth() + 1,
@@ -102,9 +111,9 @@ export function formatDateShort(local: string): string {
   return `${p.day} ${p.monthShort} ${p.year}`;
 }
 
-export function formatDate(local: string, withYear = false): string {
+export function formatDate(local: string, withYear = false, locale: DateLocale = "sv-SE"): string {
   const d = asUtc(local);
-  return (withYear ? dayMonthYear : dayMonth).format(d);
+  return (withYear ? FORMATS[locale].dayMonthYear : FORMATS[locale].dayMonth).format(d);
 }
 
 export function formatDateLong(local: string): string {
@@ -147,15 +156,16 @@ export function eventSchemaDates(start: string, end: string | null, allDay: bool
   return { startDate: format(start), endDate: end ? format(end) : undefined };
 }
 
-export function formatTimeRange(start: string, end: string | null, allDay: boolean): string {
+export function formatTimeRange(start: string, end: string | null, allDay: boolean, locale: DateLocale = "sv-SE"): string {
   if (allDay) {
-    if (!end || end.slice(0, 10) === start.slice(0, 10)) return "Heldag";
-    return `Heldag t.o.m. ${formatDate(end, end.slice(0, 4) !== start.slice(0, 4))}`;
+    const allDayText = locale === "en-GB" ? "All day" : "Heldag";
+    if (!end || end.slice(0, 10) === start.slice(0, 10)) return allDayText;
+    return `${allDayText} ${locale === "en-GB" ? "until" : "t.o.m."} ${formatDate(end, end.slice(0, 4) !== start.slice(0, 4), locale)}`;
   }
   const s = start.slice(11, 16);
   if (!end) return s;
   if (end.slice(0, 10) === start.slice(0, 10)) return `${s}–${end.slice(11, 16)}`;
-  return `${s} – ${formatDate(end)} ${end.slice(11, 16)}`;
+  return `${s} – ${formatDate(end, false, locale)} ${end.slice(11, 16)}`;
 }
 
 export function capitalize(s: string) {
@@ -236,7 +246,7 @@ export function calendarMonth(value: unknown): string {
 }
 
 export function monthLabel(year: number, month: number) {
-  return capitalize(monthLong.format(new Date(Date.UTC(year, month - 1, 1)))) + " " + year;
+  return capitalize(FORMATS["sv-SE"].monthLong.format(new Date(Date.UTC(year, month - 1, 1)))) + " " + year;
 }
 
 export function isoUtc(): string {
