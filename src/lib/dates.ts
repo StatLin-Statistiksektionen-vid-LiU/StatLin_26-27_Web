@@ -160,8 +160,8 @@ export function monthGrid(year: number, month: number) {
       inMonth: d.getUTCMonth() === month - 1,
     });
   }
-  // Ta bort en sista helt tom vecka.
-  if (!days.slice(35).some((d) => d.inMonth)) days.splice(35);
+  // Ta bort helt tomma veckor på slutet. En februari som börjar på en måndag har två sådana.
+  while (days.length > 28 && !days.slice(-7).some((d) => d.inMonth)) days.splice(-7);
   return days;
 }
 

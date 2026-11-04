@@ -2,7 +2,7 @@
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { eventEnd, formatTimeRange, isValidLocalDateTime, relativeDay } from "../src/lib/dates.ts";
+import { eventEnd, formatTimeRange, isValidLocalDateTime, monthGrid, relativeDay } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 
 // V8 rullar de två första utan fel (2 mars, 1 mars). De två sista ger Invalid Date, och då kastar en rundtur utan vakt (R-21).
@@ -104,4 +104,22 @@ test("SB-07: etiketterna utan pågående evenemang är oförändrade", () => {
   assert.equal(from("2026-11-12T10:00"), "Nästa vecka");
   assert.equal(from("2026-11-03T10:00", "2026-11-03T12:00"), "I går");
   assert.equal(from("2026-10-01T10:00", "2026-10-01T12:00"), "Har varit");
+});
+
+test("SB-10: en februari som börjar på en måndag får fyra rader, utan tomma veckor", () => {
+  const days = monthGrid(2027, 2);
+  assert.equal(days.length, 28);
+  assert.equal(days[0].date, "2027-02-01");
+  assert.equal(days.at(-1).date, "2027-02-28");
+  assert.ok(days.every((d) => d.inMonth));
+});
+
+test("SB-10: en vecka med någon dag i månaden behålls", () => {
+  // 1 feb 2026 är en söndag: sex dagar av januari först, ingen dag av mars behövs på en sjätte rad.
+  assert.equal(monthGrid(2026, 2).length, 35);
+  // 1 nov 2026 är en söndag: sex dagar av oktober och 30 dagar räcker in på en sjätte rad.
+  const november = monthGrid(2026, 11);
+  assert.equal(november.length, 42);
+  assert.equal(november[0].date, "2026-10-26");
+  assert.equal(november.at(-1).date, "2026-12-06");
 });
