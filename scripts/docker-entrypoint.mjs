@@ -28,8 +28,8 @@ function chownTree(p) {
  * från länkens katalog – följt av resten av vägen, och upplösningen börjar om från roten; högst 40 länkhopp sammanlagt. Ett led som
  * inte finns än räknas, liksom alla led efter det, som en vanlig katalog som mkdirSync sedan skapar. Andra fel från lstat kastas vidare.
  * @param {string} p absolut sökväg
- * @returns {string | null} den upplösta absoluta sökvägen, eller null om vägen går genom en symlänk som någon annan än root äger
- *   eller kräver fler än 40 länkhopp
+ * @returns {string | Error} den upplösta absoluta sökvägen, eller ett Error (som returneras, inte kastas) med beskedet om varför vägen
+ *   inte följs: den går genom en symlänk som någon annan än root äger, eller kräver fler än 40 länkhopp
  */
 function resolveRootOwned(p) {
   let rest = p.split(path.sep).filter(Boolean);
@@ -45,7 +45,12 @@ function resolveRootOwned(p) {
       throw err;
     }
     if (st.isSymbolicLink()) {
-      if (st.uid !== 0 || ++hops > 40) return null;
+      if (st.uid !== 0) {
+        return new Error(
+          `DATA_DIR ${p} går genom en symlänk som inte ägs av root och följs inte (SD-18). Lägg länken som root, eller låt DATA_DIR peka direkt på katalogen.`,
+        );
+      }
+      if (++hops > 40) return new Error(`DATA_DIR ${p} kräver fler än 40 symlänkhopp (en slinga?) och följs inte (SD-18).`);
       rest = path.resolve(path.dirname(next), fs.readlinkSync(next), ...rest.slice(1)).split(path.sep).filter(Boolean);
       resolved = path.sep;
     } else {
@@ -60,10 +65,8 @@ if (process.getuid?.() === 0) {
   // DATA_DIR och varje led i vägen dit får vara symlänkar bara om root äger dem – dem har den som driftsätter lagt i bilden. En länk
   // som någon annan äger stoppar starten, eftersom appanvändaren annars kunde få root att byta ägare på vad som helst vid nästa start.
   const resolved = resolveRootOwned(dataDir);
-  if (resolved === null) {
-    console.error(
-      `[statlin] DATA_DIR ${dataDir} går genom en symlänk som inte ägs av root och följs inte (SD-18). Lägg länken som root, eller låt DATA_DIR peka direkt på katalogen.`,
-    );
+  if (resolved instanceof Error) {
+    console.error(`[statlin] ${resolved.message}`);
     process.exit(1);
   }
   fs.mkdirSync(resolved, { recursive: true });
