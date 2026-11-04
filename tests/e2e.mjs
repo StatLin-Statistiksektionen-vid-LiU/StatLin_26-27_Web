@@ -48,13 +48,19 @@ const step = async (name, fn) => {
 /** Lösenorden som login() har bytt till, per e-postadress. */
 const changedPasswords = new Map();
 
+/** Kakorna från varje kontos senaste inloggning. */
+const sessions = new Map();
+
 async function login(page, email, password) {
   const current = changedPasswords.get(email) ?? password;
   await page.goto(`${BASE}/logga-in`);
   await page.fill("#email", email);
   await page.fill("#password", current);
   await Promise.all([page.waitForURL(/\/admin/), page.click('button[type="submit"]')]);
-  if (!/\/admin\/konto\?byt=1/.test(page.url())) return;
+  if (!/\/admin\/konto\?byt=1/.test(page.url())) {
+    sessions.set(email, await page.context().cookies());
+    return;
+  }
   assert.ok(!changedPasswords.has(email), `${email} tvingades byta lösenord en gång till`);
   // Första inloggningen: välj ett eget lösenord. Formuläret skickas via React, så vänta tills fälten är hydrerade.
   const next = `${current}-bytt`;
@@ -67,6 +73,16 @@ async function login(page, email, password) {
   await page.getByText("Lösenordet är bytt.").waitFor();
   changedPasswords.set(email, next);
   await page.goto(`${BASE}/admin`);
+  sessions.set(email, await page.context().cookies());
+}
+
+/**
+ * Byter till ett konto som redan loggat in, utan ett nytt inloggningsförsök. Spärren i rate-limit.ts släpper 20 försök per IP och
+ * kvart, och sviten ligger nära den gränsen. Försök 21 nekas, och det syns här som att waitForURL i login() går ut på tid.
+ */
+async function switchAccount(page, email) {
+  await page.context().clearCookies();
+  await page.context().addCookies(sessions.get(email));
 }
 
 /** Klickar Ta bort på en sida i adminpanelen och väntar in bekräftelsen. Knappen gör inget förrän den hydrerats. */
@@ -964,7 +980,7 @@ async function openDeleteConfirm(page) {
       await page.context().clearCookies();
       await signedOut.getByRole("button", { name: "Ta bort" }).click();
       await signedOut.getByRole("alert").waitFor();
-      await login(page, "info@statlin.se", "lokal-demo-2026");
+      await switchAccount(page, "info@statlin.se");
       await page.goto(editUrl);
       const dialog = await openDeleteConfirm(page);
       await Promise.all([page.waitForURL(/\/admin\/hjalpmedel\?raderad=1/), dialog.getByRole("button", { name: "Ta bort" }).click()]);
@@ -1130,8 +1146,7 @@ async function openDeleteConfirm(page) {
 
     await step("Mottagaren får ingen knapp för att ta bort uppdraget", async () => {
       assignedUrl = await newTask("Uppdrag till SCB i testet", "Ordförande SCB");
-      await page.context().clearCookies();
-      await login(page, "scb@statlin.se", "lokal-demo-2026");
+      await switchAccount(page, "scb@statlin.se");
       await page.goto(assignedUrl);
       await heading("Uppdrag till SCB i testet").waitFor();
       assert.equal(await page.getByRole("button", { name: "Ta bort" }).count(), 0, "mottagaren ska inte kunna ta bort uppdraget");
@@ -1189,15 +1204,13 @@ async function openDeleteConfirm(page) {
     });
 
     await step("Redaktören tar bort ett uppdrag som någon annan skickat", async () => {
-      await page.context().clearCookies();
-      await login(page, "info@statlin.se", "lokal-demo-2026");
+      await switchAccount(page, "info@statlin.se");
       await page.goto(assignedUrl);
       await confirmDelete(await openDeleteConfirm(page));
     });
 
     await step("Administratören tar bort en annans privata uppdrag, och rubriken står kvar i loggen", async () => {
-      await page.context().clearCookies();
-      await login(page, "admin@statlin.se", "lokal-admin-2026");
+      await switchAccount(page, "admin@statlin.se");
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByRole("link", { name: /Hemlig planering i testet/ }).click();
       await heading("Hemlig planering i testet").waitFor();
@@ -1246,7 +1259,7 @@ async function openDeleteConfirm(page) {
       await page.context().clearCookies();
       await dialog.getByRole("button", { name: "Ta bort" }).click();
       await dialog.getByRole("alert").getByText("Du har loggats ut").waitFor();
-      await login(page, "admin@statlin.se", "lokal-admin-2026");
+      await switchAccount(page, "admin@statlin.se");
       await page.goto(url);
       await heading("Utloggningsprov i testet").waitFor();
     });
