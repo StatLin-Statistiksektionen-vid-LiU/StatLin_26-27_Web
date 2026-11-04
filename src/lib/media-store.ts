@@ -110,8 +110,10 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
 
     // stats() räknar alltid på indata (sharps dokumentation) – här mellanbufferten. Den tidigare
     // sharp(buffer).rotate().resize(64).stats() avkodade därför hela originalet en gång till.
-    const { dominant } = await sharp(data, pixels).stats();
-    const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+    const { dominant, isOpaque } = await sharp(data, pixels).stats();
+    // En bild med genomskinliga delar (en logga) får ingen färg bakom sig: efter förminskningen har de genomskinliga
+    // pixlarna RGB 0, och den "dominanta" färgen blev nästan svart.
+    const color = isOpaque ? `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}` : "transparent";
 
     // Huvudkopian: de publicerade storlekarna är förlustkomprimerade och högst 2000 px, så utan den går en bild inte att
     // trycka eller generera om i efterhand.
