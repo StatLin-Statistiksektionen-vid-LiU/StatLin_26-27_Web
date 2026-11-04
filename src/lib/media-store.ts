@@ -13,6 +13,14 @@ export const MAX_FILE_BYTES = 30 * 1024 * 1024;
 
 const IMAGE_WIDTHS = [480, 1200, 2000];
 
+/**
+ * Pixelgränsen i varje sharp()-anrop. 40 Mpx räcker gott för den största bredden (2000 px); sharps egen gräns, 268 Mpx,
+ * är över 1 GB råpixlar – mer än maskinens minne – och en liten PNG kan ha sådana mått.
+ */
+const PIXEL_LIMIT = { limitInputPixels: 40e6 };
+const TOO_MANY_PIXELS = "Bilden är för stor (max 40 megapixlar, t.ex. 8000 × 5000 pixlar). Förminska den och försök igen.";
+const isPixelLimit = (err: unknown) => err instanceof Error && /exceeds pixel limit/i.test(err.message);
+
 const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/heic", "image/heif"]);
 
 
@@ -36,7 +44,7 @@ async function removeFiles(files: string[]) {
 
 /**
  * Sparar en bild i flera bredder som WebP. Bilden roteras enligt EXIF och all
- * metadata (t.ex. GPS-position från mobilkameror) tas bort.
+ * metadata (t.ex. GPS-position från mobilkameror) tas bort. Bilden avkodas en gång (ST-06).
  */
 export async function storeImage(file: File, userId: number | null, alt = ""): Promise<Media> {
   if (file.size > MAX_IMAGE_BYTES) throw new MediaError("Bilden är för stor (max 25 MB).");
@@ -44,9 +52,9 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
 
   let meta: Metadata;
   try {
-    meta = await sharp(buffer, { failOn: "error" }).metadata();
-  } catch {
-    throw new MediaError("Filen kunde inte läsas som en bild.");
+    meta = await sharp(buffer, { failOn: "error", ...PIXEL_LIMIT }).metadata();
+  } catch (err) {
+    throw new MediaError(isPixelLimit(err) ? TOO_MANY_PIXELS : "Filen kunde inte läsas som en bild.");
   }
   // sharps förbyggda binär saknar HEVC-avkodare: HEIC (iPhones standardformat) går att läsa mått från men inte avkoda.
   if (meta.format === "heif" && meta.compression === "hevc") {
@@ -66,21 +74,26 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
   try {
     await fs.mkdir(path.join(UPLOADS_DIR, path.dirname(base)), { recursive: true });
 
-    let outW = srcWidth;
-    let outH = srcHeight;
+    // En avkodning: roterad enligt EXIF och förminskad till den största bredden, som råa pixlar i en mellanbuffert.
+    // De mindre bredderna och färgen tas ur den – inte ur originalet igen, och inte med .clone(), vars grenar avkodar
+    // var för sig och körda parallellt höjer toppminnet (R-28).
+    const { data, info } = await sharp(buffer, { animated: false, ...PIXEL_LIMIT })
+      .rotate()
+      .resize({ width: unique[unique.length - 1], withoutEnlargement: true })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const pixels = { raw: { width: info.width, height: info.height, channels: info.channels }, ...PIXEL_LIMIT };
+
     for (const w of unique) {
       const out = path.join(UPLOADS_DIR, `${base}-${w}.webp`);
       written.push(out);
-      const info = await sharp(buffer, { animated: false })
-        .rotate()
-        .resize({ width: w, withoutEnlargement: true })
-        .webp({ quality: w <= 480 ? 72 : 80, effort: 4 })
-        .toFile(out);
-      outW = info.width;
-      outH = info.height;
+      const img = sharp(data, pixels);
+      await (w < info.width ? img.resize({ width: w }) : img).webp({ quality: w <= 480 ? 72 : 80, effort: 4 }).toFile(out);
     }
 
-    const { dominant } = await sharp(buffer).rotate().resize(64).stats();
+    // stats() räknar alltid på indata (sharps dokumentation) – här mellanbufferten. Den tidigare
+    // sharp(buffer).rotate().resize(64).stats() avkodade därför hela originalet en gång till.
+    const { dominant } = await sharp(data, pixels).stats();
     const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 
     const db = getDb();
@@ -90,12 +103,12 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
           `INSERT INTO media (kind, path_base, ext, variants, original_name, mime, size, width, height, color, alt, uploaded_by)
            VALUES ('image', ?, 'webp', ?, ?, 'image/webp', ?, ?, ?, ?, ?, ?)`,
         )
-        .run(base, unique.join(","), file.name.slice(0, 200), file.size, outW, outH, color, alt.slice(0, 300), userId);
+        .run(base, unique.join(","), file.name.slice(0, 200), file.size, info.width, info.height, color, alt.slice(0, 300), userId);
       return db.prepare("SELECT * FROM media WHERE id = ?").get(res.lastInsertRowid) as Media;
     })();
   } catch (err) {
     await removeFiles(written);
-    throw err;
+    throw isPixelLimit(err) ? new MediaError(TOO_MANY_PIXELS) : err;
   }
 }
 
