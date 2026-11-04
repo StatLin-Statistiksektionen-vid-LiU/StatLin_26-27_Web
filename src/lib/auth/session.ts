@@ -121,8 +121,10 @@ async function renew(session: Session) {
 }
 
 /**
- * För route handlers: att öppna redigeringspanelen räknas som aktivitet. En kaka som sätts i en action renderar om
- * sidan (och stänger i dag panelen, SB-30) – förlängs sessionen redan här behöver sparningen i panelen inte göra det.
+ * För route handlers och för sparningar som förlänger efter skrivningen: att öppna redigeringspanelen räknas som
+ * aktivitet, och de versionsvaktade sparningarna förlänger först när skrivningen gått igenom. En kaka som sätts i en
+ * action renderar om sidan (och stänger i dag panelen, SB-30) – förlängs sessionen redan när panelen öppnas behöver
+ * sparningen i panelen inte göra det.
  */
 export async function renewSessionIfDue() {
   const session = await getSession();
@@ -132,7 +134,9 @@ export async function renewSessionIfDue() {
 /**
  * Inloggad användare i en server action. Sidorna använder requireUser och omdirigerar, men en omdirigering från en
  * action monterar om sidan, och det som stod i formuläret försvinner. Här returneras i stället ett fel som formuläret
- * visar. En action räknas som aktivitet och förlänger sessionen (renew). renew: false för actions som bara läser.
+ * visar. En action räknas som aktivitet och förlänger sessionen (renew). renew: false för actions som bara läser, och
+ * för versionsvaktade sparningar som förlänger först efter lyckad skrivning med renewSessionIfDue() – en kaka som sätts
+ * i ett felsvar renderar om sidan.
  */
 export async function actionUser(opts: { allowTemporaryPassword?: boolean; renew?: boolean } = {}): Promise<SessionUser | { error: string }> {
   const session = await getSession();
