@@ -44,6 +44,9 @@ export async function GET(request: Request, ctx: RouteContext<"/media/[...path]"
     }
   }
   headers.set("Content-Length", String(stat.size));
+  // HEAD körs med den här GET-hanteraren, och Next läser aldrig kroppen i svaret på HEAD: en öppnad ström blev en
+  // fildeskriptor som aldrig stängdes. Svaret får samma rubriker, men filen öppnas inte.
+  if (request.method === "HEAD") return new Response(null, { headers });
   const stream = Readable.toWeb(fs.createReadStream(abs)) as ReadableStream;
   return new Response(stream, { headers });
 }
