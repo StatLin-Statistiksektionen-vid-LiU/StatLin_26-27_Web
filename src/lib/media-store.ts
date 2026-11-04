@@ -77,13 +77,11 @@ export async function storeImage(file: File, userId: number | null, alt = ""): P
 
   // Största storleken: högst 2000 px bred, och höjden följer med.
   let largest = Math.min(srcWidth, IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1]);
-  let outH = Math.round((srcHeight * largest) / srcWidth);
   // Mellanbufferten har en egen gräns: 12 Mpx × 4 B = 48 MB råpixlar per uppladdning, tre parallella ≈ 150 MB. En hög bild
-  // godtas, men dess största storlek blir smalare än 2000 px (1000 × 20 000 → 600 × 12 000).
-  if (largest * outH > 12e6) {
-    largest = Math.floor(12e6 / outH);
-    outH = Math.round((srcHeight * largest) / srcWidth);
-  }
+  // godtas, men dess största storlek blir smalare än 2000 px – så smal att ytan blir ≈ 12 Mpx med bildens proportioner
+  // (1000 × 20 000 → 774 × 15 480).
+  if (largest * Math.round((srcHeight * largest) / srcWidth) > 12e6) largest = Math.floor(Math.sqrt((12e6 * srcWidth) / srcHeight));
+  const outH = Math.round((srcHeight * largest) / srcWidth);
   // WebP klarar högst 16 383 px. En bild som fortfarande är för hög efter gränsen (500 × 20 000) nekas här, före avkodningen,
   // i stället för att fela i sharp efter en stor allokering.
   if (outH > 16383) throw new MediaError("Bilden är för hög (högst 16 383 pixlar efter förminskning). Beskär den och försök igen.");
