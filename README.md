@@ -339,7 +339,7 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 - **Next.js 16** (App Router, Cache Components, Partial Prerendering, server actions) och **React 19**.
 - **SQLite** via `better-sqlite3`, med versionerade migreringar i `src/lib/db/migrations.ts`.
 - **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen; originalet sparas i `DATA_DIR/originals`).
-- **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`).
+- **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`). Tailwind körs genom Turbopack-laddaren `@tailwindcss/turbopack` (`turbopack.rules` i `next.config.ts`). Lägg ingen `postcss.config` bredvid, för då körs Tailwind två gånger. Laddaren och `tailwindcss` är låsta till samma exakta version, så uppdatera dem tillsammans. Kör sedan `npm run build` och kontrollera att en ny klass finns i `.next/static/**/*.css`. Töm `.next/cache` om CSS:en ser gammal ut.
 - Sessioner i databasen (slumpad token, endast SHA-256-hashen lagras), lösenord med bcrypt, CSRF-skydd via SameSite-cookies och kontroll av ursprung.
 - Typsnitt (Archivo, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs. Citat och formler använder systemtypsnittet Georgia.
 
