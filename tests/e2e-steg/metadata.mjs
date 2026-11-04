@@ -221,15 +221,22 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
       return route.fulfill(answer);
     });
     const codes = { json: ["732G33", "732G34", "TATA24"] };
+    // Sidan behöver ett ögonblick för att läsa ett svar. Så länge hör tecken och fokus till hämtningen som pågår, och ingen ny går i väg.
+    const pageHasRead = () => visitor.waitForTimeout(200);
     const open = async (first) => {
       answer = first;
       requests = 0;
       await visitor.goto(`${BASE}/tentastatistik`);
       const input = visitor.getByRole("combobox", { name: "Kurskod" });
-      await waitForHydration(visitor, input);
+      // Skalet har en egen ruta som byts ut när resten av sidan kommer, så elementet slås upp på nytt tills rutan som gäller är hydrerad.
+      await visitor.waitForFunction(() => {
+        const el = document.querySelector('input[name="kod"]');
+        return el && Object.keys(el).some((k) => k.startsWith("__react"));
+      });
       const answered = visitor.waitForResponse("**/api/tentastatistik/koder");
       await input.focus();
       await answered;
+      await pageHasRead();
       return input;
     };
     const option = visitor.getByRole("option", { name: "732G33" });
@@ -247,6 +254,7 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     // Felsvaret: besökaren lämnar rutan och kommer tillbaka.
     input = await open({ status: 500, body: "" });
     await input.pressSequentially("73");
+    await pageHasRead();
     assert.equal(await option.count(), 0, "Inga förslag när hämtningen misslyckades");
     await input.blur();
     answer = codes;
