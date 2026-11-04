@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
+  FILE_AND_REMOVE,
   type FormState,
   formObject,
   formVersion,
@@ -256,6 +257,7 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
 
   let mediaId: number | null = null;
   const file = fd.get("file");
+  if (file instanceof File && file.size > 0 && fd.get("remove_file") === "on") return FILE_AND_REMOVE;
   if (file instanceof File && file.size > 0) {
     const current = old?.media_id ? (db.prepare("SELECT * FROM media WHERE id = ?").get(old.media_id) as Media | undefined) : undefined;
     try {

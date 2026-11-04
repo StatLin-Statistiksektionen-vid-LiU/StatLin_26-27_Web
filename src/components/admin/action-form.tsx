@@ -162,8 +162,13 @@ export function ActionForm({
     // Skyddet står kvar om något skrevs under sparningen (fälten laddas inte om efter en egen sparning).
     setDirty(!resetOnSuccess && editedSinceSubmit.current);
     if (resetOnSuccess) formRef.current?.reset();
-    // En fil som redan sparats skickas inte med igen nästa gång formuläret sparas (SD-35). reset() tömmer den också.
-    else for (const input of formRef.current?.querySelectorAll<HTMLInputElement>('input[type="file"]') ?? []) input.value = "";
+    else {
+      // En fil som redan sparats skickas inte med igen nästa gång formuläret sparas (SD-35). reset() tömmer den också.
+      for (const input of formRef.current?.querySelectorAll<HTMLInputElement>('input[type="file"]') ?? []) input.value = "";
+      // "Ta bort filen" är verkställd eller överkörd i och med den lyckade sparningen – ikryssad kvar hade nästa sparning
+      // (t.ex. en rättad titel) tagit bort filen.
+      for (const box of formRef.current?.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name="remove_file"]') ?? []) box.checked = false;
+    }
     onSuccessRef.current?.(state);
   }, [state, resetOnSuccess, setDirty]);
   // När formuläret göms efter en lyckad sparning (sidan lämnas, Activity) tas statusraden bort – med ett

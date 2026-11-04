@@ -14,6 +14,15 @@ export const initialFormState: FormState = {};
 /** Svaret när raden ändrats sedan formuläret laddades (se ActionForm:s version). */
 export const STALE: FormState = { error: "Någon annan har sparat – ladda om sidan." };
 
+/**
+ * Svaret när ett dokument eller hjälpmedel skickas med både en ny fil och "Ta bort filen". De säger emot varandra – tidigare
+ * vann filen, och rutan stod kvar ikryssad till nästa sparning, som då tog bort filen.
+ */
+export const FILE_AND_REMOVE: FormState = {
+  error: "Välj en ny fil eller Ta bort filen – inte båda.",
+  fieldErrors: { file: "Välj en ny fil eller kryssa i Ta bort filen – inte båda." },
+};
+
 /** updated_at som formuläret laddades med – ActionForm skickar det i ett dolt fält. Sparningen sker bara om det står kvar. */
 export const formVersion = (fd: FormData) => String(fd.get("updated_at") ?? "");
 

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { type FormState, formObject, invalid, zRequired, zText, zUrl } from "@/lib/admin/form";
+import { FILE_AND_REMOVE, type FormState, formObject, invalid, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, revalidateSite } from "@/lib/admin/helpers";
 import { actionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -37,6 +37,7 @@ export async function saveResource(_prev: FormState, fd: FormData): Promise<Form
 
   const file = fd.get("file");
   const upload = file instanceof File && file.size > 0 ? file : null;
+  if (upload && fd.get("remove_file") === "on") return FILE_AND_REMOVE;
   const kept = old && fd.get("remove_file") !== "on" ? old.media_id : null;
   // Varje rad på sidan ska leda någonstans, även efter en ändring.
   if (!upload && !kept && !d.url) return { error: "Ladda upp en fil eller ange en länk.", fieldErrors: { file: "Välj en fil eller ange en länk." } };
