@@ -6,13 +6,15 @@ import { canManageImages } from "@/lib/auth/permissions";
 import { actionUser } from "@/lib/auth/session";
 import { pruneOrphanMedia } from "@/lib/media-store";
 
+const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Knappen under Admin → Bilder (ST-17). En veckokörning väntar på CI/cron (SN-06). */
 export async function pruneUnusedMedia(): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageImages(user)) return { error: "Du har inte behörighet att göra det här." };
+  if (!canManageImages(user)) return forbidden;
   const { rows, files } = await pruneOrphanMedia({ olderThanDays: 7 });
   if (rows + files === 0) return { ok: true, message: "Inget att rensa – allt som laddats upp används, eller är yngre än en vecka." };
   const summary = [
