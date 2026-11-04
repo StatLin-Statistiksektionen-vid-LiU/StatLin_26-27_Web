@@ -176,8 +176,12 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
      ```ts
      { source: "/:path*", has: [{ type: "host", value: "statlin-web.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true },
      ```
+     Pekar `www` hit (steg 1): lägg till samma regel för den också:
+     ```ts
+     { source: "/:path*", has: [{ type: "host", value: "www.statlin.se" }], destination: "https://statlin.se/:path*", permanent: true },
+     ```
   5. Kalenderhändelsernas UID innehåller värden (`event-<id>@<värd>`, `src/lib/ics.ts`) och byter värd samtidigt. Bestäm före bytet hur det ska hanteras för dem som prenumererar på kalendern eller har lagt in evenemang i sin egen.
-  6. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se/`, `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
+  6. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se/`, `curl -sI https://www.statlin.se/` ger `308` med `location: https://statlin.se/` (om www pekar hit), `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
 
 ### Utan Docker
 
