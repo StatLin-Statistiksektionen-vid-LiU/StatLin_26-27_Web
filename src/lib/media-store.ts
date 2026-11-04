@@ -199,13 +199,11 @@ export async function replaceFile(old: Media, file: File, userId: number | null)
     await fs.writeFile(temp, buffer);
     const db = getDb();
     return db.transaction(() => {
-      db.prepare("UPDATE media SET original_name = ?, mime = ?, size = ?, uploaded_by = ? WHERE id = ?").run(
-        file.name.slice(0, 200),
-        mime,
-        file.size,
-        userId,
-        old.id,
-      );
+      const res = db
+        .prepare("UPDATE media SET original_name = ?, mime = ?, size = ?, uploaded_by = ? WHERE id = ?")
+        .run(file.name.slice(0, 200), mime, file.size, userId, old.id);
+      // Raderades dokumentet medan filen skrevs finns ingen rad att ersätta – då läggs ingen fil på den gamla adressen.
+      if (res.changes === 0) throw new MediaError("Filen har tagits bort under tiden – ladda upp den igen.");
       // I transaktionen: misslyckas bytet rullas raden tillbaka.
       renameSync(temp, target);
       return db.prepare("SELECT * FROM media WHERE id = ?").get(old.id) as Media;
