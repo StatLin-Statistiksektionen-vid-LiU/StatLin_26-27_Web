@@ -183,10 +183,10 @@ Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, s
 ```bash
 npm ci && npm run build
 cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
-DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se CLIENT_IP_HEADER=x-real-ip node .next/standalone/server.js
+HOSTNAME=127.0.0.1 DATA_DIR=/var/lib/statlin SITE_URL=https://statlin.se CLIENT_IP_HEADER=x-real-ip node .next/standalone/server.js
 ```
 
-Bakom en omvänd proxy som skriver `X-Real-IP`, som under [Docker](#docker-rekommenderat). Utan Docker-bildens startskript varnar ingenting om `CLIENT_IP_HEADER` saknas.
+Bakom en omvänd proxy som skriver `X-Real-IP`, som under [Docker](#docker-rekommenderat). `HOSTNAME=127.0.0.1` gör att bara proxyn på samma server når sajten, som `127.0.0.1` i `docker-compose.yml` – annars lyssnar servern på alla gränssnitt, och den som når port 3000 direkt kan skriva `X-Real-IP` själv. Värdet i kommandot går före ett `HOSTNAME` som skalet redan exporterar. Utan Docker-bildens startskript varnar ingenting om `CLIENT_IP_HEADER` saknas.
 
 ### Miljövariabler
 
