@@ -94,15 +94,15 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
   redirect(`/admin/uppdrag/${res.lastInsertRowid}?skapat=1`);
 }
 
-export async function setTaskStatus(fd: FormData) {
+export async function setTaskStatus(fd: FormData): Promise<FormState> {
   const user = await actionUser();
-  if ("error" in user) return;
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const status = String(fd.get("status")) as TaskStatus;
   const existing = loadTask(id);
   // Object.hasOwn och inte `in`: "constructor" och "toString" finns på alla objekt och hade räknats som giltiga statusar.
   if (!existing || !Object.hasOwn(TASK_STATUSES, status) || !canUpdateTask(user, existing)) redirect("/admin/uppdrag");
-  if (existing.status === status) return;
+  if (existing.status === status) return {};
   // updated_at skrivs inte: statusknapparna ligger på samma sida som uppdragets formulär, som inte skriver status eller
   // completed_at. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   getDb()
@@ -110,12 +110,13 @@ export async function setTaskStatus(fd: FormData) {
     .run(status, status === "klar" ? nowIso() : null, id);
   audit(user.id, "status", "task", id, `${existing.title} → ${TASK_STATUSES[status]}`);
   revalidateBoard();
+  return {};
 }
 
 /** Öppna uppdrag (utan mottagare) kan vem som helst som ser dem ta. */
-export async function claimTask(fd: FormData) {
+export async function claimTask(fd: FormData): Promise<FormState> {
   const user = await actionUser();
-  if ("error" in user) return;
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
   if (!existing || existing.to_user_id !== null || !canSeeTask(user, existing)) redirect("/admin/uppdrag");
@@ -126,6 +127,7 @@ export async function claimTask(fd: FormData) {
     .run(user.id, id);
   audit(user.id, "claim", "task", id, existing.title);
   revalidateBoard();
+  return {};
 }
 
 export async function addTaskComment(_prev: FormState, fd: FormData): Promise<FormState> {

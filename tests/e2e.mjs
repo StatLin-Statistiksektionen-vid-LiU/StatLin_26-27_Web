@@ -1264,6 +1264,60 @@ async function openDeleteConfirm(page) {
       await heading("Utloggningsprov i testet").waitFor();
     });
 
+    // Status och övertagande: klicket gör sitt direkt, och den som loggats ut ser ett besked i stället för att ingenting händer.
+    const statusButton = (pressed, label) => page.locator(`button[aria-pressed="${pressed}"]`, { hasText: label });
+    const claimButton = page.getByRole("button", { name: "Jag tar den" });
+    const signedOutNotice = page.getByRole("alert").getByText("Du har loggats ut");
+
+    await step("Den som loggats ut och ändrar status ser ett besked, och statusen står kvar", async () => {
+      const url = await newTask("Statusprov i testet", "Ordförande SCB");
+      await page.context().clearCookies();
+      await statusButton(false, "Pågår").click();
+      await signedOutNotice.waitFor();
+      await switchAccount(page, "admin@statlin.se");
+      await page.goto(url);
+      await statusButton(true, "Planerat").waitFor();
+    });
+
+    await step("Beskedet står inte kvar när man kommer tillbaka till sidan", async () => {
+      await page.context().clearCookies();
+      await statusButton(false, "Pågår").click();
+      await signedOutNotice.waitFor();
+      await switchAccount(page, "admin@statlin.se");
+      // Sidan ligger gömd medan tavlan visas, så beskedet finns kvar om inget tar bort det.
+      await page.locator("header").getByRole("link", { name: "Uppdragstavla" }).click();
+      await page.waitForURL(/\/admin\/uppdrag$/);
+      await page.goBack();
+      await statusButton(false, "Pågår").waitFor();
+      assert.equal(await signedOutNotice.count(), 0, "beskedet ska inte stå kvar");
+    });
+
+    await step("Efter ny inloggning går samma knapp igenom, och beskedet försvinner", async () => {
+      await page.context().clearCookies();
+      await statusButton(false, "Pågår").click();
+      await signedOutNotice.waitFor();
+      await switchAccount(page, "admin@statlin.se");
+      await statusButton(false, "Pågår").click();
+      await statusButton(true, "Pågår").waitFor();
+      await signedOutNotice.waitFor({ state: "detached" });
+    });
+
+    await step("Den som loggats ut och tar ett öppet uppdrag ser ett besked, och uppdraget står öppet", async () => {
+      const url = await newTask("Övertagandeprov i testet", "Öppet");
+      await page.context().clearCookies();
+      await claimButton.click();
+      await signedOutNotice.waitFor();
+      await switchAccount(page, "admin@statlin.se");
+      await page.goto(url);
+      await claimButton.waitFor();
+    });
+
+    await step("Den som är inloggad tar det öppna uppdraget och blir mottagare", async () => {
+      await claimButton.click();
+      await claimButton.waitFor({ state: "detached" });
+      await statusButton(true, "Pågår").waitFor();
+    });
+
     // Grafiskt ansvar: bilderna på alla evenemang och nyheter, men inte texterna.
     let scbEventId;
     let coverBefore;

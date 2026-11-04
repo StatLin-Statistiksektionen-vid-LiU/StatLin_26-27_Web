@@ -5,6 +5,7 @@ import { addTaskComment, claimTask, deleteTask, setTaskStatus } from "@/app/admi
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Field, TextArea } from "@/components/admin/fields";
+import { TaskActionForm } from "@/components/admin/task-action-form";
 import { TaskForm } from "@/components/admin/task-form";
 import { DueLabel, PersonChip, STATUS_ORDER, STATUS_STYLES, TaskStatusBadge } from "@/components/admin/task-ui";
 import { AdminHeader, Card, Notice } from "@/components/admin/ui";
@@ -106,13 +107,14 @@ async function TaskDetail({
           <Card className="p-6">
             <h2 className="kicker text-stone">Status</h2>
             {mayUpdate ? (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {STATUS_ORDER.map((s) => (
-                  <form key={s} action={setTaskStatus}>
-                    <input type="hidden" name="id" value={task.id} />
-                    <input type="hidden" name="status" value={s} />
+              <TaskActionForm action={setTaskStatus} id={task.id} className="mt-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {STATUS_ORDER.map((s) => (
                     <button
+                      key={s}
                       type="submit"
+                      name="status"
+                      value={s}
                       aria-pressed={task.status === s}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition-colors",
@@ -122,9 +124,9 @@ async function TaskDetail({
                       <span className={cn("size-2 shrink-0 rounded-full", STATUS_STYLES[s].dot)} aria-hidden />
                       {TASK_STATUSES[s]}
                     </button>
-                  </form>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </TaskActionForm>
             ) : (
               <div className="mt-3">
                 <TaskStatusBadge status={task.status} />
@@ -132,13 +134,12 @@ async function TaskDetail({
               </div>
             )}
             {task.to_user_id === null && (
-              <form action={claimTask} className="mt-4">
-                <input type="hidden" name="id" value={task.id} />
+              <TaskActionForm action={claimTask} id={task.id} className="mt-4">
                 <button type="submit" className="btn btn-red w-full">
                   <Users size={17} /> Jag tar den
                 </button>
                 <p className="mt-2 text-xs text-stone">Uppdraget är öppet – den som tar det blir mottagare.</p>
-              </form>
+              </TaskActionForm>
             )}
           </Card>
 
