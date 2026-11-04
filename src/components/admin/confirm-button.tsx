@@ -67,7 +67,9 @@ export function ConfirmButton({
         ref={dialogRef}
         role="alertdialog"
         aria-labelledby={questionId}
-        // Medan actionen körs går det inte att ångra: Escape hade stängt dialogen och sett ut som ett nej.
+        // Medan actionen körs går det inte att ångra: Escape hade stängt dialogen, sett ut som ett nej och dolt ett eventuellt fel.
+        // preventDefault hindrar bara det första trycket i Chromium, och closedby finns inte i alla webbläsare.
+        closedby={pending ? "none" : undefined}
         onCancel={(e) => {
           if (pending) e.preventDefault();
         }}

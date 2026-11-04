@@ -1218,6 +1218,28 @@ async function openDeleteConfirm(page) {
       await tab.close();
     });
 
+    await step("Escape stänger inte bekräftelsen medan raderingen körs, så beskedet syns ändå", async () => {
+      const url = await newTask("Escapeprov i testet", "Ordförande SCB");
+      await page.goto(url);
+      // Svaret dröjer tills Escape hunnit tryckas. Två tryck: preventDefault hindrar bara det första i Chromium.
+      const slowly = async (route) => {
+        if (route.request().method() === "POST") await new Promise((resolve) => setTimeout(resolve, 1500));
+        await route.continue();
+      };
+      await page.route(url, slowly);
+      const dialog = await openDeleteConfirm(page);
+      await dialog.locator('input[name="id"]').evaluate((input) => (input.value = "0"));
+      await dialog.getByRole("button", { name: "Ta bort" }).click();
+      await dialog.getByText("Tar bort…").waitFor();
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Escape");
+      await dialog.getByRole("alert").getByText("Uppdraget finns inte längre.").waitFor();
+      await page.unroute(url, slowly);
+      // När svaret kommit går det att stänga igen.
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+    });
+
     await step("Den som loggats ut ser ett besked, och uppdraget står kvar", async () => {
       const url = await newTask("Utloggningsprov i testet", "Ordförande SCB");
       const dialog = await openDeleteConfirm(page);
