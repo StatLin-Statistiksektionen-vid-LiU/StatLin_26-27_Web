@@ -123,7 +123,12 @@ export function ActionForm({
     },
     [watch],
   );
-  const markDirty = useCallback(() => setDirty(true), [setDirty]);
+  // Det som skrivs medan en sparning pågår fanns inte i den sparade FormData, och skyddas därför också efter "Sparat".
+  const editedSinceSubmit = useRef(false);
+  const markDirty = useCallback(() => {
+    editedSinceSubmit.current = true;
+    setDirty(true);
+  }, [setDirty]);
 
   // Bilder som laddas upp i fälten. Skickades formuläret under tiden följde det gamla id:t med, och den nya bilden
   // blev föräldralös – därför väntar knapparna (och Enter) tills uppladdningarna är klara.
@@ -154,7 +159,8 @@ export function ActionForm({
     if (!state.ok || handled.current === state) return;
     handled.current = state;
     shouldReset.current = true;
-    setDirty(false);
+    // Skyddet står kvar om något skrevs under sparningen (fälten laddas inte om efter en egen sparning).
+    setDirty(!resetOnSuccess && editedSinceSubmit.current);
     if (resetOnSuccess) formRef.current?.reset();
     onSuccessRef.current?.(state);
   }, [state, resetOnSuccess, setDirty]);
@@ -224,6 +230,7 @@ export function ActionForm({
           // Knappen som skickade formuläret följer med, så att den kan bära ett eget värde.
           const button = (e.nativeEvent as SubmitEvent).submitter;
           setSubmitter(button?.dataset.submit === "secondary" ? "secondary" : "primary");
+          editedSinceSubmit.current = false;
           const fd = new FormData(e.currentTarget, button);
           startTransition(() => formAction(fd));
         }}
