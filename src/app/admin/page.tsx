@@ -151,7 +151,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
           {upcoming.length === 0 ? (
             <p className="mt-6 text-sm text-stone">Inga kommande evenemang. Dags att planera något?</p>
           ) : (
-            <EventList events={upcoming} side={(e) => <StatusBadge published={!!e.published} />} />
+            <EventList events={upcoming} />
           )}
         </Card>
 
@@ -173,10 +173,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
                       <span className="block truncate font-semibold">{n.title}</span>
                       <span className="block text-xs text-stone">{formatTimestamp(n.published_at)}</span>
                     </span>
-                    <StatusBadge
-                      published={!!n.published && n.published_at <= nowIso}
-                      label={!n.published ? "Utkast" : n.published_at > nowIso ? "Schemalagd" : "Publicerad"}
-                    />
+                    {!n.published ? <StatusBadge published={false} /> : n.published_at > nowIso && <StatusBadge published={false} label="Schemalagd" />}
                   </Link>
                 </li>
               ))}
@@ -257,10 +254,10 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
 }
 
 /**
- * Kommande evenemang med datumbricka. meta hamnar på raden under titeln och side till höger,
- * så att översikterna kan visa utskott respektive publiceringsstatus.
+ * Kommande evenemang med datumbricka. meta hamnar på raden under titeln, så att översikten
+ * för redaktörer kan visa utskottet. Utkast står utskrivet, det publicerade är det vanliga.
  */
-function EventList({ events, meta, side }: { events: EventItem[]; meta?: (e: EventItem) => ReactNode; side?: (e: EventItem) => ReactNode }) {
+function EventList({ events, meta }: { events: EventItem[]; meta?: (e: EventItem) => ReactNode }) {
   return (
     <ul className="mt-4 divide-y divide-ink/10">
       {events.map((e) => {
@@ -276,10 +273,9 @@ function EventList({ events, meta, side }: { events: EventItem[]; meta?: (e: Eve
                 <span className="block truncate font-semibold">{e.title}</span>
                 <span className="block text-xs text-stone">
                   {meta && <>{meta(e)} · </>}
-                  {e.starts_at.slice(11)} {!side && !e.published && "· Utkast"}
+                  {e.starts_at.slice(11)} {!e.published && "· Utkast"}
                 </span>
               </span>
-              {side && <span className="shrink-0">{side(e)}</span>}
               <ArrowUpRight size={16} className="shrink-0 text-stone" />
             </Link>
           </li>

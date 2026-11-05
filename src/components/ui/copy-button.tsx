@@ -19,7 +19,7 @@ export function CopyButton({ value, label, className }: { value: string; label?:
         }
       }}
       className={cn("group inline-flex items-center gap-1.5 font-mono transition-colors", className)}
-      aria-label={`Kopiera ${label ?? value}`}
+      aria-label={label?.startsWith("Kopiera") ? label : `Kopiera ${label ?? value}`}
     >
       <span>{label ?? value}</span>
       <span className={cn("transition-opacity", copied ? "opacity-100" : "opacity-0 group-hover:opacity-60 pointer-coarse:hidden")} aria-hidden>

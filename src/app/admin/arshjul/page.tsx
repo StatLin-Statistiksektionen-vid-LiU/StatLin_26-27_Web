@@ -87,7 +87,7 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
       <AdminHeader
         kicker="Alla poster"
         title="Årshjul"
-        description="Det som brukar hända under ett år, så att nästa års post ser vad som väntar och när. Lägg det som är aktuellt på tavlan eller gör en projektplan av det. Nästa år börjar hjulet om."
+        description="Det som brukar hända under ett år, så att nästa års post ser vad som väntar och när. Nästa år börjar hjulet om."
         actions={
           <>
             {items.length > 0 && missingSuggestions && <FillSuggestionsButton action={fillWheelSuggestions} className="btn btn-ghost bg-white" />}

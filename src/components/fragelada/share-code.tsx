@@ -10,6 +10,8 @@ type Props = {
   link: string;
   base: string;
   sender: string;
+  /** Lådan har redan frågor: då är delningen inte det första ägaren vill se. */
+  folded?: boolean;
 };
 
 const CARD = "flex flex-col rounded-md bg-white p-5 shadow-[0_10px_26px_-22px_rgb(10_10_10/0.6),0_0_0_1px_rgb(10_10_10/0.07)]";
@@ -18,14 +20,11 @@ const CARD = "flex flex-col rounded-md bg-white p-5 shadow-[0_10px_26px_-22px_rg
  * De tre sätten att få ut en kod. Sajten skickar inga mejl själv, så knapparna öppnar avsändarens eget mejlprogram med
  * texten ifylld. Mottagaren väljer avsändaren där, och sajten får aldrig veta vilka som fick koden.
  */
-export function ShareCode({ boxId, title, code, link, base, sender }: Props) {
+export function ShareCode({ boxId, title, code, link, base, sender, folded = false }: Props) {
   const texts = shareTexts({ title, code, link, base, sender });
   const what = code ? "koden" : "länken";
-  return (
-    <section aria-labelledby="dela-koden" className="mt-8">
-      <h2 id="dela-koden" className="text-xl font-extrabold tracking-tight">
-        Så får de {what}
-      </h2>
+  const body = (
+    <>
       <p className="mt-1 max-w-2xl text-[0.95rem] text-stone">Knapparna öppnar ditt eget mejlprogram med texten ifylld, så väljer du vilka som ska få den. Sajten skickar inget själv och sparar inte vilka som fick den.</p>
       <ul className="mt-4 grid gap-4 md:grid-cols-3">
         <li className={CARD}>
@@ -64,6 +63,22 @@ export function ShareCode({ boxId, title, code, link, base, sender }: Props) {
           </div>
         </li>
       </ul>
+    </>
+  );
+  if (folded) {
+    return (
+      <details className="mt-12 rounded-2xl border border-ink/10 bg-white p-5">
+        <summary className="tryck cursor-pointer font-bold">Så får de {what}</summary>
+        <div className="mt-3">{body}</div>
+      </details>
+    );
+  }
+  return (
+    <section aria-labelledby="dela-koden" className="mt-8">
+      <h2 id="dela-koden" className="text-xl font-extrabold tracking-tight">
+        Så får de {what}
+      </h2>
+      {body}
     </section>
   );
 }

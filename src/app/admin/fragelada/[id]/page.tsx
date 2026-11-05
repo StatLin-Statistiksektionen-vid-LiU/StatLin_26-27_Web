@@ -72,7 +72,7 @@ async function Box({ params, searchParams }: { params: PageProps<"/admin/fragela
         </div>
       </section>
 
-      <ShareCode boxId={box.id} title={box.title} code={box.code} link={link} base={base} sender={user.name} />
+      {box.total === 0 && <ShareCode boxId={box.id} title={box.title} code={box.code} link={link} base={base} sender={user.name} />}
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-xl font-extrabold tracking-tight">
@@ -121,7 +121,9 @@ async function Box({ params, searchParams }: { params: PageProps<"/admin/fragela
         </ul>
       )}
 
-      <details className="mt-12 rounded-2xl border border-ink/10 bg-white p-5">
+      {box.total > 0 && <ShareCode folded boxId={box.id} title={box.title} code={box.code} link={link} base={base} sender={user.name} />}
+
+      <details className={cn("rounded-2xl border border-ink/10 bg-white p-5", box.total > 0 ? "mt-4" : "mt-12")}>
         <summary className="tryck cursor-pointer font-bold">Inställningar för lådan</summary>
         <div className="mt-5 space-y-6">
           <BoxForm box={box} />
