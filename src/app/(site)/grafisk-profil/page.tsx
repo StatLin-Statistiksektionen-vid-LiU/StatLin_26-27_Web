@@ -194,9 +194,9 @@ export default function BrandPage() {
             Utskottsloggorna bygger på baslogotypen: förkortningen i vit Arial i bandets övre halva och en egen bakgrundsgrafik. SCB och XCB följer
             en egen standard, och STAR har sitt eget varumärke.
           </p>
-          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-4">
+          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-white/10 sm:grid-cols-3 lg:grid-cols-4">
             {COMMITTEE_LOGOS.map((l) => (
-              <li key={l.file} className="group bg-ink p-6 text-center">
+              <li key={l.file} className="group bg-ink p-6 text-center shadow-[0_0_0_1px_rgb(255_255_255/0.1)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/brand/utskott/${l.file}.webp`} alt={`${l.name}-loggan`} className="mx-auto h-28 w-auto object-contain transition-transform duration-700 group-hover:-translate-y-1 group-hover:rotate-[-6deg] md:h-32" loading="lazy" />
                 <p className="mt-5 font-bold">{l.name}</p>
