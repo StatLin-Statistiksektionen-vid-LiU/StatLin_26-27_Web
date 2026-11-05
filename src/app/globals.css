@@ -26,7 +26,7 @@
   --color-scb-yellow: #eee242;
   --color-star-navy: #0b1530;
 
-  --font-sans: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Archivo Variable", "Archivo", "Archivo Text Reserv Arial", "Archivo Text Reserv Roboto", ui-sans-serif, system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-formulas: "Times New Roman", Times, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -156,7 +156,7 @@
   size-adjust: 122%;
 }
 
-/* Samma sak för undersidornas rubriker, som är bredare. Skalan är uppmätt mot display på alla sidor i bredderna 320 till 430. Bokstäverna blir högre en kort stund, men rubriken bryts likadant och inget under den flyttas. */
+/* Samma sak för undersidornas rubriker, som är bredare. Skalan är uppmätt mot display på alla sidor i bredderna 320 till 430. Bokstäverna blir högre en kort stund, men rubriken bryts likadant och inget under den flyttas. Utan reservfonten hoppade /grafisk-profil nästan 100 px på datorn. */
 @font-face {
   font-family: "Archivo Bred Reserv Arial";
   src: local("Arial Bold"), local("Arial-BoldMT");
@@ -171,17 +171,42 @@
   size-adjust: 141%;
 }
 
+/* Brödtexten: skalade så att stycken bryts likadant innan Archivo har kommit, och sidan under dem inte flyttas. Arial är uppmätt mot sidornas riktiga texter, Roboto räknat från Arial. */
+@font-face {
+  font-family: "Archivo Text Reserv Arial";
+  src: local("Arial"), local("ArialMT");
+  font-weight: 100 500;
+  size-adjust: 98%;
+}
+
+@font-face {
+  font-family: "Archivo Text Reserv Arial";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 600 900;
+  size-adjust: 97%;
+}
+
+@font-face {
+  font-family: "Archivo Text Reserv Roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  font-weight: 100 500;
+  size-adjust: 97%;
+}
+
+@font-face {
+  font-family: "Archivo Text Reserv Roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 600 900;
+  size-adjust: 96%;
+}
+
 @utility display {
-  font-family: var(--font-sans);
+  font-family: "Archivo Variable", "Archivo Bred Reserv Arial", "Archivo Bred Reserv Roboto", var(--font-sans);
   font-stretch: 125%;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: -0.02em;
   line-height: 0.92;
-
-  @media (pointer: coarse) {
-    font-family: "Archivo Variable", "Archivo Bred Reserv Arial", "Archivo Bred Reserv Roboto", var(--font-sans);
-  }
 }
 
 @utility display-tight {

@@ -356,7 +356,7 @@ async function openDeleteConfirm(page) {
             canvasWidth: document.querySelector("canvas").width,
             shadowBlur: window.__canvas.blur,
             sections: css(".below-fold").contentVisibility,
-            titleFont: css("h1").fontFamily.includes("Reserv"),
+            titleFont: css("h1").fontFamily.includes("Archivo Reserv"),
           };
         });
       const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);

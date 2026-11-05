@@ -143,6 +143,32 @@ export default async function publiktSteg({ BASE, browser, step }) {
     await context.close();
   });
 
+  await step("Inget flyttar sig när typsnittet kommer", async () => {
+    for (const [options, urls] of [
+      [PHONE, ["/evenemang", "/studenter/ny-student", "/studenter/lankar"]],
+      [{}, ["/grafisk-profil"]],
+    ]) {
+      const { context, page } = await newVisitor(browser, options);
+      await page.route(/\.woff2(\?.*)?$/, async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        await route.continue();
+      });
+      await page.addInitScript(() => {
+        window.__shift = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) window.__shift += entry.value;
+        }).observe({ type: "layout-shift", buffered: true });
+      });
+      for (const url of urls) {
+        await page.goto(`${BASE}${url}`);
+        await page.waitForTimeout(2000);
+        const shift = await page.evaluate(() => window.__shift);
+        assert.ok(shift < 0.02, `${url} flyttade sig ${shift.toFixed(3)}`);
+      }
+      await context.close();
+    }
+  });
+
   await step("Små länkar går att träffa med fingret", async () => {
     const { context, page } = await visit(PHONE, "/kontakt");
     const missed = await page.locator("footer nav a[href]").evaluateAll((links) =>
