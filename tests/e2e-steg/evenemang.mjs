@@ -386,5 +386,36 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     }
   });
 
+  await step("Ett nytt evenemang erbjuder nästa steg tills det sparas igen, och ett utkast har en egen flik men ingen sida att visa", async () => {
+    await switchAccount(page, ADMIN);
+    const title = `E2E-nästa ${uniqueId()}`;
+    const { url } = await createEvent({ title, startsAt: `${dayOffset(20)}T18:00` });
+    const created = page.getByRole("status").filter({ hasText: "Evenemanget är publicerat!" });
+    await created.waitFor();
+    await created.getByRole("link", { name: "Ladda upp bilder" }).waitFor();
+    await created.getByRole("link", { name: "Visa på sajten" }).waitFor();
+
+    // Affischen beställs med evenemanget redan ifyllt.
+    await Promise.all([page.waitForURL(/\/admin\/uppdrag\/ny/), created.getByRole("link", { name: "Be om affisch" }).click()]);
+    const taskTitle = page.locator('main input[name="title"]:visible');
+    await taskTitle.waitFor();
+    assert.equal(await taskTitle.inputValue(), `Affisch: ${title}`);
+    assert.equal(await page.locator('select[name="event_id"]:visible').inputValue(), url.split("/").pop());
+    assert.equal(await page.locator('input[name="due_date"]:visible').inputValue(), dayOffset(13), "en vecka före evenemanget");
+
+    await openForm(`${url}?skapad=1`);
+    await created.waitFor();
+    await page.getByRole("button", { name: "Spara ändringar" }).click();
+    await page.getByText("Sparat och publicerat.").waitFor();
+    await created.waitFor({ state: "detached" });
+
+    await page.getByRole("button", { name: "Gör till utkast" }).click();
+    await page.getByText("Sparat som utkast.").waitFor();
+    await page.getByRole("link", { name: "Visa sidan" }).waitFor({ state: "hidden" });
+    await page.goto(`${BASE}/admin/evenemang?visa=utkast`);
+    await page.locator("tbody tr", { hasText: title }).waitFor();
+    await removeItem(url);
+  });
+
   await visitor.context.close();
 }

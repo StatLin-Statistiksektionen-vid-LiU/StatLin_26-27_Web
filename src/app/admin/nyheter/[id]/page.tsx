@@ -31,10 +31,20 @@ async function EditNews({ params, searchParams }: Pick<PageProps<"/admin/nyheter
   const committees = await listCommittees();
   const visible = user.role === "committee" ? committees.filter((c) => c.id === user.committee_id) : committees;
   const scheduled = !!item.published && item.published_at > new Date().toISOString();
+  const live = !!item.published && !scheduled;
   return (
     <>
-      {sp.skapad && (
-        <Notice>
+      {/* Adressen behåller ?skapad=1 när formuläret sparas, men då har beskedet gjort sitt. */}
+      {sp.skapad && item.updated_at === item.created_at && (
+        <Notice
+          actions={
+            live && (
+              <Link href={`/nyheter/${item.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
+                Visa på sajten <ArrowUpRight size={15} />
+              </Link>
+            )
+          }
+        >
           {!item.published ? "Nyheten är sparad som utkast och syns inte på sajten än." : scheduled ? `Nyheten publiceras ${formatTimestamp(item.published_at)}.` : "Nyheten är publicerad!"}
         </Notice>
       )}
@@ -44,9 +54,12 @@ async function EditNews({ params, searchParams }: Pick<PageProps<"/admin/nyheter
         description={<StatusBadge published={!!item.published} label={scheduled ? `Schemalagd ${formatTimestamp(item.published_at)}` : undefined} />}
         actions={
           <>
-            <Link href={`/nyheter/${item.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
-              Visa <ArrowUpRight size={15} />
-            </Link>
+            {/* Ett utkast eller en schemalagd nyhet har ingen sida att visa än. */}
+            {live && (
+              <Link href={`/nyheter/${item.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
+                Visa <ArrowUpRight size={15} />
+              </Link>
+            )}
             <ConfirmButton action={deleteNews} id={item.id} message={`Ta bort "${item.title}"?`}>
               <Trash size={15} /> Ta bort
             </ConfirmButton>

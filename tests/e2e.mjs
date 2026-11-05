@@ -1060,7 +1060,9 @@ async function openDeleteConfirm(page) {
       await page.fill('input[name="location"]', "Kårallen");
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       reviewId = page.url().match(/evenemang\/(\d+)/)[1];
-      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
+      await page.getByText("Evenemanget är publicerat!").waitFor();
+      // Granskningen är styrelsens egen anteckning: utskottet varken ser den eller kan göra något åt den.
+      assert.equal(await page.getByText("Ej granskad", { exact: true }).filter({ visible: true }).count(), 0, "utskottet ska inte se granskningen");
       assert.equal(await page.getByRole("button", { name: "Markera som granskad" }).count(), 0, "utskottet ska inte kunna granska");
     });
 
@@ -1096,17 +1098,17 @@ async function openDeleteConfirm(page) {
       await page.context().clearCookies();
       await login(page, "scb@statlin.se", "lokal-demo-2026");
       await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
-      await page.getByText("Granskad", { exact: true }).first().waitFor();
       await page.fill('textarea[name="summary"]', "Ändrad efter granskningen.");
       await page.getByRole("button", { name: "Spara ändringar" }).click();
       await page.getByText("Sparat och publicerat.").waitFor();
-      await page.reload();
-      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
     });
 
     await step("Admin-skapat evenemang är granskat direkt", async () => {
       await page.context().clearCookies();
       await login(page, "admin@statlin.se", "lokal-admin-2026");
+      // Utskottets ändring i förra steget tog bort granskningen.
+      await page.goto(`${BASE}/admin/evenemang/${reviewId}`);
+      await page.getByText("Ej granskad", { exact: true }).first().waitFor();
       await page.goto(`${BASE}/admin/evenemang/ny`);
       await page.fill('input[name="title"]', "Styrelsemöte i testet");
       await page.fill('textarea[name="summary"]', "Styrelsemöte som administratören lägger upp i testet.");

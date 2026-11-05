@@ -36,7 +36,7 @@ export function EventEditor({
     <>
       <EventForm event={event} cover={cover} committees={committees} user={user} defaultStart={event.starts_at} />
 
-      <Card className="mt-10 scroll-mt-24 p-5 md:p-7">
+      <Card className="mt-6 scroll-mt-24 p-5 md:p-7">
         <div id="galleri" className="mb-5 scroll-mt-24">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <ImageIcon size={20} className="text-red" /> Bildgalleri

@@ -141,6 +141,13 @@ export async function countUnseenTasks(userId: number): Promise<number> {
 }
 
 /** Alla aktiva konton som mottagare, styrelsens poster först och sedan utskotten. */
+/** Vem en beställning av en affisch ska gå till: den grafiskt ansvariga, om det bara finns en. Annars väljer beställaren själv. */
+export async function findDesignRecipient(): Promise<number | null> {
+  const db = await readDb();
+  const rows = db.prepare("SELECT id FROM users WHERE active = 1 AND design = 1 LIMIT 2").all() as { id: number }[];
+  return rows.length === 1 ? rows[0].id : null;
+}
+
 export async function listTaskRecipients(): Promise<(TaskPerson & { kind: string })[]> {
   const db = await readDb();
   const rows = db

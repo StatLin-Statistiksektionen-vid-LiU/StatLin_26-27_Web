@@ -33,19 +33,23 @@ export function AdminHeader({
   );
 }
 
-export function Notice({ children, tone = "success" }: { children: ReactNode; tone?: "success" | "info" | "warning" }) {
+/** Ett besked överst på sidan. `actions` är det man brukar vilja göra härnäst: en till tre små knappar. */
+export function Notice({ children, tone = "success", actions }: { children: ReactNode; tone?: "success" | "info" | "warning"; actions?: ReactNode }) {
   return (
     <div
       role="status"
       className={cn(
-        "mb-6 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold",
+        "mb-6 flex flex-col gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold sm:flex-row sm:items-center",
         tone === "success" && "border-emerald-600/25 bg-emerald-600/[0.07] text-emerald-900",
         tone === "info" && "border-ink/10 bg-white text-ink",
         tone === "warning" && "border-red/30 bg-red/[0.06] text-red-dark",
       )}
     >
-      {tone === "success" && <Check size={18} />}
-      {children}
+      <span className="flex min-w-0 items-center gap-3 sm:flex-1">
+        {tone === "success" && <Check size={18} className="shrink-0" />}
+        {children}
+      </span>
+      {actions && <span className="flex shrink-0 flex-wrap gap-2 text-ink">{actions}</span>}
     </div>
   );
 }

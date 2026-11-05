@@ -41,13 +41,16 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
               <Link href={`/admin/nyheter/${n.id}`} className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   {n.pinned && <span className="chip bg-red text-white">Fäst</span>}
-                  <span className="truncate font-semibold group-hover:text-red-deep">{n.title}</span>
+                  <span className="font-semibold group-hover:text-red-deep sm:truncate">{n.title}</span>
                 </span>
                 <span className="mt-0.5 block text-xs text-stone">
                   {n.committee?.short_name ?? "Sektionen"} · {formatTimestamp(n.published_at)} {n.author_name && `· ${n.author_name}`}
                 </span>
               </Link>
-              <StatusBadge published={!!n.published && n.published_at <= now} label={!n.published ? "Utkast" : n.published_at > now ? "Schemalagd" : "Publicerad"} />
+              {/* På telefon räcker det att det ovanliga syns: rubriken får platsen. */}
+              <span className={!!n.published && n.published_at <= now ? "hidden sm:block" : undefined}>
+                <StatusBadge published={!!n.published && n.published_at <= now} label={!n.published ? "Utkast" : n.published_at > now ? "Schemalagd" : "Publicerad"} />
+              </span>
               <Link href={`/admin/nyheter/${n.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label="Redigera">
                 <Edit size={16} />
               </Link>

@@ -7,12 +7,13 @@ import { EventEditor } from "@/components/admin/event-editor";
 import { InlineActionForm } from "@/components/admin/inline-action-form";
 import { AdminHeader, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Check, Trash } from "@/components/icons";
-import { canEditOwned, canReviewEvents } from "@/lib/auth/permissions";
+import { canEditOwned, canReviewEvents, hasDesign } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getUser } from "@/lib/data/admin";
 import { listCommittees } from "@/lib/data/content";
 import { getEventById, listEventImages } from "@/lib/data/events";
-import { formatTimestamp } from "@/lib/dates";
+import { findDesignRecipient } from "@/lib/data/tasks";
+import { addDaysLocal, formatTimestamp, todayLocal } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
 
 export const metadata = { title: "Redigera evenemang" };
@@ -34,27 +35,56 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
   if (!canEditOwned(user, event)) redirect("/admin/evenemang?nekad=1");
   const [committees, images] = await Promise.all([listCommittees(), listEventImages(event.id)]);
   const visible = user.role === "committee" ? committees.filter((c) => c.id === user.committee_id) : committees;
+  const reviewer = canReviewEvents(user);
+  // Adressen behåller ?skapad=1 när formuläret sparas, men då har beskedet gjort sitt.
+  const justCreated = !!sp.skapad && event.updated_at === event.created_at;
+  const askForPoster = justCreated && !event.cover && !hasDesign(user) && event.starts_at.slice(0, 10) >= todayLocal();
+  const posterLink = askForPoster && (
+    <Link href={await posterRequestHref(event)} className="btn btn-ghost btn-sm bg-white">
+      Be om affisch
+    </Link>
+  );
 
   return (
     <>
-      {sp.skapad && (
-        <Notice>{event.published ? "Evenemanget är publicerat! Ladda gärna upp bilder längre ned." : "Evenemanget är sparat som utkast och syns inte på sajten än."}</Notice>
-      )}
+      {justCreated &&
+        (event.published ? (
+          <Notice
+            actions={
+              <>
+                {posterLink}
+                <a href="#galleri" className="btn btn-ghost btn-sm bg-white">
+                  Ladda upp bilder
+                </a>
+                <Link href={`/evenemang/${event.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
+                  Visa på sajten <ArrowUpRight size={15} />
+                </Link>
+              </>
+            }
+          >
+            Evenemanget är publicerat!
+          </Notice>
+        ) : (
+          <Notice actions={posterLink}>Evenemanget är sparat som utkast och syns inte på sajten än.</Notice>
+        ))}
       <AdminHeader
         back={{ href: "/admin/evenemang", label: "Evenemang" }}
         title={event.title}
         description={
           <span className="inline-flex flex-wrap items-center gap-3">
             <StatusBadge published={!!event.published} />
-            <ReviewBadge checked={!!event.checked_at} />
+            {reviewer && <ReviewBadge checked={!!event.checked_at} />}
             {event.committee && <span>{event.committee.name}</span>}
           </span>
         }
         actions={
           <>
-            <Link href={`/evenemang/${event.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
-              Visa sidan <ArrowUpRight size={15} />
-            </Link>
+            {/* Ett utkast har ingen sida att visa. */}
+            {event.published && (
+              <Link href={`/evenemang/${event.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
+                Visa sidan <ArrowUpRight size={15} />
+              </Link>
+            )}
             <ConfirmButton action={deleteEvent} id={event.id} message={`Ta bort "${event.title}" och alla dess bilder? Det går inte att ångra.`}>
               <Trash size={15} /> Ta bort
             </ConfirmButton>
@@ -62,7 +92,7 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
         }
       />
 
-      {canReviewEvents(user) && <ReviewPanel event={event} />}
+      {reviewer && <ReviewPanel event={event} />}
 
       <EventEditor
         event={event}
@@ -72,6 +102,16 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
       />
     </>
   );
+}
+
+/** Ett uppdrag om affischen, ifyllt så långt det går: rubrik, evenemang, grafiskt ansvarig och en vecka före evenemanget som sista dag. */
+async function posterRequestHref(event: EventItem) {
+  const designer = await findDesignRecipient();
+  const due = addDaysLocal(event.starts_at, -7).slice(0, 10);
+  const query = new URLSearchParams({ evenemang: String(event.id), titel: `Affisch: ${event.title}` });
+  if (designer) query.set("till", String(designer));
+  if (due >= todayLocal()) query.set("datum", due);
+  return `/admin/uppdrag/ny?${query}`;
 }
 
 /** Bara för administratörer: markera evenemanget som granskat, eller ångra. */
