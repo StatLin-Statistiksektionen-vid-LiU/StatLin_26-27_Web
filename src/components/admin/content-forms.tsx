@@ -222,6 +222,23 @@ export function AnnouncementSection({ s }: { s: SiteSettings }) {
   );
 }
 
+export function EducationCommitteeSection({ s, committees }: { s: SiteSettings; committees: Pick<Committee, "id" | "name">[] }) {
+  return (
+    <FormSection title="Utbildningsutskottet" description="Utskottet vars kontaktkort visas på sidorna om kandidat- och masterprogrammet.">
+      <Field label="Utskott" name="education_committee_id" hint="Automatiskt betyder utskottet med adressen ubu. Byter ni adress på det, välj det här så att kortet inte försvinner.">
+        <Select name="education_committee_id" defaultValue={s.education_committee_id}>
+          <option value="">Automatiskt</option>
+          {committees.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    </FormSection>
+  );
+}
+
 export function StarSection({ s, events }: { s: SiteSettings; events: Pick<EventItem, "id" | "title" | "starts_at">[] }) {
   return (
     <FormSection title="STAR-mässan" description="Evenemanget vars datum visas under STAR på företagssidan.">

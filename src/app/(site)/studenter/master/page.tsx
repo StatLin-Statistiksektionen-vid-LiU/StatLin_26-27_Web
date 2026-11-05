@@ -7,7 +7,7 @@ import { UbuCard } from "@/components/content/ubu-card";
 import { ArrowRight } from "@/components/icons";
 import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
-import { getCommitteeBySlug } from "@/lib/data/content";
+import { getEducationCommittee } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
 import { listFeaturedLinks } from "@/lib/data/links";
 import { SITE_ALTERNATES } from "@/lib/site-metadata";
@@ -33,7 +33,7 @@ export default function MasterPage() {
 }
 
 async function Master() {
-  const [ubu, events, shortcuts] = await Promise.all([getCommitteeBySlug("ubu"), listUpcomingEvents(3), listFeaturedLinks()]);
+  const [ubu, events, shortcuts] = await Promise.all([getEducationCommittee(), listUpcomingEvents(3), listFeaturedLinks()]);
   return (
     <ContentPage
       slug="master"

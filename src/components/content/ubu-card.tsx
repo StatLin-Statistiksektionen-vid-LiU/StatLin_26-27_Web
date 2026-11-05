@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Mail } from "@/components/icons";
 import type { Committee } from "@/lib/types";
 
-/** UBU:s kontaktkort i sidokolumnen på Kandidat och Master. */
+/** Utbildningsutskottets kontaktkort i sidokolumnen på Kandidat och Master. */
 export function UbuCard({ ubu }: { ubu: Committee }) {
   return (
     <div className="overflow-hidden rounded-[1.75rem] bg-ink p-7 text-white">
@@ -20,11 +20,11 @@ export function UbuCard({ ubu }: { ubu: Committee }) {
       <div className="mt-6 flex flex-wrap gap-2">
         {ubu.email && (
           <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">
-            <Mail size={15} /> Mejla UBU
+            <Mail size={15} /> Mejla {ubu.short_name}
           </a>
         )}
         <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
-          Om UBU
+          Om {ubu.short_name}
         </Link>
       </div>
     </div>

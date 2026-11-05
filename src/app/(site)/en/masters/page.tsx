@@ -6,7 +6,7 @@ import { EventRow } from "@/components/content/event-card";
 import { TranslateTip } from "@/components/content/translate-tip";
 import { ArrowRight, Mail } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
-import { getCommitteeBySlug } from "@/lib/data/content";
+import { getEducationCommittee } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
 import { SITE_ALTERNATES, SITE_OG_EN } from "@/lib/site-metadata";
 
@@ -28,7 +28,7 @@ export default function MastersPage() {
 }
 
 async function Masters() {
-  const [ubu, events] = await Promise.all([getCommitteeBySlug("ubu"), listUpcomingEvents(4)]);
+  const [ubu, events] = await Promise.all([getEducationCommittee(), listUpcomingEvents(4)]);
   return (
     <ContentPage
       slug="en-masters"
@@ -62,11 +62,11 @@ async function Masters() {
               <div className="mt-6 flex flex-wrap gap-2">
                 {ubu.email && (
                   <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">
-                    <Mail size={15} /> Email UBU
+                    <Mail size={15} /> Email {ubu.short_name}
                   </a>
                 )}
                 <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
-                  About UBU
+                  About {ubu.short_name}
                 </Link>
               </div>
             </div>

@@ -4,7 +4,7 @@ import { ContentPage } from "@/components/content/content-page";
 import { UbuCard } from "@/components/content/ubu-card";
 import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
-import { getCommitteeBySlug } from "@/lib/data/content";
+import { getEducationCommittee } from "@/lib/data/content";
 import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function BachelorPage() {
 }
 
 async function Bachelor() {
-  const [ubu, shortcuts] = await Promise.all([getCommitteeBySlug("ubu"), listFeaturedLinks()]);
+  const [ubu, shortcuts] = await Promise.all([getEducationCommittee(), listFeaturedLinks()]);
   return (
     <ContentPage
       slug="utbildning"

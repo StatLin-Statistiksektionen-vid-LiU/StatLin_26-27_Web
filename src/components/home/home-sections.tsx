@@ -12,6 +12,7 @@ import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/
 import { countUpcomingEvents, listUpcomingEvents } from "@/lib/data/events";
 import { listFeaturedLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
+import { PROGRAMS } from "@/lib/links";
 
 export async function HomeSections() {
   const [events, upcomingCount, news, committees, board, settings, shortcuts] = await Promise.all([
@@ -25,10 +26,10 @@ export async function HomeSections() {
   ]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
   const stats = [
-    { value: utskott.length, label: "Utskott & grupper", note: "från SCB till eSTIG" },
+    { value: utskott.length, label: "Utskott & grupper", note: utskott.length > 1 ? `från ${utskott[0].short_name} till ${utskott[utskott.length - 1].short_name}` : "på sektionen" },
     { value: board.length, label: "Poster i styrelsen", note: "väljs varje år" },
     { value: upcomingCount, label: "Kommande evenemang", note: "just nu i kalendern" },
-    { value: 2, label: "Program", note: "kandidat och master" },
+    { value: PROGRAMS.length, label: "Program", note: PROGRAMS.map((p) => p.label.toLowerCase()).join(" och ") },
   ];
 
   return (

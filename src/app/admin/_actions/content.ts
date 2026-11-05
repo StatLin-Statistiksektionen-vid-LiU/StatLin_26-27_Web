@@ -388,6 +388,7 @@ const settingsSchema = z.object({
   announcement: zText(200),
   announcement_url: zUrl,
   star_event_id: z.string().regex(/^\d*$/, "Välj ett evenemang i listan."),
+  education_committee_id: z.string().regex(/^\d*$/, "Välj ett utskott i listan."),
 });
 
 /** Sparar bara fälten som finns i formuläret, så att delformulär (t.ex. bara startsidan) inte tömmer resten. */
