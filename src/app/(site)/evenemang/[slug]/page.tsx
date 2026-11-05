@@ -12,6 +12,7 @@ import { HeroSkeleton } from "@/components/ui/skeletons";
 import { SITE_OG } from "@/lib/site-metadata";
 import { getSettings } from "@/lib/data/content";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
+import { isLunchEvent, isStarSlug } from "@/lib/naringsliv";
 import { eventEnd, eventSchemaDates, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
 import { googleCalendarUrl } from "@/lib/ics";
 import { committeeHref } from "@/lib/navigation";
@@ -156,6 +157,25 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
 
         <div className="lg:col-span-7 lg:row-start-1">
           {event.body_md ? <Markdown source={event.body_md} /> : <p className="text-stone">Mer information kommer.</p>}
+
+          {(isStarSlug(event.slug) || String(event.id) === settings.star_event_id) && (
+            <Link href="/star" className="group mt-10 flex items-center justify-between gap-4 rounded-[1.5rem] bg-star-navy p-6 text-white">
+              <span>
+                <span className="kicker block text-white/70">STAR</span>
+                <span className="mt-1 block text-lg font-semibold">Se vilka företag som kommer och vad de söker</span>
+              </span>
+              <ArrowUpRight size={20} className="shrink-0 transition-transform duration-500 group-hover:translate-x-1" />
+            </Link>
+          )}
+          {isLunchEvent(event) && (
+            <Link href="/lunchforelasningar" className="group mt-10 flex items-center justify-between gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-6 transition-colors hover:border-ink/30">
+              <span>
+                <span className="kicker block text-stone">Lunchföreläsningar</span>
+                <span className="mt-1 block text-lg font-semibold">Vad vill du höra nästa gång? Önska och ge stjärnor</span>
+              </span>
+              <ArrowUpRight size={20} className="shrink-0 text-red transition-transform duration-500 group-hover:translate-x-1" />
+            </Link>
+          )}
 
           {images.length > 0 && (
             <section id="galleri" className="mt-16 scroll-mt-28">

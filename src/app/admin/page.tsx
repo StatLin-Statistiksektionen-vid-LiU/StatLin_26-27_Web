@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { DueLabel, PersonChip } from "@/components/admin/task-ui";
+import { WheelCards } from "@/components/admin/wheel-cards";
 import { AdminHeader, Card, Notice, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Board, Calendar, Check, Image as ImageIcon, Layers, Newspaper, Plus } from "@/components/icons";
 import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
@@ -25,10 +26,15 @@ const ENTITY_LABELS: Record<string, string> = {
   document: "dokument",
   resource: "hjälpmedel",
   partner: "partner",
+  star_company: "STAR-företag",
+  lecture_wish: "lunchönskemål",
   user: "konto",
   settings: "inställningar",
   task: "uppdraget",
+  wheel_item: "årshjulet",
+  project_plan: "projektplanen",
   media: "oanvända filer",
+  question_box: "frågelådan",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",
@@ -164,6 +170,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
 
       <MyTasks tasks={myTasks} />
 
+      <WheelCards user={user} />
+
       {design && <MissingCovers events={missingCovers(allEvents, now)} />}
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -269,6 +277,8 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
       </div>
 
       <MyTasks tasks={myTasks} />
+
+      <WheelCards user={user} />
 
       {toReview && (
         <section aria-labelledby="att-granska" className="mt-8 rounded-[1.5rem] border border-ink/10 bg-white p-6">

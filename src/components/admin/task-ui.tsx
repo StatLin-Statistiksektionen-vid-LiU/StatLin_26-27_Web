@@ -69,10 +69,11 @@ export function TaskCard({ task }: { task: Task }) {
           {task.to_user_id === null ? <span className="chip bg-red/10 text-red-deep">Öppet – vem som helst</span> : <PersonChip person={task.to} />}
         </span>
       </span>
-      {(task.due_date || task.event || task.comment_count > 0) && (
+      {(task.due_date || task.event || task.plan || task.comment_count > 0) && (
         <span className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-ink/[0.07] pt-3 text-[0.78rem]">
           {task.due_date && <DueLabel date={task.due_date} done={task.status === "klar"} />}
           {task.event && <span className="truncate text-stone">↳ {task.event.title}</span>}
+          {task.plan && <span className="truncate text-stone">▤ {task.plan.title}</span>}
           {task.comment_count > 0 && (
             <span className="inline-flex items-center gap-1 text-stone">
               <MessageCircle size={13} /> {task.comment_count}

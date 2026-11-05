@@ -1,0 +1,121 @@
+import Link from "next/link";
+import { addWheelItemToBoard, setWheelStatus } from "@/app/admin/_actions/arshjul";
+import { TaskActionForm } from "@/components/admin/task-action-form";
+import { PendingButton } from "@/components/admin/wheel-buttons";
+import { ArrowUpRight, Board, Check, ClipboardList, Edit } from "@/components/icons";
+import { placementLabel, TERM_LABELS, termOfMonth, type WheelItem, type WheelState, type WheelStatus } from "@/lib/arshjul";
+import { cn } from "@/lib/utils";
+
+const STATUS_CHIP: Partial<Record<WheelStatus, { label: string; className: string }>> = {
+  planerad: { label: "Planerad", className: "bg-ink text-white" },
+  klar: { label: "Klar i år", className: "bg-emerald-600/10 text-emerald-800" },
+  hoppad: { label: "Hoppas över i år", className: "bg-ink/[0.07] text-ink/60" },
+};
+
+const smallBtn = "btn btn-sm btn-ghost bg-white";
+const quietBtn = "rounded-full px-3 py-1.5 text-sm font-semibold text-stone hover:bg-ink/[0.05] hover:text-ink";
+
+/** Knapparna på en punkt. Lägga på tavlan och skapa en plan får alla poster, medan läget ändras av ägaren, ansvarig post och admin. */
+function WheelActions({ item, year, state, status, canChange }: { item: WheelItem; year: number; state: WheelState | undefined; status: WheelStatus; canChange: boolean }) {
+  const statusForm = (value: string, label: string, className = quietBtn) => (
+    <TaskActionForm action={setWheelStatus} id={item.id} className="contents">
+      <input type="hidden" name="year" value={year} />
+      <input type="hidden" name="status" value={value} />
+      <PendingButton className={className}>{label}</PendingButton>
+    </TaskActionForm>
+  );
+  if (status === "klar" || status === "hoppad") return canChange ? <div className="mt-3 flex flex-wrap items-center gap-1.5">{statusForm("oppen", "Ångra")}</div> : null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      {state?.task_id ? (
+        <Link href={`/admin/uppdrag/${state.task_id}`} className={smallBtn}>
+          <Board size={15} /> På tavlan <ArrowUpRight size={13} className="text-stone" />
+        </Link>
+      ) : state?.project_plan_id ? null : (
+        <TaskActionForm action={addWheelItemToBoard} id={item.id} className="contents">
+          <input type="hidden" name="year" value={year} />
+          <PendingButton className={smallBtn}>
+            <Board size={15} /> Lägg på tavlan
+          </PendingButton>
+        </TaskActionForm>
+      )}
+      {state?.project_plan_id ? (
+        <Link href={`/admin/projektplaner/${state.project_plan_id}`} className={smallBtn}>
+          <ClipboardList size={15} /> Till planen <ArrowUpRight size={13} className="text-stone" />
+        </Link>
+      ) : (
+        <Link href={`/admin/projektplaner/ny?punkt=${item.id}&ar=${year}`} className={smallBtn}>
+          <ClipboardList size={15} /> Projektplan
+        </Link>
+      )}
+      {canChange && (
+        <span className="flex flex-wrap items-center gap-0.5">
+          {statusForm("klar", "Klar i år")}
+          {statusForm("hoppad", "Hoppa över i år")}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function WheelItemRow({
+  item,
+  year,
+  state,
+  status,
+  canChange,
+  late,
+  showPlacement,
+  compact,
+}: {
+  item: WheelItem;
+  year: number;
+  state: WheelState | undefined;
+  status: WheelStatus;
+  canChange: boolean;
+  late?: boolean;
+  showPlacement?: boolean;
+  /** På översikten: bara det som behövs för att bestämma sig. Beskrivningen finns i hjulet. */
+  compact?: boolean;
+}) {
+  const chip = STATUS_CHIP[status];
+  const closed = status === "klar" || status === "hoppad";
+  return (
+    <article className={cn("rounded-2xl border border-ink/10 bg-white p-4", closed && "bg-white/60")}>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className={cn("min-w-0 font-semibold leading-snug", closed && "text-ink/60")}>{item.title}</h3>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {chip && (
+            <span className={cn("chip", chip.className)}>
+              {status === "klar" && <Check size={12} strokeWidth={2.5} />}
+              {chip.label}
+            </span>
+          )}
+          {canChange && (
+            <Link href={`/admin/arshjul/${item.id}`} className="grid size-8 place-items-center rounded-full text-stone hover:bg-ink/[0.05] hover:text-ink" aria-label={`Ändra ${item.title}`} title="Ändra">
+              <Edit size={15} />
+            </Link>
+          )}
+        </div>
+      </div>
+      {item.description && !closed && !compact && <p className="mt-1 text-sm leading-relaxed text-stone">{item.description}</p>}
+      <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.72rem] tracking-wide text-ink/70">
+        {showPlacement && (
+          <span className="uppercase">
+            {placementLabel(item)}
+            {item.month !== null && ` · ${TERM_LABELS[termOfMonth(item.month)]}`}
+          </span>
+        )}
+        {item.responsible && <span>{item.responsible}</span>}
+        {item.depends_on && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rotate-45 bg-ink" aria-hidden />
+            Beror på: {item.depends_on}
+          </span>
+        )}
+        {late && <span className="font-semibold text-red-deep">Månaden har passerat</span>}
+      </p>
+      <WheelActions item={item} year={year} state={state} status={status} canChange={canChange} />
+    </article>
+  );
+}

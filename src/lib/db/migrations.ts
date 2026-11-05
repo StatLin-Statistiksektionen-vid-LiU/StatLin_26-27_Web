@@ -276,6 +276,104 @@ const steps: string[] = [
       (SELECT COALESCE(MIN(sort_order), 0) - 1 FROM links WHERE category = 'statlin')
     WHERE EXISTS (SELECT 1 FROM settings WHERE key = 'seeded_links');
   `,
+  /* 10: årshjulet och projektplanerna – punkter som återkommer varje år, årets läge för dem och planer vars steg är uppdrag på tavlan */ `
+  CREATE TABLE wheel_items (
+    id            INTEGER PRIMARY KEY,
+    title         TEXT NOT NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    responsible   TEXT NOT NULL DEFAULT '',                       -- post eller utskott i klartext, så att punkten överlever att konton byts
+    month         INTEGER CHECK (month BETWEEN 1 AND 12),          -- NULL = ingen bestämd månad, då gäller term
+    term          TEXT CHECK (term IN ('vt','ht')),                -- följer månaden när den är satt
+    depends_on    TEXT NOT NULL DEFAULT '',                       -- vem punkten beror på; tomt = bara på oss själva
+    template      TEXT NOT NULL DEFAULT '',                       -- mallen en projektplan från punkten börjar med
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    seed_key      TEXT UNIQUE,                                     -- förslagets nyckel: samma förslag läggs aldrig in två gånger
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    CHECK (month IS NOT NULL OR term IS NOT NULL)
+  );
+  CREATE INDEX wheel_items_month ON wheel_items(month);
+  CREATE TABLE project_plans (
+    id            INTEGER PRIMARY KEY,
+    title         TEXT NOT NULL,
+    template      TEXT NOT NULL,
+    plan_date     TEXT NOT NULL,                                   -- dagen planen siktar på, YYYY-MM-DD
+    responsible   TEXT NOT NULL DEFAULT '',
+    goal          TEXT NOT NULL DEFAULT '',
+    budget        TEXT NOT NULL DEFAULT '',
+    lessons       TEXT NOT NULL DEFAULT '',                       -- lärdomar till nästa år, visas när nästa plan skapas från samma punkt
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    wheel_item_id INTEGER REFERENCES wheel_items(id) ON DELETE SET NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX project_plans_item ON project_plans(wheel_item_id, plan_date);
+  CREATE TABLE wheel_item_state (
+    item_id         INTEGER NOT NULL REFERENCES wheel_items(id) ON DELETE CASCADE,
+    year            INTEGER NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'oppen' CHECK (status IN ('oppen','planerad','klar','hoppad')),
+    task_id         INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+    project_plan_id INTEGER REFERENCES project_plans(id) ON DELETE SET NULL,
+    updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (item_id, year)
+  );
+  ALTER TABLE tasks ADD COLUMN project_plan_id INTEGER REFERENCES project_plans(id) ON DELETE SET NULL;
+  CREATE INDEX tasks_plan ON tasks(project_plan_id);
+  `,
+  /* 11: frågelådan – lådor med kod eller fast adress och anonyma frågor. Frågorna har med avsikt inga kolumner för namn, IP-adress,
+     webbläsare eller klockslag, bara månaden (för gallringen efter 12 månader). Deras id slumpas, så att ordningen inte heller syns. */ `
+  CREATE TABLE question_boxes (
+    id          INTEGER PRIMARY KEY,
+    slug        TEXT UNIQUE,                                        -- fast låda utan kod: /fragelada/<slug>
+    code        TEXT UNIQUE,                                        -- sex tecken, se src/lib/fragelada.ts
+    title       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    owner_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,    -- bara ägaren läser frågorna; utan ägare tar lådan inte emot något
+    closes_on   TEXT,                                               -- YYYY-MM-DD, sista dagen lådan är öppen
+    closed      INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    CHECK ((slug IS NULL) != (code IS NULL))
+  );
+  CREATE TABLE box_questions (
+    id      INTEGER PRIMARY KEY,                                    -- slumpat
+    box_id  INTEGER NOT NULL REFERENCES question_boxes(id) ON DELETE CASCADE,
+    body    TEXT NOT NULL,
+    month   TEXT NOT NULL,                                          -- YYYY-MM
+    seen    INTEGER NOT NULL DEFAULT 0,
+    handled INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX box_questions_box ON box_questions(box_id, handled);
+  CREATE INDEX box_questions_month ON box_questions(month);
+  -- De fasta lådorna följer posternas konton. Saknas kontot väljer en administratör ägare under Frågelådan.
+  INSERT INTO question_boxes (slug, title, description, owner_id) VALUES
+    ('ubu', 'UBU, utbildningsbevakningen', 'Kurser, examination och studiemiljö.', (SELECT id FROM users WHERE email = 'ubu@statlin.se' AND active = 1)),
+    ('amo', 'AMO, arbetsmiljöombudet', 'Något som inte känns okej, i studierna eller på sektionen.', (SELECT id FROM users WHERE email = 'amo@statlin.se' AND active = 1));
+`,
+  /* 12: STAR-sidans företag och sponsorer, och önskelistan för lunchföreläsningar. Önskemålen har inga personuppgifter. */ `
+  CREATE TABLE star_companies (
+    id            INTEGER PRIMARY KEY,
+    name          TEXT NOT NULL,
+    url           TEXT NOT NULL DEFAULT '',
+    logo_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    seeks         TEXT NOT NULL DEFAULT '',                          -- mellanslagsseparerat: exjobb sommarjobb trainee heltid
+    role          TEXT NOT NULL DEFAULT 'utstallare' CHECK (role IN ('utstallare','huvudsponsor','sponsor')),
+    sort_order    INTEGER NOT NULL DEFAULT 0,
+    active        INTEGER NOT NULL DEFAULT 1
+  );
+  -- AUTOINCREMENT: ett id används aldrig två gånger, så att en gammal röst i en webbläsares localStorage inte gäller ett nytt önskemål.
+  CREATE TABLE lecture_wishes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT NOT NULL,
+    comment    TEXT NOT NULL DEFAULT '',
+    status     TEXT NOT NULL DEFAULT 'ny' CHECK (status IN ('ny','dold','onskad','pa_gang','bokad','genomford')),
+    votes      INTEGER NOT NULL DEFAULT 0,
+    event_id   INTEGER REFERENCES events(id) ON DELETE SET NULL,
+    created_on TEXT NOT NULL                                         -- bara datumet
+  );
+  CREATE INDEX lecture_wishes_status ON lecture_wishes(status, votes DESC);
+  `,
 ];
 
 export function migrate(db: Database.Database) {

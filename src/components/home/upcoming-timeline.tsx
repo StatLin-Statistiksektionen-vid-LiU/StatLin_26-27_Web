@@ -33,7 +33,7 @@ function EventStop({ event, index, days, isStar }: { event: EventItem; index: nu
   const first = index === 0;
   return (
     <li className={cn("tidsaxel-hallplats", first && "tidsaxel-forst")} style={gap(days)}>
-      <Link href={`/evenemang/${event.slug}`} className={cn("group tidsaxel-lank", isStar && "tidsaxel-star")}>
+      <Link href={isStar ? "/star" : `/evenemang/${event.slug}`} className={cn("group tidsaxel-lank", isStar && "tidsaxel-star")}>
         <span className={cn("tidsaxel-datum font-mono uppercase tracking-[0.1em]", first ? "text-[0.8125rem]" : "text-xs")}>
           <span>
             <time dateTime={event.starts_at.slice(0, 10)}>

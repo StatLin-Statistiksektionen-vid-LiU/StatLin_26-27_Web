@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
 import { SmartImage } from "@/components/content/smart-image";
 import { StarField } from "@/components/home/home-sections";
-import { ArrowUpRight, Mail } from "@/components/icons";
+import { ArrowRight, ArrowUpRight, Mail } from "@/components/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
@@ -59,16 +59,35 @@ async function Companies() {
             </p>
             <div className="mt-3 h-1 w-[min(100%,26rem)] bg-[#8f1d1d]" aria-hidden />
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/80">{STAR_COPY.text}</p>
-            {star && (
-              <a href={`/evenemang/${star.slug}`} className="btn btn-light mt-8">
-                {formatDateLong(star.starts_at)} <ArrowUpRight size={18} />
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="/star" className="btn btn-red">
+                Till STAR-sidan <ArrowRight size={18} />
               </a>
-            )}
+              {star && (
+                <a href={`/evenemang/${star.slug}`} className="btn btn-light">
+                  {formatDateLong(star.starts_at)} <ArrowUpRight size={18} />
+                </a>
+              )}
+            </div>
           </Reveal>
           <Reveal delay={150} className="flex justify-center md:col-span-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/utskott/star.webp" alt="STAR-loggan" className="w-[min(70vw,22rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)]" />
           </Reveal>
+        </div>
+      </section>
+
+      {/* Lunchföreläsningar */}
+      <section className="border-b border-ink/10 py-14 md:py-16">
+        <div className="container-site flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <p className="kicker text-stone">Lunchföreläsningar</p>
+            <p className="display-tight mt-3 text-2xl md:text-3xl">Studenterna önskar, ni föreläser</p>
+            <p className="mt-2 max-w-xl text-stone">Se vad studenterna vill höra om och hur det går till att hålla en lunchföreläsning.</p>
+          </div>
+          <a href="/lunchforelasningar" className="btn btn-ink shrink-0">
+            Till önskelistan <ArrowRight size={18} />
+          </a>
         </div>
       </section>
 

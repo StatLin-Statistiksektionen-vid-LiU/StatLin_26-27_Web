@@ -225,6 +225,7 @@ const ID_COLUMNS = [
   ["news", "cover_media_id"],
   ["board_members", "photo_media_id"],
   ["partners", "logo_media_id"],
+  ["star_companies", "logo_media_id"],
   ["documents", "media_id"],
   ["resources", "media_id"],
 ] as const;
@@ -246,6 +247,7 @@ const USED_BY_ADDRESS = `SELECT
   (SELECT COUNT(*) FROM resources WHERE url LIKE @pattern) +
   (SELECT COUNT(*) FROM documents WHERE url LIKE @pattern) +
   (SELECT COUNT(*) FROM partners WHERE url LIKE @pattern) +
+  (SELECT COUNT(*) FROM star_companies WHERE url LIKE @pattern) +
   (SELECT COUNT(*) FROM tasks WHERE description LIKE @pattern) +
   (SELECT COUNT(*) FROM task_comments WHERE body LIKE @pattern) +
   (SELECT COUNT(*) FROM settings WHERE value LIKE @pattern) AS n`;

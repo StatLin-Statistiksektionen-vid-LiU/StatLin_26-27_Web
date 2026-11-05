@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Notice } from "@/components/admin/ui";
+import { canManageFragelada } from "@/lib/auth/permissions";
 import { getSessionUser, loginPath, sessionExpiresSoon } from "@/lib/auth/session";
+import { readDb } from "@/lib/data/db";
+import { countUnseenQuestions, frageladaIsOpen } from "@/lib/data/fragelada";
+import { canManageNaringsliv, countNewWishes } from "@/lib/data/naringsliv";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
 
@@ -27,9 +31,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect(await loginPath());
-  const [unseenTasks, expiresAt] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon()]);
+  const naringsliv = canManageNaringsliv(user);
+  const [unseenTasks, expiresAt, unseenQuestions, db, newWishes] = await Promise.all([
+    countUnseenTasks(user.id),
+    sessionExpiresSoon(),
+    countUnseenQuestions(user.id),
+    readDb(),
+    naringsliv ? countNewWishes() : 0,
+  ]);
   return (
-    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
       <AdminSidebar
         user={{
           name: user.name,
@@ -41,6 +52,9 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           design: user.design,
         }}
         unseenTasks={unseenTasks}
+        questionBox={{ show: canManageFragelada(user) || frageladaIsOpen(db) || unseenQuestions > 0, unseen: unseenQuestions }}
+        naringsliv={naringsliv}
+        newWishes={newWishes}
       />
       <div className="min-w-0">
         {user.must_change_password && (

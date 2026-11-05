@@ -224,10 +224,10 @@ export async function HomeSections() {
             </Link>
           </Reveal>
           <Reveal delay={120}>
-            <Link href="/foretag" className="group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-star-navy p-8 text-white md:p-12">
+            <Link href="/star" className="group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-star-navy p-8 text-white md:p-12">
               <StarField />
               <span className="kicker relative flex items-center gap-2 text-white/70">
-                <Handshake size={16} /> För företag
+                <Handshake size={16} /> Arbetsmarknadsdagen
               </span>
               <div className="relative">
                 <p className="text-[clamp(2.4rem,5vw,4.4rem)] font-light uppercase leading-none tracking-[0.18em] [font-stretch:110%] max-[22.5rem]:text-[10vw]">STAR</p>
@@ -236,7 +236,7 @@ export async function HomeSections() {
                   StatLins arbetsmarknadsdag – och fler sätt att möta Linköpings statistik- och datastudenter.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-3 font-semibold">
-                  Samarbeta med oss
+                  Vilka kommer?
                   <span className="grid size-10 place-items-center rounded-full bg-white text-star-navy transition-transform duration-500 group-hover:translate-x-1.5">
                     <ArrowRight size={18} />
                   </span>

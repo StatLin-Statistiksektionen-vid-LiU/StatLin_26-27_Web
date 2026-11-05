@@ -9,6 +9,7 @@ import {
   BookOpen,
   Calendar,
   Chain,
+  ClipboardList,
   Close,
   FileText,
   Handshake,
@@ -18,9 +19,12 @@ import {
   Layers,
   Logout,
   Menu,
+  MessageCircle,
   Newspaper,
   Settings,
+  Star,
   Users,
+  Wheel,
 } from "@/components/icons";
 import { hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
@@ -30,7 +34,19 @@ import { LogoutForm } from "./logout-form";
 
 type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
 
-export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
+export function AdminSidebar({
+  user,
+  unseenTasks = 0,
+  questionBox,
+  naringsliv = false,
+  newWishes = 0,
+}: {
+  user: SidebarUser;
+  unseenTasks?: number;
+  questionBox?: { show: boolean; unseen: number };
+  naringsliv?: boolean;
+  newWishes?: number;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const topbarRef = useRef<HTMLDivElement>(null);
@@ -58,10 +74,15 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const tasks = { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks };
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
+  const inbox = questionBox?.show ? { href: "/admin/fragelada", label: "Frågelådan", Icon: MessageCircle, badge: questionBox.unseen } : null;
+  const wheel = { href: "/admin/arshjul", label: "Årshjul", Icon: Wheel };
+  const plans = { href: "/admin/projektplaner", label: "Projektplaner", Icon: ClipboardList };
   const images = { href: "/admin/bilder", label: "Bilder", Icon: ImageIcon };
   const resources = { href: "/admin/hjalpmedel", label: "Hjälpmedel", Icon: BookOpen };
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
   const design = hasDesign(user);
+  const star = { href: "/admin/star", label: "STAR", Icon: Star };
+  const wishes = { href: "/admin/lunchonskemal", label: "Lunchönskemål", Icon: MessageCircle, badge: newWishes };
   const groups = [
     {
       label: "Innehåll",
@@ -69,6 +90,9 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         ? [
             { href: "/admin", label: "Översikt", Icon: Home, exact: true },
             tasks,
+            inbox,
+            wheel,
+            plans,
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             images,
@@ -82,8 +106,13 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             design ? images : null,
             resources,
             ownPage,
+            naringsliv ? star : null,
+            naringsliv ? wishes : null,
             design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,
+            inbox,
+            wheel,
+            plans,
           ],
     },
     {
@@ -95,6 +124,8 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         { href: "/admin/dokument", label: "Dokument", Icon: FileText },
         { href: "/admin/lankar", label: "Länkar", Icon: Chain },
         { href: "/admin/partners", label: "Partners", Icon: Handshake },
+        star,
+        wishes,
       ],
     },
     {
@@ -174,7 +205,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   return (
     <>
       {/* Mobil topbar */}
-      <div ref={topbarRef} className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden">
+      <div ref={topbarRef} className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden print:hidden">
         <Link href="/admin" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/statlin.svg" alt="" className="logo-kant size-8 [--kant:1px]" />
@@ -192,7 +223,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
       </div>
 
       {/* Desktop */}
-      <aside className="sticky top-0 hidden h-dvh flex-col bg-ink lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col bg-ink lg:flex print:hidden">
         <Link href="/admin" className="flex items-center gap-3 px-6 pb-2 pt-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/statlin.svg" alt="" className="logo-kant size-10 transition-transform duration-700 [--kant:1px] hover:rotate-[-12deg]" />

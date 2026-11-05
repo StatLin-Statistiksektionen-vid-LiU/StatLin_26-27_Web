@@ -1,3 +1,4 @@
+import { matchesResponsible } from "@/lib/arshjul";
 import type { DocumentCategory, SessionUser } from "@/lib/types";
 
 type Owned = { committee_id: number | null };
@@ -39,6 +40,13 @@ export function canEditTask(u: SessionUser, t: TaskRef): boolean {
   return seesAllTasks(u) || t.from_user_id === u.id;
 }
 
+/* Årshjulet och projektplanerna: alla poster läser och lägger till. Ändra får admin, den som la in det och den ansvariga posten. */
+type Stewarded = { owner_user_id: number | null; responsible: string };
+type Steward = Pick<SessionUser, "id" | "role" | "committee_id" | "post" | "committee_name">;
+
+export const canChangeWheelItem = (u: Steward, item: Stewarded) => isAdmin(u) || item.owner_user_id === u.id || matchesResponsible(u, item.responsible);
+export const canChangePlan = canChangeWheelItem;
+
 /* Grafiskt ansvar (flaggan under Konton): bilderna på hela sajten. Texterna följer fortfarande rollen. */
 export const hasDesign = (u: Pick<SessionUser, "design">) => !!u.design;
 
@@ -52,5 +60,10 @@ export const canManageImages = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocuments = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocument = (u: Designer, category: DocumentCategory) => isEditor(u) || (hasDesign(u) && category === "grafiskt");
 
+/* Frågelådan: bara kontot som äger lådan läser frågorna. Administratörer ser titlar och antal och kan ta bort lådor med kod. */
+type BoxRef = { owner_id: number | null; slug: string | null };
+export const ownsBox = (u: Pick<SessionUser, "id">, box: BoxRef) => box.owner_id === u.id;
+export const canDeleteBox = (u: Pick<SessionUser, "id" | "role" | "committee_id">, box: BoxRef) => box.slug === null && (ownsBox(u, box) || isAdmin(u));
+export const canManageFragelada = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;

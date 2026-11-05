@@ -1,0 +1,376 @@
+/*
+ * STAR-sidan och lunchföreläsningarna: natthimlen från STAR-loggan. Laddas bara på de sidorna.
+ *
+ * Himlen är en upprepad SVG i bakgrunden, inte element på sidan: den kostar inga DOM-noder, och två rutor i olika storlek gör att
+ * mönstret inte syns upprepas. Blinkandet är opaciteten på två lager, vilket grafikkortet sköter utan att sidan ritas om.
+ */
+
+.star-type {
+  font-family: Bahnschrift, "DIN Alternate", "Archivo Variable", sans-serif;
+  font-stretch: 88%;
+}
+
+.star-sky {
+  background-color: var(--color-star-navy);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1' stroke-opacity='0.45' d='M465 888h0M575 879h0M801 478h0M464 522h0M877 603h0M196 191h0M825 526h0M489 646h0M630 814h0M192 98h0M459 312h0M147 94h0M553 831h0M712 651h0M44 611h0M407 465h0M671 758h0M632 667h0M163 640h0M17 853h0M543 66h0M62 38h0M196 249h0M616 32h0M798 477h0M336 453h0M607 864h0M202 533h0M241 657h0M303 513h0M6 680h0M89 470h0M672 286h0M418 566h0M862 87h0M726 262h0M324 778h0M237 527h0M297 32h0M73 578h0M786 112h0M412 112h0M868 299h0M397 70h0M19 869h0M703 2h0M220 216h0M55 483h0M386 727h0M408 431h0M76 581h0M646 205h0M799 693h0M278 346h0M91 320h0M342 17h0M421 778h0M122 139h0M254 725h0M105 13h0M63 478h0M818 500h0M183 700h0M574 194h0M460 523h0M197 751h0M789 136h0M431 661h0M394 121h0M406 432h0'/%3E%3Cpath stroke-width='1.5' stroke-opacity='0.7' d='M219 2h0M278 887h0M824 608h0M313 22h0M217 193h0M405 876h0M618 659h0M592 104h0M45 151h0M220 454h0M266 11h0M793 626h0M338 852h0M305 397h0M77 78h0M94 215h0M598 653h0M250 17h0M617 379h0M382 639h0M466 132h0M603 497h0'/%3E%3Cpath stroke-width='2' stroke-opacity='0.9' d='M854 590h0M140 889h0M397 189h0M644 159h0M320 235h0M839 627h0'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1270' height='1270' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='0.8' stroke-opacity='0.3' d='M595 173h0M36 1214h0M630 869h0M778 1087h0M735 268h0M395 549h0M912 30h0M454 933h0M52 218h0M177 1022h0M864 42h0M1051 885h0M737 119h0M423 74h0M1208 757h0M354 444h0M744 1160h0M757 1173h0M578 645h0M1175 177h0M972 365h0M991 1211h0M918 337h0M374 367h0M1094 664h0M1067 402h0M1194 236h0M170 203h0M874 81h0M1165 566h0M1175 576h0M1210 679h0M225 759h0M592 1112h0M626 933h0M1126 449h0M531 308h0M221 246h0M1011 489h0M674 1119h0M293 1215h0M207 786h0M344 922h0M71 116h0M854 807h0M49 334h0M464 28h0M457 118h0M1105 913h0M192 710h0M34 774h0M1006 397h0M77 157h0M543 956h0M1124 404h0M942 607h0M444 189h0M213 1141h0M1085 349h0M1115 1144h0M490 520h0M206 865h0M339 26h0M912 704h0M850 340h0M1265 847h0M144 490h0M1119 606h0M872 840h0M614 1142h0M1250 1128h0M107 585h0M224 53h0M287 682h0M1147 883h0M510 340h0M162 693h0M1153 1111h0M234 483h0M1150 966h0M922 559h0M10 694h0M774 50h0M292 824h0M418 63h0M356 922h0M867 169h0M862 569h0M985 1225h0M1106 1140h0'/%3E%3Cpath stroke-width='1.3' stroke-opacity='0.55' d='M365 1079h0M1092 611h0M545 178h0M465 129h0M1021 774h0M38 937h0M1241 845h0M599 656h0M836 717h0M620 562h0M700 330h0M795 89h0M861 980h0M1136 525h0'/%3E%3C/svg%3E"),
+    radial-gradient(70rem 42rem at 85% 0, color-mix(in oklab, #3d5bb8 38%, transparent), transparent);
+  background-size:
+    900px 900px,
+    1270px 1270px,
+    100% 100%;
+  background-repeat: repeat, repeat, no-repeat;
+}
+
+/* ---------- Blinkande lager, bara i heron och kring kartan ---------- */
+
+.star-twinkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.star-twinkle::before,
+.star-twinkle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+}
+.star-twinkle::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1.6' stroke-opacity='0.9' d='M624 95h0M634 683h0M651 529h0M38 648h0M380 450h0M542 112h0M469 617h0M290 389h0M435 456h0M149 52h0M95 425h0M78 558h0M297 371h0M665 444h0M603 578h0M376 656h0'/%3E%3Cpath stroke-width='2.3' stroke-opacity='1' d='M588 36h0M541 636h0M220 519h0M428 66h0'/%3E%3C/svg%3E");
+  background-size: 700px 700px;
+}
+.star-twinkle::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='940' height='940' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1.4' stroke-opacity='0.8' d='M633 875h0M913 223h0M469 516h0M730 496h0M737 535h0M371 753h0M467 747h0M33 880h0M39 935h0M175 354h0M766 137h0M269 904h0M762 59h0M175 50h0M370 236h0M453 204h0M236 131h0M143 361h0'/%3E%3Cpath stroke-width='2.2' stroke-opacity='1' d='M521 785h0M664 874h0M327 525h0M678 414h0M58 342h0'/%3E%3C/svg%3E");
+  background-size: 940px 940px;
+}
+@keyframes star-twinkle {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes star-draw {
+  from {
+    clip-path: inset(-30% 100% -30% -2%);
+  }
+  to {
+    clip-path: inset(-30% -2% -30% -2%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .star-twinkle::before {
+    will-change: opacity;
+    animation: star-twinkle 4.2s ease-in-out infinite alternate;
+  }
+  .star-twinkle::after {
+    will-change: opacity;
+    animation: star-twinkle 6.5s ease-in-out -2s infinite alternate;
+  }
+  /* Grafen i loggan ritas upp från vänster en gång när sidan öppnas. */
+  .star-draw {
+    animation: star-draw 2.4s var(--ease-out-expo) 0.15s both;
+  }
+}
+
+/* ---------- Stjärnkartan ---------- */
+
+.star-map a {
+  cursor: pointer;
+  outline: none;
+}
+.star-node {
+  transition: opacity 0.25s;
+}
+.star-halo {
+  opacity: 0.35;
+  transition: opacity 0.25s;
+}
+.star-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.star-name {
+  fill: rgb(255 255 255 / 0.78);
+  transition: fill 0.2s;
+  /* En kant i himlens färg, så att linjerna inte går rakt igenom namnen. */
+  paint-order: stroke;
+  stroke: var(--color-star-navy);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.star-seeks {
+  fill: rgb(255 255 255 / 0.75);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.star-ring {
+  stroke: #fff;
+  opacity: 0;
+}
+.star-ghost {
+  opacity: 0;
+}
+.star-lines {
+  transition: opacity 0.25s;
+}
+.star-map:has(a:hover, a:focus-visible) .star-node {
+  opacity: 0.35;
+}
+.star-map:has(a:hover, a:focus-visible) .star-node:has(a:hover, a:focus-visible) {
+  opacity: 1;
+}
+.star-node a:hover .star-halo,
+.star-node a:focus-visible .star-halo {
+  opacity: 1;
+}
+.star-node a:hover .star-core,
+.star-node a:focus-visible .star-core {
+  transform: scale(1.7);
+}
+.star-node a:hover .star-name,
+.star-node a:focus-visible .star-name {
+  fill: #fff;
+}
+.star-node a:hover .star-seeks,
+.star-node a:focus-visible .star-seeks {
+  opacity: 1;
+}
+.star-node a:focus-visible .star-ring {
+  opacity: 1;
+}
+
+/* ---------- Filtret: fungerar med enbart CSS. Utan stöd för :has syns hela listan. ---------- */
+
+.star-filter input:checked + span {
+  background: #fff;
+  border-color: #fff;
+  color: var(--color-star-navy);
+}
+.star-filter input:focus-visible + span {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.star-scope:has(#soker-exjobb:checked) .star-card:not([data-seeks~="exjobb"]) {
+  display: none;
+}
+.star-scope:has(#soker-exjobb:checked) .star-node:not([data-seeks~="exjobb"]) a {
+  visibility: hidden;
+}
+.star-scope:has(#soker-exjobb:checked) .star-node:not([data-seeks~="exjobb"]) .star-ghost {
+  opacity: 0.35;
+}
+.star-scope:has(#soker-sommarjobb:checked) .star-card:not([data-seeks~="sommarjobb"]) {
+  display: none;
+}
+.star-scope:has(#soker-sommarjobb:checked) .star-node:not([data-seeks~="sommarjobb"]) a {
+  visibility: hidden;
+}
+.star-scope:has(#soker-sommarjobb:checked) .star-node:not([data-seeks~="sommarjobb"]) .star-ghost {
+  opacity: 0.35;
+}
+.star-scope:has(#soker-trainee:checked) .star-card:not([data-seeks~="trainee"]) {
+  display: none;
+}
+.star-scope:has(#soker-trainee:checked) .star-node:not([data-seeks~="trainee"]) a {
+  visibility: hidden;
+}
+.star-scope:has(#soker-trainee:checked) .star-node:not([data-seeks~="trainee"]) .star-ghost {
+  opacity: 0.35;
+}
+.star-scope:has(#soker-heltid:checked) .star-card:not([data-seeks~="heltid"]) {
+  display: none;
+}
+.star-scope:has(#soker-heltid:checked) .star-node:not([data-seeks~="heltid"]) a {
+  visibility: hidden;
+}
+.star-scope:has(#soker-heltid:checked) .star-node:not([data-seeks~="heltid"]) .star-ghost {
+  opacity: 0.35;
+}
+.star-scope:has(.star-filter input:not([value="alla"]):checked) .star-lines {
+  opacity: 0.4;
+}
+
+/* ---------- Korten ---------- */
+
+.star-card {
+  scroll-margin-top: calc(var(--header-h) + 1.5rem);
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
+}
+.star-card:hover {
+  border-color: rgb(255 255 255 / 0.4);
+}
+.star-card:target {
+  border-color: #fff;
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+/* ---------- Programmet: telefonen en rad per punkt, datorn en bana uppför himlen som grafen i loggan ---------- */
+
+.star-route {
+  position: relative;
+  list-style: none;
+}
+.star-route-line {
+  display: none;
+}
+.star-stop {
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 1.75rem;
+}
+.star-stop::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 5px rgb(255 255 255 / 0.12);
+}
+.star-stop::after {
+  content: "";
+  position: absolute;
+  left: calc(0.35rem - 0.5px);
+  top: 1.05rem;
+  bottom: -0.35rem;
+  width: 1px;
+  background: rgb(255 255 255 / 0.4);
+}
+.star-stop:last-child::after {
+  display: none;
+}
+@media (min-width: 48rem) {
+  .star-route:not([data-long]) {
+    height: 22rem;
+  }
+  .star-route:not([data-long]) .star-route-line {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .star-route:not([data-long]) .star-stop {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top: calc(var(--y) * 1%);
+    width: var(--w);
+    margin-top: -0.35rem;
+    padding: 1.25rem 1rem 0 0;
+  }
+  .star-route:not([data-long]) .star-stop::before {
+    top: 0;
+    left: -0.35rem;
+  }
+  .star-route:not([data-long]) .star-stop::after {
+    display: none;
+  }
+}
+
+/* ---------- Stjärnan på önskelistan ---------- */
+
+/* Tråden: en linje från stjärna till stjärna, så att listan blir en stjärnbild. Mitten av knappen är radens utfyllnad plus halva knappen. */
+.wish-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--color-ink) 18%, transparent);
+}
+.wish-row:first-child::before {
+  top: 2rem;
+}
+.wish-row:last-child::before {
+  bottom: auto;
+  height: 2rem;
+}
+.wish-row:first-child:last-child::before {
+  display: none;
+}
+.wish-count {
+  position: relative;
+}
+.wish-row .wish-count {
+  padding-inline: 0.35rem;
+  background: #fff;
+}
+.wish-leader [role="alert"] {
+  color: #fff;
+}
+@media (min-width: 48rem) {
+  .wish-row::before {
+    left: 3.25rem;
+  }
+}
+
+.wish-star {
+  transition:
+    transform 0.3s var(--ease-out-expo),
+    border-color 0.2s,
+    background-color 0.2s;
+}
+.wish-star:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: var(--color-red);
+}
+.wish-star:not(:disabled):active {
+  transform: scale(0.94);
+}
+.wish-star-icon {
+  transition:
+    color 0.25s,
+    fill 0.25s;
+}
+.wish-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px;
+  border-radius: 999px;
+  background: var(--color-red);
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes wish-pop {
+  0% {
+    transform: scale(0.4) rotate(-40deg);
+  }
+  55% {
+    transform: scale(1.35) rotate(8deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes wish-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(-0.6rem);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(-1.9rem);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wish-star[data-lit-now] .wish-star-icon {
+    animation: wish-pop 0.55s var(--ease-out-expo);
+  }
+  .wish-star[data-lit-now] .wish-spark {
+    animation: wish-spark 0.6s ease-out;
+  }
+}

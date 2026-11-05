@@ -313,12 +313,43 @@ Läget enligt en anteckning från 2026-10-31, inte kontrollerat sedan dess:
 
 Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy vol_491j0dldgmng2x5r`. Det går inte att ångra, så kontrollera först att den är tom eller äldre: CREATED AT i listan, eller innehållet med en maskin utan publik trafik som i övningen ovan.
 
+### STAR-sidan och lunchföreläsningarna
+
+`/star` är arbetsmarknadsdagens egen sida, och `/lunchforelasningar` har nästa föreläsning och studenternas önskelista. SASU:s konto och redaktörer sköter båda i adminpanelen.
+
+- **Företag:** `/admin/star`. Varje företag blir ett kort och en stjärna på kartan. Rollen avgör om det också står under Sponsorer. Utan företag står det att de presenteras snart.
+- **Datum, plats och program:** tas från STAR-evenemanget, det som ligger närmast av de med adressen `star` eller `star-2027`. Programmet är rader under rubriken `## Program` i evenemangets text, till exempel `- **10.00** Mässan öppnar`.
+- **Önskemål:** `/admin/lunchonskemal`. Nya önskemål syns först när någon har godkänt dem, och menyn visar hur många som väntar. När ett önskemål blir av: sätt status och koppla evenemanget.
+- **Vilka föreläsningar som visas:** kommande evenemang vars titel börjar med "Lunchföreläsning" eller vars adress börjar med `lunch`.
+
+Innan det går live: låt SASU läsa de tre raderna i bandet "Vill ni hålla en lunchföreläsning?" och texterna till företagen, och lägg in de företag som redan är klara. Allt annat följer med migrationen när en ny version startar. Påhittat innehåll att prova med finns i `scripts/demo-naringsliv.ts`, som vägrar köra i produktion.
+
 ### Årshjul
 
 | När | Vad |
 | --- | --- |
 | Vid överlämningen | Gå igenom det här avsnittet, fyll i [Ägarskap](#ägarskap) och kontrollera [Volymen](#volymen). |
 | Juni | Större uppgraderingar (Next.js, Node, beroenden) och den årliga övningen i [återställning](#återställning-och-rollback). |
+
+### Årshjulet och projektplanerna i adminpanelen
+
+Under *Årshjul* och *Projektplaner* i adminpanelen samlas det som kommer tillbaka varje år, så att nästa års post slipper börja från noll. Alla poster läser och lägger till. Den som la in något, den ansvariga posten och admin ändrar. Hjulet börjar om av sig självt varje år: läget (planerad, klar, hoppas över) sparas per år, och själva punkterna står kvar.
+
+Före live: inget behöver installeras eller ställas in, och migreringen körs vid start som vanligt. Tryck sedan en gång på *Fyll med förslag* och gå igenom hjulet tillsammans. Månaderna är en gissning, och ansvarig måste skrivas som postens eller utskottets namn för att uppdragen ska hamna rätt. Exempeldata för lokal provning finns i `scripts/demo-postverktyg.ts`. Mallarna för projektplaner är konstanter i `src/lib/projektplan-mallar.ts`.
+
+### Frågelådan
+
+Frågelådan låter besökare ställa en anonym fråga utan att logga in. En post skapar en låda under **Frågelådan** i adminpanelen och visar sexteckenskoden, till exempel i en föreläsningssal med **Visa på skärm**. Besökaren skriver koden på `/fragelada` och lämnar sin fråga. UBU och AMO har fasta lådor utan kod, `/fragelada/ubu` och `/fragelada/amo`. Bara kontot som äger en låda kan läsa frågorna. Administratörer ser titlar och antal och kan ta bort lådor med kod, men kan inte läsa frågorna i adminpanelen. Lådan är envägs: det går inte att svara.
+
+Frågorna sparas med månad, inte med namn, IP-adress eller klockslag, och raderas efter ungefär ett år. Det gäller det sajten själv sparar. Fly-snapshots behåller raderade frågor i upp till fem dygn, och den som kommer åt servern kan läsa databasen.
+
+Funktionen är avstängd tills en administratör slår på den under **Frågelådan**. Före det:
+
+1. Bekräfta vem som är AMO och att UBU och AMO läser sina lådor (U-04). En fast låda utan aktiv ägare tar inte emot frågor. När funktionen slås på får lådorna kontona `ubu@statlin.se` och `amo@statlin.se` om de finns, annars väljer administratören ägare.
+2. Ändra texterna i produktionsdatabasen så att de stämmer: seed-texterna gäller bara nya databaser. Listan finns i rapporten för frågelådan.
+3. Besluta om säkerhetskopiorna (B-16), om vad som loggas på vägen till servern (B-17) och om B-18.
+
+Att prova lokalt: `DATA_DIR=<samma som servern> npx tsx scripts/demo-fragelada.ts` slår på funktionen och skapar en påhittad låda med koden `STAT26`. Skriptet vägrar köra i produktion.
 
 ## Guide för poster
 
@@ -331,6 +362,7 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 7. **Hjälpmedel**: under *Hjälpmedel* lägger du upp en fil eller en länk och väljer program, termin och kategori. Gäller det flera terminer väljer du *Hela programmet*. Allt blir offentligt, så lägg bara upp sådant ni får dela.
 8. **Bilder (grafiskt ansvarig)**: under *Bilder* finns omslagen till alla evenemang och nyheter och utskottens loggor – ladda upp en bild så är den sparad. *Galleri* på ett evenemang leder till dess bildgalleri. Översikten visar kommande evenemang som saknar omslag, och ett uppdrag som är kopplat till ett evenemang har knappen *Ladda upp omslag*. Mallar läggs upp under *Dokument* och visas under *Mallar och material* på sidan Grafisk profil.
 9. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. På evenemang och nyheter byter *Byt bilder* och *Byt omslag* bilderna direkt i sidopanelen. Partners ändras i adminpanelen, och panelen har en länk dit.
+10. **Årshjul och projektplaner**: översikten visar vad som väntar nästa månad och vad som behöver planeras in denna termin. Lägg en punkt på tavlan, eller gör en projektplan av den: välj mall och datum, så räknas stegen ut bakåt och blir uppdrag. Skriv lärdomar på planen efteråt, så ser nästa års post dem när de gör om samma sak.
 
 Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
 

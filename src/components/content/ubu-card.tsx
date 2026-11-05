@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Mail } from "@/components/icons";
+import { FixedBoxLink } from "@/components/fragelada/box-link";
+import { Mail, MessageCircle } from "@/components/icons";
 import type { Committee } from "@/lib/types";
 
 /** Utbildningsutskottets kontaktkort i sidokolumnen på Kandidat och Master. */
@@ -23,6 +24,9 @@ export function UbuCard({ ubu }: { ubu: Committee }) {
             <Mail size={15} /> Mejla {ubu.short_name}
           </a>
         )}
+        <FixedBoxLink slug="ubu" className="btn btn-light btn-sm">
+          <MessageCircle size={15} /> Skriv anonymt
+        </FixedBoxLink>
         <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
           Om {ubu.short_name}
         </Link>

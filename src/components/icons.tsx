@@ -214,6 +214,19 @@ export const Board = (p: IconProps) => (
     <path d="M9.5 4v16M14.5 4v16M5.8 8h1.4M11.3 8h1.4M11.3 11.5h1.4M16.8 8h1.4" />
   </svg>
 );
+export const Wheel = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M12 3.5v6M12 14.5v6M3.5 12h6M14.5 12h6" />
+  </svg>
+);
+export const ClipboardList = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="5" y="4.5" width="14" height="16" rx="2" />
+    <path d="M9.5 3.5h5v2.5h-5zM9 11h6M9 15h6" />
+  </svg>
+);
 export const Lock = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="5" y="10.5" width="14" height="9.5" rx="2" />

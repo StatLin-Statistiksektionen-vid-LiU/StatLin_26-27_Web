@@ -252,6 +252,20 @@ await check("Adminpanelen kräver inloggning", async () => {
   expect(res.status >= 300 && res.status < 400 && location.includes("/logga-in"), `status ${res.status} ${location}`);
 });
 
+await check("STAR och lunchföreläsningarna svarar, och deras admin kräver inloggning", async () => {
+  const { res: star, body: starBody } = await get("/star");
+  expect(star.status === 200, `/star: status ${star.status}`);
+  expect(starBody.includes("Vilka kommer"), "/star saknar avsnittet Vilka kommer");
+  const { res: lunch, body: lunchBody } = await get("/lunchforelasningar");
+  expect(lunch.status === 200, `/lunchforelasningar: status ${lunch.status}`);
+  expect(lunchBody.includes("Önskelistan"), "/lunchforelasningar saknar önskelistan");
+  for (const path of ["/admin/star", "/admin/lunchonskemal"]) {
+    const { res } = await get(path);
+    const location = res.headers.get("location") ?? "";
+    expect(res.status >= 300 && res.status < 400 && location.includes("/logga-in"), `${path}: status ${res.status} ${location}`);
+  }
+});
+
 await check("Okänd sida ger 404", async () => {
   const { res } = await get("/finns-inte-" + Date.now());
   expect(res.status === 404, `status ${res.status}`);
