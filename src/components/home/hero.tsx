@@ -31,7 +31,7 @@ function titleSize(title: string) {
 function HeroBottom({ title, text }: { title: string | null; text: string | null }) {
   const size = titleSize(title ?? DEFAULT_SETTINGS.hero_title);
   return (
-    <div className="grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
+    <div className="hero-bunn grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
       <Editable
         target={{ type: "home" }}
         label="Redigera texten"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Board,
@@ -27,6 +27,7 @@ import {
 } from "@/components/icons";
 import { hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
+import { closeWhenWider, useFocusLayer } from "@/lib/use-focus-layer";
 import { cn, initials } from "@/lib/utils";
 import { LogoutForm } from "./logout-form";
 
@@ -35,6 +36,25 @@ type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name"
 export function AdminSidebar({ user, unseenTasks = 0, questionBox }: { user: SidebarUser; unseenTasks?: number; questionBox?: { show: boolean; unseen: number } }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const topbarRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  useFocusLayer({
+    active: open,
+    layers: () => [topbarRef.current, menuRef.current],
+    initial: () => toggleRef.current,
+    returnTo: () => toggleRef.current,
+  });
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    const stopWatching = closeWhenWider("(min-width: 1024px)", () => setOpen(false));
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      stopWatching();
+    };
+  }, [open]);
   const editor = user.role !== "committee";
   const admin = user.role === "admin";
 
@@ -166,7 +186,7 @@ export function AdminSidebar({ user, unseenTasks = 0, questionBox }: { user: Sid
   return (
     <>
       {/* Mobil topbar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden print:hidden">
+      <div ref={topbarRef} className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden print:hidden">
         <Link href="/admin" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/statlin.svg" alt="" className="logo-kant size-8 [--kant:1px]" />
@@ -174,11 +194,11 @@ export function AdminSidebar({ user, unseenTasks = 0, questionBox }: { user: Sid
             Stat<span className="text-red">Lin</span> admin
           </span>
         </Link>
-        <button type="button" onClick={() => setOpen((o) => !o)} className="grid size-10 place-items-center rounded-full border border-white/15" aria-label="Meny" aria-expanded={open}>
+        <button ref={toggleRef} type="button" onClick={() => setOpen((o) => !o)} className="grid size-10 place-items-center rounded-full border border-white/15" aria-label={open ? "Stäng menyn" : "Öppna menyn"} aria-expanded={open} aria-controls="adminmeny">
           {open ? <Close size={18} /> : <Menu size={18} />}
         </button>
       </div>
-      <div className={cn("fixed inset-0 top-[64px] z-30 flex flex-col bg-ink lg:hidden", open ? "flex" : "hidden")}>
+      <div ref={menuRef} id="adminmeny" className={cn("fixed inset-0 top-[64px] z-30 flex flex-col bg-ink lg:hidden", open ? "flex" : "hidden")}>
         {nav}
         {profile}
       </div>

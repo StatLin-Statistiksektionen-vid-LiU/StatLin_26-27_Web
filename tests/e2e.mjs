@@ -19,6 +19,7 @@ import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
 import sharp from "sharp";
+import { skipEditGuide } from "./e2e-hjalp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const SHOTS = fs.mkdtempSync(path.join(os.tmpdir(), "statlin-e2e-shots-"));
@@ -99,6 +100,7 @@ async function openDeleteConfirm(page) {
 (async () => {
   await makeTestImages();
   const browser = await chromium.launch();
+  skipEditGuide(browser);
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   const errors = [];

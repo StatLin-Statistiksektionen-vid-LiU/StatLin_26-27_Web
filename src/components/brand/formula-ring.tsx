@@ -241,8 +241,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
           {SEPARATOR}
           P(A|B) = P(B|A) P(A) / P(B)
           {SEPARATOR}
-          {/* Georgia saknar hatten. I ett typsnitt med både β och hatten hamnar den över bokstaven i stället för bredvid. */}
-          <tspan fontFamily="'Times New Roman', serif">β̂</tspan> = (XᵀX)⁻¹Xᵀy
+          β̂ = (XᵀX)⁻¹Xᵀy
           {SEPARATOR}
           √n (X̄ − μ) →ᵈ N(0, σ²)
           {SEPARATOR}

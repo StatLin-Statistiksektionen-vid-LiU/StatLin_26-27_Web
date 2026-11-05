@@ -71,34 +71,35 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
   return (
     <section className="container-site py-14 md:py-20">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2" role="list" aria-label="Filtrera på utskott">
-          <FilterChip href={href({ utskott: undefined })} active={!active}>
-            Alla
-          </FilterChip>
-          {committees.map((c) => (
-            <FilterChip key={c.id} href={href({ utskott: c.slug })} active={active?.id === c.id} color={c.accent}>
-              {c.short_name}
+        <nav aria-label="Filtrera på utskott">
+          <ul className="flex flex-wrap gap-2">
+            <FilterChip href={href({ utskott: undefined })} active={!active}>
+              Alla
             </FilterChip>
-          ))}
-        </div>
-        <div className="inline-flex shrink-0 rounded-full border border-ink/15 bg-white p-1" role="tablist" aria-label="Vy">
+            {committees.map((c) => (
+              <FilterChip key={c.id} href={href({ utskott: c.slug })} active={active?.id === c.id} color={c.accent}>
+                {c.short_name}
+              </FilterChip>
+            ))}
+          </ul>
+        </nav>
+        {/* Vanliga länkar: varje vy är en egen adress, så flikar med tablist och panel skulle lova ett beteende som inte finns. */}
+        <nav aria-label="Vy" className="inline-flex shrink-0 rounded-full border border-ink/15 bg-white p-1">
           <Link
             href={href({ vy: undefined, manad: undefined })}
-            role="tab"
-            aria-selected={view === "lista"}
+            aria-current={view === "lista" ? "page" : undefined}
             className={cn("rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "lista" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
             Lista
           </Link>
           <Link
             href={href({ vy: "kalender" })}
-            role="tab"
-            aria-selected={view === "kalender"}
+            aria-current={view === "kalender" ? "page" : undefined}
             className={cn("inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "kalender" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
             <Calendar size={15} /> Kalender
           </Link>
-        </div>
+        </nav>
       </div>
 
       {view === "kalender" ? (
@@ -112,18 +113,19 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
 
 function FilterChip({ href, active, color, children }: { href: string; active: boolean; color?: string; children: React.ReactNode }) {
   return (
-    <Link
-      href={href}
-      role="listitem"
-      aria-current={active ? "true" : undefined}
-      className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all",
-        active ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink/75 hover:border-ink/40 hover:text-ink",
-      )}
-    >
-      {color && <span className="size-2 rounded-full" style={{ background: active ? "#fff" : color }} aria-hidden />}
-      {children}
-    </Link>
+    <li>
+      <Link
+        href={href}
+        aria-current={active ? "true" : undefined}
+        className={cn(
+          "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all",
+          active ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink/75 hover:border-ink/40 hover:text-ink",
+        )}
+      >
+        {color && <span className="size-2 rounded-full" style={{ background: active ? "#fff" : color }} aria-hidden />}
+        {children}
+      </Link>
+    </li>
   );
 }
 

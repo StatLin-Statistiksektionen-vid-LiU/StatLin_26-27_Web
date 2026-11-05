@@ -9,7 +9,7 @@ import { listCommittees } from "@/lib/data/content";
 
 export const metadata: Metadata = {
   title: "Utskott",
-  description: "SCB, UBU, SASU, StatPub, STIG, eSTIG och fler – hitta ditt sammanhang på StatLin.",
+  description: "Utskotten och grupperna på StatLin – hitta ditt sammanhang, från studiebevakning till pub och idrott.",
 };
 
 export default function CommitteesPage() {

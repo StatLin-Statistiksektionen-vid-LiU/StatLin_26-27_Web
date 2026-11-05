@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { SmartImage } from "./smart-image";
 import type { ImageRef } from "@/lib/types";
 import { cn, hashString, initials, mulberry32 } from "@/lib/utils";
@@ -14,6 +15,7 @@ export function Avatar({
   photo: ImageRef | null;
   className?: string;
 }) {
+  const id = useId();
   if (photo) {
     return (
       <div className={cn("relative overflow-hidden bg-ink", className)}>
@@ -21,6 +23,8 @@ export function Avatar({
       </div>
     );
   }
+  // Eget id per ruta: seed kan innehålla mellanslag, och samma post kan stå två gånger i dokumentet (dolda sidor i <Activity>).
+  const gradientId = `av-${id}`;
   const rnd = mulberry32(hashString(seed));
   const angle = Math.round(rnd() * 360);
   const rings = Array.from({ length: 5 }, (_, i) => 30 + i * 22 + rnd() * 10);
@@ -28,12 +32,12 @@ export function Avatar({
     <div className={cn("relative grid place-items-center overflow-hidden bg-ink text-white", className)} role="img" aria-label={name}>
       <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden preserveAspectRatio="xMidYMid slice">
         <defs>
-          <linearGradient id={`av-${seed}`} gradientTransform={`rotate(${angle} .5 .5)`}>
+          <linearGradient id={gradientId} gradientTransform={`rotate(${angle} .5 .5)`}>
             <stop offset="0" stopColor="#ff0707" stopOpacity="0.55" />
             <stop offset="1" stopColor="#0a0a0a" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <rect width="200" height="200" fill={`url(#av-${seed})`} />
+        <rect width="200" height="200" fill={`url(#${gradientId})`} />
         {rings.map((r, i) => (
           <circle key={i} cx={rnd() > 0.5 ? 200 : 0} cy="200" r={r * 1.6} fill="none" stroke="#fff" strokeOpacity="0.09" />
         ))}

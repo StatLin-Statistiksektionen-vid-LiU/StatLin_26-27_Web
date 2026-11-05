@@ -4,6 +4,9 @@
  */
 import type { LinkCategory } from "./types";
 
+/** Adressen på utbildningsutskottet tills någon valt ett annat under Admin → Inställningar. */
+export const EDUCATION_COMMITTEE_SLUG = "ubu";
+
 export const SEED_COMMITTEES = [
   {
     slug: "styrelsen",

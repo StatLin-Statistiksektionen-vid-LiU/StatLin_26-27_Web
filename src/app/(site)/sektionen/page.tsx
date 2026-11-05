@@ -9,6 +9,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { HeroSkeleton, PageSkeleton } from "@/components/ui/skeletons";
 import { getPage, listBoard, listCommittees } from "@/lib/data/content";
+import { programFacts, PROGRAMS } from "@/lib/links";
 import { Editable } from "@/components/edit-mode/editable";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
 
@@ -66,9 +67,11 @@ async function AboutContent() {
                   <span className="font-mono">StatLin · StLn · StL · SL · S</span>
                 </Fact>
                 <Fact label="Program">
-                  Statistik och dataanalys, 180 hp
-                  <br />
-                  Statistics and Machine Learning, 120 hp
+                  {PROGRAMS.map((p) => (
+                    <span key={p.value} className="block">
+                      {programFacts(p.value)}
+                    </span>
+                  ))}
                 </Fact>
                 <Fact label="Färger">
                   <span className="flex gap-2">

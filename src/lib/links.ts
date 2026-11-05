@@ -28,10 +28,16 @@ export const LINK_ICONS = [
   { value: "clock", label: "Klocka" },
 ] as const;
 
-export const PROGRAMS: { value: Program; label: string; name: string }[] = [
-  { value: "kandidat", label: "Kandidat", name: "Statistik och dataanalys" },
-  { value: "master", label: "Master", name: "Statistics and Machine Learning" },
+export const PROGRAMS: { value: Program; label: string; name: string; credits: number }[] = [
+  { value: "kandidat", label: "Kandidat", name: "Statistik och dataanalys", credits: 180 },
+  { value: "master", label: "Master", name: "Statistics and Machine Learning", credits: 120 },
 ];
+
+/** "Statistik och dataanalys, 180 hp": programfakta har en enda källa, listan ovan. */
+export function programFacts(value: Program): string {
+  const p = PROGRAMS.find((x) => x.value === value);
+  return p ? `${p.name}, ${p.credits} hp` : "";
+}
 
 /** Gemener utan diakritiska tecken, så att "tenta", "Tenta" och "téntå" hittar samma sak. */
 export const normalizeSearch = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();

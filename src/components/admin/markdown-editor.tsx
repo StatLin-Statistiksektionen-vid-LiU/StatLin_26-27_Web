@@ -131,7 +131,7 @@ export function MarkdownEditor({
                 key={t.title}
                 type="button"
                 title={t.title}
-                aria-label={t.title}
+                aria-label={/^[\p{L}\p{N}]/u.test(t.label) ? `${t.label} ${t.title}` : t.title}
                 onClick={() => insert(t)}
                 className={cn("grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-sm text-ink/75 hover:bg-white hover:text-ink", t.label === "B" && "font-bold", t.label === "I" && "italic")}
               >

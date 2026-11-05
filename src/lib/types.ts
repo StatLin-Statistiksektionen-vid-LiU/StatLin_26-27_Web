@@ -297,4 +297,6 @@ export interface SiteSettings {
   announcement_url: string;
   /** Evenemanget vars datum visas som STAR på företagssidan. Tomt: väljs med adressen, se getStarEvent. */
   star_event_id: string;
+  /** Utskottet på programsidornas kontaktkort. Tomt: se getEducationCommittee. */
+  education_committee_id: string;
 }

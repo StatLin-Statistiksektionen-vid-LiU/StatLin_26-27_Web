@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Close, Download } from "@/components/icons";
 import type { ImageRef } from "@/lib/types";
+import { useFocusLayer } from "@/lib/use-focus-layer";
 import { cn } from "@/lib/utils";
 
 export type GalleryItem = { id: number; caption: string; image: ImageRef };
@@ -12,25 +13,19 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
   const [index, setIndex] = useState<number | null>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const lastFocus = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  const open = (i: number) => {
-    lastFocus.current = document.activeElement as HTMLElement;
-    setIndex(i);
-  };
-  const close = useCallback(() => {
-    setIndex(null);
-    lastFocus.current?.focus();
-  }, []);
+  const close = useCallback(() => setIndex(null), []);
   const step = useCallback(
     (d: number) => setIndex((i) => (i === null ? i : (i + d + items.length) % items.length)),
     [items.length],
   );
 
+  useFocusLayer({ active: index !== null, layers: () => [dialogRef.current], initial: () => closeRef.current });
+
   useEffect(() => {
     if (index === null) return;
     document.documentElement.style.overflow = "hidden";
-    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "ArrowRight") step(1);
@@ -64,7 +59,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
           <li key={it.id} className="break-inside-avoid">
             <button
               type="button"
-              onClick={() => open(i)}
+              onClick={() => setIndex(i)}
               className="group relative block w-full overflow-hidden rounded-2xl"
               aria-label={`Visa bild ${i + 1} av ${items.length}${it.caption ? `: ${it.caption}` : ""}`}
             >
@@ -89,6 +84,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
 
       {current && index !== null && (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={`${title} – bild ${index + 1} av ${items.length}`}

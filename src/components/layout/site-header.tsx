@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { languageSwitch, NAV, type NavGroup } from "@/lib/navigation";
+import { closeWhenWider, useFocusLayer } from "@/lib/use-focus-layer";
 import { ArrowUpRight, ChevronDown, Close, Menu } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,9 @@ function HeaderView({ pathname }: { pathname: string | null }) {
   // Utfällda grupper i mobilmenyn. Saknas en grupp här är den utfälld om man står på någon av dess sidor.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const isHome = pathname === "/";
   const language = languageSwitch(pathname);
 
@@ -53,6 +57,17 @@ function HeaderView({ pathname }: { pathname: string | null }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Sidhuvudet ligger ovanpå menyn och har stängknappen, så det hör till lagret. Resten av sidan blir inert.
+  useFocusLayer({
+    active: open,
+    layers: () => [headerRef.current, menuRef.current],
+    initial: () => toggleRef.current,
+    returnTo: () => toggleRef.current,
+  });
+  useEffect(() => {
+    if (open) return closeWhenWider("(min-width: 1024px)", () => setOpen(false));
+  }, [open]);
+
   const active = (href: string) =>
     pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
   const groupActive = (g: NavGroup) => active(g.href) || !!g.children?.some((c) => active(c.href));
@@ -67,6 +82,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
         Hoppa till innehållet
       </a>
       <header
+        ref={headerRef}
         className={cn(
           "fixed inset-x-0 top-0 z-50 text-white transition-[background-color,border-color,backdrop-filter] duration-500",
           scrolled || open
@@ -102,7 +118,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                 item.children ? (
                   <li
                     key={item.href}
-                    className="relative"
+                    className="meny-grupp relative"
                     onMouseEnter={() => {
                       clearTimeout(closeTimer.current);
                       setDropdown(item.label);
@@ -125,7 +141,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                     </button>
                     <div
                       className={cn(
-                        "absolute left-1/2 top-full -translate-x-1/2 pt-3 transition-all duration-300 ease-[var(--ease-out-expo)]",
+                        "meny-lista absolute left-1/2 top-full -translate-x-1/2 pt-3 transition-all duration-300 ease-[var(--ease-out-expo)]",
                         item.children.length > 3 ? "w-[34rem]" : "w-[22rem]",
                         dropdown === item.label ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0",
                       )}
@@ -177,27 +193,36 @@ function HeaderView({ pathname }: { pathname: string | null }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              href={language.href}
-              hrefLang={language.lang}
-              lang={language.lang}
-              aria-label={language.label}
-              title={language.label}
-              className="inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-white/15 px-3 text-[0.82rem] font-semibold text-white/80 transition-colors hover:border-white/40 hover:text-white lg:h-9"
-            >
-              {language.short}
-            </Link>
+            {(pathname === null ? [language, languageSwitch("/en")] : [language]).map((l) => (
+              <Link
+                key={l.lang}
+                href={l.href}
+                hrefLang={l.lang}
+                lang={l.lang}
+                aria-label={l.label}
+                title={l.label}
+                className={cn(pathname === null && `sprak-${l.lang}`, "inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-white/15 px-3 text-[0.82rem] font-semibold text-white/80 transition-colors hover:border-white/40 hover:text-white lg:h-9")}
+              >
+                {l.short}
+              </Link>
+            ))}
             <Link
               href="/admin"
               className="hidden rounded-full border border-white/15 px-4 py-2 text-[0.82rem] font-medium text-white/80 transition-colors hover:border-white/40 hover:text-white sm:inline-flex"
             >
               Poster
             </Link>
+            {/* Utan JavaScript går menyn inte att öppna. Sidfoten har samma länkar. */}
+            <a href="#sidfot" aria-label="Alla sidor, i sidfoten" className="meny-utan-js size-11 place-items-center rounded-full border border-white/15 lg:hidden">
+              <Menu />
+            </a>
             <button
+              ref={toggleRef}
               type="button"
-              className="grid size-11 place-items-center rounded-full border border-white/15 lg:hidden"
+              className="meny-knapp grid size-11 place-items-center rounded-full border border-white/15 lg:hidden"
               aria-label={open ? "Stäng meny" : "Öppna meny"}
               aria-expanded={open}
+              aria-controls="mobilmeny"
               onClick={() => setOpen((o) => !o)}
             >
               {open ? <Close /> : <Menu />}
@@ -208,6 +233,8 @@ function HeaderView({ pathname }: { pathname: string | null }) {
 
       {/* Mobilmeny */}
       <div
+        ref={menuRef}
+        id="mobilmeny"
         className={cn(
           "fixed inset-0 z-40 overflow-y-auto bg-ink text-white transition-[opacity,visibility] duration-500 lg:hidden",
           open ? "visible opacity-100" : "invisible opacity-0",

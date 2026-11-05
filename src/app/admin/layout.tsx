@@ -55,14 +55,14 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         )}
-        <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">
+        <main id="innehall" className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">
           {expiresAt && (
             <Notice tone="warning">
               Din inloggning går ut {formatTimestamp(expiresAt)}. Den förlängs när du sparar något – annars behöver du logga in igen.
             </Notice>
           )}
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );
