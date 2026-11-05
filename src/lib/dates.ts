@@ -59,6 +59,11 @@ export function isValidLocalDateTime(local: string): boolean {
   return d.toISOString().slice(0, 16) === local;
 }
 
+/** Går tiden att visa? Formateringen kastar för en tid som blir Invalid Date. Bara datumet går bra, till skillnad från isValidLocalDateTime. */
+export function canFormatLocal(local: string): boolean {
+  return Number.isFinite(asUtc(local).getTime());
+}
+
 /** ISO-tidsstämpel (UTC, från databasen) → lokal tid i Stockholm, "YYYY-MM-DDTHH:mm". */
 export function isoToLocal(iso: string): string {
   return toLocal(new Date(iso));
