@@ -123,7 +123,7 @@ async function renew(session: Session) {
 /**
  * För route handlers och för sparningar som förlänger efter skrivningen: att öppna redigeringspanelen räknas som
  * aktivitet, och de versionsvaktade sparningarna förlänger först när skrivningen gått igenom. En kaka som sätts i en
- * action renderar om sidan (och stänger i dag panelen, SB-30) – förlängs sessionen redan när panelen öppnas behöver
+ * action renderar om sidan – förlängs sessionen redan när panelen öppnas behöver
  * sparningen i panelen inte göra det.
  */
 export async function renewSessionIfDue() {
