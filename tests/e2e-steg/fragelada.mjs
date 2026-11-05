@@ -141,8 +141,10 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await page.goto(`${BASE}/admin/fragelada`);
     // Menyn finns dold en gång till för mobilen.
     await page.locator('a[href="/admin/fragelada"]:visible').getByText("nya").waitFor({ state: "attached" });
+    const seen = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === boxUrl);
     await page.goto(`${BASE}${boxUrl}`);
     await page.getByText(firstQuestion).waitFor();
+    await seen;
     assert.equal(await page.getByText(`Robot ${marker}`).count(), 0, "honungsfällans fråga ska inte sparas");
     assert.equal(await page.locator('main img[src="x"]').count(), 0, "frågan ska inte tolkas som HTML");
     assert.equal(await page.evaluate(() => window.__xss), undefined);
@@ -183,8 +185,10 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     const dialog = card.getByRole("alertdialog");
     await dialog.waitFor();
     await switchAccount(page, ADMIN);
+    // Svaret är en nekning, och sidan ritas om som administratörens. Att frågan finns kvar kontrolleras längst ned.
+    const refused = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === boxUrl);
     await dialog.getByRole("button", { name: "Ta bort" }).click();
-    await dialog.getByText("Du har inte behörighet att göra det här.").waitFor();
+    await refused;
 
     for (const email of [ADMIN, EDITOR]) {
       await switchAccount(page, email);
@@ -197,7 +201,7 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     // Administratören ser titel och antal i översikten, inte texten.
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/fragelada`);
-    await page.getByText(`Testkurs ${marker}`).waitFor();
+    await page.getByText(`Testkurs ${marker}`, { exact: true }).waitFor();
     assert.equal((await page.content()).includes(`Fråga ${marker}`), false);
 
     await switchAccount(page, OWNER);
