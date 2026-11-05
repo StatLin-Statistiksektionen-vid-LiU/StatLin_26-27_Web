@@ -23,6 +23,23 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
 
   useFocusLayer({ active: index !== null, layers: () => [dialogRef.current], initial: () => closeRef.current });
 
+  // På telefonen är Tillbaka det naturliga sättet att lämna en bild i helskärm. Visaren får en egen historiepost, som tas bort igen när den stängs på annat sätt.
+  const open = index !== null;
+  useEffect(() => {
+    if (!open) return;
+    window.history.pushState(null, "");
+    let closedByBack = false;
+    const onBack = () => {
+      closedByBack = true;
+      setIndex(null);
+    };
+    window.addEventListener("popstate", onBack);
+    return () => {
+      window.removeEventListener("popstate", onBack);
+      if (!closedByBack) window.history.back();
+    };
+  }, [open]);
+
   useEffect(() => {
     if (index === null) return;
     document.documentElement.style.overflow = "hidden";
@@ -88,7 +105,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
           role="dialog"
           aria-modal="true"
           aria-label={`${title}, bild ${index + 1} av ${items.length}`}
-          className="fixed inset-0 z-[100] flex flex-col bg-black/95 text-white [animation:logo-fade_0.25s_ease-out]"
+          className="fixed inset-0 z-[100] flex flex-col bg-black text-white [animation:logo-fade_0.25s_ease-out]"
           onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
           onTouchEnd={(e) => {
             if (!touch.current) return;
