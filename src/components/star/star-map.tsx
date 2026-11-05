@@ -1,14 +1,18 @@
-import type { CSSProperties } from "react";
 import { parseSeeks, SEEK_LABELS, type StarCompany } from "@/lib/naringsliv";
 import { narrowMap, wideMap, type StarMap as Layout } from "@/lib/star-map";
 import "./star.css";
 
 const LINE = { stroke: "#fff", strokeOpacity: 0.32, strokeWidth: 1 };
 
-/** Stjärnan: huvudsponsorn med fyra uddar, sponsorer större än utställare. */
+/** Stjärnan: huvudsponsorn med en tunn ring, som en ljusstark stjärna på en stjärnkarta, sponsorer större än utställare. */
 function StarShape({ x, y, role }: { x: number; y: number; role: StarCompany["role"] }) {
   if (role === "huvudsponsor") {
-    return <path className="star-core" fill="#fff" d={`M${x} ${y - 14}Q${x + 1.5} ${y - 1.5} ${x + 14} ${y}Q${x + 1.5} ${y + 1.5} ${x} ${y + 14}Q${x - 1.5} ${y + 1.5} ${x - 14} ${y}Q${x - 1.5} ${y - 1.5} ${x} ${y - 14}Z`} />;
+    return (
+      <>
+        <circle cx={x} cy={y} r="11" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="1" />
+        <circle className="star-core" cx={x} cy={y} r="6" fill="#fff" />
+      </>
+    );
   }
   return <circle className="star-core" cx={x} cy={y} r={role === "sponsor" ? 5 : 3.5} fill="#fff" />;
 }
@@ -61,16 +65,6 @@ function Map({ layout, companies, size, className }: { layout: Layout; companies
         );
       })}
     </svg>
-    {/* Stjärnorna tänds en efter en när kartan kommer in i bild. Små egna lager ovanpå, så att kartan inte behöver ritas om. */}
-    <div aria-hidden>
-      {layout.stars.map((s, i) => (
-        <span
-          key={s.id}
-          className="star-blixt"
-          style={{ left: `${(s.x / layout.width) * 100}%`, top: `${(s.y / layout.height) * 100}%`, "--i": i, "--s": byId.get(s.id)?.role === "huvudsponsor" ? "2.6rem" : "1.6rem" } as CSSProperties}
-        />
-      ))}
-    </div>
     </div>
   );
 }

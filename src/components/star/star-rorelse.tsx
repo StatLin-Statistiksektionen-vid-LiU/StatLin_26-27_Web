@@ -4,8 +4,8 @@ import { useEffect } from "react";
 
 /**
  * Rörelsen på STAR-sidan, utan att något hänger på den. Sidan är hel utan JavaScript: det här lägger bara till, och döljer aldrig något
- * som redan syns. Det som ligger utanför bilden när sidan öppnas tonas in när det kommer fram, en gång, och gnistorna i heron pausas
- * medan heron är utanför bilden. Raden med genvägar visar var på sidan man är.
+ * som redan syns. Det som ligger utanför bilden när sidan öppnas tonas in när det kommer fram, en gång. Raden med genvägar visar var på
+ * sidan man är.
  */
 export function StarRorelse() {
   useEffect(() => {
@@ -46,16 +46,6 @@ export function StarRorelse() {
         // Inget får stå dolt om sidan lämnas mitt i: Next kan behålla den dold och visa den igen.
         for (const el of delar) delete el.dataset.starVantar;
       });
-
-      const hero = rot.querySelector<HTMLElement>("[data-star-hero]");
-      if (hero) {
-        const paus = new IntersectionObserver(([post]) => {
-          if (post.isIntersecting) delete hero.dataset.starPaus;
-          else hero.dataset.starPaus = "";
-        });
-        paus.observe(hero);
-        stada.push(() => paus.disconnect());
-      }
     }
 
     const rad = rot.querySelector<HTMLElement>(".star-nav ul");

@@ -44,8 +44,6 @@ function remember(id: number) {
   listeners.forEach((l) => l());
 }
 
-const SPARK_ANGLES = [0, 60, 120, 180, 240, 300];
-
 /**
  * "Ge en stjärna". Utan JavaScript är det ett vanligt formulär. Med JavaScript tänds stjärnan direkt och antalet ökar; säger servern
  * nej (spärren) släcks den igen och besökaren får veta varför.
@@ -86,9 +84,6 @@ export function WishStar({ id, title, votes, litByServer = false }: { id: number
         className="wish-star relative grid size-14 cursor-pointer place-items-center rounded-full border border-ink/20 bg-white disabled:cursor-default disabled:border-red/50"
       >
         <Star size={24} className={lit ? "wish-star-icon fill-red text-red" : "wish-star-icon fill-transparent text-ink"} />
-        {SPARK_ANGLES.map((a) => (
-          <span key={a} className="wish-spark" style={{ "--a": `${a}deg` } as React.CSSProperties} aria-hidden />
-        ))}
       </button>
       <span className="wish-count mono-accent mt-1.5 text-sm font-semibold tabular" aria-live="polite">
         {count}

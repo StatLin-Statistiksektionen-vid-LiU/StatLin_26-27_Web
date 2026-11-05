@@ -5,7 +5,7 @@ import { setStarLive } from "@/app/admin/_actions/naringsliv";
 import { SmartImage } from "@/components/content/smart-image";
 import { Editable } from "@/components/edit-mode/editable";
 import { ArrowRight, ArrowUpRight, Calendar, ChevronDown, Edit, Eye, Mail } from "@/components/icons";
-import { StarGnistor } from "@/components/star/star-gnistor";
+import { StarHimmel } from "@/components/star/star-himmel";
 import { EmptySky, StarMap } from "@/components/star/star-map";
 import { StarRorelse } from "@/components/star/star-rorelse";
 import "@/components/star/star.css";
@@ -49,6 +49,7 @@ export default async function StarPage(props: PageProps<"/star">) {
   if (!live && !canEdit) {
     return (
       <div data-star-rot className="star-sky star-sida text-white">
+        <StarHimmel />
         <StarRorelse />
         {asVisitor && <OwnerBar live={live} asVisitor />}
         <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={asVisitor}>
@@ -89,6 +90,7 @@ export default async function StarPage(props: PageProps<"/star">) {
 
   return (
     <div data-star-rot className="star-sky star-sida text-white">
+      <StarHimmel />
       <StarRorelse />
       {(canEdit || asVisitor) && <OwnerBar live={live} asVisitor={asVisitor} />}
       {/* Heron är loggan i sidans storlek: bokstäverna, den röda linjen genom dem och grafen uppför himlen. */}
@@ -238,7 +240,7 @@ export default async function StarPage(props: PageProps<"/star">) {
 
       {/* Två vägar ut, under den röda linjen som bär hela sidan. */}
       <section id="vara-med" className="star-ankare pb-20 md:pb-28">
-        <div data-star-in className="star-rod h-1 w-full bg-[#8f1d1d]" aria-hidden />
+        <div data-star-in className="star-rod h-0.5 w-full" aria-hidden />
         <div className="container-site mt-14 grid gap-10 md:mt-20 md:grid-cols-2 md:gap-16">
           <div>
             <p className="kicker text-white/65">För dig som student</p>
@@ -325,10 +327,7 @@ function OwnerBar({ live, asVisitor = false }: { live: boolean; asVisitor?: bool
 
 function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: boolean; children: ReactNode }) {
   return (
-    <section data-star-hero className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
-      <div className="star-twinkle -z-10" aria-hidden>
-        <span className="star-fall" />
-      </div>
+    <section className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
       <div className="container-site">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -336,9 +335,8 @@ function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: 
           <p className="kicker text-white/75">{subtitle}</p>
         </div>
         <div className="relative mt-6 md:mt-8">
-          <div className={cn("star-linje absolute left-1/2 top-[56%] h-[0.065em] w-[200vw] -translate-x-1/2 bg-[#8f1d1d]", WORD_SIZE)} aria-hidden />
+          <div className={cn("star-linje absolute left-1/2 top-[56%] h-[max(2px,0.016em)] w-screen -translate-x-1/2", WORD_SIZE)} aria-hidden />
           <HeroGraph />
-          <StarGnistor />
           <h1 className={cn("star-type star-ord relative -mr-[0.2em] font-light uppercase leading-[1.05] tracking-[0.2em]", WORD_SIZE)}>{STAR_COPY.title}</h1>
         </div>
         <div className="star-upp mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">{children}</div>
@@ -398,7 +396,7 @@ function CountdownFacts({ event }: { event: EventFactsData }) {
   const countdown = countdownText(event.starts_at);
   return (
     <>
-      <p className="star-type star-nedrakning text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight first-letter:uppercase">{countdown ?? "Pågår nu"}</p>
+      <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight first-letter:uppercase">{countdown ?? "Pågår nu"}</p>
       <EventFacts event={event} className="mt-4" />
     </>
   );

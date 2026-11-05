@@ -1,8 +1,8 @@
 /*
  * STAR-sidan och lunchföreläsningarna: natthimlen från STAR-loggan. Laddas bara på de sidorna.
  *
- * Himlen är en upprepad SVG i bakgrunden, inte element på sidan: den kostar inga DOM-noder, och två rutor i olika storlek gör att
- * mönstret inte syns upprepas. Blinkandet är opaciteten på två lager, vilket grafikkortet sköter utan att sidan ritas om.
+ * Lunchsidans ytor har en upprepad SVG i bakgrunden: den kostar inga DOM-noder, och två rutor i olika storlek gör att mönstret inte syns
+ * upprepas. STAR-sidan har en riktig himmel, se star-himmel.tsx.
  */
 
 .star-type {
@@ -13,8 +13,8 @@
 .star-sky {
   background-color: var(--color-star-navy);
   --star-himmel:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1' stroke-opacity='0.45' d='M465 888h0M575 879h0M801 478h0M464 522h0M877 603h0M196 191h0M825 526h0M489 646h0M630 814h0M192 98h0M459 312h0M147 94h0M553 831h0M712 651h0M44 611h0M407 465h0M671 758h0M632 667h0M163 640h0M17 853h0M543 66h0M62 38h0M196 249h0M616 32h0M798 477h0M336 453h0M607 864h0M202 533h0M241 657h0M303 513h0M6 680h0M89 470h0M672 286h0M418 566h0M862 87h0M726 262h0M324 778h0M237 527h0M297 32h0M73 578h0M786 112h0M412 112h0M868 299h0M397 70h0M19 869h0M703 2h0M220 216h0M55 483h0M386 727h0M408 431h0M76 581h0M646 205h0M799 693h0M278 346h0M91 320h0M342 17h0M421 778h0M122 139h0M254 725h0M105 13h0M63 478h0M818 500h0M183 700h0M574 194h0M460 523h0M197 751h0M789 136h0M431 661h0M394 121h0M406 432h0'/%3E%3Cpath stroke-width='1.5' stroke-opacity='0.7' d='M219 2h0M278 887h0M824 608h0M313 22h0M217 193h0M405 876h0M618 659h0M592 104h0M45 151h0M220 454h0M266 11h0M793 626h0M338 852h0M305 397h0M77 78h0M94 215h0M598 653h0M250 17h0M617 379h0M382 639h0M466 132h0M603 497h0'/%3E%3Cpath stroke-width='2' stroke-opacity='0.9' d='M854 590h0M140 889h0M397 189h0M644 159h0M320 235h0M839 627h0'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1270' height='1270' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='0.8' stroke-opacity='0.3' d='M595 173h0M36 1214h0M630 869h0M778 1087h0M735 268h0M395 549h0M912 30h0M454 933h0M52 218h0M177 1022h0M864 42h0M1051 885h0M737 119h0M423 74h0M1208 757h0M354 444h0M744 1160h0M757 1173h0M578 645h0M1175 177h0M972 365h0M991 1211h0M918 337h0M374 367h0M1094 664h0M1067 402h0M1194 236h0M170 203h0M874 81h0M1165 566h0M1175 576h0M1210 679h0M225 759h0M592 1112h0M626 933h0M1126 449h0M531 308h0M221 246h0M1011 489h0M674 1119h0M293 1215h0M207 786h0M344 922h0M71 116h0M854 807h0M49 334h0M464 28h0M457 118h0M1105 913h0M192 710h0M34 774h0M1006 397h0M77 157h0M543 956h0M1124 404h0M942 607h0M444 189h0M213 1141h0M1085 349h0M1115 1144h0M490 520h0M206 865h0M339 26h0M912 704h0M850 340h0M1265 847h0M144 490h0M1119 606h0M872 840h0M614 1142h0M1250 1128h0M107 585h0M224 53h0M287 682h0M1147 883h0M510 340h0M162 693h0M1153 1111h0M234 483h0M1150 966h0M922 559h0M10 694h0M774 50h0M292 824h0M418 63h0M356 922h0M867 169h0M862 569h0M985 1225h0M1106 1140h0'/%3E%3Cpath stroke-width='1.3' stroke-opacity='0.55' d='M365 1079h0M1092 611h0M545 178h0M465 129h0M1021 774h0M38 937h0M1241 845h0M599 656h0M836 717h0M620 562h0M700 330h0M795 89h0M861 980h0M1136 525h0'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' fill='none' stroke-linecap='round'%3E%3Cpath stroke='%23fff' stroke-width='0.8' stroke-opacity='0.32' d='M488 506h0M703 607h0M369 97h0M678 711h0M823 146h0M659 596h0M492 222h0M168 611h0M81 140h0M872 562h0M493 128h0M128 411h0M630 591h0M609 823h0M881 23h0M67 297h0M32 547h0M401 106h0M279 210h0M30 206h0M527 695h0M61 880h0M112 777h0M52 730h0M403 688h0M528 133h0M500 351h0M341 518h0M761 311h0M856 735h0M207 660h0M332 416h0M483 703h0M600 602h0M110 110h0M31 331h0M837 885h0M372 3h0M585 739h0M469 519h0M637 539h0M637 126h0M642 779h0M159 357h0M304 550h0M552 264h0M117 727h0M24 843h0M869 407h0M239 200h0M658 696h0M70 506h0M836 783h0M536 117h0M430 450h0M94 247h0M893 217h0M194 586h0M449 579h0M503 49h0M269 115h0M850 896h0M783 690h0M36 306h0M286 757h0M880 894h0M884 144h0M175 401h0M205 162h0M46 346h0M8 732h0M432 481h0M549 391h0M114 82h0'/%3E%3Cpath stroke='%23cddbff' stroke-width='1' stroke-opacity='0.5' d='M563 174h0M82 396h0M720 335h0M20 506h0M868 759h0M148 466h0M4 146h0M343 817h0M650 418h0M475 163h0M99 782h0M160 471h0M518 505h0M332 441h0M649 826h0M829 751h0M238 529h0M738 483h0M245 606h0M73 586h0M521 896h0M141 416h0M247 677h0M420 43h0M760 614h0M382 609h0'/%3E%3Cpath stroke='%23fff' stroke-width='1.4' stroke-opacity='0.72' d='M117 644h0M602 691h0M256 453h0M776 332h0M485 162h0M554 464h0M400 871h0M72 68h0M866 806h0M703 449h0M289 444h0M318 450h0'/%3E%3Cpath stroke='%23ffe7cf' stroke-width='1.7' stroke-opacity='0.85' d='M60 54h0M92 648h0M232 831h0'/%3E%3Cpath stroke='%23fff' stroke-width='2.2' stroke-opacity='1' d='M608 518h0M498 493h0M788 483h0'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1270' height='1270' fill='none' stroke-linecap='round'%3E%3Cpath stroke='%23fff' stroke-width='0.7' stroke-opacity='0.24' d='M27 630h0M592 462h0M990 570h0M173 610h0M433 1055h0M56 638h0M208 293h0M302 138h0M540 800h0M985 412h0M320 374h0M414 21h0M996 295h0M230 316h0M538 3h0M476 215h0M634 63h0M72 566h0M582 832h0M11 1130h0M722 604h0M613 972h0M651 717h0M869 984h0M243 95h0M932 220h0M711 502h0M177 248h0M888 822h0M1068 28h0M1027 165h0M269 1100h0M22 445h0M1154 500h0M741 28h0M957 996h0M91 586h0M537 542h0M168 399h0M675 720h0M578 2h0M909 91h0M263 628h0M1057 73h0M467 610h0M591 1154h0M234 1216h0M1072 179h0M976 286h0M327 670h0M212 850h0M52 972h0M1057 67h0M1004 566h0M1242 808h0M41 442h0M730 784h0M1247 400h0M894 973h0M14 626h0M528 561h0M1157 80h0M808 882h0M296 310h0M1049 137h0M721 416h0M371 42h0M913 414h0M63 886h0M1016 915h0M985 563h0M679 444h0M671 243h0M628 1222h0M994 1117h0M443 551h0M626 930h0M242 573h0M89 269h0M560 62h0M343 574h0M347 840h0M1255 345h0M653 902h0M1249 1265h0M38 169h0M141 506h0M268 377h0M386 658h0M826 425h0M810 142h0M658 551h0M38 113h0M307 460h0M1119 1033h0M541 49h0'/%3E%3Cpath stroke='%23cddbff' stroke-width='0.9' stroke-opacity='0.36' d='M385 648h0M116 659h0M250 1137h0M665 1176h0M133 476h0M883 424h0M170 1033h0M1116 1178h0M1206 1261h0M575 491h0M1177 563h0M1116 1255h0M1007 251h0M823 273h0M1017 148h0M955 212h0M936 774h0M26 1052h0M138 243h0M50 901h0M16 904h0M819 475h0'/%3E%3Cpath stroke='%23fff' stroke-width='1.3' stroke-opacity='0.6' d='M1218 444h0M437 414h0M685 428h0M562 171h0M268 650h0M1130 619h0M1072 1050h0M172 122h0'/%3E%3C/svg%3E"),
     radial-gradient(70rem 42rem at 85% 0, color-mix(in oklab, #3d5bb8 38%, transparent), transparent);
   background-image: var(--star-himmel);
   background-size:
@@ -34,16 +34,40 @@
   isolation: isolate;
   background-image: none;
 }
-.star-sida::before {
-  content: "";
-  display: block;
+.star-himmel {
   position: sticky;
   top: 0;
   z-index: -1;
   height: 100lvh;
   margin-bottom: -100lvh;
+  overflow: hidden;
+  contain: strict;
   pointer-events: none;
   will-change: transform;
+  background: linear-gradient(168deg, #070d22, var(--color-star-navy) 48%, #0e1a3d);
+}
+/* Vintergatans sken: ett svagt stråk uppför himlen, i samma lutning som stjärnorna samlas i. */
+.star-himmel::before {
+  content: "";
+  position: absolute;
+  inset: -30% -40%;
+  background:
+    radial-gradient(closest-side at 64% 50%, rgb(74 104 204 / 0.24), transparent),
+    radial-gradient(closest-side at 32% 52%, rgb(92 78 176 / 0.1), transparent);
+  transform: rotate(-24deg) scaleY(0.44);
+}
+@media (max-aspect-ratio: 1/1) {
+  .star-himmel::before {
+    inset: -10% -90%;
+    transform: rotate(-48deg) scaleY(0.36);
+  }
+}
+.star-himmel-yta,
+.star-himmel-reserv {
+  position: absolute;
+  inset: 0;
+}
+.star-himmel-reserv {
   background-image: var(--star-himmel);
   background-size:
     900px 900px,
@@ -51,29 +75,53 @@
     100% 100%;
   background-repeat: repeat, repeat, no-repeat;
 }
-
-/* ---------- Ljusare stjärnor i heron: de scrollar med sidan över himlen bakom ---------- */
-
-.star-twinkle {
+.star-himmel-yta canvas {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  overflow: hidden;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
-.star-twinkle::before,
-.star-twinkle::after {
+.star-ljus {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2);
+  border-radius: 999px;
+  background: radial-gradient(closest-side, #fff 0 15%, rgb(226 234 255 / 0.5) 23%, rgb(214 226 255 / 0.1) 42%, transparent);
+}
+/* Stjärnfallet: ett element som flyttas och tonas, med svansen bakom sig. Den lilla marginalen runt svansen gör kanterna mjuka när den lutar. */
+.star-stjarnfall {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+.star-stjarnfall::after {
   content: "";
   position: absolute;
-  inset: 0;
-  opacity: 0.7;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, #fff 0 20%, rgb(205 219 255 / 0.3) 42%, transparent);
 }
-.star-twinkle::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1.6' stroke-opacity='0.9' d='M624 95h0M634 683h0M651 529h0M38 648h0M380 450h0M542 112h0M469 617h0M290 389h0M435 456h0M149 52h0M95 425h0M78 558h0M297 371h0M665 444h0M603 578h0M376 656h0'/%3E%3Cpath stroke-width='2.3' stroke-opacity='1' d='M588 36h0M541 636h0M220 519h0M428 66h0'/%3E%3C/svg%3E");
-  background-size: 700px 700px;
+.star-stjarnfall i {
+  position: absolute;
+  right: 0;
+  top: -3px;
+  height: 6px;
+  transform-origin: 100% 50%;
+  clip-path: polygon(0 50%, 100% 26%, 100% 74%);
+  background: linear-gradient(90deg, transparent, rgb(190 208 255 / 0.22) 45%, rgb(232 239 255 / 0.75) 88%, #fff);
 }
-.star-twinkle::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='940' height='940' fill='none' stroke='%23fff' stroke-linecap='round'%3E%3Cpath stroke-width='1.4' stroke-opacity='0.8' d='M633 875h0M913 223h0M469 516h0M730 496h0M737 535h0M371 753h0M467 747h0M33 880h0M39 935h0M175 354h0M766 137h0M269 904h0M762 59h0M175 50h0M370 236h0M453 204h0M236 131h0M143 361h0'/%3E%3Cpath stroke-width='2.2' stroke-opacity='1' d='M521 785h0M664 874h0M327 525h0M678 414h0M58 342h0'/%3E%3C/svg%3E");
-  background-size: 940px 940px;
+@media print {
+  .star-himmel {
+    display: none;
+  }
 }
 
 /* ---------- Rörelsen: bara transform och opacity, så att den går på grafikkortet och inte hindrar scrollningen ---------- */
@@ -97,54 +145,9 @@
   inset: 18.75% 1.923%;
 }
 
-.star-gnistor {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.star-gnista,
-.star-blixt {
-  position: absolute;
-  width: var(--s);
-  height: var(--s);
-  margin: calc(var(--s) / -2);
-  opacity: 0;
-  pointer-events: none;
-}
-.star-gnista::before,
-.star-blixt::before {
-  content: "";
-  position: absolute;
-  inset: -70%;
-  border-radius: 999px;
-  background: radial-gradient(closest-side, rgb(255 255 255 / 0.32), transparent);
-}
-.star-gnista::after,
-.star-blixt::after,
-.star-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #fff;
-  clip-path: polygon(50% 0, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0 50%, 44% 44%);
-}
-.star-fall {
-  position: absolute;
-  top: 16%;
-  right: 3%;
-  width: clamp(4.5rem, 16vw, 10rem);
-  height: 1.5px;
-  opacity: 0;
-  background: linear-gradient(90deg, #fff, transparent);
-}
-.star-nedrakning::after {
-  content: "✦";
-  content: "✦" / "";
-  display: inline-block;
-  margin-left: 0.35em;
-  font-size: 0.42em;
-  vertical-align: 0.9em;
-  color: rgb(255 255 255 / 0.8);
+.star-linje,
+.star-rod {
+  background: linear-gradient(90deg, transparent, #b3261f 12%, #c42c25 50%, #b3261f 88%, transparent);
 }
 
 @keyframes star-svep-ut {
@@ -179,64 +182,29 @@
     opacity: 0.25;
   }
 }
-@keyframes star-gnista {
-  0% {
+@keyframes star-tona-in {
+  from {
     opacity: 0;
-    transform: scale(0.2) rotate(-30deg);
-  }
-  7% {
-    opacity: 1;
-    transform: scale(1) rotate(0);
-  }
-  18%,
-  100% {
-    opacity: 0;
-    transform: scale(0.3) rotate(30deg);
   }
 }
-@keyframes star-blixt {
-  0% {
-    opacity: 0;
-    transform: scale(0.2);
-  }
-  35% {
-    opacity: 1;
-    transform: scale(1.1) rotate(10deg);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.4) rotate(40deg);
-  }
-}
-@keyframes star-fall {
-  0%,
-  92% {
-    opacity: 0;
-    transform: rotate(-18deg) translateX(0);
-  }
-  93.5% {
-    opacity: 0.9;
-  }
-  99%,
-  100% {
-    opacity: 0;
-    transform: rotate(-18deg) translateX(-55vw);
-  }
-}
-@keyframes star-glimt {
-  0%,
-  72%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.85);
-  }
-  84% {
-    opacity: 1;
-    transform: scale(1.3) rotate(45deg);
+@keyframes star-andas {
+  50% {
+    opacity: 0.6;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .star-himmel::before {
+    animation: star-tona-in 3.2s ease-out 0.1s backwards;
+  }
+  .star-himmel-yta canvas[data-tand] {
+    animation: star-tona-in var(--t) ease-out var(--d) backwards;
+  }
+  .star-ljus {
+    animation:
+      star-tona-in 1.3s ease-out var(--d) backwards,
+      star-andas var(--t) ease-in-out calc(var(--d) + 1.3s) infinite;
+  }
   .star-draw {
     animation: star-svep-ut 2.4s var(--ease-out-expo) 0.25s backwards;
   }
@@ -253,20 +221,6 @@
   .star-upp {
     animation: star-upp 0.9s var(--ease-out-expo) 0.45s backwards;
   }
-  .star-gnista {
-    animation: star-gnista 8s linear infinite;
-  }
-  .star-fall {
-    animation: star-fall 17s linear 2s infinite;
-  }
-  .star-nedrakning::after {
-    animation: star-glimt 5.5s ease-in-out 2s infinite;
-  }
-  [data-star-paus] .star-gnista,
-  [data-star-paus] .star-fall,
-  [data-star-paus] .star-nedrakning::after {
-    animation-play-state: paused;
-  }
   /* Bara på skärmen, så att en utskrift alltid är hel. Attributen sätts av star-rorelse.tsx, och bara på det som ligger utanför bilden. */
   @media screen {
     [data-star-vantar]:not(.star-karta) {
@@ -281,20 +235,10 @@
     .star-karta[data-star-tand] > svg {
       animation: star-karta 1.6s ease-out backwards;
     }
-    .star-karta[data-star-tand] .star-blixt {
-      animation: star-blixt 0.9s var(--ease-out-expo) calc(var(--i) * 80ms + 0.15s) backwards;
-    }
     .star-rod[data-star-tand] {
       transform-origin: left center;
       animation: star-linje 1.4s var(--ease-out-expo) backwards;
     }
-  }
-}
-
-/* Telefonen får färre gnistor. */
-@media (max-width: 47.99rem) {
-  .star-gnista:nth-child(n + 6) {
-    display: none;
   }
 }
 
@@ -308,7 +252,7 @@
   transition: opacity 0.25s;
 }
 .star-halo {
-  opacity: 0.35;
+  opacity: 0;
   transition: opacity 0.25s;
 }
 .star-core {
@@ -426,38 +370,12 @@
     border-color 0.25s,
     background-color 0.25s;
 }
-.star-card::after {
-  inset: 1.1rem 1.1rem auto auto;
-  width: 1rem;
-  height: 1rem;
-  opacity: 0;
-  transform: scale(0.3) rotate(-40deg);
-  pointer-events: none;
-  transition:
-    opacity 0.25s,
-    transform 0.5s var(--ease-out-expo);
-}
 .star-card:hover {
   border-color: rgb(255 255 255 / 0.4);
 }
 .star-card:target {
   border-color: #fff;
   background-color: rgb(255 255 255 / 0.1);
-}
-.star-card:target::after {
-  opacity: 1;
-  transform: none;
-}
-@media (hover: hover) {
-  .star-card:hover::after {
-    opacity: 1;
-    transform: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .star-card::after {
-    transition: none;
-  }
 }
 
 /* ---------- Programmet: telefonen en rad per punkt, datorn en bana uppför himlen som grafen i loggan ---------- */
@@ -624,8 +542,12 @@
   display: none;
 }
 .star-faq summary::after {
-  content: "✦";
+  content: "+";
+  content: "+" / "";
   flex: none;
+  font-weight: 300;
+  line-height: 1;
+  font-size: 1.5rem;
   color: rgb(255 255 255 / 0.55);
   transition:
     transform 0.3s,
@@ -703,18 +625,6 @@
     color 0.25s,
     fill 0.25s;
 }
-.wish-spark {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 3px;
-  height: 3px;
-  margin: -1.5px;
-  border-radius: 999px;
-  background: var(--color-red);
-  opacity: 0;
-  pointer-events: none;
-}
 @keyframes wish-pop {
   0% {
     transform: scale(0.4) rotate(-40deg);
@@ -726,21 +636,8 @@
     transform: none;
   }
 }
-@keyframes wish-spark {
-  0% {
-    opacity: 1;
-    transform: rotate(var(--a)) translateY(-0.6rem);
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(var(--a)) translateY(-1.9rem);
-  }
-}
 @media (prefers-reduced-motion: no-preference) {
   .wish-star[data-lit-now] .wish-star-icon {
     animation: wish-pop 0.55s var(--ease-out-expo);
-  }
-  .wish-star[data-lit-now] .wish-spark {
-    animation: wish-spark 0.6s ease-out;
   }
 }

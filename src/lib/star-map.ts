@@ -8,7 +8,7 @@ export type MapInput = { id: number; name: string };
 export type MapStar = { id: number; x: number; y: number; label: string; anchor: "start" | "end" };
 export type StarMap = { width: number; height: number; stars: MapStar[]; lines: [number, number][] };
 
-const LABEL_MAX = 24;
+const LABEL_MAX = 30;
 const CHAR_WIDTH = 7.6;
 const MARGIN_X = 28;
 const MARGIN_Y = 34;
