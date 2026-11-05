@@ -277,7 +277,8 @@ function FormStatus() {
   useEffect(() => {
     if ((!state.error && !state.ok) || scrolled.current === state) return;
     scrolled.current = state;
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    ref.current?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "nearest" });
   }, [state]);
   if (!state.error && !state.ok) return null;
   return (
