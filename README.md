@@ -313,6 +313,17 @@ Läget enligt en anteckning från 2026-10-31, inte kontrollerat sedan dess:
 
 Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy vol_491j0dldgmng2x5r`. Det går inte att ångra, så kontrollera först att den är tom eller äldre: CREATED AT i listan, eller innehållet med en maskin utan publik trafik som i övningen ovan.
 
+### STAR-sidan och lunchföreläsningarna
+
+`/star` är arbetsmarknadsdagens egen sida, och `/lunchforelasningar` har nästa föreläsning och studenternas önskelista. SASU:s konto och redaktörer sköter båda i adminpanelen.
+
+- **Företag:** `/admin/star`. Varje företag blir ett kort och en stjärna på kartan. Rollen avgör om det också står under Sponsorer. Utan företag står det att de presenteras snart.
+- **Datum, plats och program:** tas från STAR-evenemanget, det som ligger närmast av de med adressen `star` eller `star-2027`. Programmet är rader under rubriken `## Program` i evenemangets text, till exempel `- **10.00** Mässan öppnar`.
+- **Önskemål:** `/admin/lunchonskemal`. Nya önskemål syns först när någon har godkänt dem, och menyn visar hur många som väntar. När ett önskemål blir av: sätt status och koppla evenemanget.
+- **Vilka föreläsningar som visas:** kommande evenemang vars titel börjar med "Lunchföreläsning" eller vars adress börjar med `lunch`.
+
+Innan det går live: låt SASU läsa de tre raderna i bandet "Vill ni hålla en lunchföreläsning?" och texterna till företagen, och lägg in de företag som redan är klara. Allt annat följer med migrationen när en ny version startar. Påhittat innehåll att prova med finns i `scripts/demo-naringsliv.ts`, som vägrar köra i produktion.
+
 ### Årshjul
 
 | När | Vad |
