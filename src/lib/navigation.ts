@@ -28,7 +28,15 @@ export const NAV: NavGroup[] = [
       { href: "/tentastatistik", label: "Tentastatistik", description: "Betyg per tentatillfälle, för alla kurser" },
     ],
   },
-  { label: "Företag", href: "/foretag" },
+  {
+    label: "Företag",
+    href: "/foretag",
+    children: [
+      { href: "/foretag", label: "För företag", description: "Samarbeta med StatLin" },
+      { href: "/star", label: "STAR", description: "Arbetsmarknadsdagen: vilka kommer och när" },
+      { href: "/lunchforelasningar", label: "Lunchföreläsningar", description: "Nästa föreläsning och önskelistan" },
+    ],
+  },
   { label: "Kontakt", href: "/kontakt" },
 ];
 
