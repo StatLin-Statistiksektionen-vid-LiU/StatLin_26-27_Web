@@ -292,11 +292,27 @@ export interface SiteSettings {
   hero_title: string;
   hero_text: string;
   hero_ring_color: "red" | "white";
+  band_color: "vit" | "rod" | "natt";
   home_intro: string;
   announcement: string;
   announcement_url: string;
   /** Evenemanget vars datum visas som STAR på företagssidan. Tomt: väljs med adressen, se getStarEvent. */
   star_event_id: string;
+  /** "1" när STAR-sidan är live. Annars ser besökare bara att den kommer snart, se starIsLive. */
+  star_live: string;
+  star_subtitle: string;
+  star_intro: string;
+  star_companies_intro: string;
+  star_sponsors_intro: string;
+  /** Ett tips per rad, se parseStarTips. */
+  star_tips: string;
+  /** Fråga på första raden, svar på nästa och en tom rad mellan frågorna, se parseStarFaq. */
+  star_faq: string;
+  star_student_title: string;
+  star_student_text: string;
+  star_company_title: string;
+  star_company_text: string;
+  star_teaser: string;
   /** Utskottet på programsidornas kontaktkort. Tomt: se getEducationCommittee. */
   education_committee_id: string;
 }

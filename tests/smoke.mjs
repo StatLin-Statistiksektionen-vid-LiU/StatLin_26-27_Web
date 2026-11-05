@@ -255,7 +255,8 @@ await check("Adminpanelen kräver inloggning", async () => {
 await check("STAR och lunchföreläsningarna svarar, och deras admin kräver inloggning", async () => {
   const { res: star, body: starBody } = await get("/star");
   expect(star.status === 200, `/star: status ${star.status}`);
-  expect(starBody.includes("Vilka kommer"), "/star saknar avsnittet Vilka kommer");
+  // Sidan är dold tills SASU gör den live, och då säger den bara att den kommer snart.
+  expect(starBody.includes("Vilka kommer") || starBody.includes("STAR-sidan kommer snart"), "/star saknar både avsnittet Vilka kommer och beskedet om att den kommer snart");
   const { res: lunch, body: lunchBody } = await get("/lunchforelasningar");
   expect(lunch.status === 200, `/lunchforelasningar: status ${lunch.status}`);
   expect(lunchBody.includes("Önskelistan"), "/lunchforelasningar saknar önskelistan");

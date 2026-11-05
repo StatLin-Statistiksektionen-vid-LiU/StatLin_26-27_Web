@@ -277,6 +277,123 @@
   }
 }
 
+/* På större skärmar ligger uppgifterna om dagen i himlen ovanför banan, som bara klättrar till höger om dem. */
+@media (min-width: 64rem) {
+  .star-route:not([data-long]) {
+    margin-top: -8rem;
+    pointer-events: none;
+  }
+  .star-route:not([data-long]) .star-stop {
+    pointer-events: auto;
+  }
+}
+
+/* ---------- Avsnitten och raden med genvägar ---------- */
+
+.star-avsnitt,
+.star-ankare {
+  scroll-margin-top: 3.25rem;
+}
+.star-avsnitt {
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+.star-card {
+  scroll-margin-top: 3.25rem;
+}
+
+.star-nav {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 20;
+  border-block: 1px solid rgb(255 255 255 / 0.12);
+  background: color-mix(in oklab, var(--color-star-navy) 90%, transparent);
+  backdrop-filter: blur(10px);
+}
+.star-nav ul {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
+}
+.star-nav ul::-webkit-scrollbar {
+  display: none;
+}
+.star-nav a {
+  display: block;
+  padding: 0.85rem 0.8rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.75);
+  transition: color 0.2s;
+}
+.star-nav li:first-child a {
+  padding-left: 0;
+}
+.star-nav a:hover,
+.star-nav a:focus-visible {
+  color: #fff;
+}
+
+/* ---------- Förbered dig ---------- */
+
+/* Samma stjärnbild som programmet på telefonen: punkter på en tråd. Tipsen behöver inga klockslag. */
+.star-tips .star-stop {
+  padding-bottom: 1.5rem;
+}
+.star-tips .star-stop:last-child {
+  padding-bottom: 0;
+}
+
+/* ---------- Frågor ---------- */
+
+.star-faq details {
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+}
+.star-faq details:last-child {
+  border-bottom: 1px solid rgb(255 255 255 / 0.18);
+}
+.star-faq summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.star-faq summary::-webkit-details-marker {
+  display: none;
+}
+.star-faq summary::after {
+  content: "✦";
+  flex: none;
+  color: rgb(255 255 255 / 0.55);
+  transition:
+    transform 0.3s,
+    color 0.3s;
+}
+.star-faq details[open] summary::after {
+  color: #fff;
+  transform: rotate(45deg);
+}
+.star-faq p {
+  max-width: 42rem;
+  padding-bottom: 1.25rem;
+  line-height: 1.6;
+  color: rgb(255 255 255 / 0.8);
+}
+@media (prefers-reduced-motion: reduce) {
+  .star-faq summary::after {
+    transition: none;
+  }
+}
+
 /* ---------- Stjärnan på önskelistan ---------- */
 
 /* Tråden: en linje från stjärna till stjärna, så att listan blir en stjärnbild. Mitten av knappen är radens utfyllnad plus halva knappen. */

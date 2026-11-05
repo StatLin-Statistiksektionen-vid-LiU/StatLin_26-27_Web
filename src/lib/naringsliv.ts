@@ -109,6 +109,33 @@ export function parseProgram(bodyMd: string): ProgramStop[] {
   return stops;
 }
 
+/** STAR-sidan är dold tills SASU gör den live. Besökare ser då bara att den kommer snart, och länkarna hit försvinner. */
+export const starIsLive = (settings: { star_live: string }) => settings.star_live === "1";
+
+/** Tipsen under Förbered dig: ett per rad. Tomma rader och punkter som någon skrivit själv räknas inte. */
+export function parseStarTips(raw: string): string[] {
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^[-*•]\s*/, ""))
+    .filter(Boolean);
+}
+
+export type StarFaq = { question: string; answer: string };
+
+/** Frågan på första raden och svaret på resten. En tom rad börjar nästa fråga, och en fråga utan svar visas inte. */
+export function parseStarFaq(raw: string): StarFaq[] {
+  return raw
+    .split(/\r?\n[ \t]*\r?\n/)
+    .map((block) => {
+      const [question = "", ...answer] = block
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      return { question, answer: answer.join(" ") };
+    })
+    .filter((f) => f.question && f.answer);
+}
+
 /** E-postlänk med ifyllt ämne. Ämnet kodas, så att åäö och mellanslag kommer fram i alla e-postprogram. */
 export const mailtoWithSubject = (email: string, subject: string) => `mailto:${email}?subject=${encodeURIComponent(subject)}`;
 

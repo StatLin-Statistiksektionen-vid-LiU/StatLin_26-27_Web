@@ -2,7 +2,7 @@
 import assert from "node:assert";
 import test from "node:test";
 import { addDaysLocal, todayLocal } from "../src/lib/dates.ts";
-import { countdownText, isLunchEvent, isStarSlug, mailtoWithSubject, parseProgram, parseSeeks } from "../src/lib/naringsliv.ts";
+import { countdownText, isLunchEvent, isStarSlug, mailtoWithSubject, parseProgram, parseSeeks, parseStarFaq, parseStarTips, starIsLive } from "../src/lib/naringsliv.ts";
 import { narrowMap, wideMap } from "../src/lib/star-map.ts";
 
 test("programmet läses ur avsnittet och slutar vid nästa rubrik", () => {
@@ -69,6 +69,26 @@ test("alla stjärnor binds ihop och ligger innanför kartan, också många", () 
   }
   assert.equal(wideMap([]).stars.length, 0);
   assert.equal(narrowMap([]).stars.length, 0);
+});
+
+test("STAR-sidan är dold tills inställningen säger ja", () => {
+  assert.equal(starIsLive({ star_live: "" }), false);
+  assert.equal(starIsLive({ star_live: "0" }), false);
+  assert.equal(starIsLive({ star_live: "1" }), true);
+});
+
+test("tipsen läses rad för rad, utan tomma rader och egna punkter", () => {
+  assert.deepEqual(parseStarTips("Ta med cv:t\r\n\r\n- Läs på om företagen\n  * Kom i tid  \n• Fråga mycket\n"), ["Ta med cv:t", "Läs på om företagen", "Kom i tid", "Fråga mycket"]);
+  assert.deepEqual(parseStarTips(""), []);
+});
+
+test("frågorna läses som block, och en fråga utan svar visas inte", () => {
+  const raw = "Vad kostar det?\nInget alls.\n\nVem får komma?\nAlla.\nÄven alumner.\r\n\r\nFråga utan svar\n\n\n";
+  assert.deepEqual(parseStarFaq(raw), [
+    { question: "Vad kostar det?", answer: "Inget alls." },
+    { question: "Vem får komma?", answer: "Alla. Även alumner." },
+  ]);
+  assert.deepEqual(parseStarFaq(""), []);
 });
 
 test("långa namn kortas på kartan", () => {

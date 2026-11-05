@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
+import { starIsLive } from "@/lib/naringsliv";
 import { STAR_COPY } from "@/lib/seed-content";
 import { formatDateLong } from "@/lib/dates";
 import { safeExternalUrl } from "@/lib/utils";
@@ -53,16 +54,18 @@ async function Companies() {
         <StarField />
         <div className="container-site relative grid items-center gap-12 md:grid-cols-12">
           <Reveal className="md:col-span-7">
-            <p className="kicker text-white/60">{STAR_COPY.subtitle}</p>
+            <p className="kicker text-white/60">{settings.star_subtitle || STAR_COPY.subtitle}</p>
             <p className="mt-6 text-[clamp(4rem,12vw,9rem)] font-light uppercase leading-none tracking-[0.2em] [font-stretch:110%]">
               {STAR_COPY.title}
             </p>
             <div className="mt-3 h-1 w-[min(100%,26rem)] bg-[#8f1d1d]" aria-hidden />
-            <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/80">{STAR_COPY.text}</p>
+            {settings.star_intro && <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/80">{settings.star_intro}</p>}
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="/star" className="btn btn-red">
-                Till STAR-sidan <ArrowRight size={18} />
-              </a>
+              {starIsLive(settings) && (
+                <a href="/star" className="btn btn-red">
+                  Till STAR-sidan <ArrowRight size={18} />
+                </a>
+              )}
               {star && (
                 <a href={`/evenemang/${star.slug}`} className="btn btn-light">
                   {formatDateLong(star.starts_at)} <ArrowUpRight size={18} />

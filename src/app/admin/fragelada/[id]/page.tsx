@@ -6,6 +6,7 @@ import { ConfirmButton } from "@/components/admin/confirm-button";
 import { AdminHeader, EmptyState, Notice } from "@/components/admin/ui";
 import { BoxForm } from "@/components/fragelada/box-form";
 import { MarkBoxSeen } from "@/components/fragelada/mark-box-seen";
+import { ShareCode } from "@/components/fragelada/share-code";
 import { Check, Eye } from "@/components/icons";
 import { CopyButton } from "@/components/ui/copy-button";
 import { requireUser } from "@/lib/auth/session";
@@ -47,7 +48,7 @@ async function Box({ params, searchParams }: { params: PageProps<"/admin/fragela
   return (
     <>
       {box.unseen > 0 && <MarkBoxSeen boxId={box.id} />}
-      {sp.skapad && <Notice>Lådan är skapad. Visa koden för dem du vill höra från.</Notice>}
+      {sp.skapad && <Notice>Lådan är skapad. Här under finns färdiga texter för att skicka koden i ett mejl eller via läraren.</Notice>}
       {sp.borttagen && <Notice>Frågan är borttagen.</Notice>}
       {sp.tomd && <Notice>Lådan är tom.</Notice>}
       <AdminHeader back={{ href: "/admin/fragelada", label: "Frågelådan" }} kicker={state.label} title={<span className="break-words">{box.title}</span>} description={box.description || undefined} />
@@ -70,6 +71,8 @@ async function Box({ params, searchParams }: { params: PageProps<"/admin/fragela
           </div>
         </div>
       </section>
+
+      <ShareCode boxId={box.id} title={box.title} code={box.code} link={link} base={base} sender={user.name} />
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-xl font-extrabold tracking-tight">

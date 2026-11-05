@@ -172,6 +172,13 @@ export function HomeTextsSection({ s, className }: { s: SiteSettings; className?
           <option value="white">Vit</option>
         </Select>
       </Field>
+      <Field label="Bandets färger" name="band_color" hint="Tidslinjen med kommande evenemang under genvägarna.">
+        <Select name="band_color" defaultValue={s.band_color}>
+          <option value="vit">Vitt med röd linje</option>
+          <option value="rod">Rött med vit text</option>
+          <option value="natt">Natthimmel som på STAR</option>
+        </Select>
+      </Field>
     </FormSection>
   );
 }

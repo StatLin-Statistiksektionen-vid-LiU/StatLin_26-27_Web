@@ -1,79 +1,127 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { setStarLive } from "@/app/admin/_actions/naringsliv";
 import { SmartImage } from "@/components/content/smart-image";
-import { ArrowRight, ArrowUpRight, Calendar, ChevronDown, Mail } from "@/components/icons";
+import { Editable } from "@/components/edit-mode/editable";
+import { ArrowRight, ArrowUpRight, Calendar, ChevronDown, Edit, Eye, Mail } from "@/components/icons";
 import { EmptySky, StarMap } from "@/components/star/star-map";
 import "@/components/star/star.css";
+import { getSessionUser } from "@/lib/auth/session";
 import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
-import { listStarCompanies } from "@/lib/data/naringsliv";
+import { canManageNaringsliv, listStarCompanies } from "@/lib/data/naringsliv";
 import { formatDateLong, formatTimeRange } from "@/lib/dates";
-import { COMPANY_ROLE_LABELS, countdownText, mailtoWithSubject, parseProgram, parseSeeks, SEEK_KINDS, SEEK_LABELS, type ProgramStop, type StarCompany } from "@/lib/naringsliv";
+import { COMPANY_ROLE_LABELS, countdownText, mailtoWithSubject, parseProgram, parseSeeks, parseStarFaq, parseStarTips, SEEK_KINDS, SEEK_LABELS, starIsLive, type ProgramStop, type StarCompany } from "@/lib/naringsliv";
 import { STAR_COPY } from "@/lib/seed-content";
 import { cn, safeExternalUrl } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "STAR – arbetsmarknadsdagen",
-  description: "STAR är StatLins arbetsmarknadsdag i Linköping. Se vilka företag som kommer, vad de söker och hur dagen ser ut.",
-};
+/** Så länge sidan är dold ska sökmotorerna inte hitta den, och beskrivningen får inte lova något som inte syns. */
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  if (!starIsLive(settings)) return { title: "STAR kommer snart", description: settings.star_teaser, robots: { index: false, follow: false } };
+  return {
+    title: "STAR – arbetsmarknadsdagen",
+    description: "STAR är StatLins arbetsmarknadsdag i Linköping. Se vilka företag som kommer, vad de söker och hur dagen ser ut.",
+  };
+}
 
 // Företagen, kartan och filtret fungerar utan JavaScript, så sidan renderas hel vid varje anrop i stället för med ett skelett.
 export const instant = false;
 
-export default async function StarPage() {
-  const [companies, sasu, settings] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings()]);
+const H2 = "star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]";
+
+export default async function StarPage(props: PageProps<"/star">) {
+  const [companies, sasu, settings, user, sp] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings(), getSessionUser(), props.searchParams]);
   const event = await getStarEvent(Number(settings.star_event_id) || null);
   const contact = sasu?.email || "sasu@statlin.se";
   const companyMail = mailtoWithSubject(contact, "Vi vill vara med på STAR");
+  const live = starIsLive(settings);
+  const owner = !!user && !user.must_change_password && canManageNaringsliv(user);
+  // Den som får ändra sidan kan se den som en besökare, annars går det inte att veta hur den dolda sidan ser ut.
+  const asVisitor = owner && sp.som === "besokare";
+  const canEdit = owner && !asVisitor;
+
+  if (!live && !canEdit) {
+    return (
+      <div className="star-sky text-white">
+        {asVisitor && <OwnerBar live={live} asVisitor />}
+        <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={asVisitor}>
+          <div className="md:col-span-7">
+            <h2 className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">STAR-sidan kommer snart</h2>
+            {event && <EventFacts event={event} className="mt-4" />}
+            {settings.star_teaser && <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80">{settings.star_teaser}</p>}
+          </div>
+          <div className="md:col-span-5">
+            <div className="flex flex-wrap gap-3 md:justify-end">
+              <a href={companyMail} className="btn btn-light">
+                <Mail size={18} /> Vill ni vara med?
+              </a>
+              <a href="/foretag" className="btn btn-ghost-dark">
+                Fler sätt att samarbeta
+              </a>
+            </div>
+          </div>
+        </StarHero>
+      </div>
+    );
+  }
+
   const program = event ? parseProgram(event.body_md) : [];
   const mainSponsors = companies.filter((c) => c.role === "huvudsponsor");
   const sponsors = companies.filter((c) => c.role === "sponsor");
+  const hasSponsors = mainSponsors.length > 0 || sponsors.length > 0;
+  const tips = parseStarTips(settings.star_tips);
+  const faq = parseStarFaq(settings.star_faq);
+  const sections = [
+    { href: "#vilka-kommer", label: "Vilka kommer" },
+    ...(event ? [{ href: "#dagen", label: "Dagen" }] : []),
+    ...(hasSponsors ? [{ href: "#sponsorer", label: "Sponsorer" }] : []),
+    ...(tips.length > 0 ? [{ href: "#forbered-dig", label: "Förbered dig" }] : []),
+    ...(faq.length > 0 ? [{ href: "#fragor", label: "Frågor" }] : []),
+    { href: "#vara-med", label: "Vara med" },
+  ];
 
   return (
     <div className="star-sky text-white">
+      {(canEdit || asVisitor) && <OwnerBar live={live} asVisitor={asVisitor} />}
       {/* Heron är loggan i sidans storlek: bokstäverna, den röda linjen genom dem och grafen uppför himlen. */}
-      <section className="relative isolate flex min-h-svh flex-col justify-end overflow-hidden pb-12 pt-[calc(var(--header-h)+1.5rem)] md:pb-10">
-        <div className="star-twinkle -z-10" aria-hidden />
-        <div className="container-site">
-          <div className="flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/utskott/star.webp" alt="" width={360} height={356} className="size-14 md:size-16" />
-            <p className="kicker text-white/75">{STAR_COPY.subtitle}</p>
-          </div>
-          <div className="relative mt-6 md:mt-8">
-            <div className="absolute left-1/2 top-[56%] h-[0.065em] w-[200vw] -translate-x-1/2 bg-[#8f1d1d] text-[clamp(6.2rem,min(28vw,35svh),23rem)]" aria-hidden />
-            <HeroGraph />
-            <h1 className="star-type relative -mr-[0.2em] text-[clamp(6.2rem,min(28vw,35svh),23rem)] font-light uppercase leading-[1.05] tracking-[0.2em]">{STAR_COPY.title}</h1>
-          </div>
-
-          <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">
-            <div className="md:col-span-7">
-              {event ? <CountdownFacts event={event} /> : <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">Datum kommer snart</p>}
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80">{STAR_COPY.text}</p>
-            </div>
-            <div className="md:col-span-5">
-              <div className="flex flex-wrap gap-3 md:justify-end">
-                <a href="#vilka-kommer" className="btn btn-light">
-                  Vilka kommer <ChevronDown size={18} />
-                </a>
-                {event && (
-                  <a href={`/evenemang/${event.slug}/kalender.ics`} className="btn btn-ghost-dark">
-                    <Calendar size={18} /> Lägg i kalendern
-                  </a>
-                )}
-              </div>
-              {mainSponsors.length > 0 && (
-                <p className="kicker mt-6 text-white/65 md:text-right">
-                  Huvudsponsor <span className="text-white">{mainSponsors.map((s) => s.name).join(", ")}</span>
-                </p>
-              )}
-            </div>
-          </div>
+      <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={canEdit || asVisitor}>
+        <div className="md:col-span-7">
+          {event ? <CountdownFacts event={event} /> : <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">Datum kommer snart</p>}
+          <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
+            {settings.star_intro && <p className="text-lg leading-relaxed text-white/80">{settings.star_intro}</p>}
+          </Pen>
         </div>
-      </section>
+        <div className="md:col-span-5">
+          <div className="flex flex-wrap gap-3 md:justify-end">
+            <a href="#vilka-kommer" className="btn btn-light">
+              Vilka kommer <ChevronDown size={18} />
+            </a>
+            {event && (
+              <a href={`/evenemang/${event.slug}/kalender.ics`} className="btn btn-ghost-dark">
+                <Calendar size={18} /> Lägg i kalendern
+              </a>
+            )}
+          </div>
+          {companies.length > 0 && (
+            <p className="kicker mt-6 text-white/65 md:text-right">
+              <span className="text-white tabular">{companies.length}</span> företag på plats
+            </p>
+          )}
+          {mainSponsors.length > 0 && (
+            <p className="kicker mt-2 text-white/65 md:text-right">
+              Huvudsponsor <span className="text-white">{mainSponsors.map((s) => s.name).join(", ")}</span>
+            </p>
+          )}
+        </div>
+      </StarHero>
 
-      <section id="vilka-kommer" className="star-scope relative isolate scroll-mt-[var(--header-h)] border-t border-white/10 py-20 md:py-28">
+      <SectionNav items={sections} />
+
+      <section id="vilka-kommer" className="star-scope star-avsnitt relative isolate py-16 md:py-24">
         <div className="container-site">
-          <h2 className="star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]">Vilka kommer</h2>
+          <h2 className={H2}>Vilka kommer</h2>
           {companies.length === 0 ? (
             <div className="relative mt-10">
               <EmptySky />
@@ -89,7 +137,9 @@ export default async function StarPage() {
             </div>
           ) : (
             <>
-              <p className="mt-5 max-w-2xl text-lg text-white/80">Varje stjärna är ett företag. Välj vad du söker, så lyser bara de som passar. Under kartan finns alla som kort.</p>
+              <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-2xl">
+                {settings.star_companies_intro && <p className="text-lg text-white/80">{settings.star_companies_intro}</p>}
+              </Pen>
               <SeekFilter companies={companies} />
               <div className="mt-8">
                 <StarMap companies={companies} />
@@ -104,20 +154,31 @@ export default async function StarPage() {
         </div>
       </section>
 
-      {program.length > 0 && (
-        <section className="border-t border-white/10 py-20 md:py-28">
+      {event && (
+        <section id="dagen" className="star-avsnitt py-16 md:py-24">
           <div className="container-site">
-            <h2 className="star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]">Dagen</h2>
-            <Route stops={program} />
+            {/* Banan klättrar från nedre vänstra hörnet, så att uppgifterna om dagen får plats i himlen ovanför den. */}
+            <div className="relative z-10 lg:max-w-[18rem]">
+              <h2 className={H2}>Dagen</h2>
+              <EventFacts event={event} stacked className="mt-6" />
+              <p className="mt-5">
+                <a href={`/evenemang/${event.slug}`} className="link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
+                  Mer om dagen <ArrowRight size={15} />
+                </a>
+              </p>
+            </div>
+            {program.length > 0 ? <Route stops={program} /> : <p className="mt-8 max-w-xl text-lg text-white/75">Programmet kommer snart.</p>}
           </div>
         </section>
       )}
 
-      {(mainSponsors.length > 0 || sponsors.length > 0) && (
-        <section className="border-t border-white/10 py-20 md:py-28">
+      {hasSponsors && (
+        <section id="sponsorer" className="star-avsnitt py-16 md:py-24">
           <div className="container-site">
-            <h2 className="star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]">Sponsorer</h2>
-            <p className="mt-5 max-w-xl text-lg text-white/80">De gör dagen möjlig.</p>
+            <h2 className={H2}>Sponsorer</h2>
+            <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
+              {settings.star_sponsors_intro && <p className="text-lg text-white/80">{settings.star_sponsors_intro}</p>}
+            </Pen>
             {mainSponsors.map((s) => (
               <MainSponsor key={s.id} company={s} />
             ))}
@@ -125,7 +186,7 @@ export default async function StarPage() {
               <ul className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                 {sponsors.map((s) => (
                   <li key={s.id}>
-                    <SponsorPlate company={s} className="h-28" imageClass="max-h-14" textClass="text-lg" />
+                    <SponsorPlate company={s} className="h-24 md:h-28" imageClass="max-h-14" textClass="text-lg" />
                   </li>
                 ))}
               </ul>
@@ -134,14 +195,51 @@ export default async function StarPage() {
         </section>
       )}
 
+      {tips.length > 0 && (
+        <section id="forbered-dig" className="star-avsnitt py-16 md:py-24">
+          <div className="container-site grid gap-10 lg:grid-cols-12">
+            <h2 className={cn(H2, "lg:col-span-5")}>Förbered dig</h2>
+            <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
+              <ol className="star-route star-tips" data-long="">
+                {tips.map((tip, i) => (
+                  <li key={`${i}-${tip}`} className="star-stop">
+                    <p className="text-lg leading-snug text-white/90">{tip}</p>
+                  </li>
+                ))}
+              </ol>
+            </Pen>
+          </div>
+        </section>
+      )}
+
+      {faq.length > 0 && (
+        <section id="fragor" className="star-avsnitt py-16 md:py-24">
+          <div className="container-site grid gap-10 lg:grid-cols-12">
+            <h2 className={cn(H2, "lg:col-span-5")}>Frågor</h2>
+            <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
+              <div className="star-faq">
+                {faq.map((f) => (
+                  <details key={f.question}>
+                    <summary>{f.question}</summary>
+                    <p>{f.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </Pen>
+          </div>
+        </section>
+      )}
+
       {/* Två vägar ut, under den röda linjen som bär hela sidan. */}
-      <section className="pb-20 md:pb-28">
+      <section id="vara-med" className="star-ankare pb-20 md:pb-28">
         <div className="h-1 w-full bg-[#8f1d1d]" aria-hidden />
         <div className="container-site mt-14 grid gap-10 md:mt-20 md:grid-cols-2 md:gap-16">
           <div>
             <p className="kicker text-white/65">För dig som student</p>
-            <p className="star-type mt-4 text-3xl font-light leading-tight md:text-4xl">Se vart statistiken kan ta dig.</p>
-            <p className="mt-4 max-w-md text-white/80">Prata med företagen, fråga om exjobb och sommarjobb och ta reda på vad en statistiker faktiskt gör om dagarna.</p>
+            <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
+              {settings.star_student_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_student_title}</p>}
+              {settings.star_student_text && <p className="mt-4 max-w-md text-white/80">{settings.star_student_text}</p>}
+            </Pen>
             <div className="mt-7 flex flex-wrap gap-3">
               {event && (
                 <a href={`/evenemang/${event.slug}`} className="btn btn-light">
@@ -155,8 +253,10 @@ export default async function StarPage() {
           </div>
           <div>
             <p className="kicker text-white/65">För er som företag</p>
-            <p className="star-type mt-4 text-3xl font-light leading-tight md:text-4xl">Möt framtidens statistiker.</p>
-            <p className="mt-4 max-w-md text-white/80">Vill ni ställa ut eller sponsra? SASU berättar hur det går till och tar fram ett upplägg med er.</p>
+            <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
+              {settings.star_company_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_company_title}</p>}
+              {settings.star_company_text && <p className="mt-4 max-w-md text-white/80">{settings.star_company_text}</p>}
+            </Pen>
             <div className="mt-7 flex flex-wrap gap-3">
               <a href={companyMail} className="btn btn-red">
                 <Mail size={18} /> {contact}
@@ -169,6 +269,87 @@ export default async function StarPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Pennan syns bara för den som får ändra sidan. Alla texter öppnar samma formulär, och besökare får bara texten. */
+function Pen({ on, label, className, children }: { on: boolean; label: string; className?: string; children: ReactNode }) {
+  if (on) {
+    return (
+      <Editable target={{ type: "star" }} label={label} className={className}>
+        {children}
+      </Editable>
+    );
+  }
+  return <div className={className}>{children}</div>;
+}
+
+/** Raden överst för den som får ändra sidan: läget, knappen som ändrar det och vägen till formulären. Sidhuvudet ligger ovanpå. */
+function OwnerBar({ live, asVisitor = false }: { live: boolean; asVisitor?: boolean }) {
+  return (
+    <div className={cn("relative z-10 pt-[var(--header-h)] text-white", live ? "bg-white/[0.08]" : "bg-[#8f1d1d]")}>
+      <div className="container-site flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-3">
+        <p className="text-sm font-semibold">{asVisitor ? "Du ser sidan som en besökare." : live ? "Sidan är live och syns för alla." : "Förhandsvisning: besökare ser bara att STAR kommer snart."}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {asVisitor ? (
+            <a href="/star" className="btn btn-light btn-sm">
+              Tillbaka till redigeringen
+            </a>
+          ) : (
+            <>
+              <form action={setStarLive}>
+                <input type="hidden" name="live" value={live ? "0" : "1"} />
+                <button type="submit" className={live ? "btn btn-ghost-dark btn-sm" : "btn btn-light btn-sm"}>
+                  {live ? "Dölj sidan" : "Gör sidan live"}
+                </button>
+              </form>
+              <Link href="/admin/star" className="btn btn-ghost-dark btn-sm">
+                <Edit size={15} /> Redigera i admin
+              </Link>
+              <a href="/star?som=besokare" className="btn btn-ghost-dark btn-sm">
+                <Eye size={15} /> Se som besökare
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: boolean; children: ReactNode }) {
+  return (
+    <section className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
+      <div className="star-twinkle -z-10" aria-hidden />
+      <div className="container-site">
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/utskott/star.webp" alt="" width={360} height={356} className="size-14 md:size-16" />
+          <p className="kicker text-white/75">{subtitle}</p>
+        </div>
+        <div className="relative mt-6 md:mt-8">
+          <div className="absolute left-1/2 top-[56%] h-[0.065em] w-[200vw] -translate-x-1/2 bg-[#8f1d1d] text-[clamp(6.2rem,min(28vw,35svh),23rem)]" aria-hidden />
+          <HeroGraph />
+          <h1 className="star-type relative -mr-[0.2em] text-[clamp(6.2rem,min(28vw,35svh),23rem)] font-light uppercase leading-[1.05] tracking-[0.2em]">{STAR_COPY.title}</h1>
+        </div>
+        <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+/** Genvägarna längs sidan. Vanliga ankarlänkar, så att de fungerar utan JavaScript, och raden stannar kvar under sidhuvudet. */
+function SectionNav({ items }: { items: { href: string; label: string }[] }) {
+  return (
+    <nav aria-label="På den här sidan" className="star-nav">
+      <ul className="container-site">
+        {items.map((item) => (
+          <li key={item.href}>
+            <a href={item.href}>{item.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -198,12 +379,21 @@ function HeroGraph() {
   );
 }
 
-function CountdownFacts({ event }: { event: { starts_at: string; ends_at: string | null; all_day: boolean; location: string; price: string } }) {
+type EventFactsData = { starts_at: string; ends_at: string | null; all_day: boolean; location: string; price: string };
+
+function CountdownFacts({ event }: { event: EventFactsData }) {
   const countdown = countdownText(event.starts_at);
   return (
     <>
       <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight first-letter:uppercase">{countdown ?? "Pågår nu"}</p>
-      <dl className="mono-accent mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-white/85 md:text-base">
+      <EventFacts event={event} className="mt-4" />
+    </>
+  );
+}
+
+function EventFacts({ event, stacked, className }: { event: EventFactsData; stacked?: boolean; className?: string }) {
+  return (
+    <dl className={cn("mono-accent flex gap-x-6 gap-y-1 text-sm text-white/85 md:text-base", stacked ? "flex-col" : "flex-wrap", className)}>
         <div>
           <dt className="sr-only">Datum</dt>
           <dd className="first-letter:uppercase">{formatDateLong(event.starts_at)}</dd>
@@ -224,8 +414,7 @@ function CountdownFacts({ event }: { event: { starts_at: string; ends_at: string
             <dd>{event.price}</dd>
           </div>
         )}
-      </dl>
-    </>
+    </dl>
   );
 }
 
@@ -342,10 +531,10 @@ function SponsorPlate({ company, className, imageClass, textClass }: { company: 
 function MainSponsor({ company }: { company: StarCompany }) {
   return (
     <div className="mt-10 grid items-center gap-8 md:grid-cols-12">
-      <div className="md:col-span-7">
-        <SponsorPlate company={company} className="h-48 md:h-64" imageClass="max-h-32 md:max-h-44" textClass="text-4xl md:text-6xl font-light uppercase tracking-[0.08em]" />
-      </div>
       <div className="md:col-span-5">
+        <SponsorPlate company={company} className="h-40 md:h-48" imageClass="max-h-24 md:max-h-32" textClass="text-3xl md:text-5xl font-light uppercase tracking-[0.08em]" />
+      </div>
+      <div className="md:col-span-7">
         <p className="kicker text-white/65">Huvudsponsor</p>
         <p className="star-type mt-3 text-3xl leading-tight">{company.name}</p>
         {company.description && <p className="mt-3 max-w-md leading-relaxed text-white/80">{company.description}</p>}

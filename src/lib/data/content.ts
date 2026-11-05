@@ -1,4 +1,5 @@
 import "server-only";
+import { STAR_COPY } from "@/lib/seed-content";
 import { cache } from "react";
 import { readDb } from "./db";
 import { fileHref, MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
@@ -20,10 +21,25 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   hero_title: "Sektionen för *statistik*, dataanalys och maskininlärning vid LiU",
   hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet – drivet av studenter, för studenter.",
   hero_ring_color: "red",
+  band_color: "vit",
   home_intro: "Vi är statistikstudenternas sektion i Linköping. Här möts *gemenskap*, *utbildning* och vägen ut i *arbetslivet*.",
   announcement: "",
   announcement_url: "",
   star_event_id: "",
+  star_live: "",
+  star_subtitle: STAR_COPY.subtitle,
+  star_intro: STAR_COPY.text,
+  star_companies_intro: "Varje stjärna är ett företag. Välj vad du söker, så lyser bara de som passar. Under kartan finns alla som kort.",
+  star_sponsors_intro: "De gör dagen möjlig.",
+  star_tips:
+    "Titta igenom vilka som kommer och välj två eller tre du verkligen vill prata med.\nSkriv ner en fråga till var och en, till exempel vad en statistiker gör hos dem en vanlig dag.\nTa med CV:t, gärna på papper.\nFråga om exjobb och sommarjobb, även om det ligger långt fram.",
+  star_faq:
+    "Är det för mig som precis har börjat?\nJa. Det är aldrig för tidigt att se vad utbildningen kan leda till och att börja prata med företagen.\n\nVad kan jag fråga företagen?\nTill exempel vad en statistiker gör hos dem en vanlig dag, vilka verktyg de använder och hur exjobb och sommarjobb går till.\n\nVi är ett företag och vill vara med. Hur gör vi?\nMejla SASU, så berättar de hur det går till och tar fram ett upplägg med er.",
+  star_student_title: "Se vart statistiken kan ta dig.",
+  star_student_text: "Prata med företagen, fråga om exjobb och sommarjobb och ta reda på vad en statistiker faktiskt gör om dagarna.",
+  star_company_title: "Möt framtidens statistiker.",
+  star_company_text: "Vill ni ställa ut eller sponsra? SASU berättar hur det går till och tar fram ett upplägg med er.",
+  star_teaser: "Vi förbereder nästa STAR. Snart ser du här vilka företag som kommer, vad de söker och hur dagen ser ut.",
   education_committee_id: "",
 };
 

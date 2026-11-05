@@ -127,7 +127,7 @@ function CodeLock({
   return (
     <div>
       <h2 className="text-[clamp(1.5rem,4vw,2.1rem)] font-extrabold leading-tight tracking-tight [font-stretch:110%]">Skriv koden du har fått</h2>
-      <p className="mt-2 text-stone">Sex tecken. Koden innehåller aldrig O, 0, I, L eller 1.</p>
+      <p className="mt-2 text-stone">Du får koden i ett mejl från oss eller av din lärare. Den har sex tecken och innehåller aldrig O, 0, I, L eller 1.</p>
 
       <form ref={formRef} action={formAction} noValidate>
         <div className={cn("fl-lock", opened && "fl-opened")}>
@@ -179,10 +179,12 @@ function CodeLock({
         </button>
       </form>
 
-      {fixedBoxes.length > 0 && (
-        <div className="mt-10 max-w-[27rem] border-t border-ink/15 pt-6">
-          <p className="font-bold">Ingen kod?</p>
-          <p className="mt-1 text-[0.95rem] text-stone">De här lådorna är alltid öppna.</p>
+      <div className="mt-10 max-w-[27rem] border-t border-ink/15 pt-6">
+        <p className="font-bold">Ingen kod?</p>
+        <p className="mt-1 text-[0.95rem] text-stone">
+          Titta i mejlet från den som ordnar, eller fråga din lärare.{fixedBoxes.length > 0 ? " De här lådorna är alltid öppna och behöver ingen kod." : ""}
+        </p>
+        {fixedBoxes.length > 0 && (
           <ul className="mt-3 space-y-2">
             {fixedBoxes.map((b) => (
               <li key={b.slug}>
@@ -193,8 +195,8 @@ function CodeLock({
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

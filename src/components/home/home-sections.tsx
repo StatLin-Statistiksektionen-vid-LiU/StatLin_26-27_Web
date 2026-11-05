@@ -9,20 +9,28 @@ import { Editable } from "@/components/edit-mode/editable";
 import { AccentText } from "@/components/ui/accent-text";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DEFAULT_SETTINGS, getSettings, listBoard, listCommittees } from "@/lib/data/content";
+import { starIsLive } from "@/lib/naringsliv";
+import { readDb } from "@/lib/data/db";
 import { countUpcomingEvents, listUpcomingEvents } from "@/lib/data/events";
+import { frageladaIsOpen } from "@/lib/data/fragelada";
 import { listFeaturedLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
 import { PROGRAMS } from "@/lib/links";
 
+/** Raden med genvägar under heron. Frågelådan står sist när den är öppen, så att den som fått en kod hittar var den ska skrivas. */
+export async function HomeShortcuts() {
+  const [links, db] = await Promise.all([listFeaturedLinks(), readDb()]);
+  return <QuickLinksRow links={links} fragelada={frageladaIsOpen(db)} />;
+}
+
 export async function HomeSections() {
-  const [events, upcomingCount, news, committees, board, settings, shortcuts] = await Promise.all([
+  const [events, upcomingCount, news, committees, board, settings] = await Promise.all([
     listUpcomingEvents(6),
     countUpcomingEvents(),
     listNews(4),
     listCommittees({ visibleOnly: true }),
     listBoard(),
     getSettings(),
-    listFeaturedLinks(),
   ]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
   const stats = [
@@ -34,8 +42,6 @@ export async function HomeSections() {
 
   return (
     <>
-      <QuickLinksRow links={shortcuts} />
-
       {/* 01 Om */}
       <section id="utforska" className="relative overflow-hidden">
         <div className="grid-paper-fine pointer-events-none absolute inset-0 text-ink [mask-image:linear-gradient(to_bottom,black,transparent)]" aria-hidden />
@@ -224,7 +230,7 @@ export async function HomeSections() {
             </Link>
           </Reveal>
           <Reveal delay={120}>
-            <Link href="/star" className="group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-star-navy p-8 text-white md:p-12">
+            <Link href={starIsLive(settings) ? "/star" : "/foretag"} className="group relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-star-navy p-8 text-white md:p-12">
               <StarField />
               <span className="kicker relative flex items-center gap-2 text-white/70">
                 <Handshake size={16} /> Arbetsmarknadsdagen
@@ -236,7 +242,7 @@ export async function HomeSections() {
                   StatLins arbetsmarknadsdag – och fler sätt att möta Linköpings statistik- och datastudenter.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-3 font-semibold">
-                  Vilka kommer?
+                  {starIsLive(settings) ? "Vilka kommer?" : "Fler sätt att samarbeta"}
                   <span className="grid size-10 place-items-center rounded-full bg-white text-star-navy transition-transform duration-500 group-hover:translate-x-1.5">
                     <ArrowRight size={18} />
                   </span>

@@ -12,7 +12,7 @@ import { HeroSkeleton } from "@/components/ui/skeletons";
 import { SITE_OG } from "@/lib/site-metadata";
 import { getSettings } from "@/lib/data/content";
 import { getEventBySlug, listEventImages, listUpcomingEvents } from "@/lib/data/events";
-import { isLunchEvent, isStarSlug } from "@/lib/naringsliv";
+import { isLunchEvent, isStarSlug, starIsLive } from "@/lib/naringsliv";
 import { eventEnd, eventSchemaDates, formatDateLong, formatTimeRange, nowLocal, relativeDay } from "@/lib/dates";
 import { googleCalendarUrl } from "@/lib/ics";
 import { committeeHref } from "@/lib/navigation";
@@ -158,7 +158,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
         <div className="lg:col-span-7 lg:row-start-1">
           {event.body_md ? <Markdown source={event.body_md} /> : <p className="text-stone">Mer information kommer.</p>}
 
-          {(isStarSlug(event.slug) || String(event.id) === settings.star_event_id) && (
+          {starIsLive(settings) && (isStarSlug(event.slug) || String(event.id) === settings.star_event_id) && (
             <Link href="/star" className="group mt-10 flex items-center justify-between gap-4 rounded-[1.5rem] bg-star-navy p-6 text-white">
               <span>
                 <span className="kicker block text-white/70">STAR</span>

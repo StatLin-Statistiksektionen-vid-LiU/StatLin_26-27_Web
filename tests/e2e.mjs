@@ -489,7 +489,7 @@ async function openDeleteConfirm(page) {
       const menu = await phone.getByRole("button", { name: "Öppna meny" }).boundingBox();
       assert.ok(menu.x >= 0 && menu.x + menu.width <= 320, `menyknappen ligger på ${menu.x}–${menu.x + menu.width} px`);
       // Korten klipper det som sticker ut, så sidans bredd säger inget om att rubrikerna får plats.
-      for (const title of [phone.getByRole("heading", { name: "Ny student?" }), phone.locator('main a[href="/star"]').getByText("STAR", { exact: true })]) {
+      for (const title of [phone.getByRole("heading", { name: "Ny student?" }), phone.locator("main a").filter({ hasText: "Arbetsmarknadsdagen" }).getByText("STAR", { exact: true })]) {
         const spare = await title.evaluate((el) => {
           const text = document.createRange();
           text.selectNodeContents(el);

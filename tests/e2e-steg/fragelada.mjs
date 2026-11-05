@@ -108,10 +108,19 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     boxUrl = new URL(page.url()).pathname;
     code = (await page.locator('section[aria-label="Kod och länk"] p.font-mono').textContent()).trim();
     assert.match(code, /^[A-HJKMNP-Z2-9]{6}$/);
+    // Texterna för att få ut koden. Sajten skickar inget själv, så knapparna öppnar ett ifyllt mejl utan mottagare.
+    for (const name of ["Skriv mejlet", "Mejla läraren"]) {
+      const draft = decodeURIComponent(await page.getByRole("link", { name }).getAttribute("href"));
+      assert.ok(draft.startsWith("mailto:?subject="), `${name} ska öppna ett mejl utan mottagare`);
+      assert.ok(draft.includes(code) && draft.includes(`Testkurs ${marker}`), `${name} ska innehålla koden och lådans namn`);
+    }
+    await page.getByRole("button", { name: "Kopiera texten" }).waitFor();
+    await page.getByRole("button", { name: "Kopiera kort text" }).waitFor();
   });
 
   await step("Frågelådan: fel kod stoppas, rätt kod öppnar, och utloggad kan skicka", async () => {
     await openCodePage(visitor, BASE);
+    await visitor.getByText("Du får koden i ett mejl från oss eller av din lärare.").waitFor();
     await enterCode(visitor, "ZZZZZZ");
     await visitor.getByText(WRONG).waitFor();
     // Skriver man över en hel kod skickas den också, utan att knappen behövs. Små bokstäver går bra.

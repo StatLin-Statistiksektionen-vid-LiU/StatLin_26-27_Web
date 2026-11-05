@@ -70,6 +70,52 @@ export async function deleteStarCompany(fd: FormData): Promise<FormState | void>
   redirect("/admin/star?raderad=1");
 }
 
+/* ---------- STAR-sidan ---------- */
+
+const SAVE_SETTING = "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value";
+
+const starPageSchema = z.object({
+  star_event_id: z.string().regex(/^\d*$/, "Välj ett evenemang i listan."),
+  star_subtitle: zText(120, "Underrubriken"),
+  star_intro: zText(600, "Introduktionen"),
+  star_companies_intro: zText(400, "Texten över företagen"),
+  star_sponsors_intro: zText(300, "Texten över sponsorerna"),
+  star_tips: zText(1500, "Tipsen"),
+  star_faq: zText(4000, "Frågorna"),
+  star_student_title: zText(120, "Rubriken"),
+  star_student_text: zText(500, "Texten"),
+  star_company_title: zText(120, "Rubriken"),
+  star_company_text: zText(500, "Texten"),
+  star_teaser: zText(500, "Texten"),
+});
+
+/** Bara de här nycklarna: resten av inställningarna kräver fortfarande en administratör, se saveSettings. */
+export async function saveStarPage(_prev: FormState, fd: FormData): Promise<FormState> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  if (!canManageNaringsliv(user)) return forbidden();
+  const parsed = starPageSchema.safeParse(formObject(fd));
+  if (!parsed.success) return invalid(parsed.error);
+  const db = getDb();
+  const save = db.prepare(SAVE_SETTING);
+  db.transaction(() => {
+    for (const [key, value] of Object.entries(parsed.data)) save.run(key, value);
+  })();
+  audit(user.id, "update", "star_page", null, "STAR-sidans texter");
+  revalidateSite();
+  return { ok: true, message: "Texterna är sparade." };
+}
+
+/** Knappen som gör sidan live eller döljer den. Fungerar utan JavaScript, och samma svar som sidan själv om den nekas. */
+export async function setStarLive(fd: FormData): Promise<void> {
+  const user = await actionUser();
+  if ("error" in user || !canManageNaringsliv(user)) return;
+  const live = fd.get("live") === "1";
+  getDb().prepare(SAVE_SETTING).run("star_live", live ? "1" : "");
+  audit(user.id, "update", "star_page", null, live ? "STAR-sidan är live" : "STAR-sidan är dold");
+  revalidateSite();
+}
+
 /* ---------- Lunchönskemålen ---------- */
 
 const wishSchema = z.object({

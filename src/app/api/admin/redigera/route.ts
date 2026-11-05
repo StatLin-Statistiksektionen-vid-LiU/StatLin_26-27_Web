@@ -2,7 +2,8 @@ import { json } from "@/lib/api";
 import { canEditCommittee, canEditImages, canEditOwned, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getBoardMember, getCommitteeById, getPage, getSettings, listCommittees } from "@/lib/data/content";
-import { getEventById, listEventImages } from "@/lib/data/events";
+import { getEventById, listEventImages, listUpcomingEvents } from "@/lib/data/events";
+import { canManageNaringsliv } from "@/lib/data/naringsliv";
 import { getNewsById } from "@/lib/data/news";
 import type { SessionUser } from "@/lib/types";
 
@@ -38,6 +39,10 @@ export async function GET(request: Request) {
     case "footer": {
       if (!canManageSettings(user)) return denied();
       return json({ settings: await getSettings() });
+    }
+    case "star": {
+      if (!canManageNaringsliv(user)) return denied();
+      return json({ settings: await getSettings(), events: await listUpcomingEvents(200) });
     }
     case "committee": {
       if (!canEditCommittee(user, id)) return denied();

@@ -22,7 +22,9 @@ export type EditTarget =
   | { type: "event-images"; id: number; committeeId: number | null }
   | { type: "news-cover"; id: number; committeeId: number | null }
   /** Hjälpmedlen sköts i adminpanelen. Målet styr bara vem som ser länken dit. */
-  | { type: "resources" };
+  | { type: "resources" }
+  /** STAR-sidans texter. Sidan ritar pennan bara för dem som får ändra den, och servern kontrollerar igen. */
+  | { type: "star" };
 
 /**
  * dirty: formuläret i panelen har osparade ändringar – panelen frågar innan den stängs.
@@ -140,6 +142,7 @@ export function canEditTarget(user: EditUser, target: EditTarget): boolean {
     case "news-cover":
       return canEditImages(user, { committee_id: target.committeeId });
     case "resources":
+    case "star":
       return true;
   }
 }

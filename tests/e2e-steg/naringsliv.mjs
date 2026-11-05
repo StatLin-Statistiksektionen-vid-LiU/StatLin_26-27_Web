@@ -1,5 +1,6 @@
 // STAR-sidan och lunchföreläsningarna: företag i admin syns på /star, tomt läge, önskemål som syns först efter godkännande,
-// en röst per webbläsare, formulär utan JavaScript, och att obehöriga stoppas på servern.
+// en röst per webbläsare, formulär utan JavaScript, och att obehöriga stoppas på servern. STAR-sidan är dold tills SASU gör den
+// live, och SASU ändrar texterna själv. Här ligger också startsidans band, som delar färgvalet med STAR.
 import assert from "node:assert";
 import { changeTemporaryPassword, newVisitor, openLogin, tryLogin, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 
@@ -50,6 +51,98 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await page.getByRole("button", { name: "Lägg till företag" }).click();
     await page.getByText("Företaget är tillagt.").waitFor();
   };
+
+  /** Väljer om STAR-sidan syns, med knappen på adminsidan. Sidan ska vara inloggad som någon som får ändra den. */
+  const setStarLive = async (p, live) => {
+    const wanted = live ? "Sidan syns för alla" : "Sidan är dold för besökare";
+    await p.goto(`${BASE}/admin/star`);
+    await p.getByRole("heading", { name: /^Sidan (syns för alla|är dold för besökare)$/ }).waitFor();
+    if (await p.getByRole("heading", { name: wanted }).count()) return;
+    const button = p.getByRole("button", { name: live ? "Gör sidan live" : "Dölj sidan" });
+    await waitForHydration(p, button);
+    await button.click();
+    await p.getByRole("heading", { name: wanted }).waitFor();
+  };
+
+  await step("Startsidans band: genvägarna ligger ovanför, vitt är förval och färgen väljs under Inställningar", async () => {
+    await switchAccount(page, ADMIN);
+    const { page: p, context } = await visit();
+    const bandColor = async () => {
+      await p.goto(`${BASE}/`);
+      const band = p.locator(".tidsaxel").first();
+      await band.waitFor({ state: "attached" });
+      return band.getAttribute("data-farg");
+    };
+    const choose = async (color) => {
+      await page.goto(`${BASE}/admin/installningar`);
+      const field = page.locator("#band_color");
+      await field.waitFor();
+      await waitForHydration(page, field);
+      await field.selectOption(color);
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText("Inställningarna är sparade.").waitFor();
+    };
+    assert.equal(await bandColor(), "vit");
+    const row = p.locator('section[aria-labelledby="genvagar-start"]');
+    await row.waitFor();
+    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel")) & Node.DOCUMENT_POSITION_FOLLOWING)), "Genvägarna ska ligga före bandet");
+    await choose("natt");
+    assert.equal(await bandColor(), "natt");
+    await choose("rod");
+    assert.equal(await bandColor(), "rod");
+    await choose("vit");
+    assert.equal(await bandColor(), "vit");
+    await context.close();
+  });
+
+  await step("STAR-sidan är dold tills den görs live: besökaren ser att den kommer snart, och inga länkar leder dit", async () => {
+    await switchAccount(page, ADMIN);
+    await setStarLive(page, false);
+    const { page: p, context } = await visit();
+    const homeCard = () => p.locator("main a").filter({ hasText: "Arbetsmarknadsdagen" }).first();
+
+    await p.goto(`${BASE}/star`);
+    await p.getByRole("heading", { name: "STAR-sidan kommer snart" }).waitFor();
+    await p.locator('meta[name="robots"][content*="noindex"]').waitFor({ state: "attached" });
+    assert.equal(await p.getByRole("heading", { name: "Vilka kommer" }).count(), 0, "Besökaren ska inte se företagen");
+    assert.equal(await p.locator("[data-edit-pen]").count(), 0, "Besökaren ska inte se några pennor");
+    assert.match(await p.title(), /kommer snart/);
+
+    await p.goto(`${BASE}/`);
+    await homeCard().waitFor({ state: "attached" });
+    await p.waitForLoadState("networkidle");
+    assert.equal(await homeCard().getAttribute("href"), "/foretag", "STAR-kortet ska gå till företagssidan");
+    assert.equal(await p.locator('a[href="/star"]:visible').count(), 0, "Startsidan, menyn och sidfoten ska inte länka till den dolda sidan");
+
+    await p.goto(`${BASE}/foretag`);
+    await p.getByRole("link", { name: "Till önskelistan" }).waitFor();
+    assert.equal(await p.getByRole("link", { name: "Till STAR-sidan" }).count(), 0, "/foretag ska inte länka till den dolda sidan");
+
+    await p.goto(`${BASE}/evenemang/star`);
+    await p.getByText("Mässan öppnar").first().waitFor();
+    assert.equal(await p.getByText("Se vilka företag som kommer").count(), 0, "Evenemanget ska inte länka till den dolda sidan");
+
+    assert.ok(!/(?<!evenemang)\/star</.test(await (await p.request.get(`${BASE}/sitemap.xml`)).text()), "Sitemapen ska inte ha den dolda sidan");
+
+    // Den som får ändra sidan ser hela sidan som en förhandsvisning, och kan se det besökaren ser.
+    await page.goto(`${BASE}/star`);
+    await page.getByText("Förhandsvisning: besökare ser bara").waitFor();
+    await page.getByRole("heading", { name: "Vilka kommer" }).waitFor();
+    await page.goto(`${BASE}/star?som=besokare`);
+    await page.getByRole("heading", { name: "STAR-sidan kommer snart" }).waitFor();
+
+    await setStarLive(page, true);
+    await p.goto(`${BASE}/star`);
+    await p.getByRole("heading", { name: "Vilka kommer" }).waitFor();
+    await p.waitForLoadState("networkidle");
+    assert.equal(await p.locator('meta[name="robots"][content*="noindex"]').count(), 0, "Sidan ska kunna hittas när den är live");
+    assert.equal(await p.locator("[data-edit-pen]").count(), 0, "Besökaren ska inte se några pennor");
+    await p.goto(`${BASE}/`);
+    await homeCard().waitFor({ state: "attached" });
+    await p.waitForLoadState("networkidle");
+    assert.equal(await homeCard().getAttribute("href"), "/star", "STAR-kortet ska gå till STAR-sidan");
+    await context.close();
+  });
 
   await step("STAR-sidan är begriplig utan företag: tomt läge, datum från evenemanget och inget externt", async () => {
     const { page: p, context } = await visit();
@@ -267,6 +360,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await anon.page.waitForURL(/\/logga-in/);
     await anon.page.goto(`${BASE}/admin/lunchonskemal`);
     await anon.page.waitForURL(/\/logga-in/);
+    assert.equal((await anon.page.request.get(`${BASE}/api/admin/redigera?typ=star`)).status(), 401, "pennan ska nekas utloggad");
     await anon.context.close();
 
     // Ett annat utskott: sidorna nekas och menyn saknar raderna.
@@ -276,6 +370,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await page.goto(`${BASE}/admin/lunchonskemal`);
     await page.waitForURL(/\/admin\?nekad=1/);
     assert.equal(await page.locator('a[href="/admin/star"]').count(), 0, "menyraden ska saknas");
+    assert.equal((await page.request.get(`${BASE}/api/admin/redigera?typ=star`)).status(), 403, "pennan ska nekas för ett annat utskott");
     const otherCookies = await page.context().cookies();
 
     // Actionen själv: formuläret är öppet hos SASU, men skickas med det andra utskottets kaka. Servern ska säga nej.
@@ -288,6 +383,14 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await sasu.context.addCookies(otherCookies);
     await sasu.page.getByRole("button", { name: "Lägg till företag" }).click();
     await sasu.page.getByText("Du har inte behörighet att göra det här.").waitFor();
+    // Samma sak för STAR-sidans texter. Knappen för live svarar inte med något, så det är sidans läge efteråt som visar att inget hände.
+    const deniedIntro = `Nekad text ${id}`;
+    await sasu.page.locator('textarea[name="star_intro"]').fill(deniedIntro);
+    await sasu.page.getByRole("button", { name: "Spara texterna" }).click();
+    await sasu.page.locator('form:has(textarea[name="star_intro"])').getByText("Du har inte behörighet att göra det här.").waitFor();
+    const refused = sasu.page.waitForResponse((r) => r.request().method() === "POST");
+    await sasu.page.getByRole("button", { name: "Dölj sidan" }).click();
+    await refused;
     await sasu.context.clearCookies();
     await sasu.context.addCookies(sasuCookies);
 
@@ -295,12 +398,48 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await page.goto(`${BASE}/admin/star`);
     await page.getByRole("heading", { name: "STAR" }).waitFor();
     assert.equal(await page.getByText(denied).count(), 0, "det nekade företaget ska inte finnas");
+    await page.getByRole("heading", { name: "Sidan syns för alla" }).waitFor();
+    assert.notEqual(await page.locator('textarea[name="star_intro"]').inputValue(), deniedIntro, "den nekade texten ska inte sparas");
   });
 
   await step("SASU och redaktörer kommer åt båda sidorna, och menyn har raderna", async () => {
     await sasu.page.goto(`${BASE}/admin/star`);
     await sasu.page.getByRole("button", { name: "Lägg till företag" }).waitFor();
     assert.ok(await sasu.page.locator('nav[aria-label="Adminmeny"]:visible a[href="/admin/star"]').count(), "SASU: menyraden");
+
+    // SASU sköter sidan själv: ändrar en text i admin, ändrar tillbaka den med pennan och väljer om sidan syns.
+    const save = sasu.page.getByRole("button", { name: "Spara texterna" });
+    await waitForHydration(sasu.page, save);
+    const introField = sasu.page.locator('textarea[name="star_intro"]');
+    const oldIntro = await introField.inputValue();
+    const newIntro = `Introduktion från SASU ${id}`;
+    await introField.fill(newIntro);
+    await save.click();
+    await sasu.page.getByText("Texterna är sparade.").waitFor();
+    const { page: guest, context: guestContext } = await visit();
+    await guest.goto(`${BASE}/star`);
+    await guest.getByText(newIntro).first().waitFor();
+
+    await sasu.page.goto(`${BASE}/star`);
+    await sasu.page.getByText("Sidan är live och syns för alla.").waitFor();
+    await sasu.page.locator("[data-edit-pen]:visible").first().click();
+    const drawerField = sasu.page.getByRole("dialog").locator('textarea[name="star_intro"]');
+    await drawerField.waitFor();
+    assert.equal(await drawerField.inputValue(), newIntro, "pennan ska visa den sparade texten");
+    await drawerField.fill(oldIntro);
+    await sasu.page.getByRole("dialog").getByRole("button", { name: "Spara texterna" }).click();
+    await sasu.page.getByRole("dialog").waitFor({ state: "detached" });
+    await guest.goto(`${BASE}/star`);
+    await guest.getByText(oldIntro).first().waitFor();
+    assert.equal(await guest.getByText(newIntro).count(), 0, "den gamla texten ska vara tillbaka");
+
+    await setStarLive(sasu.page, false);
+    await guest.goto(`${BASE}/star`);
+    await guest.getByRole("heading", { name: "STAR-sidan kommer snart" }).waitFor();
+    await setStarLive(sasu.page, true);
+    await guest.goto(`${BASE}/star`);
+    await guest.getByRole("heading", { name: "Vilka kommer" }).waitFor();
+    await guestContext.close();
     await sasu.context.close();
     await switchAccount(page, EDITOR);
     await page.goto(`${BASE}/admin/star`);

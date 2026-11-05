@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, ArrowUpRight } from "@/components/icons";
+import { ArrowRight, ArrowUpRight, Mail } from "@/components/icons";
 import { isExternalUrl } from "@/lib/links";
 import type { LinkItem } from "@/lib/types";
 import { safeExternalUrl } from "@/lib/utils";
@@ -27,29 +27,39 @@ const shortcuts = (links: LinkItem[]) =>
     return href ? [{ ...l, href }] : [];
   });
 
-/** En rad överst på startsidan. */
-export function QuickLinksRow({ links }: { links: LinkItem[] }) {
-  if (links.length === 0) return null;
+const chipClass = "group inline-flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] pl-1.5 pr-4 text-sm font-semibold transition-colors hover:border-white hover:bg-white/15";
+const chipIconClass = "grid size-7 place-items-center rounded-full bg-white text-ink transition-colors group-hover:bg-red group-hover:text-white";
+
+/** Raden direkt under heron, ovanför bandet. Mörk som heron, så att den hör ihop med den och bandet får stå för sig. */
+export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[]; fragelada?: boolean }) {
+  if (links.length === 0 && !fragelada) return null;
   return (
-    <section aria-labelledby="genvagar-start" className="border-b border-ink/10 bg-white">
+    <section aria-labelledby="genvagar-start" className="border-t border-white/10 bg-ink text-white">
       <div className="container-site flex flex-col gap-4 py-5 lg:flex-row lg:items-center lg:gap-8">
-        <h2 id="genvagar-start" className="kicker shrink-0 text-stone">
+        <h2 id="genvagar-start" className="kicker shrink-0 text-white/60">
           Genvägar för studenter
         </h2>
         <ul className="flex flex-wrap gap-2">
           {shortcuts(links).map((l) => (
             <li key={l.id}>
-              <AnyLink
-                href={l.href}
-                className="group inline-flex h-10 items-center gap-2 rounded-full border border-ink/10 bg-paper/50 pl-1.5 pr-4 text-sm font-semibold transition-colors hover:border-ink hover:bg-white"
-              >
-                <span className="grid size-7 place-items-center rounded-full bg-ink text-white transition-colors group-hover:bg-red">
+              <AnyLink href={l.href} className={chipClass}>
+                <span className={chipIconClass}>
                   <LinkIcon name={l.icon} size={14} />
                 </span>
                 {l.label}
               </AnyLink>
             </li>
           ))}
+          {fragelada && (
+            <li>
+              <Link href="/fragelada" className={chipClass}>
+                <span className={chipIconClass}>
+                  <Mail size={14} />
+                </span>
+                Frågelådan: har du en kod?
+              </Link>
+            </li>
+          )}
         </ul>
         <Link href="/studenter/lankar" className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold lg:ml-auto">
           <span className="link-underline">Alla länkar</span>

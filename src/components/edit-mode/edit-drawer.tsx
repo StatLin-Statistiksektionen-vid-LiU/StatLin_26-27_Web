@@ -11,6 +11,7 @@ import { CoverSlot } from "@/components/admin/cover-slot";
 import { EventForm } from "@/components/admin/event-form";
 import { EventImagesEditor } from "@/components/admin/event-images-editor";
 import { NewsForm } from "@/components/admin/news-form";
+import { StarPageForm } from "@/components/admin/star-page-form";
 import { ArrowUpRight, Close } from "@/components/icons";
 import type { BoardMember, Committee, EventItem, ImageRef, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
 import { useFocusLayer } from "@/lib/use-focus-layer";
@@ -27,6 +28,7 @@ const TITLES: Record<EditTarget["type"], string> = {
   "event-images": "Evenemangets bilder",
   "news-cover": "Nyhetens omslag",
   resources: "Hjälpmedel",
+  star: "STAR-sidans texter",
 };
 
 function adminHref(t: EditTarget): string {
@@ -50,6 +52,8 @@ function adminHref(t: EditTarget): string {
       return "/admin/bilder#nyheter";
     case "resources":
       return "/admin/hjalpmedel";
+    case "star":
+      return "/admin/star";
   }
 }
 
@@ -140,6 +144,7 @@ type Data = {
   user?: Pick<SessionUser, "role" | "committee_id">;
   cover?: ImageRef | null;
   images?: { id: number; caption: string; image: ImageRef }[];
+  events?: Pick<EventItem, "id" | "title" | "starts_at">[];
 };
 
 function DrawerBody({ target }: { target: EditTarget }) {
@@ -198,6 +203,8 @@ function DrawerBody({ target }: { target: EditTarget }) {
       return d.member && d.committees ? <BoardMemberForm member={d.member} committees={d.committees} nextOrder={d.member.sort_order} onSaved={onSaved} /> : null;
     case "resources":
       return null;
+    case "star":
+      return d.settings && d.events ? <StarPageForm s={d.settings} events={d.events} onSaved={onSaved} /> : null;
     // Bilderna sparas direkt, och sidan bakom panelen uppdateras när de sparats.
     case "event-images":
       return d.images ? (
