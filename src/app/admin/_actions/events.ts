@@ -131,12 +131,14 @@ export async function saveEvent(_prev: FormState, fd: FormData): Promise<FormSta
   redirect(`/admin/evenemang/${res.lastInsertRowid}?skapad=1`);
 }
 
-export async function deleteEvent(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
+export async function deleteEvent(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const existing = loadEvent(id);
-  if (!existing || !canEditOwned(user, existing)) redirect("/admin/evenemang");
+  if (!existing) return { error: "Evenemanget finns inte längre." };
+  if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ta bort det här evenemanget." };
   const db = getDb();
   const media = db
     .prepare("SELECT media_id FROM event_images WHERE event_id = ? UNION SELECT cover_media_id FROM events WHERE id = ?")
@@ -144,23 +146,26 @@ export async function deleteEvent(fd: FormData) {
   db.prepare("DELETE FROM events WHERE id = ?").run(id);
   for (const m of media) await deleteMediaIfUnused(m.media_id);
   audit(user.id, "delete", "event", id, existing.title);
+  await renewSessionIfDue();
   revalidateSite();
   redirect("/admin/evenemang?raderad=1");
 }
 
 /** Administratörernas granskningsbock. Rör aldrig om evenemanget är publicerat. */
-export async function setEventChecked(fd: FormData) {
+export async function setEventChecked(fd: FormData): Promise<FormState> {
   const user = await actionUser();
-  if ("error" in user) return;
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const existing = loadEvent(id);
-  if (!existing || !canReviewEvents(user)) redirect("/admin/evenemang");
+  if (!existing) return { error: "Evenemanget finns inte längre." };
+  if (!canReviewEvents(user)) return { error: "Du har inte behörighet att granska evenemang." };
   const checked = fd.get("checked") === "1";
   getDb()
     .prepare("UPDATE events SET checked_at = ?, checked_by = ? WHERE id = ?")
     .run(checked ? nowIso() : null, checked ? user.id : null, id);
   audit(user.id, checked ? "check" : "uncheck", "event", id, existing.title);
   revalidateSite();
+  return { ok: true };
 }
 
 /* ---------- Galleri och omslag (även grafiskt ansvarig, på alla evenemang) ---------- */

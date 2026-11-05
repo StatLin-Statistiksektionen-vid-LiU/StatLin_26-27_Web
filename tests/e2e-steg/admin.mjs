@@ -4,7 +4,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
+import { changeTemporaryPassword, createEditor, newVisitor, openLogin, tryLogin, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 
 const ADMIN = "admin@statlin.se";
 
@@ -42,7 +42,7 @@ async function submitNewUser(page, name) {
   return email;
 }
 
-export default async function adminSteg({ BASE, page, step, switchAccount }) {
+export default async function adminSteg({ BASE, browser, page, step, switchAccount }) {
   await step("Nästa konto får rollen som visas efter att ett konto skapats (SB-31)", async () => {
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/konton`);
@@ -333,6 +333,184 @@ export default async function adminSteg({ BASE, page, step, switchAccount }) {
     await prune.click();
     await dialog.getByRole("button", { name: "Rensa" }).click();
     await prune.locator("xpath=following-sibling::p").waitFor();
+  });
+
+  await step("Platsen i listan består när fältet saknas eller är tomt (SB-37)", async () => {
+    const name = `E2E-partner ${uniqueId()}`;
+    await page.goto(`${BASE}/admin/partners`);
+    await waitForHydration(page, page.locator('input[name="name"]'));
+    await page.fill('input[name="name"]', name);
+    await page.fill('input[name="sort_order"]', "7");
+    await page.getByRole("button", { name: /Lägg till/ }).click();
+    await page.waitForURL((u) => u.search.includes("sparad=1"));
+    await page.reload();
+    await page.getByRole("link", { name }).first().click();
+    await page.waitForURL((u) => /\/admin\/partners\/\d+/.test(u.pathname));
+    const url = page.url();
+    await page.goto(url);
+    const order = page.locator('input[name="sort_order"]');
+    await waitForHydration(page, order);
+    assert.equal(await order.inputValue(), "7");
+    const saveWith = async (change) => {
+      await page.goto(url);
+      await waitForHydration(page, order);
+      await page.fill('textarea[name="description"], input[name="description"]', `Ändrad ${uniqueId()}`);
+      await change();
+      await page.getByRole("button", { name: /Spara/ }).click();
+      await page.getByText("Partnern är sparad.").waitFor();
+      await page.goto(url);
+      await waitForHydration(page, order);
+      assert.equal(await order.inputValue(), "7", "Platsen ska bestå");
+    };
+    await saveWith(() => order.fill(""));
+    await saveWith(() => order.evaluate((el) => el.remove()));
+
+    // Fel tal ger fel vid fältet.
+    await page.goto(url);
+    await waitForHydration(page, order);
+    await order.evaluate((el) => {
+      el.type = "text";
+      el.removeAttribute("max");
+      el.value = "10000";
+    });
+    await page.getByRole("button", { name: /Spara/ }).click();
+    await page.getByText("Ordningen får vara högst 9999.").first().waitFor();
+
+    await page.goto(url);
+    const remove = page.getByRole("button", { name: "Ta bort" });
+    await waitForHydration(page, remove);
+    await remove.click();
+    await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+  });
+
+  await step("Ett dokument kan inte bli utan både fil och länk, och formuläret töms efter en sparning (SB-37)", async () => {
+    const title = `E2E-dokument ${uniqueId()}`;
+    await page.goto(`${BASE}/admin/dokument`);
+    await waitForHydration(page, page.locator('input[name="title"]'));
+    await page.fill('input[name="title"]', title);
+    await page.fill('input[name="url"]', "https://example.com/e2e.pdf");
+    await page.getByRole("button", { name: "Lägg till dokument" }).click();
+    await page.waitForURL((u) => u.search.includes("sparad=1"));
+    await page.getByRole("link", { name: title }).first().waitFor();
+    assert.equal(await page.locator('input[name="title"]:visible').inputValue(), "", "Formuläret ska vara tomt för nästa dokument");
+    await page.getByRole("link", { name: title }).first().click();
+    await page.waitForURL((u) => /\/admin\/dokument\/\d+/.test(u.pathname));
+    const url = page.url();
+    await waitForHydration(page, page.getByRole("button", { name: "Spara", exact: true }));
+    await page.fill('input[name="url"]', "");
+    await page.getByRole("button", { name: "Spara", exact: true }).click();
+    await page.locator("#file-error", { hasText: "Välj en fil eller ange en länk." }).waitFor();
+    await page.goto(url);
+    assert.equal(await page.inputValue('input[name="url"]'), "https://example.com/e2e.pdf", "Inget ska ha sparats");
+    const remove = page.getByRole("button", { name: "Ta bort" });
+    await waitForHydration(page, remove);
+    await remove.click();
+    await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+  });
+
+  await step("Förhandsgranskningen visar hela texten som får sparas (SB-37)", async () => {
+    await page.goto(`${BASE}/admin/sidor`);
+    await page.locator('a[href^="/admin/sidor/"]').first().click();
+    await page.waitForURL((u) => /\/admin\/sidor\/.+/.test(u.pathname));
+    const body = page.locator('textarea[name="body_md"]');
+    await waitForHydration(page, body);
+    await body.evaluate((ta) => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(ta, "x".repeat(55000) + " SLUTET");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.getByRole("button", { name: "Förhandsgranska" }).click();
+    await page.locator(".prose-statlin", { hasText: "SLUTET" }).waitFor();
+    await page.reload();
+  });
+
+  await step("Inloggningen leder tillbaka till sidan som efterfrågades, med frågesträngen (SB-38)", async () => {
+    await switchAccount(page, ADMIN);
+    const editor = await createEditor(page, BASE);
+    const person = await newVisitor(browser);
+    try {
+      await openLogin(person.page, BASE);
+      assert.equal(await tryLogin(person.page, editor.email, editor.password), null);
+      const password = await changeTemporaryPassword(person.page, editor.password);
+      await person.context.clearCookies();
+
+      // Utan kaka: proxyn.
+      await person.page.goto(`${BASE}/admin/evenemang?sparad=1`);
+      const next = new URL(person.page.url());
+      assert.equal(next.pathname, "/logga-in");
+      assert.equal(next.searchParams.get("next"), "/admin/evenemang?sparad=1");
+      await waitForHydration(person.page, person.page.locator("#email"));
+      assert.equal(await tryLogin(person.page, editor.email, password), null);
+      await person.page.waitForURL((u) => u.pathname === "/admin/evenemang");
+      assert.equal(new URL(person.page.url()).search, "?sparad=1", "Frågesträngen ska finnas kvar");
+
+      // Kakan finns men sessionen har gått ut: layouten och requireUser.
+      await person.context.clearCookies();
+      await person.context.addCookies([{ name: "statlin_session", value: "utgangen", url: BASE }]);
+      await person.page.goto(`${BASE}/admin/nyheter`);
+      await person.page.waitForURL((u) => u.pathname === "/logga-in");
+      assert.equal(new URL(person.page.url()).searchParams.get("next"), "/admin/nyheter");
+      await waitForHydration(person.page, person.page.locator("#email"));
+      assert.equal(await tryLogin(person.page, editor.email, password), null);
+      await person.page.waitForURL((u) => u.pathname === "/admin/nyheter");
+
+      // En adress utanför adminpanelen går inte att skicka in.
+      await person.context.clearCookies();
+      await person.page.goto(`${BASE}/logga-in?next=${encodeURIComponent("//example.com/admin")}`);
+      await waitForHydration(person.page, person.page.locator("#email"));
+      assert.equal(await tryLogin(person.page, editor.email, password), null);
+      await person.page.waitForURL((u) => u.pathname.startsWith("/admin"));
+      assert.equal(new URL(person.page.url()).host, new URL(BASE).host);
+    } finally {
+      await person.context.close();
+    }
+  });
+
+  await step("Knappar med utgången session säger till i stället för att inget händer", async () => {
+    await switchAccount(page, ADMIN);
+    const signedOut = "Du har loggats ut";
+    const expire = async () => {
+      const cookies = await page.context().cookies();
+      await page.context().clearCookies({ name: "statlin_session" });
+      return () => page.context().addCookies(cookies.filter((c) => c.name === "statlin_session"));
+    };
+
+    // Granskningen.
+    const { url, slug } = await createEvent(page, BASE, `E2E-tyst ${uniqueId()}`);
+    await page.goto(url);
+    const review = page.getByRole("button", { name: /Markera som granskad|Ångra granskning/ });
+    await waitForHydration(page, review);
+    let restore = await expire();
+    await review.click();
+    await page.getByText(signedOut).first().waitFor();
+    await restore();
+
+    // Flyttknapparna.
+    await page.goto(`${BASE}/admin/styrelsen`);
+    const down = page.locator("span.inline-flex.flex-col button:not([disabled])").first();
+    await waitForHydration(page, down);
+    restore = await expire();
+    await down.click();
+    await page.getByText(signedOut).first().waitFor();
+    await restore();
+
+    // Raderingen: felet står i bekräftelsen, och evenemanget finns kvar.
+    await page.goto(url);
+    const remove = page.getByRole("button", { name: "Ta bort" });
+    await waitForHydration(page, remove);
+    restore = await expire();
+    await remove.click();
+    const dialog = page.getByRole("alertdialog");
+    await dialog.getByRole("button", { name: "Ta bort" }).click();
+    await dialog.getByText(signedOut).waitFor();
+    await restore();
+    const visitor = await newVisitor(browser);
+    const response = await visitor.page.goto(`${BASE}/evenemang/${slug}`);
+    assert.equal(response.status(), 200, "Evenemanget ska finnas kvar");
+    await visitor.context.close();
+    await page.goto(url);
+    await waitForHydration(page, remove);
+    await remove.click();
+    await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), dialog.getByRole("button", { name: "Ta bort" }).click()]);
   });
 
   await step("Rollfältet visar sitt eget fel (SB-35)", async () => {

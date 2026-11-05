@@ -108,7 +108,8 @@ export function BoardMemberForm({
   return (
     <ActionForm action={saveBoardMember} submitLabel={member ? "Spara" : "Lägg till"} onSuccess={onSaved}>
       {member && <input type="hidden" name="id" value={member.id} />}
-      <input type="hidden" name="sort_order" value={member?.sort_order ?? nextOrder} />
+      {/* Platsen ändras med pilarna i listan. Bara en ny post får en plats härifrån, så att en gammal flik inte flyttar tillbaka en post. */}
+      {!member && <input type="hidden" name="sort_order" value={nextOrder} />}
       <div className="grid gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Post">

@@ -10,8 +10,6 @@ export type FormState = {
   data?: Record<string, string>;
 };
 
-export const initialFormState: FormState = {};
-
 /** Svaret när raden ändrats sedan formuläret laddades (se ActionForm:s version). */
 export const STALE: FormState = { error: "Någon annan har sparat – ladda om sidan." };
 
@@ -68,6 +66,14 @@ export const zText = (max: number, label = "Fältet") =>
     .trim()
     .max(max, `${label} får vara högst ${max} tecken.`)
     .default("");
+/**
+ * Platsen i en lista. Saknas fältet eller är det tomt svarar den undefined, och actionen behåller den gamla platsen:
+ * `default(0)` skickade annars posten högst upp i listan (SB-37).
+ */
+export const zOrder = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.coerce.number("Ordningen måste vara ett tal.").int("Ordningen måste vara ett heltal.").min(0, "Ordningen kan inte vara negativ.").max(9999, "Ordningen får vara högst 9999.").optional(),
+);
 export const zRequired = (max: number, label = "Fältet") =>
   z.string().trim().min(1, `${label} måste fyllas i.`).max(max, `${label} får vara högst ${max} tecken.`);
 export const zCheckbox = z

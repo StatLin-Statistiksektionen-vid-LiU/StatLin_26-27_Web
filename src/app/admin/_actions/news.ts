@@ -123,18 +123,21 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
   redirect(`/admin/nyheter/${res.lastInsertRowid}?skapad=1`);
 }
 
-export async function deleteNews(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
+export async function deleteNews(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const db = getDb();
   const existing = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(id) as
     | { id: number; committee_id: number | null; title: string; cover_media_id: number | null }
     | undefined;
-  if (!existing || !canEditOwned(user, existing)) redirect("/admin/nyheter");
+  if (!existing) return { error: "Nyheten finns inte längre." };
+  if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ta bort den här nyheten." };
   db.prepare("DELETE FROM news WHERE id = ?").run(id);
   await deleteMediaIfUnused(existing.cover_media_id);
   audit(user.id, "delete", "news", id, existing.title);
+  await renewSessionIfDue();
   revalidateSite();
   redirect("/admin/nyheter?raderad=1");
 }
