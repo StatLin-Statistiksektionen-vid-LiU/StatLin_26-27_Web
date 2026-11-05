@@ -24,7 +24,7 @@ export function SectionHeading({
     <div className={cn("flex flex-col gap-6 md:flex-row md:items-end md:justify-between", className)}>
       <div>
         <p className={cn("kicker flex items-center gap-3", dark ? "text-white/55" : "text-stone")}>
-          {index && <span className="text-red">{index}</span>}
+          {index && <span className={dark ? "text-red" : "text-red-deep"}>{index}</span>}
           <span className={cn("h-px w-8", dark ? "bg-white/25" : "bg-ink/20")} aria-hidden />
           {kicker}
         </p>

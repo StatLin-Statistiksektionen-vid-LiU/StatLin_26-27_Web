@@ -70,7 +70,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
             placeholder="Sök, t.ex. schema eller 732G33"
             autoComplete="off"
             enterKeyHint="search"
-            className="h-full min-w-0 flex-1 bg-transparent text-[1.05rem] outline-none placeholder:text-stone-light focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="h-full min-w-0 flex-1 bg-transparent text-[1.05rem] outline-none placeholder:text-stone focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {query ? (
             <button
@@ -188,7 +188,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
             <section key={g.value} aria-labelledby={`grupp-${g.value}`} className="mb-6 break-inside-avoid overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
               <h2 id={`grupp-${g.value}`} className="flex items-baseline justify-between gap-4 px-5 pb-2 pt-5">
                 <span className="display-tight text-lg">{g.label}</span>
-                <span className="kicker text-stone-light">{g.links.length}</span>
+                <span className="kicker text-stone">{g.links.length}</span>
               </h2>
               <ul className="divide-y divide-ink/[0.07]">
                 {g.links.map((l) => (
@@ -272,7 +272,7 @@ function PinButton({ id, label, pinned }: { id: string; label: string; pinned: b
       onClick={() => pinStore.toggle(id)}
       aria-pressed={pinned}
       title={pinned ? "Ta bort från Fästa" : "Fäst överst på sidan"}
-      className={cn("grid w-12 shrink-0 place-items-center transition-colors", pinned ? "text-red" : "text-stone-light hover:text-ink")}
+      className={cn("grid w-12 shrink-0 place-items-center transition-colors", pinned ? "text-red" : "text-stone hover:text-ink")}
     >
       <Star size={18} fill={pinned ? "currentColor" : "none"} />
       <span className="sr-only">Fäst {label}</span>

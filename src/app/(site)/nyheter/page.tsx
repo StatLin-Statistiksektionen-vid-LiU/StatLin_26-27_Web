@@ -40,6 +40,7 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
   const [first, ...rest] = items;
   return (
     <section className="container-site py-14 md:py-20">
+      <h2 className="sr-only">Alla inlägg</h2>
       {page === 1 ? (
         <Reveal>
           <NewsCard item={first} featured />

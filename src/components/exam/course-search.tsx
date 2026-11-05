@@ -114,7 +114,7 @@ export function CourseSearch({
           autoCapitalize="characters"
           spellCheck={false}
           enterKeyHint="search"
-          className="h-full min-w-0 flex-1 bg-transparent font-mono text-lg uppercase tracking-tight outline-none placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-stone-light focus-visible:outline-none"
+          className="h-full min-w-0 flex-1 bg-transparent font-mono text-lg uppercase tracking-tight outline-none placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-stone focus-visible:outline-none"
         />
         <button type="submit" className="btn btn-red h-12 shrink-0 px-5">
           <span className="hidden sm:inline">Visa</span>

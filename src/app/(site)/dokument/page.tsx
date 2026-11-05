@@ -61,7 +61,7 @@ async function Documents() {
                       <span className="min-w-0 flex-1">
                         <span className="block font-bold tracking-tight">{d.title}</span>
                         {d.description && <span className="mt-0.5 block text-sm text-stone">{d.description}</span>}
-                        <span className="kicker mt-1.5 block text-stone-light">
+                        <span className="kicker mt-1.5 block text-stone">
                           {[d.doc_date && formatDate(d.doc_date, true), d.file && `${d.file.ext.toUpperCase()} · ${formatBytes(d.file.size)}`, !d.file && isPdf && "PDF"]
                             .filter(Boolean)
                             .join(" · ")}

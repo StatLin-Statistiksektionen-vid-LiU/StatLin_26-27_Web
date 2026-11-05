@@ -16,7 +16,7 @@ function DateBlock({ date, className, dark, locale }: { date: string; className?
         className,
       )}
     >
-      <span className="kicker text-[0.62rem] text-red">{p.monthShort}</span>
+      <span className={cn("kicker text-[0.62rem]", dark ? "text-red" : "text-red-deep")}>{p.monthShort}</span>
       <span className="display-tight text-[1.9rem] leading-none">{p.day}</span>
       <span className={cn("mt-0.5 font-mono text-[0.62rem] uppercase", dark ? "text-white/45" : "text-stone")}>{p.weekdayShort}</span>
     </div>

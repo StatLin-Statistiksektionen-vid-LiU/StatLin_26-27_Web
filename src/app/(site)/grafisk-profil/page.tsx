@@ -225,7 +225,7 @@ export default function BrandPage() {
                 {p.colors.map((c) => (
                   <li key={c.name + c.hex} className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
                     <div className={cn("relative", p.colors.length > 3 ? "h-28" : "h-40")} style={{ background: c.hex }}>
-                      <span className={cn("absolute left-4 top-4 text-sm font-bold", ["#FFFFFF", "#EEE242", "#FBB03B"].includes(c.hex) ? "text-ink" : "text-white")}>{c.name}</span>
+                      <span className={cn("absolute left-4 top-4 text-sm font-bold", ["#FFFFFF", "#EEE242", "#FBB03B", "#F15A24", "#29ABE2"].includes(c.hex) ? "text-ink" : "text-white")}>{c.name}</span>
                     </div>
                     <dl className="grid gap-1.5 p-4 text-xs">
                       <ColorRow label="HEX" value={c.hex} />
@@ -349,7 +349,7 @@ async function Material() {
   return (
     <section id="material" aria-labelledby="material-rubrik" className="container-site scroll-mt-32 py-20 md:py-28">
       <p className="kicker text-stone">
-        <span className="text-red">Ladda ner</span> · Från grafiskt ansvarig
+        <span className="text-red-deep">Ladda ner</span> · Från grafiskt ansvarig
       </p>
       <h2 id="material-rubrik" className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)]">
         Mallar och material
@@ -370,7 +370,7 @@ async function Material() {
               <span className="min-w-0 flex-1">
                 <span className="block font-bold tracking-tight">{d.title}</span>
                 {d.description && <span className="mt-0.5 block text-sm leading-snug text-stone">{d.description}</span>}
-                <span className="kicker mt-2 block text-stone-light">{d.file ? `${d.file.ext.toUpperCase()} · ${formatBytes(d.file.size)}` : "Länk"}</span>
+                <span className="kicker mt-2 block text-stone">{d.file ? `${d.file.ext.toUpperCase()} · ${formatBytes(d.file.size)}` : "Länk"}</span>
               </span>
               {d.file ? (
                 <Download size={18} className="mt-1 shrink-0 text-red opacity-60 transition-opacity group-hover:opacity-100" />
@@ -391,7 +391,7 @@ function BrandHeading({ index, title, dark }: { index: string; title: string; da
   return (
     <div>
       <p className={cn("kicker", dark ? "text-white/50" : "text-stone")}>
-        <span className="text-red">§ {index}</span> · Grafiskt styrdokument
+        <span className={dark ? "text-red" : "text-red-deep"}>§ {index}</span> · Grafiskt styrdokument
       </p>
       <h2 className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)] max-[27.1875rem]:text-[7vw]">{title}</h2>
     </div>

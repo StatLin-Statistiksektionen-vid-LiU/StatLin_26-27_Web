@@ -168,7 +168,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
       {view === "chart" ? (
         // Med mus försvinner rutan när pekaren lämnar diagrammet. Med touch ligger den kvar tills man trycker någon annanstans.
         <div className="mt-4 rounded-[1.5rem] border border-ink/10 bg-white px-2 py-4 sm:px-3 sm:py-5" onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}>
-          <div aria-hidden className={cn(ROW, "kicker cursor-auto py-0 pb-1 text-stone-light")}>
+          <div aria-hidden className={cn(ROW, "kicker cursor-auto py-0 pb-1 text-stone")}>
             <span>Datum</span>
             <span className="relative block h-lh">
               {showAverage && (

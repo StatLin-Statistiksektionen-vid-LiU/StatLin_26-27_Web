@@ -76,7 +76,7 @@ export function ResourceBoard({ resources, initialProgram }: { resources: Resour
                 <div key={term}>
                   <h3 className="flex items-baseline justify-between gap-4 border-b border-ink/10 pb-3">
                     <span className="display-tight text-lg">Termin {term}</span>
-                    <span className="kicker text-stone-light">{termSeason(term)}</span>
+                    <span className="kicker text-stone">{termSeason(term)}</span>
                   </h3>
                   <ResourceList items={items} />
                 </div>
@@ -125,7 +125,7 @@ function ResourceList({ items }: { items: ResourceItem[] }) {
                   <span className="rounded-full border border-ink/15 px-2.5 py-0.5 text-xs font-semibold text-stone">{RESOURCE_CATEGORIES[r.category]}</span>
                 </span>
                 {r.description && <span className="mt-1 block text-sm text-stone">{r.description}</span>}
-                {meta && <span className="kicker mt-1.5 block text-stone-light">{meta}</span>}
+                {meta && <span className="kicker mt-1.5 block text-stone">{meta}</span>}
               </span>
               <Action size={20} className="shrink-0 text-red opacity-60 transition-opacity group-hover:opacity-100" />
             </a>

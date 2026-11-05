@@ -48,7 +48,7 @@ export async function HomeSections() {
         <div className="container-site relative grid gap-14 py-24 md:py-32 lg:grid-cols-12">
           <Reveal className="lg:col-span-7">
             <p className="kicker flex items-center gap-3 text-stone">
-              <span className="text-red">01</span>
+              <span className="text-red-deep">01</span>
               <span className="h-px w-8 bg-ink/20" aria-hidden />
               Om sektionen
             </p>
@@ -75,12 +75,15 @@ export async function HomeSections() {
                   key={s.label}
                   className={`relative p-6 md:p-7 ${i % 2 === 0 ? "border-r" : ""} ${i < 2 ? "border-b" : ""} border-ink/10`}
                 >
-                  <dt className="kicker pr-6 text-stone">{s.label}</dt>
+                  <dt className="kicker pr-6 text-stone">
+                    {s.label}
+                    {/* Inne i dt: en dl får inte ha något annat än dt och dd i sina grupper. */}
+                    <span aria-hidden className="absolute right-5 top-5 font-mono text-[0.65rem] normal-case tracking-normal text-red-deep">x̄{i + 1}</span>
+                  </dt>
                   <dd className="display mt-4 text-[clamp(2.6rem,5vw,3.8rem)] text-ink">
                     <CountUp value={s.value} />
                   </dd>
                   <dd className="mt-2 text-sm text-stone">{s.note}</dd>
-                  <span className="absolute right-5 top-5 font-mono text-[0.65rem] text-red">x̄{i + 1}</span>
                 </div>
               ))}
             </dl>

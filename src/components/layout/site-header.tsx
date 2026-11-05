@@ -220,7 +220,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                 href={l.href}
                 hrefLang={l.lang}
                 lang={l.lang}
-                aria-label={l.label}
+                aria-label={`${l.short}, ${l.label}`}
                 title={l.label}
                 className={cn(pathname === null && `sprak-${l.lang}`, "inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-white/15 px-3 text-[0.82rem] font-semibold text-white/80 transition-colors hover:border-white/40 hover:text-white lg:h-9")}
               >
