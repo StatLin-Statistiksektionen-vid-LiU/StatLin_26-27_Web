@@ -60,11 +60,14 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await visitor.goto(`${BASE}/fragelada/ubu`);
     await visitor.getByText(CLOSED_PAGE).waitFor();
     assert.equal(await visitor.locator("#fraga").count(), 0, "lappen ska inte finnas");
-    for (const path of ["/studenter/kandidat", "/studenter/master", "/utskott/ubu", "/utskott/amo", "/en/masters", "/integritet"]) {
-      await visitor.goto(`${BASE}${path}`);
-      assert.equal(await visitor.locator('a[href^="/fragelada"]').count(), 0, `${path} ska inte länka till lådan när den är av`);
+    // Hela svaret och inte det som syns: React släpper fram Suspense-innehåll med en fördröjning, så en räkning direkt efter goto kan bli 0 av fel skäl.
+    for (const path of ["/studenter/kandidat", "/studenter/master", "/utskott/ubu", "/utskott/amo", "/en/masters"]) {
+      const html = await (await visitor.goto(`${BASE}${path}`)).text();
+      assert.doesNotMatch(html, /href="\/fragelada/, `${path} ska inte länka till lådan när den är av`);
     }
-    assert.equal(await visitor.getByText("Frågelådan").count(), 0, "integritetssidan ska inte nämna lådan när den är av");
+    const privacy = await (await visitor.goto(`${BASE}/integritet`)).text();
+    assert.doesNotMatch(privacy, /href="\/fragelada/, "/integritet ska inte länka till lådan när den är av");
+    assert.doesNotMatch(privacy, /Frågelådan/, "integritetssidan ska inte nämna lådan när den är av");
   });
 
   await step("Frågelådan: en post får inte slå på funktionen, och ser inget reglage", async () => {
@@ -79,7 +82,7 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await switchAccount(page, ADMIN);
     await setSwitch(page, BASE, true);
     await visitor.goto(`${BASE}/studenter/kandidat`);
-    assert.ok((await visitor.locator('main a[href="/fragelada/ubu"]').count()) > 0, "länken till UBU:s låda saknas");
+    await visitor.locator('main a[href="/fragelada/ubu"]').first().waitFor();
   });
 
   await step("Frågelådan: en post skapar en låda och får en kod utan förväxlingsbara tecken", async () => {
@@ -313,8 +316,8 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     assert.equal(await visitor.locator("#fraga").inputValue(), text);
     await visitor.goto(`${BASE}/fragelada`);
     await visitor.getByText(CLOSED_PAGE).waitFor();
-    await visitor.goto(`${BASE}/studenter/kandidat`);
-    assert.equal(await visitor.locator('a[href^="/fragelada"]').count(), 0);
+    const html = await (await visitor.goto(`${BASE}/studenter/kandidat`)).text();
+    assert.doesNotMatch(html, /href="\/fragelada/);
   });
 
   await step("Frågelådan: ägaren tömmer lådan, och administratören kan ta bort en låda utan att läsa den", async () => {
