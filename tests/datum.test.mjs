@@ -3,6 +3,7 @@
 import assert from "node:assert";
 import { mock, test } from "node:test";
 import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatDate, formatTimeRange, isoToLocal, parts, isoToLocalInput, isValidLocalDateTime, localToIso, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
+import { canFormatLocal } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 import { isFileUrl } from "../src/lib/links.ts";
 
@@ -275,4 +276,12 @@ test("SB-29: svenska är fortfarande standard", () => {
   assert.deepEqual([p.weekday, p.weekdayShort, p.monthShort, p.monthLong], ["lördag", "lör", "nov", "november"]);
   assert.equal(formatDate("2027-01-02T00:00", true), "2 januari 2027");
   assert.equal(formatTimeRange("2026-08-19T00:00", "2026-08-21T00:00", true), "Heldag t.o.m. 21 augusti");
+});
+
+test("canFormatLocal säger vilka tider som går att visa utan att formateringen kastar", () => {
+  for (const ok of ["2026-11-07T18:00", "2026-11-07", "2025-02-30T12:00"]) assert.equal(canFormatLocal(ok), true, ok);
+  for (const bad of ["", "nästa vecka", "2025-13-01T12:00", "2025-02-28T12:60", "okänt"]) {
+    assert.equal(canFormatLocal(bad), false, bad);
+    assert.throws(() => formatDate(bad), RangeError);
+  }
 });

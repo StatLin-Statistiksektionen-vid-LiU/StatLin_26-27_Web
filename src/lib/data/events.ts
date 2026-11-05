@@ -1,6 +1,6 @@
 import "server-only";
 import { parseCommitteeRef, readDb } from "./db";
-import { nowLocal } from "@/lib/dates";
+import { canFormatLocal, nowLocal } from "@/lib/dates";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import type { EventImage, EventItem, Media } from "@/lib/types";
 
@@ -28,6 +28,18 @@ function map(r: Row): EventItem {
   };
 }
 
+/**
+ * Rader från före SB-32 kan ha ett datum som inte går att visa, och då skulle en enda rad ta ner startsidan, /evenemang och kalenderfilen.
+ * Sajten visar dem inte. Adminpanelen läser dem som vanligt, så att de går att rätta där.
+ */
+function canShow(r: Pick<Row, "id" | "starts_at" | "ends_at">): boolean {
+  if (canFormatLocal(r.starts_at) && (r.ends_at === null || canFormatLocal(r.ends_at))) return true;
+  console.error(`[statlin] Evenemang ${r.id} har ett ogiltigt datum och visas inte på sajten. Rätta det i adminpanelen.`);
+  return false;
+}
+
+const mapShown = (rows: Row[]) => rows.filter(canShow).map(map);
+
 /** Sista minuten ett evenemang pågår – samma regel som eventEnd i src/lib/dates.ts. */
 export const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
   ELSE COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') END`;
@@ -44,7 +56,7 @@ export async function listUpcomingEvents(limit = 50, committeeId?: number): Prom
        ORDER BY e.starts_at ASC LIMIT @limit`,
     )
     .all({ now, limit, committeeId: committeeId ?? null }) as Row[];
-  return rows.map(map);
+  return mapShown(rows);
 }
 
 /** Antalet kommande evenemang, utan listans tak. Samma urval som listUpcomingEvents. */
@@ -65,7 +77,7 @@ export async function listPastEvents(limit = 24, committeeId?: number): Promise<
        ORDER BY e.starts_at DESC LIMIT @limit`,
     )
     .all({ now, limit, committeeId: committeeId ?? null }) as Row[];
-  return rows.map(map);
+  return mapShown(rows);
 }
 
 export async function listEventsBetween(fromDate: string, toDate: string): Promise<EventItem[]> {
@@ -77,12 +89,12 @@ export async function listEventsBetween(fromDate: string, toDate: string): Promi
        ORDER BY e.starts_at ASC`,
     )
     .all({ from: fromDate, to: toDate }) as Row[];
-  return rows.map(map);
+  return mapShown(rows);
 }
 
 export async function listAllPublishedEvents(): Promise<EventItem[]> {
   const db = await readDb();
-  return (db.prepare(`${SELECT} WHERE e.published = 1 ORDER BY e.starts_at DESC`).all() as Row[]).map(map);
+  return mapShown(db.prepare(`${SELECT} WHERE e.published = 1 ORDER BY e.starts_at DESC`).all() as Row[]);
 }
 
 /**
@@ -99,7 +111,7 @@ export async function getStarEvent(chosenId: number | null): Promise<EventItem |
        ORDER BY e.id = @chosenId DESC, e.starts_at ASC LIMIT 1`,
     )
     .get({ now: nowLocal(), chosenId }) as Row | undefined;
-  return row ? map(row) : null;
+  return row && canShow(row) ? map(row) : null;
 }
 
 /** Kommande lunchföreläsningar. Samma regel som isLunchEvent i src/lib/naringsliv.ts: titeln eller adressen säger det. */
@@ -112,7 +124,7 @@ export async function listLunchEvents(limit = 5): Promise<EventItem[]> {
        ORDER BY e.starts_at ASC LIMIT @limit`,
     )
     .all({ now: nowLocal(), limit }) as Row[];
-  return rows.map(map);
+  return mapShown(rows);
 }
 
 export async function getEventBySlug(slug: string, includeDrafts = false): Promise<EventItem | null> {
@@ -120,7 +132,7 @@ export async function getEventBySlug(slug: string, includeDrafts = false): Promi
   const row = db
     .prepare(`${SELECT} WHERE e.slug = ? ${includeDrafts ? "" : "AND e.published = 1"}`)
     .get(slug) as Row | undefined;
-  return row ? map(row) : null;
+  return row && canShow(row) ? map(row) : null;
 }
 
 export async function getEventById(id: number): Promise<EventItem | null> {
@@ -203,7 +215,7 @@ export async function listGalleryAlbums(): Promise<GalleryAlbum[]> {
        ORDER BY album.starts_at DESC`,
     )
     .all() as (Row & { preview_json: string })[];
-  return rows.map(({ preview_json, ...row }) => ({
+  return rows.filter(canShow).map(({ preview_json, ...row }) => ({
     event: map(row),
     preview: (JSON.parse(preview_json) as Media[]).map((m) => toImageRef(m)!).filter(Boolean),
   }));
