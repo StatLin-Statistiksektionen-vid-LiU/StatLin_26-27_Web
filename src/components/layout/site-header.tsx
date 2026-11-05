@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { languageSwitch, NAV, type NavGroup } from "@/lib/navigation";
+import { FOCUS_SEARCH_EVENT, fetchSearchEntries } from "@/lib/search-prefetch";
 import { closeWhenWider, useFocusLayer } from "@/lib/use-focus-layer";
-import { ArrowUpRight, ChevronDown, Close, Menu } from "@/components/icons";
+import { ArrowUpRight, ChevronDown, Close, Menu, Search } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -32,7 +33,31 @@ function HeaderView({ pathname }: { pathname: string | null }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const isHome = pathname === "/";
+  const onSearch = pathname === "/sok";
   const language = languageSwitch(pathname);
+  const router = useRouter();
+
+  // Snabbtangenter till sökfliken: / när man inte skriver någonstans, och Ctrl eller Cmd + K.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]");
+      const combo = e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && !e.altKey;
+      const slash = e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && !typing;
+      if (!combo && !slash) return;
+      // På sökfliken sköter sökrutan snedstrecket själv.
+      if (onSearch) {
+        if (combo) {
+          e.preventDefault();
+          window.dispatchEvent(new Event(FOCUS_SEARCH_EVENT));
+        }
+        return;
+      }
+      e.preventDefault();
+      router.push("/sok");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onSearch, router]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > (isHome ? window.innerHeight * 0.55 : 24));
@@ -214,6 +239,28 @@ function HeaderView({ pathname }: { pathname: string | null }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/sok"
+              aria-label="Sök"
+              title="Sök (snabbtangent /)"
+              aria-current={onSearch ? "page" : undefined}
+              // Indexet börjar hämtas redan när man pekar eller trycker, så att träffarna finns när sökfliken öppnas.
+              onPointerEnter={() => void fetchSearchEntries()}
+              onPointerDown={() => void fetchSearchEntries()}
+              onFocus={() => void fetchSearchEntries()}
+              onClick={(e) => {
+                if (!onSearch) return;
+                e.preventDefault();
+                setOpen(false);
+                window.dispatchEvent(new Event(FOCUS_SEARCH_EVENT));
+              }}
+              className={cn(
+                "inline-flex size-11 items-center justify-center rounded-full border text-white/80 transition-colors hover:border-white/40 hover:text-white lg:size-9",
+                onSearch ? "border-white/40 text-white" : "border-white/15",
+              )}
+            >
+              <Search size={18} />
+            </Link>
             {(pathname === null ? [language, languageSwitch("/en")] : [language]).map((l) => (
               <Link
                 key={l.lang}
