@@ -54,7 +54,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
                     {ROLE_LABELS[u.role]}
                     {u.role === "committee" && u.committee_name ? ` · ${u.committee_name}` : ""}
                   </span>
-                  <span className="mt-1 block font-mono text-[0.68rem] text-stone-light">{u.last_login_at ? `Senast ${formatTimestamp(u.last_login_at)}` : "Aldrig inloggad"}</span>
+                  <span className="mt-1 block font-mono text-[0.68rem] text-stone">{u.last_login_at ? `Senast ${formatTimestamp(u.last_login_at)}` : "Aldrig inloggad"}</span>
                 </span>
                 <Edit size={16} className="text-stone" />
               </Link>

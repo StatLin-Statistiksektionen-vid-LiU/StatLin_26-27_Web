@@ -75,7 +75,7 @@ export function StatusBadge({ published, label }: { published: boolean; label?: 
 /** Administratörernas granskning. Står bredvid publiceringsstatusen men påverkar den aldrig. */
 export function ReviewBadge({ checked }: { checked: boolean }) {
   return (
-    <span className={cn("chip", checked ? "bg-ink text-white" : "text-ink/55 ring-1 ring-inset ring-ink/20")}>
+    <span className={cn("chip", checked ? "bg-ink text-white" : "text-ink/65 ring-1 ring-inset ring-ink/20")}>
       {checked ? <Check size={12} strokeWidth={2.5} /> : <span className="size-1.5 rounded-full border border-ink/40" aria-hidden />}
       {checked ? "Granskad" : "Ej granskad"}
     </span>

@@ -97,7 +97,9 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
                 <th className="hidden px-3 py-3 font-medium md:table-cell">Datum</th>
                 <th className="hidden px-3 py-3 font-medium sm:table-cell">Status</th>
                 <th className="hidden px-3 py-3 font-medium lg:table-cell">Bilder</th>
-                <th className="px-5 py-3" />
+                <th className="px-5 py-3">
+                  <span className="sr-only">Åtgärder</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/10">

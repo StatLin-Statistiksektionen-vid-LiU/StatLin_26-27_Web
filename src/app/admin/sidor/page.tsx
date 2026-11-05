@@ -37,7 +37,7 @@ async function Pages() {
               </span>
               <span className="mt-1 block font-mono text-xs text-stone">{PAGE_PATHS[p.slug] ?? `/${p.slug}`}</span>
               <span className="mt-3 line-clamp-2 block text-sm text-stone">{p.lead}</span>
-              <span className="mt-3 block text-xs text-stone-light">Senast ändrad {formatTimestamp(p.updated_at)}</span>
+              <span className="mt-3 block text-xs text-stone">Senast ändrad {formatTimestamp(p.updated_at)}</span>
             </Link>
           </li>
         ))}

@@ -133,7 +133,7 @@ export function AdminSidebar({
     <nav aria-label="Adminmeny" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-2">
       {groups.map((g) => (
         <div key={g.label ?? "arbete"}>
-          {g.label && <p className="kicker px-3 pb-1 text-[0.6rem] text-white/35">{g.label}</p>}
+          {g.label && <p className="kicker px-3 pb-1 text-[0.6rem] text-white/60">{g.label}</p>}
           <ul className="space-y-px">
             {g.items.map((item) => {
               if (!item) return null;
@@ -197,7 +197,7 @@ export function AdminSidebar({
   return (
     <>
       {/* Mobil topbar */}
-      <div ref={topbarRef} className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden print:hidden">
+      <div ref={topbarRef} role="banner" className="sticky top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 text-white lg:hidden print:hidden">
         <Link href="/admin" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/statlin.svg" alt="" className="logo-kant size-8 [--kant:1px]" />
@@ -223,7 +223,7 @@ export function AdminSidebar({
             <span className="display-tight block text-white">
               Stat<span className="text-red">Lin</span>
             </span>
-            <span className="kicker block text-[0.6rem] text-white/40">Adminpanel</span>
+            <span className="kicker block text-[0.6rem] text-white/60">Adminpanel</span>
           </span>
         </Link>
         {nav}

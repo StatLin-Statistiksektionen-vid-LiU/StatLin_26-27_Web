@@ -241,7 +241,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
                   <span className="min-w-0">
                     <span className="font-semibold">{a.user_name ?? "Någon"}</span> {ACTION_LABELS[a.action] ?? a.action} {ENTITY_LABELS[a.entity] ?? a.entity}
                     {a.summary && <span className="block truncate text-stone">{a.summary}</span>}
-                    <span className="block font-mono text-[0.7rem] text-stone-light">{formatTimestamp(a.created_at)}</span>
+                    <span className="block font-mono text-[0.7rem] text-stone">{formatTimestamp(a.created_at)}</span>
                   </span>
                 </li>
               ))}
@@ -266,7 +266,7 @@ function EventList({ events, meta }: { events: EventItem[]; meta?: (e: EventItem
           <li key={e.id}>
             <Link href={`/admin/evenemang/${e.id}`} className="flex items-center gap-4 py-3 hover:opacity-80">
               <span className="flex w-12 shrink-0 flex-col items-center rounded-xl bg-paper py-1.5 tabular">
-                <span className="kicker text-[0.55rem] text-red">{p.monthShort}</span>
+                <span className="kicker text-[0.55rem] text-red-deep">{p.monthShort}</span>
                 <span className="text-lg font-bold leading-none">{p.day}</span>
               </span>
               <span className="min-w-0 flex-1">
