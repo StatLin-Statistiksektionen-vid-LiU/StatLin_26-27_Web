@@ -6,7 +6,7 @@ export type NavGroup = { label: string; href: string; children?: NavItem[] };
 
 export const NAV: NavGroup[] = [
   { label: "Evenemang", href: "/evenemang" },
-  { label: "Nyheter", href: "/nyheter" },
+  { label: "Nytt", href: "/nyheter" },
   {
     label: "Sektionen",
     href: "/sektionen",

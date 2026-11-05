@@ -77,7 +77,7 @@ async function Images({ searchParams }: { searchParams: PageProps<"/admin/bilder
       )}
 
       {news.length > 0 && (
-        <Section id="nyheter" title="Nyheter" description="Omslaget visas överst i nyheten och i nyhetslistan.">
+        <Section id="nyheter" title="Nytt" description="Omslaget visas överst i nyheten och på sidan Nytt.">
           <CardGrid>
             {(all ? news : news.slice(0, NEWS)).map((n) => (
               <ImageCard key={n.id} label={n.title} meta={[formatTimestamp(n.published_at), n.committee?.short_name ?? "Hela sektionen", !n.published && "Utkast"]}>

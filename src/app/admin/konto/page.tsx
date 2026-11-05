@@ -43,7 +43,7 @@ async function Account({ searchParams }: { searchParams: PageProps<"/admin/konto
             </FormSection>
           </ActionForm>
           <ActionForm action={updateProfile} submitLabel="Spara profil" stickyFooter={false}>
-            <FormSection title="Profil" description="Visas som avsändare på nyheter du skriver.">
+            <FormSection title="Profil" description="Visas som avsändare på det du skriver under Nytt.">
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Namn" name="name" required>
                   <TextInput name="name" defaultValue={user.name} maxLength={120} />

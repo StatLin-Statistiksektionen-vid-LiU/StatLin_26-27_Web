@@ -166,7 +166,7 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     await admin.page.getByText("Kunde inte spara – försök igen.").waitFor();
     await admin.page.unrouteAll();
     await admin.page.goto(`${BASE}/admin/nyheter`);
-    await admin.page.getByRole("heading", { name: "Nyheter" }).first().waitFor();
+    await admin.page.getByRole("heading", { name: "Nytt" }).first().waitFor();
     assert.equal(await admin.page.getByText(title).count(), 0, "nyheten ska inte ha sparats");
     await admin.context.close();
   });

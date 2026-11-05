@@ -177,12 +177,12 @@ export async function HomeSections() {
         </div>
       </section>
 
-      {/* 04 Nyheter */}
+      {/* 04 Nytt */}
       {news.length > 0 && (
         <section className="below-fold py-24 [--fold-h:2050px] md:py-32">
           <div className="container-site">
             <Reveal>
-              <SectionHeading index="04" kicker="Nyheter" title={<>Senaste <span className="mono-accent text-red-deep">nytt</span></>} href="/nyheter" linkLabel="Alla nyheter" />
+              <SectionHeading index="04" kicker="Från sektionen" title={<>Senaste <span className="mono-accent text-red-deep">nytt</span></>} href="/nyheter" linkLabel="Allt nytt" />
             </Reveal>
             <Reveal className="mt-14">
               <NewsCard item={news[0]} featured />

@@ -20,7 +20,7 @@ async function NewNews() {
   const visible = user.role === "committee" ? committees.filter((c) => c.id === user.committee_id) : committees;
   return (
     <>
-      <AdminHeader back={{ href: "/admin/nyheter", label: "Nyheter" }} title="Ny nyhet" />
+      <AdminHeader back={{ href: "/admin/nyheter", label: "Nytt" }} title="Ny nyhet" />
       <NewsForm committees={visible} user={user} />
     </>
   );

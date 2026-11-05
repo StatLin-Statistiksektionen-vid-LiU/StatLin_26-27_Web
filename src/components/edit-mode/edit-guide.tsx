@@ -157,7 +157,7 @@ export function EditGuide({ user, helpRef }: { user: EditUser; helpRef: React.Re
           {step === LAST && (
             <>
               <p className="font-semibold">Ändra och tryck Spara. Ändringen syns direkt.</p>
-              <p className="text-sm text-white/70">Nya evenemang och nyheter skapas i adminpanelen. Guiden finns kvar bakom frågetecknet.</p>
+              <p className="text-sm text-white/70">Nya evenemang och inlägg i Nytt skapas i adminpanelen. Guiden finns kvar bakom frågetecknet.</p>
               <p className="text-sm text-white/70">Inloggad som {user.post || user.name}.</p>
             </>
           )}

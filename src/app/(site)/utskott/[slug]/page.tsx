@@ -141,7 +141,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
       {news.length > 0 && (
         <section className="py-16 md:py-24">
           <div className="container-site">
-            <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">Nyheter</h2>
+            <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">Nytt</h2>
             <div className="mt-10 grid gap-10 md:grid-cols-3">
               {news.map((n) => (
                 <NewsCard key={n.id} item={n} />

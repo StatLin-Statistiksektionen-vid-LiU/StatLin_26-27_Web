@@ -219,7 +219,7 @@ function DrawerBody({ target }: { target: EditTarget }) {
             label="Omslagsbild"
             image={d.cover ?? null}
             save={(mediaId) => setNewsCover(target.id, mediaId)}
-            hint="Visas under rubriken och i nyhetslistan. Liggande bild, gärna 2100 × 900 px."
+            hint="Visas under rubriken och på sidan Nytt. Liggande bild, gärna 2100 × 900 px."
           />
         </div>
       );

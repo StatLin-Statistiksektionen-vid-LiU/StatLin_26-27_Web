@@ -178,7 +178,7 @@ async function seedDemo(created: { email: string; password: string; role: string
   const news = [
     { slug: "valkommen-till-nya-statlin-se", title: "Välkommen till nya statlin.se", committee: "styrelsen", pinned: 1, days: 0,
       excerpt: "Ny webb med kalender, galleri och inloggning för sektionens poster.",
-      body: "Sektionen har fått en ny hemsida! Här hittar du alla evenemang, nyheter, styrelsen och utskotten – och du kan prenumerera på kalendern direkt i mobilen.\n\n## Nytt för poster\nAlla poster kan logga in och lägga upp evenemang, nyheter och bilder för sitt utskott. Informationsansvarig och styrelsen kan redigera allt innehåll.\n\nHittar du något som är fel? Hör av dig till info@statlin.se." },
+      body: "Sektionen har fått en ny hemsida! Här hittar du alla evenemang, senaste nytt, styrelsen och utskotten – och du kan prenumerera på kalendern direkt i mobilen.\n\n## Nytt för poster\nAlla poster kan logga in och lägga upp evenemang, nyheter och bilder för sitt utskott. Informationsansvarig och styrelsen kan redigera allt innehåll.\n\nHittar du något som är fel? Hör av dig till info@statlin.se." },
     { slug: "star-anmalan-foretag", title: "STAR: anmälan för företag är öppen", committee: "sasu", pinned: 0, days: -3,
       excerpt: "Vill ditt företag träffa Linköpings statistikstudenter? Nu kan ni boka plats.",
       body: "SASU och SCB:s sponsoransvariga öppnar nu anmälan för årets STAR. Läs mer under **För företag** eller kontakta näringslivsansvarig." },

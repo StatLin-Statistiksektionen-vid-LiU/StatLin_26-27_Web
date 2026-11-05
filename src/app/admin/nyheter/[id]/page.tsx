@@ -39,7 +39,7 @@ async function EditNews({ params, searchParams }: Pick<PageProps<"/admin/nyheter
         </Notice>
       )}
       <AdminHeader
-        back={{ href: "/admin/nyheter", label: "Nyheter" }}
+        back={{ href: "/admin/nyheter", label: "Nytt" }}
         title={item.title}
         description={<StatusBadge published={!!item.published} label={scheduled ? `Schemalagd ${formatTimestamp(item.published_at)}` : undefined} />}
         actions={

@@ -94,7 +94,7 @@ export function AdminSidebar({
             wheel,
             plans,
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
-            { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            { href: "/admin/nyheter", label: "Nytt", Icon: Newspaper },
             images,
             resources,
             { href: "/admin/utskott", label: "Utskott", Icon: Layers },
@@ -102,7 +102,7 @@ export function AdminSidebar({
         : [
             { href: "/admin", label: "Översikt", Icon: Home, exact: true },
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
-            { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
+            { href: "/admin/nyheter", label: "Nytt", Icon: Newspaper },
             design ? images : null,
             resources,
             ownPage,

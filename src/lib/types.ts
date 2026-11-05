@@ -9,8 +9,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   admin: "Allt, inklusive konton och granskning av evenemang.",
-  editor: "Allt innehåll och sajtens inställningar: evenemang, nyheter, bilder, sidor, styrelse och dokument.",
-  committee: "Det egna utskottets evenemang, nyheter, bilder och utskottssida.",
+  editor: "Allt innehåll och sajtens inställningar: evenemang, nytt, bilder, sidor, styrelse och dokument.",
+  committee: "Det egna utskottets evenemang, nytt, bilder och utskottssida.",
 };
 
 export interface Media {

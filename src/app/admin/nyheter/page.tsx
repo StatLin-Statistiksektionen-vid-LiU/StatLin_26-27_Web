@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { formatTimestamp } from "@/lib/dates";
 
-export const metadata = { title: "Nyheter" };
+export const metadata = { title: "Nytt" };
 
 export default function AdminNews(props: PageProps<"/admin/nyheter">) {
   return (
@@ -25,7 +25,7 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
     <>
       {sp.raderad && <Notice>Nyheten är borttagen.</Notice>}
       <AdminHeader
-        title="Nyheter"
+        title="Nytt"
         actions={
           <Link href="/admin/nyheter/ny" className="btn btn-red">
             <Plus size={18} /> Ny nyhet
@@ -33,7 +33,7 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
         }
       />
       {items.length === 0 ? (
-        <EmptyState title="Inga nyheter ännu" action={<Link href="/admin/nyheter/ny" className="btn btn-ink">Skriv den första</Link>} />
+        <EmptyState title="Inget nytt ännu" action={<Link href="/admin/nyheter/ny" className="btn btn-ink">Skriv den första</Link>} />
       ) : (
         <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
           {items.map((n) => (

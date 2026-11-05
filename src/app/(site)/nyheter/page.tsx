@@ -9,8 +9,8 @@ import { countNews, listNews } from "@/lib/data/news";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Nyheter",
-  description: "Nyheter från styrelsen och utskotten på StatLin.",
+  title: "Nytt",
+  description: "Nytt från styrelsen och utskotten på StatLin.",
 };
 
 const PER_PAGE = 9;
@@ -18,7 +18,7 @@ const PER_PAGE = 9;
 export default function NewsPage(props: PageProps<"/nyheter">) {
   return (
     <>
-      <PageHero kicker="Nyheter" title={<>Senaste <span className="mono-accent text-red">nytt</span></>} lead="Information från styrelsen och utskotten – från sittningsanmälningar till beslut på sektionsmötet." />
+      <PageHero kicker="Från sektionen" title={<>Senaste <span className="mono-accent text-red">nytt</span></>} lead="Information från styrelsen och utskotten – från sittningsanmälningar till beslut på sektionsmötet." />
       <Suspense fallback={<PageSkeleton />}>
         <NewsList searchParams={props.searchParams} />
       </Suspense>
@@ -35,7 +35,7 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   if (items.length === 0) {
-    return <p className="container-site py-24 text-center text-stone">Inga nyheter ännu.</p>;
+    return <p className="container-site py-24 text-center text-stone">Inget nytt ännu.</p>;
   }
   const [first, ...rest] = items;
   return (

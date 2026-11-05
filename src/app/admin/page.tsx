@@ -93,8 +93,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   const title = board ? user.post || user.name : (committee?.short_name ?? user.name);
   const subtitle = board
     ? design
-      ? "Omslag och bilder till hela sajten, och evenemang och nyheter i styrelsens namn."
-      : "Lägg upp evenemang och nyheter i styrelsens namn."
+      ? "Omslag och bilder till hela sajten, och evenemang och nytt i styrelsens namn."
+      : "Lägg upp evenemang och nytt i styrelsens namn."
     : committee && simplify(committee.name) !== simplify(title)
       ? committee.name
       : null;
@@ -179,7 +179,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
         <Card className="p-6 lg:col-span-3">
           <div className="flex items-center justify-between">
             <h2 className="font-bold">Våra kommande evenemang</h2>
-            <Link href="/admin/evenemang" className="text-sm font-semibold text-red-deep hover:underline">
+            <Link href="/admin/evenemang" className="tryck text-sm font-semibold text-red-deep hover:underline">
               Alla
             </Link>
           </div>
@@ -192,13 +192,13 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
 
         <Card className="p-6 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold">Våra nyheter</h2>
-            <Link href="/admin/nyheter" className="text-sm font-semibold text-red-deep hover:underline">
+            <h2 className="font-bold">Senaste nytt</h2>
+            <Link href="/admin/nyheter" className="tryck text-sm font-semibold text-red-deep hover:underline">
               Alla
             </Link>
           </div>
           {latestNews.length === 0 ? (
-            <p className="mt-6 text-sm text-stone">Inga nyheter ännu.</p>
+            <p className="mt-6 text-sm text-stone">Inget nytt ännu.</p>
           ) : (
             <ul className="mt-4 divide-y divide-ink/10">
               {latestNews.map((n) => (
@@ -288,7 +288,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
               Att granska
             </h2>
             {toReview.length > 0 && (
-              <Link href="/admin/evenemang?visa=ogranskade" className="text-sm font-semibold text-red-deep hover:underline">
+              <Link href="/admin/evenemang?visa=ogranskade" className="tryck text-sm font-semibold text-red-deep hover:underline">
                 Alla {toReview.length}
               </Link>
             )}
@@ -324,7 +324,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
         <Card className="p-6 lg:col-span-3">
           <div className="flex items-center justify-between">
             <h2 className="font-bold">Kommande evenemang</h2>
-            <Link href="/admin/evenemang" className="text-sm font-semibold text-red-deep hover:underline">
+            <Link href="/admin/evenemang" className="tryck text-sm font-semibold text-red-deep hover:underline">
               Alla
             </Link>
           </div>
@@ -369,7 +369,7 @@ function MyTasks({ tasks }: { tasks: Task[] }) {
         <h2 id="uppdrag-till-dig" className="flex items-center gap-2 font-bold">
           <Board size={18} className="text-red" /> Uppdrag till dig
         </h2>
-        <Link href="/admin/uppdrag?visa=till" className="text-sm font-semibold text-red-deep hover:underline">
+        <Link href="/admin/uppdrag?visa=till" className="tryck text-sm font-semibold text-red-deep hover:underline">
           Tavlan
         </Link>
       </div>
@@ -437,7 +437,7 @@ function MissingCovers({ events }: { events: EventItem[] }) {
         <h2 id="saknar-omslag" className="font-bold">
           Saknar omslag
         </h2>
-        <Link href="/admin/bilder" className="text-sm font-semibold text-red-deep hover:underline">
+        <Link href="/admin/bilder" className="tryck text-sm font-semibold text-red-deep hover:underline">
           Alla bilder
         </Link>
       </div>

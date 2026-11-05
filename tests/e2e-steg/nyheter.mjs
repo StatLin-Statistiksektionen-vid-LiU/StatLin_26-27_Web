@@ -78,7 +78,7 @@ export default async function nyhetsSteg({ BASE, browser, page, step, switchAcco
     await page.getByText("Nyheten är borttagen.").waitFor();
     // Listan laddas om, eftersom Next behåller den förra sidan dold i dokumentet efter ett sidbyte i appen.
     await page.goto(`${BASE}/admin/nyheter`);
-    await page.getByRole("heading", { name: "Nyheter" }).first().waitFor();
+    await page.getByRole("heading", { name: "Nytt" }).first().waitFor();
     assert.equal(await page.getByText(title).count(), 0, "nyheten ska vara borta ur adminlistan");
     await assertHiddenFromSite();
   });

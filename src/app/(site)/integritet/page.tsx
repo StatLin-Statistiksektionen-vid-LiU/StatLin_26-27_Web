@@ -95,7 +95,7 @@ export default function PrivacyPage() {
 
           <h2>Innehåll och bilder</h2>
           <p>
-            Det som posterna lägger upp – evenemang, nyheter, styrelsens namn och e-postadresser, bilder och dokument – är
+            Det som posterna lägger upp – evenemang, nytt, styrelsens namn och e-postadresser, bilder och dokument – är
             publikt tills det tas bort i adminpanelen. Bilder publiceras som omkodade kopior utan inbäddade uppgifter som
             kamerans GPS-position. Originalet sparas internt med sina uppgifter, går inte att nå från webben och raderas med
             bilden. Dokument publiceras som de laddas upp.

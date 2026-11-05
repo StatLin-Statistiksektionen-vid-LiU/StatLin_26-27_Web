@@ -66,7 +66,7 @@ export function NewsForm({
                     ))}
                   </Select>
                 </Field>
-                <Toggle name="pinned" label="Fäst högst upp" defaultChecked={!!item?.pinned} hint="Visas först på startsidan och i nyhetslistan." />
+                <Toggle name="pinned" label="Fäst högst upp" defaultChecked={!!item?.pinned} hint="Visas först på startsidan och på sidan Nytt." />
               </>
             )}
           </FormSection>

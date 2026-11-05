@@ -31,7 +31,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
           <p className="display-tight max-w-md text-3xl">
             För sektionens <span className="mono-accent text-red">poster</span>
           </p>
-          <p className="mt-3 max-w-md text-white/55">Lägg upp evenemang, nyheter och bilder för ditt utskott – direkt på sajten.</p>
+          <p className="mt-3 max-w-md text-white/55">Lägg upp evenemang, nytt och bilder för ditt utskott – direkt på sajten.</p>
         </div>
       </section>
 
