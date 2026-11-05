@@ -89,7 +89,7 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
         </div>
       </div>
       <div className="print:hidden">
-        {sp.skapad && <Notice>Planen är skapad. Stegen ligger här i planen tills du skickar dem till uppdragstavlan.</Notice>}
+        {sp.skapad && visible.some((s) => s.task_id === null && !s.done) && <Notice>Planen är skapad. Stegen ligger här i planen tills du skickar dem till uppdragstavlan.</Notice>}
         {sp.borttaget && <Notice>Steget är borttaget ur planen.</Notice>}
         {over && !plan.lessons && canChange && <Notice tone="info">Datumet har passerat. Skriv några lärdomar till nästa år medan du minns dem.</Notice>}
         <LessonsPanel lessons={lessons} />

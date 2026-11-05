@@ -39,6 +39,7 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.fill('input[name="title"]', title);
     await page.fill('input[name="responsible"]', responsible);
     await page.selectOption('select[name="month"]', String(month));
+    await page.locator("summary", { hasText: "Fler val" }).click();
     await page.fill('input[name="depends_on"]', depends);
     await page.getByRole("button", { name: "Lägg till punkten" }).click();
     await page.getByText("Punkten ligger i hjulet.").waitFor();

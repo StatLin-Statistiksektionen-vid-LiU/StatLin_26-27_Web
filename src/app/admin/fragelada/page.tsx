@@ -51,7 +51,16 @@ async function Inbox({ searchParams }: { searchParams: PageProps<"/admin/fragela
       <h2 className="kicker mt-10 text-stone">Dina lådor</h2>
       {own.length === 0 ? (
         <div className="mt-3">
-          <EmptyState title="Du har inga lådor än">Skapa en låda så får du en kod som går att visa i en föreläsningssal.</EmptyState>
+          <EmptyState
+            title="Du har inga lådor än"
+            action={
+              <Link href="/admin/fragelada/ny" className="btn btn-ink">
+                <Plus size={18} /> Skapa en låda
+              </Link>
+            }
+          >
+            Skapa en låda så får du en kod som går att visa i en föreläsningssal.
+          </EmptyState>
         </div>
       ) : (
         <ul className="mt-3 grid gap-3 md:grid-cols-2">

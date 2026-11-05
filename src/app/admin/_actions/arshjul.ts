@@ -28,14 +28,11 @@ const itemSchema = z
     title: zRequired(140, "Rubriken"),
     description: zText(2000, "Beskrivningen"),
     responsible: zText(80, "Ansvarig"),
+    // Ett enda val: en månad, eller bara en termin när månaden inte är bestämd.
     month: z
       .string()
       .optional()
-      .transform((v) => (v && /^([1-9]|1[0-2])$/.test(v) ? Number(v) : null)),
-    term: z
-      .string()
-      .optional()
-      .transform((v) => (v === "vt" || v === "ht" ? v : null)),
+      .transform((v) => (v === "vt" || v === "ht" ? v : v && /^([1-9]|1[0-2])$/.test(v) ? Number(v) : null)),
     depends_on: zText(200, "Fältet"),
     template: z
       .string()
@@ -43,10 +40,7 @@ const itemSchema = z
       .transform((v) => (v && planTemplate(v) ? v : "")),
   })
   .superRefine((d, ctx) => {
-    if (d.month === null && d.term === null) ctx.addIssue({ code: "custom", path: ["month"], message: "Välj en månad eller en termin." });
-    if (d.month !== null && d.term !== null && termOfMonth(d.month) !== d.term) {
-      ctx.addIssue({ code: "custom", path: ["term"], message: "Månaden ligger i den andra terminen. Välj Följer månaden eller byt termin." });
-    }
+    if (d.month === null) ctx.addIssue({ code: "custom", path: ["month"], message: "Välj när på året det händer." });
   });
 
 export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -57,7 +51,8 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
   const d = parsed.data;
   const db = getDb();
   // Månaden bestämmer terminen, så det finns bara ett svar i databasen.
-  const term = d.month !== null ? termOfMonth(d.month) : d.term;
+  const month = typeof d.month === "number" ? d.month : null;
+  const term = month !== null ? termOfMonth(month) : d.month;
 
   if (d.id) {
     const existing = loadItem(d.id);
@@ -66,7 +61,7 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
     const updatedAt = nowIso();
     const res = db
       .prepare("UPDATE wheel_items SET title = ?, description = ?, responsible = ?, month = ?, term = ?, depends_on = ?, template = ?, updated_at = ? WHERE id = ? AND updated_at = ?")
-      .run(d.title, d.description, d.responsible, d.month, term, d.depends_on, d.template, updatedAt, d.id, formVersion(fd));
+      .run(d.title, d.description, d.responsible, month, term, d.depends_on, d.template, updatedAt, d.id, formVersion(fd));
     if (res.changes === 0) return STALE;
     audit(user.id, "update", "wheel_item", d.id, d.title);
     await renewSessionIfDue();
@@ -76,11 +71,11 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
 
   const res = db
     .prepare("INSERT INTO wheel_items (title, description, responsible, month, term, depends_on, template, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-    .run(d.title, d.description, d.responsible, d.month, term, d.depends_on, d.template, user.id);
+    .run(d.title, d.description, d.responsible, month, term, d.depends_on, d.template, user.id);
   audit(user.id, "create", "wheel_item", Number(res.lastInsertRowid), d.title);
   await renewSessionIfDue();
   revalidateAdmin();
-  redirect(`/admin/arshjul?sparad=1${d.month ? `&manad=${d.month}` : ""}`);
+  redirect(`/admin/arshjul?sparad=1${month ? `&manad=${month}` : ""}`);
 }
 
 export async function deleteWheelItem(fd: FormData): Promise<FormState> {
