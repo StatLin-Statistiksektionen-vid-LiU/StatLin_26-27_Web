@@ -47,6 +47,8 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
   const ankare = useRef<HTMLDivElement>(null);
   const valjare = useRef<HTMLDivElement>(null);
   const svep = useRef<{ x: number; y: number } | null>(null);
+  const vakt = useRef<HTMLDivElement>(null);
+  const band = useRef<HTMLDivElement>(null);
 
   const valj = (i: number) => {
     tagitOver.current = true;
@@ -86,6 +88,18 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
     };
   }, []);
 
+  // Vakten ligger så långt ovanför väljaren som sidhuvudet tar plats. När den har lämnat skärmen uppåt sitter väljaren fast.
+  useEffect(() => {
+    const el = vakt.current;
+    const b = band.current;
+    if (!el || !b) return;
+    const io = new IntersectionObserver(([entry]) => {
+      b.toggleAttribute("data-fast", !entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   const visa = (i: number) => {
     valj(i);
     const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -100,7 +114,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
   const nya = ALLA.filter((r) => arNy(r.lagen, niva)).length;
 
   return (
-    <section id="kompetens" className={cn("scroll-mt-[var(--header-h)] text-white", natt ? "star-avsnitt relative py-16 md:py-24" : "bg-ink pb-20 pt-4 md:pb-28 md:pt-6")}>
+    <section id="kompetens" className={cn("scroll-mt-[var(--header-h)] overflow-x-clip text-white", natt ? "star-avsnitt relative py-16 md:py-24" : "bg-ink pb-20 pt-4 md:pb-28 md:pt-6")}>
       <div className="container-site">
         <Reveal>
           <p className="kicker text-white/70">Två program vid Linköpings universitet</p>
@@ -139,9 +153,19 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
         </div>
 
         {/* Väljaren och innehållet ligger i samma behållare, annars har väljaren inget att följa med i. */}
-        <div className="mt-6 md:mt-8">
+        <div className="relative mt-6 md:mt-8">
+          <div ref={vakt} aria-hidden className="pointer-events-none absolute inset-x-0 top-[calc(-1*(var(--header-h)+0.5rem))] h-px" />
           <div ref={valjare} className="sticky top-[calc(var(--header-h)+0.5rem)] z-30 [@media(max-height:520px)]:static">
-            <fieldset>
+            {/* Det som scrollar förbi tonas bort här, annars sticker det fram vid väljarens rundade hörn och i glipan under sidhuvudet. Himlen är inte enfärgad, så bandet går över hela bredden och syns bara när väljaren sitter fast. */}
+            <div
+              ref={band}
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute -bottom-5 -top-2 left-1/2 w-screen -translate-x-1/2 opacity-0 transition-opacity duration-200 data-[fast]:opacity-100 motion-reduce:transition-none [@media(max-height:520px)]:hidden",
+                natt ? "bg-[linear-gradient(to_bottom,var(--color-star-navy)_calc(100%-1.25rem),transparent)]" : "bg-[linear-gradient(to_bottom,var(--color-ink)_calc(100%-1.25rem),transparent)]",
+              )}
+            />
+            <fieldset className="relative">
               <legend className="sr-only">Bläddra genom utbildningen: visa vad en student kan på varje nivå</legend>
               <div className={cn("relative grid grid-cols-4 rounded-full border border-white/20 p-1 shadow-[0_10px_30px_rgb(0_0_0_/_0.35)]", natt ? "bg-star-navy" : "bg-ink")}>
                 <span
@@ -154,7 +178,8 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                     key={n.id}
                     className="group relative flex min-h-11 cursor-pointer select-none flex-col items-center justify-center rounded-full px-1 py-1.5 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-white md:min-h-14"
                   >
-                    <input type="radio" name={namn} value={n.id} checked={i === niva} onChange={() => valj(i)} className="sr-only" />
+                    {/* onClick också: ett klick på steget som redan visas ger ingen change, men ska ändå stoppa genomgången. */}
+                    <input type="radio" name={namn} value={n.id} checked={i === niva} onChange={() => valj(i)} onClick={() => valj(i)} className="sr-only" />
                     <span className={cn("text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none md:text-base", i === niva ? "text-ink" : "text-white/85 group-hover:text-white")}>{n.etikett}</span>
                     <span className={cn("hidden text-xs transition-colors duration-200 motion-reduce:transition-none md:block", i === niva ? "text-ink/70" : "text-white/70")}>{n.undertitel}</span>
                   </label>

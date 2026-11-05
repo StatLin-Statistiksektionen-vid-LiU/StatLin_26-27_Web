@@ -97,6 +97,16 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     await levelText(moving.page, "master").waitFor({ timeout: 8000 });
     await moving.context.close();
 
+    // Ett klick på steget som redan visas ger ingen change, men ska ändå stoppa genomgången.
+    const stopped = await newVisitor(browser);
+    await stopped.page.goto(`${BASE}/foretag`);
+    await levelText(stopped.page, "ar1").waitFor();
+    await center(stopped.page);
+    await stepLabel(stopped.page, "År 1").click();
+    await stopped.page.waitForTimeout(2300);
+    assert.ok(await levelText(stopped.page, "ar1").isVisible(), "klicket ska stoppa genomgången på steget man valde");
+    await stopped.context.close();
+
     const calm = await newVisitor(browser, { reducedMotion: "reduce" });
     await calm.page.goto(`${BASE}/foretag`);
     await waitForHydration(calm.page, stepLabel(calm.page, "År 1"));
