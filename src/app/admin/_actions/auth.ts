@@ -6,6 +6,7 @@ import { z } from "zod";
 import { audit } from "@/lib/admin/helpers";
 import { type FormState, invalid } from "@/lib/admin/form";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
+import { LOGIN_ERRORS, loginErrorCode } from "@/lib/auth/login-errors";
 import { clearLoginFailures, clientIp, loginDelayed, loginDelayKey, rateLimitHit, recordLoginFailure } from "@/lib/auth/rate-limit";
 import { actionUser, createSession, currentToken, destroyAllSessionsForUser, destroySession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -16,6 +17,17 @@ let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= hashPassword("statlin-dummy-password"));
 
 export async function login(_prev: FormState, fd: FormData): Promise<FormState> {
+  const state = await attemptLogin(fd);
+  // Utan JavaScript, eller innan sidan hydrerats, kommer formuläret utan next-action och utan att React väntar på svaret. Inloggningssidan har inget
+  // statiskt skal, och då skickar Next inte med svaret från actionen till formuläret: felet måste komma med adressen (SB-27).
+  if ((await headers()).has("next-action")) return state;
+  const query = new URLSearchParams({ fel: loginErrorCode(state.error) });
+  const next = fd.get("next");
+  if (typeof next === "string") query.set("next", next);
+  redirect(`/logga-in?${query}`);
+}
+
+async function attemptLogin(fd: FormData): Promise<FormState> {
   const typedEmail = String(fd.get("email") ?? "").slice(0, 200);
   const fail = (state: FormState): FormState => ({ ...state, data: { email: typedEmail } });
   const parsed = z
@@ -30,14 +42,14 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
 
   const ip = clientIp(await headers());
   if (rateLimitHit(`login:${ip}`)) {
-    return fail({ error: "För många inloggningsförsök. Vänta en stund och försök igen." });
+    return fail({ error: LOGIN_ERRORS.forsok });
   }
 
   const db = getDb();
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
   // Samma svar för okänd adress, fel lösenord, fördröjt och avstängt konto, så att svaret inte avslöjar vilka konton
   // som finns. Varje misslyckat försök sparas i revisionsloggen med adressen, men utan IP.
-  const denied = (reason: string, error = "Fel e-postadress eller lösenord.") => {
+  const denied = (reason: string, error: string = LOGIN_ERRORS.uppgifter) => {
     audit(null, "login_failed", "user", user?.id ?? null, `Misslyckad inloggning (${reason}): ${email}`);
     return fail({ error });
   };
@@ -58,7 +70,7 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   if (!user.active) {
     // Ett avstängt konto räknar inga försök. Först med rätt lösenord får personen veta varför det inte går.
     if (!ok) return denied("avstängt konto, fel lösenord");
-    return denied("avstängt konto, rätt lösenord", "Kontot är avstängt – kontakta en administratör.");
+    return denied("avstängt konto, rätt lösenord", LOGIN_ERRORS.avstangt);
   }
   if (!ok) {
     recordLoginFailure(delayKey);

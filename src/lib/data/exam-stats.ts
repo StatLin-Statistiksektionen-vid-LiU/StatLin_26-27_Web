@@ -62,7 +62,7 @@ async function fetchSource(path: string): Promise<Response | null> {
 }
 
 /** Källans format → moment med tillfällen, nyast först och betygen från sämst till bäst. */
-export function normalizeSource(raw: SourceCourse): ExamStats {
+function normalizeSource(raw: SourceCourse): ExamStats {
   const modules = new Map<string, ExamModule>();
   for (const entry of raw.modules ?? []) {
     let m = modules.get(entry.moduleCode);
@@ -103,6 +103,8 @@ async function fetchCodes(): Promise<string[] | null> {
     const list = (await res.json()) as unknown;
     if (!Array.isArray(list)) return null;
     const codes = list.filter((c): c is string => typeof c === "string").map((c) => c.toUpperCase());
+    // Källan har alltid kurser, så en tom lista är ett fel hos den. Sparad skulle den stänga av sökningen i ett dygn.
+    if (codes.length === 0) return null;
     const db = getDb();
     const upsert = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
     db.transaction(() => {
@@ -119,7 +121,8 @@ async function fetchCodes(): Promise<string[] | null> {
 export async function listExamCodes(): Promise<string[]> {
   await readDb();
   const { codes, fetchedAt } = readCodes();
-  if (!codes) return (await refreshCodes()) ?? [];
+  // Också en tom lista: den kan ligga sparad från tiden innan den räknades som ett fel.
+  if (!codes?.length) return (await refreshCodes()) ?? [];
   if (isStale(fetchedAt)) after(refreshCodes);
   return codes;
 }

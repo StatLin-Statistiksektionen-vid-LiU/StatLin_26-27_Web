@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore, type ElementType, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Tonar in innehåll när det scrollas in i bild. */
+const noSubscribe = () => () => {};
+const whenRenderedInBrowser = () => false;
+const whenHydrating = () => true;
+
+/**
+ * Tonar in innehåll när det scrollas in i bild. Innehållet är synligt i HTML:en och göms först här, när observern är på plats, så att det
+ * syns utan JavaScript och medan det laddas (SB-03).
+ */
 export function Reveal({
   children,
   as: Tag = "div",
@@ -17,10 +24,15 @@ export function Reveal({
 }) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState(false);
+  // Sant om elementet kom som HTML från servern, falskt om det renderas här, som vid sidbyte inom sajten. Det första värdet gäller.
+  const [fromHtml] = useState(useSyncExternalStore(noSubscribe, whenRenderedInBrowser, whenHydrating));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // HTML som redan har synts ska inte försvinna och tonas in igen. Elementet kan ha gömts tidigare: effekten körs om när Next visar en dold sida igen.
+    if (fromHtml && !el.dataset.hydrated && el.getBoundingClientRect().top < window.innerHeight) return;
+    el.dataset.hydrated = "true";
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -32,7 +44,7 @@ export function Reveal({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [fromHtml]);
 
   return (
     <Tag

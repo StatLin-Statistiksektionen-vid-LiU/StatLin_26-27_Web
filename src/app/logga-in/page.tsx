@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 import { FloatingLogo } from "@/components/brand/floating-logo";
 import { ArrowLeft } from "@/components/icons";
+import { loginErrorText } from "@/lib/auth/login-errors";
 import { getSessionUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -12,7 +13,13 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function LoginPage(props: PageProps<"/logga-in">) {
+// Sidan renderas hel vid varje anrop, utan statiskt skal. Med ett skal svarar Next på ett formulär som skickats utan JavaScript
+// med bara det dynamiska innehållet, och besökaren får en vit sida. Felmeddelandet och "Du är utloggad" läses dessutom ur adressen,
+// och ett hål i skalet skulle inte synas utan JavaScript (SB-27).
+export const instant = false;
+
+export default async function LoginPage(props: PageProps<"/logga-in">) {
+  const { utloggad, next, fel } = await props.searchParams;
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <section className="noise relative hidden overflow-hidden bg-ink text-white lg:flex lg:flex-col">
@@ -39,13 +46,12 @@ export default function LoginPage(props: PageProps<"/logga-in">) {
           <h1 className="display mt-3 text-[2.6rem]">Logga in</h1>
           <p className="mt-3 text-stone">Använd e-postadressen för din post. Saknar du konto? Fråga sektionens webbansvariga.</p>
           <Suspense fallback={null}>
-            <LoginGate searchParams={props.searchParams} />
+            <LoggedInRedirect />
           </Suspense>
-          {/* Formuläret ligger i det statiska skalet så att det syns och fungerar direkt, även utan JavaScript. */}
-          <LoginForm>
-            <Suspense fallback={null}>
-              <NextField searchParams={props.searchParams} />
-            </Suspense>
+          {utloggad && <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
+          <LoginForm error={loginErrorText(fel)}>
+            {/* Sidan man skickades från, så att man hamnar rätt efter inloggningen. */}
+            {typeof next === "string" && <input type="hidden" name="next" value={next} />}
           </LoginForm>
         </div>
         <p className="text-center text-xs text-stone">Glömt lösenordet? En administratör kan återställa det åt dig.</p>
@@ -54,16 +60,8 @@ export default function LoginPage(props: PageProps<"/logga-in">) {
   );
 }
 
-/** Redan inloggad → vidare till adminpanelen. Visar också "Du är utloggad". */
-async function LoginGate({ searchParams }: { searchParams: PageProps<"/logga-in">["searchParams"] }) {
-  const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
-  if (user) redirect("/admin");
-  if (!sp.utloggad) return null;
-  return <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>;
-}
-
-/** Sidan man skickades från, så att man hamnar rätt efter inloggningen. */
-async function NextField({ searchParams }: { searchParams: PageProps<"/logga-in">["searchParams"] }) {
-  const { next } = await searchParams;
-  return typeof next === "string" ? <input type="hidden" name="next" value={next} /> : null;
+/** Redan inloggad → vidare till adminpanelen. Egen Suspense-gräns: högst upp i sidan ger omdirigeringen en helt tom sida utan JavaScript (SB-27). */
+async function LoggedInRedirect() {
+  if (await getSessionUser()) redirect("/admin");
+  return null;
 }

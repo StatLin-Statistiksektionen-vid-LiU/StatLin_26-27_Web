@@ -2,12 +2,12 @@ import Link from "next/link";
 import { CoverArt } from "./cover-art";
 import { SmartImage } from "./smart-image";
 import { ArrowUpRight, Clock, MapPin } from "@/components/icons";
-import { formatTimeRange, parts, relativeDay } from "@/lib/dates";
+import { type DateLocale, formatTimeRange, parts, relativeDay } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function DateBlock({ date, className, dark }: { date: string; className?: string; dark?: boolean }) {
-  const p = parts(date);
+function DateBlock({ date, className, dark, locale }: { date: string; className?: string; dark?: boolean; locale?: DateLocale }) {
+  const p = parts(date, locale);
   return (
     <div
       className={cn(
@@ -88,7 +88,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
 }
 
 /** Kompakt rad för listor och kalendervyer. */
-export function EventRow({ event, dark }: { event: EventItem; dark?: boolean }) {
+export function EventRow({ event, dark, locale }: { event: EventItem; dark?: boolean; locale?: DateLocale }) {
   return (
     <Link
       href={`/evenemang/${event.slug}`}
@@ -97,10 +97,10 @@ export function EventRow({ event, dark }: { event: EventItem; dark?: boolean }) 
         dark ? "border-white/10 hover:bg-white/[0.03]" : "border-ink/10 hover:bg-white/60",
       )}
     >
-      <DateBlock date={event.starts_at} dark={dark} />
+      <DateBlock date={event.starts_at} dark={dark} locale={locale} />
       <div className="min-w-0 flex-1">
         <p className={cn("kicker", dark ? "text-white/45" : "text-stone")}>
-          {event.committee?.short_name ?? "StatLin"} · {formatTimeRange(event.starts_at, event.ends_at, !!event.all_day)}
+          {event.committee?.short_name ?? "StatLin"} · {formatTimeRange(event.starts_at, event.ends_at, !!event.all_day, locale)}
         </p>
         <p className="mt-1 truncate text-lg font-bold tracking-tight">{event.title}</p>
         {event.location && <p className={cn("truncate text-sm", dark ? "text-white/55" : "text-stone")}>{event.location}</p>}

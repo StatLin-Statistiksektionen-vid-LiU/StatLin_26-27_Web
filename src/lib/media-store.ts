@@ -8,10 +8,8 @@ import { getDb, ORIGINALS_DIR, UPLOADS_DIR } from "./db";
 import type { Media } from "./types";
 import { FILE_TYPES, fileMime } from "./file-types";
 
-export { FILE_TYPES };
-
-export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
-export const MAX_FILE_BYTES = 30 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+const MAX_FILE_BYTES = 30 * 1024 * 1024;
 
 const IMAGE_WIDTHS = [480, 1200, 2000];
 

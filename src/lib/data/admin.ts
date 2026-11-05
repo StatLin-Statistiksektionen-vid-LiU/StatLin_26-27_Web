@@ -1,5 +1,6 @@
 import "server-only";
 import { readDb } from "./db";
+import { EVENT_END } from "./events";
 import { nowLocal } from "@/lib/dates";
 import type { Role } from "@/lib/types";
 
@@ -80,7 +81,7 @@ export async function dashboardStats(committeeId: number | null) {
   const p = { now, c: committeeId };
   const one = (sql: string) => (db.prepare(sql).get(p) as { n: number }).n;
   return {
-    upcoming: one(`SELECT COUNT(*) AS n FROM events WHERE published = 1 AND starts_at >= @now ${where}`),
+    upcoming: one(`SELECT COUNT(*) AS n FROM events e WHERE e.published = 1 AND ${EVENT_END} >= @now ${where}`),
     drafts: one(`SELECT COUNT(*) AS n FROM events WHERE published = 0 ${where}`) + one(`SELECT COUNT(*) AS n FROM news WHERE published = 0 ${where}`),
     images: one(`SELECT COUNT(*) AS n FROM event_images ei JOIN events e ON e.id = ei.event_id WHERE 1=1 ${committeeId ? "AND e.committee_id = @c" : ""}`),
     news: one(`SELECT COUNT(*) AS n FROM news WHERE published = 1 ${where}`),

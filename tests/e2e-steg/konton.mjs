@@ -115,7 +115,7 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     await setAccountActive(email, false);
     await person.page.fill('input[name="title"]', `Ska inte sparas ${uniqueId()}`);
     await person.page.getByRole("button", { name: "Spara som utkast" }).click();
-    await person.page.getByText("Du har loggats ut – logga in i en ny flik och spara igen.").waitFor();
+    await person.page.getByText("Du har loggats ut – logga in i en ny flik och försök igen.").waitFor();
     assert.equal((await person.context.request.get(`${BASE}${LOGGED_IN_API}`)).status(), 401, "redigeringens API efter avstängningen");
     await person.page.goto(`${BASE}/admin`);
     await person.page.waitForURL(/\/logga-in/);

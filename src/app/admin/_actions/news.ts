@@ -16,9 +16,10 @@ import {
   zText,
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
-import { localToIso } from "@/lib/dates";
+import { isoToLocal, localToIso } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 
@@ -26,7 +27,7 @@ const schema = z.object({
   title: zRequired(160, "Rubriken"),
   slug: zText(90),
   excerpt: zText(320, "Ingressen"),
-  body_md: zText(40000, "Texten"),
+  body_md: zText(TEXT_LIMITS.news, "Texten"),
   committee_id: zOptionalId,
   cover_media_id: zOptionalId,
   published: zCheckbox,
@@ -35,6 +36,21 @@ const schema = z.object({
 });
 
 const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda upp en ny bild." };
+
+/**
+ * Publiceringsdatumet när en befintlig nyhet sparas (SB-33). Fältet har bara minuter och den sparade tiden sekunder, så de
+ * jämförs i fältets form. En vanlig sparning av en publicerad nyhet ändrar inte datumet, och den flyttar den inte heller
+ * upp i listan. Ett utkast som publiceras får dagens datum, om det inte är schemalagt eller om ett annat datum valts.
+ */
+function nextPublishedAt(existing: { published: number; published_at: string }, d: { published: number; published_at: string | null }): string {
+  const stored = existing.published_at;
+  const scheduled = Date.parse(stored) > Date.now();
+  if (d.published_at && d.published_at !== isoToLocal(stored)) return localToIso(d.published_at);
+  if (d.published_at && scheduled) return stored;
+  if (d.published && !existing.published) return nowIso();
+  // Ett tömt fält tar bort schemaläggningen.
+  return !d.published_at && scheduled ? nowIso() : stored;
+}
 
 export async function saveNews(_prev: FormState, fd: FormData): Promise<FormState> {
   // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
@@ -53,12 +69,11 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
   }
   const committeeId = isEditor(user) ? d.committee_id : user.committee_id;
   const pinned = isEditor(user) ? d.pinned : 0;
-  const publishedAt = d.published_at ? localToIso(d.published_at) : nowIso();
   const db = getDb();
 
   if (id) {
-    const existing = db.prepare("SELECT id, committee_id, pinned, cover_media_id FROM news WHERE id = ?").get(id) as
-      | { id: number; committee_id: number | null; pinned: number; cover_media_id: number | null }
+    const existing = db.prepare("SELECT id, committee_id, pinned, cover_media_id, published, published_at FROM news WHERE id = ?").get(id) as
+      | { id: number; committee_id: number | null; pinned: number; cover_media_id: number | null; published: number; published_at: string }
       | undefined;
     if (!existing) return { error: "Nyheten finns inte längre." };
     if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ändra den här nyheten." };
@@ -80,7 +95,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       committee_id: committeeId,
       cover_media_id: coverMediaId,
       pinned: isEditor(user) ? pinned : existing.pinned,
-      published_at: publishedAt,
+      published_at: nextPublishedAt(existing, d),
       updated_at: updatedAt,
       id,
       version: formVersion(fd),
@@ -101,25 +116,28 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
       `INSERT INTO news (title, slug, excerpt, body_md, committee_id, cover_media_id, published, pinned, published_at, author_id)
        VALUES (@title, @slug, @excerpt, @body_md, @committee_id, @cover_media_id, @published, @pinned, @published_at, @author_id)`,
     )
-    .run({ ...d, slug, committee_id: committeeId, pinned, published_at: publishedAt, author_id: user.id });
+    .run({ ...d, slug, committee_id: committeeId, pinned, published_at: d.published_at ? localToIso(d.published_at) : nowIso(), author_id: user.id });
   audit(user.id, "create", "news", Number(res.lastInsertRowid), d.title);
   await renewSessionIfDue();
   revalidateSite();
   redirect(`/admin/nyheter/${res.lastInsertRowid}?skapad=1`);
 }
 
-export async function deleteNews(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
+export async function deleteNews(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const db = getDb();
   const existing = db.prepare("SELECT id, committee_id, title, cover_media_id FROM news WHERE id = ?").get(id) as
     | { id: number; committee_id: number | null; title: string; cover_media_id: number | null }
     | undefined;
-  if (!existing || !canEditOwned(user, existing)) redirect("/admin/nyheter");
+  if (!existing) return { error: "Nyheten finns inte längre." };
+  if (!canEditOwned(user, existing)) return { error: "Du har inte behörighet att ta bort den här nyheten." };
   db.prepare("DELETE FROM news WHERE id = ?").run(id);
   await deleteMediaIfUnused(existing.cover_media_id);
   audit(user.id, "delete", "news", id, existing.title);
+  await renewSessionIfDue();
   revalidateSite();
   redirect("/admin/nyheter?raderad=1");
 }

@@ -23,7 +23,7 @@ export default function AboutPage() {
       fallback={
         <>
           <HeroSkeleton />
-          <PageSkeleton />
+          <PageSkeleton note={false} />
         </>
       }
     >

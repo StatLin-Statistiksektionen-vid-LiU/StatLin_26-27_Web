@@ -9,7 +9,7 @@ type Row = Omit<EventItem, "committee" | "cover"> & { committee_json: string | n
 const SELECT = `
   SELECT e.*,
     CASE WHEN c.id IS NULL THEN NULL ELSE json_object(
-      'id', c.id, 'slug', c.slug, 'name', c.name, 'short_name', c.short_name, 'logo_url', c.logo_url, 'accent', c.accent
+      'id', c.id, 'slug', c.slug, 'name', c.name, 'short_name', c.short_name, 'logo_url', c.logo_url, 'accent', c.accent, 'visible', c.visible, 'kind', c.kind
     ) END AS committee_json,
     ${MEDIA_JSON_COLUMNS("m")} AS cover_json,
     (SELECT COUNT(*) FROM event_images ei WHERE ei.event_id = e.id) AS image_count
@@ -27,7 +27,7 @@ function map(r: Row): EventItem {
 }
 
 /** Sista minuten ett evenemang pågår – samma regel som eventEnd i src/lib/dates.ts. */
-const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
+export const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
   ELSE COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') END`;
 
 /** Kommande = ej avslutade (pågående räknas som kommande). */

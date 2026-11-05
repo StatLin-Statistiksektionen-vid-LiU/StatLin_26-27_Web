@@ -4,11 +4,12 @@ import { CourseSearch } from "@/components/exam/course-search";
 import { ArrowUpRight } from "@/components/icons";
 import { PageHero } from "@/components/ui/page-hero";
 import { normalizeCourseCode } from "@/lib/exam-stats";
+import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Tentastatistik",
   description: "Hur brukar tentan gå? Sök på kurskoden för vilken LiU-kurs som helst och se betygen på varje tentatillfälle.",
-  alternates: { canonical: "/tentastatistik" },
+  alternates: { ...SITE_ALTERNATES, canonical: "/tentastatistik" },
 };
 
 /** Fler ställen med tentastatistik. */

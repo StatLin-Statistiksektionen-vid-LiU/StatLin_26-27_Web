@@ -21,7 +21,7 @@ export const TERMS = [1, 2, 3, 4, 5, 6];
 /** Kandidaten har sex terminer och mastern fyra, så det som gäller båda programmen kan ligga på termin 1–4. */
 export const LAST_TERM: Record<ResourceProgram, number> = { kandidat: 6, master: 4, bada: 4 };
 
-export const termYear = (term: number) => Math.ceil(term / 2);
+const termYear = (term: number) => Math.ceil(term / 2);
 
 /** Båda programmen börjar på hösten, så udda terminer är hösttermin. */
 export const termSeason = (term: number) => (term % 2 === 1 ? "Hösttermin" : "Vårtermin");

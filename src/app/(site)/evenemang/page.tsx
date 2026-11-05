@@ -10,6 +10,7 @@ import { PageSkeleton } from "@/components/ui/skeletons";
 import { listCommittees } from "@/lib/data/content";
 import { listEventsBetween, listPastEvents, listUpcomingEvents } from "@/lib/data/events";
 import { calendarMonth, calendarMonthInRange, eventInMonth, eventLastDay, monthGrid, monthLabel, todayLocal } from "@/lib/dates";
+import { SITE_ALTERNATES } from "@/lib/site-metadata";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/evenemang">
   return {
     title: "Evenemang",
     description: "Sittningar, pubar, idrott, föreläsningar och sektionsmöten – allt som händer på StatLin.",
-    // Metadata slås ihop ytligt, så länken till kalenderflödet från roten måste stå med här.
-    alternates: { canonical: "/evenemang", types: { "text/calendar": "/kalender.ics" } },
+    alternates: { ...SITE_ALTERNATES, canonical: "/evenemang" },
     // Kalendervyn och filtren är samma innehåll under andra adresser.
     robots: vy !== undefined || manad !== undefined || utskott !== undefined ? { index: false } : undefined,
   };

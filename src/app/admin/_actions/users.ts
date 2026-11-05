@@ -6,7 +6,8 @@ import { type FormState, formObject, invalid, zCheckbox, zEmail, zOptionalId, zR
 import { audit } from "@/lib/admin/helpers";
 import { generatePassword, hashPassword } from "@/lib/auth/password";
 import { isAdmin } from "@/lib/auth/permissions";
-import { actionUser, destroyAllSessionsForUser } from "@/lib/auth/session";
+import { actionUser, destroyAllSessionsForUser, renewSessionIfDue } from "@/lib/auth/session";
+import { ROLE_VALUES } from "@/lib/types";
 import { getDb } from "@/lib/db";
 
 const forbidden: FormState = { error: "Endast administratörer kan hantera konton." };
@@ -15,7 +16,7 @@ const schema = z.object({
   email: zEmail,
   name: zRequired(120, "Namnet"),
   post: zText(120),
-  role: z.enum(["admin", "editor", "committee"], { message: "Välj en roll." }),
+  role: z.enum(ROLE_VALUES, { message: "Välj en roll." }),
   committee_id: zOptionalId,
   active: zCheckbox,
   design: zCheckbox,
@@ -90,18 +91,20 @@ export async function resetUserPassword(_prev: FormState, fd: FormData): Promise
   return { ok: true, message: "Nytt tillfälligt lösenord (visas bara nu):", data: { password, email: user.email } };
 }
 
-export async function deleteUser(fd: FormData) {
-  const me = await actionUser();
-  if ("error" in me) return;
-  if (!isAdmin(me)) redirect("/admin");
+export async function deleteUser(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const me = await actionUser({ renew: false });
+  if ("error" in me) return me;
+  if (!isAdmin(me)) return forbidden;
   const id = Number(fd.get("id"));
-  if (id === me.id) redirect(`/admin/konton/${id}?fel=sjalv`);
+  // Administratören som frågar är själv kvar, så det finns alltid minst en kvar efter raderingen.
+  if (id === me.id) return { error: "Du kan inte ta bort ditt eget konto." };
   const db = getDb();
   const user = db.prepare("SELECT email, role FROM users WHERE id = ?").get(id) as { email: string; role: string } | undefined;
   if (user) {
-    if (user.role === "admin" && adminCount(id) === 0) redirect(`/admin/konton/${id}?fel=sista`);
     db.prepare("DELETE FROM users WHERE id = ?").run(id);
     audit(me.id, "delete", "user", id, user.email);
+    await renewSessionIfDue();
   }
   redirect("/admin/konton?raderad=1");
 }

@@ -9,7 +9,7 @@ type Row = Omit<NewsItem, "committee" | "cover"> & { committee_json: string | nu
 const SELECT = `
   SELECT n.*, u.name AS author_name, u.post AS author_post,
     CASE WHEN c.id IS NULL THEN NULL ELSE json_object(
-      'id', c.id, 'slug', c.slug, 'name', c.name, 'short_name', c.short_name, 'logo_url', c.logo_url, 'accent', c.accent
+      'id', c.id, 'slug', c.slug, 'name', c.name, 'short_name', c.short_name, 'logo_url', c.logo_url, 'accent', c.accent, 'visible', c.visible, 'kind', c.kind
     ) END AS committee_json,
     ${MEDIA_JSON_COLUMNS("m")} AS cover_json
   FROM news n

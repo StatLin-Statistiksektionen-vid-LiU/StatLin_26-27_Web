@@ -6,14 +6,18 @@ import { ArrowRight, Search } from "@/components/icons";
 import { normalizeCourseCode } from "@/lib/exam-stats";
 import { cn } from "@/lib/utils";
 
-/** Kodlistan (drygt 4 000 koder) hämtas en gång per sidvisning, först när någon börjar skriva. */
+/**
+ * Kodlistan (drygt 4 000 koder) hämtas en gång per sidvisning, först när någon börjar skriva. Ett fel eller en tom lista betyder att
+ * källan inte svarade, och då försöker nästa fokus eller tecken igen.
+ */
 let codesPromise: Promise<string[]> | null = null;
 function loadCodes(): Promise<string[]> {
   codesPromise ??= fetch("/api/tentastatistik/koder")
     .then((r) => (r.ok ? (r.json() as Promise<string[]>) : []))
-    .catch(() => {
-      codesPromise = null;
-      return [];
+    .catch(() => [])
+    .then((list) => {
+      if (list.length === 0) codesPromise = null;
+      return list;
     });
   return codesPromise;
 }
@@ -78,6 +82,7 @@ export function CourseSearch({
             setOpen(true);
             setActive(-1);
             setMessage("");
+            if (codes.length === 0) loadCodes().then(setCodes);
           }}
           onFocus={() => {
             setOpen(true);
