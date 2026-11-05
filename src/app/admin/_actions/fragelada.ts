@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, formVersion, invalid, STALE, zCheckbox, zOptionalId, zRequired, zText } from "@/lib/admin/form";
-import { audit, nowIso, revalidateSite } from "@/lib/admin/helpers";
+import { audit, forbidden, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { canDeleteBox, canManageFragelada, ownsBox } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { FRAGELADA_SETTING } from "@/lib/data/fragelada";
@@ -18,7 +18,6 @@ import { CODE_ALPHABET, CODE_LENGTH } from "@/lib/fragelada";
  * lådorna (skapad, borttagen, tömd, ny ägare, på och av), aldrig något om enskilda frågor.
  */
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 const BOARD = "/admin";
 
 type BoxRow = { id: number; slug: string | null; title: string; owner_id: number | null; updated_at: string };
@@ -67,7 +66,7 @@ export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState
 
   if (d.id) {
     const box = loadBox(d.id);
-    if (!box || !ownsBox(user, box)) return forbidden;
+    if (!box || !ownsBox(user, box)) return forbidden();
     const now = nowIso();
     const res = db
       .prepare("UPDATE question_boxes SET title = ?, description = ?, closes_on = ?, updated_at = ? WHERE id = ? AND updated_at = ?")
@@ -125,7 +124,7 @@ export async function deleteQuestion(fd: FormData): Promise<FormState> {
   const row = id
     ? (db.prepare("SELECT q.box_id FROM box_questions q JOIN question_boxes b ON b.id = q.box_id WHERE q.id = ? AND b.owner_id = ?").get(id, user.id) as { box_id: number } | undefined)
     : undefined;
-  if (!row) return forbidden;
+  if (!row) return forbidden();
   eraseOnDelete();
   db.prepare("DELETE FROM box_questions WHERE id = ?").run(id);
   revalidateInbox();
@@ -137,7 +136,7 @@ export async function emptyBox(fd: FormData): Promise<FormState> {
   if ("error" in user) return user;
   const id = idFrom(fd);
   const box = id ? loadBox(id) : undefined;
-  if (!box || !ownsBox(user, box)) return forbidden;
+  if (!box || !ownsBox(user, box)) return forbidden();
   eraseOnDelete();
   const { changes } = getDb().prepare("DELETE FROM box_questions WHERE box_id = ?").run(box.id);
   audit(user.id, "delete", "question_box", box.id, `Tömde lådan ${box.title} (${changes} frågor)`);
@@ -152,7 +151,7 @@ export async function deleteBox(fd: FormData): Promise<FormState> {
   const id = idFrom(fd);
   const box = id ? loadBox(id) : undefined;
   if (!box) return { error: "Lådan finns inte längre." };
-  if (!canDeleteBox(user, box)) return forbidden;
+  if (!canDeleteBox(user, box)) return forbidden();
   eraseOnDelete();
   getDb().prepare("DELETE FROM question_boxes WHERE id = ?").run(box.id);
   audit(user.id, "delete", "question_box", box.id, box.title);
@@ -190,12 +189,12 @@ const ownerSchema = z.object({ id: zOptionalId, owner_id: zOptionalId, empty_ok:
 export async function setBoxOwner(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageFragelada(user)) return forbidden;
+  if (!canManageFragelada(user)) return forbidden();
   const parsed = ownerSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const { id, owner_id, empty_ok } = parsed.data;
   const box = id ? loadBox(id) : undefined;
-  if (!box || box.slug === null) return forbidden;
+  if (!box || box.slug === null) return forbidden();
   if (box.owner_id === owner_id) return { ok: true, message: "Ingen ändring." };
   const db = getDb();
   if (owner_id !== null && !db.prepare("SELECT 1 FROM users WHERE id = ? AND active = 1").get(owner_id)) {

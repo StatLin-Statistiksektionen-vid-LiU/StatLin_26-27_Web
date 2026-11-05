@@ -3,14 +3,12 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zRequired, zText, zUrl } from "@/lib/admin/form";
-import { audit, canUseImage, revalidateSite } from "@/lib/admin/helpers";
+import { audit, canUseImage, forbidden, revalidateSite } from "@/lib/admin/helpers";
 import { actionUser } from "@/lib/auth/session";
 import { canManageNaringsliv } from "@/lib/data/naringsliv";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 import { COMPANY_ROLES, SEEK_KINDS, WISH_COMMENT_MAX, WISH_STATUSES, WISH_STATUS_LABELS, WISH_TITLE_MAX, type WishStatus } from "@/lib/naringsliv";
-
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 /* ---------- STAR-företagen ---------- */
 
@@ -27,7 +25,7 @@ const companySchema = z.object({
 export async function saveStarCompany(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageNaringsliv(user)) return forbidden;
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = companySchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -38,7 +36,7 @@ export async function saveStarCompany(_prev: FormState, fd: FormData): Promise<F
   if (id) {
     const old = db.prepare("SELECT logo_media_id FROM star_companies WHERE id = ?").get(id) as { logo_media_id: number | null } | undefined;
     if (!old) return { error: "Företaget finns inte längre." };
-    if (old.logo_media_id !== values.logo_media_id && !canUseImage(user, values.logo_media_id)) return forbidden;
+    if (old.logo_media_id !== values.logo_media_id && !canUseImage(user, values.logo_media_id)) return forbidden();
     db.prepare(
       "UPDATE star_companies SET name=@name, url=@url, description=@description, logo_media_id=@logo_media_id, seeks=@seeks, role=@role, sort_order=@sort_order, active=@active WHERE id=@id",
     ).run({ ...values, id });
@@ -47,7 +45,7 @@ export async function saveStarCompany(_prev: FormState, fd: FormData): Promise<F
     revalidateSite();
     return { ok: true, message: "Företaget är sparat." };
   }
-  if (!canUseImage(user, values.logo_media_id)) return forbidden;
+  if (!canUseImage(user, values.logo_media_id)) return forbidden();
   const res = db
     .prepare("INSERT INTO star_companies (name, url, description, logo_media_id, seeks, role, sort_order, active) VALUES (@name, @url, @description, @logo_media_id, @seeks, @role, @sort_order, @active)")
     .run(values);
@@ -59,7 +57,7 @@ export async function saveStarCompany(_prev: FormState, fd: FormData): Promise<F
 export async function deleteStarCompany(fd: FormData): Promise<FormState | void> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageNaringsliv(user)) return forbidden;
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT name, logo_media_id FROM star_companies WHERE id = ?").get(id) as { name: string; logo_media_id: number | null } | undefined;
@@ -84,7 +82,7 @@ const wishSchema = z.object({
 export async function saveWish(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageNaringsliv(user)) return forbidden;
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
   const parsed = wishSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -120,7 +118,7 @@ export async function setWishStatus(fd: FormData): Promise<void> {
 export async function deleteWish(fd: FormData): Promise<FormState | void> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageNaringsliv(user)) return forbidden;
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("DELETE FROM lecture_wishes WHERE id = ? RETURNING title").get(id) as { title: string } | undefined;

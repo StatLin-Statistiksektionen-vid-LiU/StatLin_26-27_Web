@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, formVersion, invalid, STALE, zRequired, zText } from "@/lib/admin/form";
-import { audit, nowIso } from "@/lib/admin/helpers";
+import { audit, forbidden, nowIso } from "@/lib/admin/helpers";
 import { yearInRange } from "@/lib/arshjul";
 import { canChangePlan } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
@@ -13,7 +13,6 @@ import { getDb } from "@/lib/db";
 import { isValidDate, planTemplate } from "@/lib/projektplan-mallar";
 import { findResponsibleAccount } from "./projektplaner-hjalp";
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 const revalidateAdmin = () => revalidatePath("/admin", "layout");
 
 type PlanRow = { id: number; title: string; owner_user_id: number | null; responsible: string; template: string; updated_at: string };
@@ -111,7 +110,7 @@ export async function savePlan(_prev: FormState, fd: FormData): Promise<FormStat
   const d = parsed.data;
   const existing = loadPlan(d.id);
   if (!existing) return { error: "Planen finns inte längre." };
-  if (!canChangePlan(user, existing)) return forbidden;
+  if (!canChangePlan(user, existing)) return forbidden();
   const updatedAt = nowIso();
   // Stegen flyttas inte med datumet: någon kan redan ha bokat efter dem. Det står vid fältet.
   const res = getDb()
@@ -138,7 +137,7 @@ export async function addPlanStep(_prev: FormState, fd: FormData): Promise<FormS
   const d = parsed.data;
   const plan = loadPlan(d.plan_id);
   if (!plan) return { error: "Planen finns inte längre." };
-  if (!canChangePlan(user, plan)) return forbidden;
+  if (!canChangePlan(user, plan)) return forbidden();
   const to = findResponsibleAccount(plan.responsible) ?? user.id;
   const res = getDb()
     .prepare("INSERT INTO tasks (title, from_user_id, to_user_id, shared, due_date, assigned_at, project_plan_id) VALUES (?, ?, ?, 1, ?, ?, ?)")
@@ -155,7 +154,7 @@ export async function deletePlan(fd: FormData): Promise<FormState> {
   const id = Number(fd.get("id"));
   const existing = loadPlan(id);
   if (!existing) return { error: "Planen finns inte längre." };
-  if (!canChangePlan(user, existing)) return forbidden;
+  if (!canChangePlan(user, existing)) return forbidden();
   // Uppdragen står kvar på tavlan utan plan (ON DELETE SET NULL), och årshjulspunkten blir öppen igen om inget annat är planerat.
   getDb().prepare("DELETE FROM project_plans WHERE id = ?").run(id);
   audit(user.id, "delete", "project_plan", id, existing.title);

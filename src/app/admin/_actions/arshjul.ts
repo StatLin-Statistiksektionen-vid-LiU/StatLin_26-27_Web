@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, formVersion, invalid, STALE, zRequired, zText } from "@/lib/admin/form";
-import { audit, nowIso } from "@/lib/admin/helpers";
+import { audit, forbidden, nowIso } from "@/lib/admin/helpers";
 import { itemTerm, suggestedDueDate, termOfMonth, yearInRange, type WheelItem, type WheelStatus } from "@/lib/arshjul";
 import { WHEEL_SUGGESTIONS } from "@/lib/arshjul-forslag";
 import { canChangeWheelItem } from "@/lib/auth/permissions";
@@ -13,8 +13,6 @@ import { todayLocal } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { planTemplate } from "@/lib/projektplan-mallar";
 import { findResponsibleAccount } from "./projektplaner-hjalp";
-
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 /** Hjulet, översiktens kort och tavlan ligger alla under /admin. */
 const revalidateAdmin = () => revalidatePath("/admin", "layout");
@@ -64,7 +62,7 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
   if (d.id) {
     const existing = loadItem(d.id);
     if (!existing) return { error: "Punkten finns inte längre." };
-    if (!canChangeWheelItem(user, existing)) return forbidden;
+    if (!canChangeWheelItem(user, existing)) return forbidden();
     const updatedAt = nowIso();
     const res = db
       .prepare("UPDATE wheel_items SET title = ?, description = ?, responsible = ?, month = ?, term = ?, depends_on = ?, template = ?, updated_at = ? WHERE id = ? AND updated_at = ?")
@@ -91,7 +89,7 @@ export async function deleteWheelItem(fd: FormData): Promise<FormState> {
   const id = Number(fd.get("id"));
   const existing = loadItem(id);
   if (!existing) return { error: "Punkten finns inte längre." };
-  if (!canChangeWheelItem(user, existing)) return forbidden;
+  if (!canChangeWheelItem(user, existing)) return forbidden();
   // Uppdrag och planer som skapats från punkten står kvar: de är redan arbete som någon gör.
   getDb().prepare("DELETE FROM wheel_items WHERE id = ?").run(id);
   audit(user.id, "delete", "wheel_item", id, existing.title);
@@ -139,7 +137,7 @@ export async function setWheelStatus(fd: FormData): Promise<FormState> {
   const item = loadItem(Number(fd.get("id")));
   const year = yearOf(fd);
   if (!item || year === null) return { error: "Punkten finns inte längre. Ladda om sidan." };
-  if (!canChangeWheelItem(user, item)) return forbidden;
+  if (!canChangeWheelItem(user, item)) return forbidden();
   const action = String(fd.get("status"));
   if (action !== "klar" && action !== "hoppad" && action !== "oppen") return { error: "Okänt val." };
   // Ångra återställer till planerad om uppdraget eller planen finns kvar. effectiveStatus räknar ut det, så här räcker "planerad".
