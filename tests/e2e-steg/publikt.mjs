@@ -212,7 +212,8 @@ export default async function publiktSteg({ BASE, browser, step }) {
         await p.goto(`${BASE}/integritet`);
         await p.goBack();
         await stillThere("bakåt");
-        assert.equal(await p.evaluate(() => history.scrollRestoration), "auto", "bakåt inom sajten ska webbläsaren få sköta själv");
+        // Bakåt inom sajten ska webbläsaren få sköta själv igen när platsen väl är tillbaka.
+        await p.waitForFunction(() => history.scrollRestoration === "auto", null, { timeout: 10000 });
 
         // Den som öppnar sidan på nytt ska börja högst upp.
         await p.goto(`${BASE}${path}`);
