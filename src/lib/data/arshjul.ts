@@ -61,8 +61,8 @@ export interface ProjectPlan {
 
 const PLAN_SELECT = `
   SELECT p.*,
-    (SELECT COUNT(*) FROM tasks t WHERE t.project_plan_id = p.id) AS total,
-    (SELECT COUNT(*) FROM tasks t WHERE t.project_plan_id = p.id AND t.status = 'klar') AS done
+    (SELECT COUNT(*) FROM plan_steps s WHERE s.plan_id = p.id) AS total,
+    (SELECT COUNT(*) FROM plan_steps s LEFT JOIN tasks t ON t.id = s.task_id WHERE s.plan_id = p.id AND (s.done = 1 OR t.status = 'klar')) AS done
   FROM project_plans p`;
 
 export async function listProjectPlans(): Promise<ProjectPlan[]> {
@@ -75,14 +75,17 @@ export async function getProjectPlan(id: number): Promise<ProjectPlan | null> {
   return (db.prepare(`${PLAN_SELECT} WHERE p.id = ?`).get(id) as ProjectPlan | undefined) ?? null;
 }
 
+/** Ett steg i en plan. Är det skickat till tavlan kommer rubrik, datum och status från uppdraget. */
 export interface PlanStep {
   id: number;
+  task_id: number | null;
   title: string;
-  status: string;
+  description: string;
   due_date: string | null;
+  status: string | null;
+  done: boolean;
   label: string | null;
   open: boolean;
-  /** Uppdraget är privat och användaren får inte se det: det räknas i mätaren men syns inte i listan. */
   hidden: boolean;
 }
 
@@ -90,13 +93,39 @@ export async function listPlanSteps(planId: number, user: SessionUser): Promise<
   const db = await readDb();
   const rows = db
     .prepare(
-      `SELECT t.id, t.title, t.status, t.due_date, t.from_user_id, t.to_user_id, t.shared, COALESCE(NULLIF(u.post, ''), u.name) AS label
-       FROM tasks t LEFT JOIN users u ON u.id = t.to_user_id
-       WHERE t.project_plan_id = ?
-       ORDER BY t.due_date IS NULL, t.due_date, t.id`,
+      `SELECT s.id, s.task_id, s.done, COALESCE(t.title, s.title) AS title, COALESCE(t.description, s.description) AS description, COALESCE(t.due_date, s.due_date) AS due_date,
+         t.status, t.from_user_id, t.to_user_id, t.shared, COALESCE(NULLIF(u.post, ''), u.name) AS label
+       FROM plan_steps s
+       LEFT JOIN tasks t ON t.id = s.task_id
+       LEFT JOIN users u ON u.id = t.to_user_id
+       WHERE s.plan_id = ?
+       ORDER BY COALESCE(t.due_date, s.due_date) IS NULL, COALESCE(t.due_date, s.due_date), s.id`,
     )
-    .all(planId) as { id: number; title: string; status: string; due_date: string | null; from_user_id: number | null; to_user_id: number | null; shared: number; label: string | null }[];
-  return rows.map((r) => ({ id: r.id, title: r.title, status: r.status, due_date: r.due_date, label: r.label, open: r.to_user_id === null, hidden: !canSeeTask(user, r) }));
+    .all(planId) as {
+    id: number;
+    task_id: number | null;
+    done: number;
+    title: string;
+    description: string;
+    due_date: string | null;
+    status: string | null;
+    from_user_id: number | null;
+    to_user_id: number | null;
+    shared: number;
+    label: string | null;
+  }[];
+  return rows.map((r) => ({
+    id: r.id,
+    task_id: r.task_id,
+    title: r.title,
+    description: r.description,
+    due_date: r.due_date,
+    status: r.status,
+    done: r.done === 1 || r.status === "klar",
+    label: r.label,
+    open: r.task_id !== null && r.to_user_id === null,
+    hidden: r.task_id !== null && !canSeeTask(user, r),
+  }));
 }
 
 export interface PlanLessons {

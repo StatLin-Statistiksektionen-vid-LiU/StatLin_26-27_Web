@@ -35,7 +35,7 @@ export function PlanNewForm({
   const passed = validDate ? steps.filter((s) => dueOf(s) < today).length : 0;
 
   return (
-    <ActionForm action={createPlan} submitLabel={`Skapa planen${steps.length ? ` med ${steps.length} uppdrag` : ""}`}>
+    <ActionForm action={createPlan} submitLabel={`Skapa planen${steps.length ? ` med ${steps.length} steg` : ""}`}>
       {defaults.wheelItemId !== null && <input type="hidden" name="wheel_item_id" value={defaults.wheelItemId} />}
       {defaults.year !== null && <input type="hidden" name="year" value={defaults.year} />}
 
@@ -84,7 +84,7 @@ export function PlanNewForm({
           <TextInput type="date" name="plan_date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
-      <Field label="Ansvarig" name="responsible" hint="En post eller ett utskott. Stegen blir uppdrag till det kontot, och annars till dig.">
+      <Field label="Ansvarig" name="responsible" hint="En post eller ett utskott. Det kontot föreslås som mottagare när du skickar steg till tavlan.">
         <TextInput name="responsible" defaultValue={defaults.responsible} maxLength={80} list="plan-ansvariga" autoComplete="off" />
         <datalist id="plan-ansvariga">
           {responsibleOptions.map((o) => (
@@ -111,7 +111,7 @@ export function PlanNewForm({
           <p className="mt-3 rounded-2xl border border-dashed border-ink/20 px-4 py-6 text-sm text-stone">Välj ett datum så räknas stegen ut.</p>
         ) : (
           <>
-            <p className="mt-1 text-sm text-stone">Ändra, ta bort och lägg till innan du skapar planen. Varje steg blir ett uppdrag på tavlan.</p>
+            <p className="mt-1 text-sm text-stone">Ändra, ta bort och lägg till innan du skapar planen. Stegen stannar i planen tills du skickar dem till tavlan.</p>
             <ol className="mt-3 divide-y divide-ink/10 rounded-2xl border border-ink/10 bg-white">
               {steps.map((s) => {
                 const due = dueOf(s);

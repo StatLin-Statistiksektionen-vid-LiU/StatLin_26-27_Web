@@ -1,20 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { findResponsibleAccount } from "@/app/admin/_actions/projektplaner-hjalp";
 import { deletePlan } from "@/app/admin/_actions/projektplaner";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { PlanEditForm, PlanStepForm } from "@/components/admin/plan-edit-form";
 import { LessonsPanel } from "@/components/admin/plan-lessons";
 import { PlanMeter } from "@/components/admin/plan-meter";
+import { PlanSteps } from "@/components/admin/plan-steps";
 import { Notice } from "@/components/admin/ui";
 import { PrintButton } from "@/components/admin/wheel-buttons";
-import { ArrowLeft, Check, Printer, Trash } from "@/components/icons";
+import { ArrowLeft, Printer, Trash } from "@/components/icons";
 import { canChangePlan } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
-import { getProjectPlan, getWheelItem, listLessons, listPlanSteps, listResponsibleOptions, type PlanStep } from "@/lib/data/arshjul";
+import { getProjectPlan, getWheelItem, listLessons, listPlanSteps, listResponsibleOptions } from "@/lib/data/arshjul";
+import { listTaskRecipients } from "@/lib/data/tasks";
 import { formatDate, todayLocal } from "@/lib/dates";
-import { planTemplate, weeksBefore } from "@/lib/projektplan-mallar";
-import { cn } from "@/lib/utils";
+import { planTemplate } from "@/lib/projektplan-mallar";
+import { cn, simplify } from "@/lib/utils";
 
 export const metadata = { title: "Projektplan" };
 
@@ -26,37 +29,12 @@ export default function PlanPage(props: PageProps<"/admin/projektplaner/[id]">) 
   );
 }
 
-const weekLabel = (weeks: number) => (weeks === 0 ? "Dagen" : weeks > 0 ? `−${weeks} v` : `+${-weeks} v`);
-
 function Block({ title, children, empty }: { title: string; children: string; empty: string }) {
   return (
     <section className={cn("break-inside-avoid", !children && "print:hidden")}>
       <h2 className="kicker text-stone">{title}</h2>
       {children ? <p className="mt-1.5 whitespace-pre-line leading-relaxed print:text-[0.82rem] print:leading-snug">{children}</p> : <p className="mt-1.5 text-sm text-stone">{empty}</p>}
     </section>
-  );
-}
-
-function StepRow({ step, planDate, today }: { step: PlanStep; planDate: string; today: string }) {
-  const done = step.status === "klar";
-  const late = !done && !!step.due_date && step.due_date < today;
-  return (
-    <li className="grid grid-cols-[1.25rem_3.25rem_minmax(0,1fr)] items-baseline gap-x-2 py-2.5 print:py-1">
-      <span className={cn("grid size-4 translate-y-0.5 place-items-center rounded-[3px] border [print-color-adjust:exact]", done ? "border-ink bg-ink text-white" : "border-ink/30")}>
-        {done && <Check size={11} strokeWidth={3} />}
-        <span className="sr-only">{done ? "Klart" : "Inte klart"}</span>
-      </span>
-      <span className="font-mono text-[0.72rem] text-stone tabular">{step.due_date ? weekLabel(weeksBefore(planDate, step.due_date)) : "–"}</span>
-      <span className="min-w-0">
-        <Link href={`/admin/uppdrag/${step.id}`} className={cn("font-semibold leading-snug hover:underline print:text-[0.82rem] print:font-medium", done && "text-ink/60")}>
-          {step.title}
-        </Link>
-        <span className="mt-0.5 flex flex-wrap gap-x-3 font-mono text-[0.7rem] text-ink/60 print:mt-0">
-          {step.due_date && <span className={cn(late && "font-semibold text-red-deep")}>{formatDate(step.due_date)}</span>}
-          <span>{step.open ? "Öppet" : (step.label ?? "Ingen")}</span>
-        </span>
-      </span>
-    </li>
   );
 }
 
@@ -76,13 +54,19 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
   const plan = /^\d+$/.test(id) ? await getProjectPlan(Number(id)) : null;
   if (!plan) notFound();
   const today = todayLocal();
-  const [steps, lessons, item, options] = await Promise.all([
+  const canChange = canChangePlan(user, plan);
+  const [steps, lessons, item, options, people] = await Promise.all([
     listPlanSteps(plan.id, user),
     plan.wheel_item_id ? listLessons(plan.wheel_item_id, plan.id) : [],
     plan.wheel_item_id ? getWheelItem(plan.wheel_item_id) : null,
     listResponsibleOptions(),
+    canChange ? listTaskRecipients() : [],
   ]);
-  const canChange = canChangePlan(user, plan);
+  const recipients = people.map((p) => ({
+    id: p.id,
+    label: p.committee && simplify(p.committee) !== simplify(p.label) ? `${p.label} (${p.committee})` : p.label,
+    board: p.kind === "styrelse",
+  }));
   const visible = steps.filter((s) => !s.hidden);
   const hiddenCount = steps.length - visible.length;
   const over = plan.plan_date < today;
@@ -98,14 +82,15 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
             <Printer size={16} /> Skriv ut
           </PrintButton>
           {canChange && (
-            <ConfirmButton action={deletePlan} id={plan.id} message="Ta bort projektplanen? Uppdragen ligger kvar på tavlan, men utan koppling till planen.">
+            <ConfirmButton action={deletePlan} id={plan.id} message="Ta bort projektplanen? Uppdrag som redan är skickade ligger kvar på tavlan, men utan koppling till planen.">
               <Trash size={15} /> Ta bort
             </ConfirmButton>
           )}
         </div>
       </div>
       <div className="print:hidden">
-        {sp.skapad && <Notice>Planen är skapad, och stegen ligger på uppdragstavlan.</Notice>}
+        {sp.skapad && <Notice>Planen är skapad. Stegen ligger här i planen tills du skickar dem till uppdragstavlan.</Notice>}
+        {sp.borttaget && <Notice>Steget är borttaget ur planen.</Notice>}
         {over && !plan.lessons && canChange && <Notice tone="info">Datumet har passerat. Skriv några lärdomar till nästa år medan du minns dem.</Notice>}
         <LessonsPanel lessons={lessons} />
       </div>
@@ -146,21 +131,17 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
               {plan.lessons}
             </Block>
           </div>
-          <section aria-labelledby="planens-steg">
-            <h2 id="planens-steg" className="kicker text-stone">
-              Steg på tavlan
-            </h2>
-            {visible.length === 0 ? (
-              <p className="mt-1.5 text-sm text-stone">{hiddenCount > 0 ? "Stegen är privata uppdrag." : "Alla steg är borttagna från tavlan."}</p>
-            ) : (
-              <ol className="mt-1 divide-y divide-ink/10">
-                {visible.map((s) => (
-                  <StepRow key={s.id} step={s} planDate={plan.plan_date} today={today} />
-                ))}
-              </ol>
-            )}
-            {hiddenCount > 0 && visible.length > 0 && <p className="mt-2 text-xs text-stone">{hiddenCount === 1 ? "1 steg är ett privat uppdrag och visas inte." : `${hiddenCount} steg är privata uppdrag och visas inte.`}</p>}
-          </section>
+          <PlanSteps
+            key={plan.responsible}
+            planId={plan.id}
+            planDate={plan.plan_date}
+            today={today}
+            steps={visible}
+            hiddenCount={hiddenCount}
+            canChange={canChange}
+            recipients={recipients}
+            defaultTo={canChange ? (findResponsibleAccount(plan.responsible) ?? user.id) : null}
+          />
         </div>
       </article>
 

@@ -51,6 +51,9 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
 
   const planPageId = () => Number(new URL(page.url()).pathname.split("/").pop());
 
+  /** En rad i planens stegslista. */
+  const stepRow = (title) => page.locator("article li", { hasText: title });
+
   /** Fyller i och skapar en plan på sidan som redan är öppen. */
   const submitPlan = async (title, date) => {
     await page.fill('input[name="title"]', title);
@@ -183,25 +186,108 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await submitPlan(planTitle, date);
     plan = planPageId();
     await page.getByRole("img", { name: "0 av 8 steg klara" }).waitFor();
-    await page.getByRole("link", { name: `Boka lokalen ${id}` }).waitFor();
-    assert.equal(await page.getByRole("link", { name: "Beställ affisch och omslag" }).count(), 0);
+    await stepRow(`Boka lokalen ${id}`).waitFor();
+    assert.equal(await page.locator("article").getByText("Beställ affisch och omslag").count(), 0);
   });
 
-  await step("Projektplan: stegen är uppdrag med länk till planen, och framsteget räknar dem", async () => {
-    await page.getByRole("link", { name: `Boka lokalen ${id}` }).click();
-    await page.getByRole("heading", { name: `Boka lokalen ${id}` }).waitFor();
+  await step("Projektplan: stegen stannar i planen tills de skickas till tavlan", async () => {
+    const title = `Boka lokalen ${id}`;
+    await stepRow(title).getByText("Inte på tavlan än").waitFor();
+    assert.equal(await stepRow(title).getByRole("link", { name: title }).count(), 0, "ett oskickat steg har inget uppdrag att länka till");
+    await page.goto(`${BASE}/admin/uppdrag`);
+    await page.getByRole("heading", { level: 1 }).first().waitFor();
+    assert.equal(await page.locator("main").getByText(title).count(), 0, "inget ska ligga på tavlan än");
+
+    await page.goto(`${BASE}/admin/projektplaner/${plan}`);
+    const send = stepRow(title).getByRole("button", { name: `Skicka ${title} till tavlan` });
+    await waitForHydration(page, send);
+    await send.click();
+    await page.getByText("ligger nu på tavlan.").waitFor();
+    await stepRow(title).getByRole("link", { name: title }).waitFor();
+    await page.getByRole("button", { name: "Skicka alla 7" }).waitFor();
+    // Att ett steg ligger på tavlan betyder inte att det är klart.
+    await page.getByRole("img", { name: "0 av 8 steg klara" }).waitFor();
+
+    await stepRow(title).getByRole("link", { name: title }).click();
+    await page.waitForURL(/\/admin\/uppdrag\/\d+/);
+    await page.getByRole("heading", { name: title }).waitFor();
     await page.getByRole("link", { name: planTitle }).waitFor();
     await page.goto(`${BASE}/admin/uppdrag`);
-    await page.getByText(planTitle).first().waitFor();
+    await page.locator("main").getByText(title).first().waitFor();
   });
 
-  await step("Projektplan: ett borttaget uppdrag kraschar inte planen", async () => {
+  await step("Projektplan: ett borttaget uppdrag lämnar steget oskickat i planen", async () => {
+    const title = `Boka lokalen ${id}`;
     await page.goto(`${BASE}/admin/projektplaner/${plan}`);
-    await page.goto(`${BASE}${await page.getByRole("link", { name: `Boka lokalen ${id}` }).getAttribute("href")}`);
+    await page.goto(`${BASE}${await stepRow(title).getByRole("link", { name: title }).getAttribute("href")}`);
     await (await openDeleteConfirm(page)).getByRole("button", { name: "Ta bort" }).click();
     await page.waitForURL(/\/admin\/uppdrag(\?|$)/);
     await page.goto(`${BASE}/admin/projektplaner/${plan}`);
+    await page.getByRole("img", { name: "0 av 8 steg klara" }).waitFor();
+    await stepRow(title).getByRole("button", { name: `Skicka ${title} till tavlan` }).waitFor();
+    await stepRow(title).getByText("Inte på tavlan än").waitFor();
+  });
+
+  await step("Projektplan: ett steg bockas av, ändras och tas bort utan att hamna på tavlan", async () => {
+    const title = "Sätt tema, meny och budget";
+    const box = stepRow(title).getByRole("checkbox");
+    await waitForHydration(page, box);
+    await box.click();
+    await page.getByRole("img", { name: "1 av 8 steg klara" }).waitFor();
+    await stepRow(title).getByText("Klart utan uppdrag").waitFor();
+    await page.getByRole("button", { name: "Skicka alla 7" }).waitFor();
+    await box.click();
+    await page.getByRole("img", { name: "0 av 8 steg klara" }).waitFor();
+    await page.getByRole("button", { name: "Skicka alla 8" }).waitFor();
+
+    // Ändra rubriken på ett steg.
+    const renamed = `Handla mat ${id}`;
+    await stepRow("Handla och beställ mat").getByRole("button", { name: "Ändra Handla och beställ mat" }).click();
+    await stepRow("Handla och beställ mat").locator('input[name="title"]').fill(renamed);
+    await stepRow("Handla och beställ mat").getByRole("button", { name: "Spara" }).click();
+    await stepRow(renamed).waitFor();
+    await stepRow(renamed).locator('input[name="title"]').waitFor({ state: "detached" });
+
+    // Ta bort steget: det är bara planens steg som försvinner.
+    await stepRow(renamed).getByRole("button", { name: `Ändra ${renamed}` }).click();
+    await stepRow(renamed).getByRole("button", { name: "Ta bort steget" }).click();
+    const dialog = page.getByRole("alertdialog");
+    await dialog.waitFor();
+    await dialog.getByRole("button", { name: "Ta bort steget" }).click();
+    await page.getByText("Steget är borttaget ur planen.").waitFor();
     await page.getByRole("img", { name: "0 av 7 steg klara" }).waitFor();
+    assert.equal(await stepRow(renamed).count(), 0);
+  });
+
+  await step("Projektplan: ett nytt steg läggs i planen, och Skicka alla skickar resten till rätt mottagare", async () => {
+    const added = `Tacka volontärerna ${id}`;
+    await page.locator("summary", { hasText: "Lägg till ett steg" }).click();
+    const form = page.locator("details", { hasText: "Lägg till ett steg" });
+    await form.locator('input[name="title"]').fill(added);
+    await form.getByRole("button", { name: "Lägg till steget" }).click();
+    await page.getByText("Skicka det till tavlan när det är redo.").waitFor();
+    await page.getByRole("img", { name: "0 av 8 steg klara" }).waitFor();
+    await stepRow(added).getByText("Inte på tavlan än").waitFor();
+
+    // Öppet: vem som helst kan ta dem.
+    await page.locator('article select[name="to"]').selectOption("");
+    const sendAll = page.getByRole("button", { name: "Skicka alla 8" });
+    await sendAll.click();
+    await page.getByText("8 steg ligger nu på tavlan.").waitFor();
+    await stepRow(added).getByText("Öppet").waitFor();
+    await page.getByRole("link", { name: /8 av 8 på tavlan/ }).waitFor();
+    assert.equal(await page.getByRole("button", { name: /^Skicka alla/ }).count(), 0, "inget är kvar att skicka");
+    assert.equal(await page.locator("article").getByRole("checkbox").count(), 0, "skickade steg bockas av på tavlan");
+
+    // Klart på tavlan räknas i planen.
+    await page.goto(`${BASE}${await stepRow(added).getByRole("link", { name: added }).getAttribute("href")}`);
+    await page.getByRole("heading", { name: added }).waitFor();
+    const finished = page.getByRole("button", { name: "Klart", exact: true });
+    await waitForHydration(page, finished);
+    await finished.click();
+    await page.locator('button[aria-pressed="true"]', { hasText: "Klart" }).waitFor();
+    await page.goto(`${BASE}/admin/projektplaner/${plan}`);
+    await page.getByRole("img", { name: "1 av 8 steg klara" }).waitFor();
   });
 
   await step("Projektplan: från en årshjulspunkt, och lärdomarna visas nästa år", async () => {
@@ -252,6 +338,13 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     const nextMonthUrl = `${BASE}/admin/arshjul?manad=${nextMonth}`;
     await page.goto(nextMonthUrl);
     const adminItem = Number((await page.getByRole("link", { name: `Ändra ${nextTitle}` }).getAttribute("href")).split("/").pop());
+    await page.goto(`${BASE}/admin/projektplaner`);
+    await page.getByRole("link", { name: wheelPlanTitle }).click();
+    await page.waitForURL(/\/admin\/projektplaner\/\d+$/);
+    const adminStepEdit = page.locator("article").getByRole("button", { name: /^Ändra / }).first();
+    await waitForHydration(page, adminStepEdit);
+    await adminStepEdit.click();
+    const adminStep = await page.locator('article li input[name="id"]').first().inputValue();
     await switchAccount(page, SCB);
 
     // Läser allt, men får bara ändra sitt eget och det där utskottet är ansvarigt.
@@ -289,6 +382,8 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.getByRole("heading", { name: planTitle }).waitFor();
     assert.equal(await page.locator("summary", { hasText: "Ändra planen" }).count(), 0);
     assert.equal(await page.getByRole("button", { name: "Ta bort" }).count(), 0);
+    assert.equal(await page.locator("article").getByRole("button", { name: /^Skicka/ }).count(), 0, "en annan post skickar inte stegen");
+    assert.equal(await page.locator("article").getByRole("button", { name: /^Ändra/ }).count(), 0);
 
     await page.goto(`${BASE}/admin/projektplaner/ny`);
     await waitForHydration(page, page.locator('input[name="plan_date"]'));
@@ -300,6 +395,15 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await forgeId(savePlan, plan);
     await savePlan.click();
     await page.getByText(FORBIDDEN).waitFor();
+
+    // Samma sak för stegen: ett steg i någon annans plan går inte att ändra.
+    const ownStepEdit = page.locator("article").getByRole("button", { name: /^Ändra / }).first();
+    await ownStepEdit.click();
+    const saveStep = page.locator("article li").getByRole("button", { name: "Spara" }).first();
+    await waitForHydration(page, saveStep);
+    await forgeId(saveStep, adminStep);
+    await saveStep.click();
+    await page.locator("article li").getByText(FORBIDDEN).waitFor();
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/projektplaner/${plan}`);
     await page.getByRole("heading", { name: planTitle }).waitFor();

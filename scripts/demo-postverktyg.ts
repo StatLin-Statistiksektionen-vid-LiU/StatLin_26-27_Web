@@ -49,10 +49,12 @@ function plan(o: { title: string; template: string; date: string; responsible: s
       .run(o.title, o.template, o.date, o.responsible, o.goal, o.budget ?? "", o.lessons ?? "", admin!.id, itemId(o.key)).lastInsertRowid,
   );
   const insertTask = db.prepare("INSERT INTO tasks (title, description, from_user_id, to_user_id, status, shared, due_date, completed_at, project_plan_id) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)");
+  const insertStep = db.prepare("INSERT INTO plan_steps (plan_id, title, description, due_date, task_id) VALUES (?, ?, ?, ?, ?)");
   template.steps.forEach((s, i) => {
-    const done = i < o.done;
     const due = stepDate(o.date, s.weeks);
-    insertTask.run(s.title, s.description, admin!.id, admin!.id, done ? "klar" : "planerad", due, done ? `${due}T12:00:00.000Z` : null, id);
+    // Det som är klart har varit på tavlan. Resten ligger kvar i planen tills någon skickar det.
+    const taskId = i < o.done ? Number(insertTask.run(s.title, s.description, admin!.id, admin!.id, "klar", due, `${due}T12:00:00.000Z`, id).lastInsertRowid) : null;
+    insertStep.run(id, s.title, s.description, due, taskId);
   });
   setState(o.key, "planerad", null, id, o.year);
 }

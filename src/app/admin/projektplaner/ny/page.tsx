@@ -31,7 +31,7 @@ async function NewPlan({ searchParams }: { searchParams: PageProps<"/admin/proje
       <AdminHeader
         back={item ? { href: "/admin/arshjul", label: "Årshjul" } : { href: "/admin/projektplaner", label: "Projektplaner" }}
         title={item ? `Plan för ${item.title}` : "Ny projektplan"}
-        description="Välj mall och datum, så visas stegen med uträknade datum. Inget hamnar på tavlan förrän du skapar planen."
+        description="Välj mall och datum, så visas stegen med uträknade datum. Inget hamnar på tavlan förrän du själv skickar det dit."
       />
       <LessonsPanel lessons={lessons} />
       <PlanNewForm

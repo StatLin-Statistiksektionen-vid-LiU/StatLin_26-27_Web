@@ -58,11 +58,11 @@ async function Plans({ searchParams }: { searchParams: PageProps<"/admin/projekt
 
   return (
     <>
-      {sp.raderad && <Notice>Planen är borttagen. Uppdragen ligger kvar på tavlan.</Notice>}
+      {sp.raderad && <Notice>Planen är borttagen. Uppdrag som redan var skickade ligger kvar på tavlan.</Notice>}
       <AdminHeader
         kicker="Alla poster"
         title="Projektplaner"
-        description="För det som kräver mer än ett uppdrag. Välj en mall och ett datum, så räknas stegen ut bakåt och hamnar på tavlan. Lärdomarna följer med till nästa år."
+        description="För det som kräver mer än ett uppdrag. Välj en mall och ett datum, så räknas stegen ut bakåt. Skicka dem till uppdragstavlan när de är redo. Lärdomarna följer med till nästa år."
         actions={
           <Link href="/admin/projektplaner/ny" className="btn btn-red">
             <Plus size={18} /> Ny plan

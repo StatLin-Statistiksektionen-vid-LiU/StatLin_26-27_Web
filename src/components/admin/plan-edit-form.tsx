@@ -44,7 +44,7 @@ export function PlanEditForm({ plan, responsibleOptions }: { plan: ProjectPlan; 
 
 export function PlanStepForm({ planId, defaultDate }: { planId: number; defaultDate: string }) {
   return (
-    <ActionForm action={addPlanStep} submitLabel="Lägg till" stickyFooter={false} resetOnSuccess>
+    <ActionForm action={addPlanStep} submitLabel="Lägg till steget" stickyFooter={false} resetOnSuccess>
       <input type="hidden" name="plan_id" value={planId} />
       <div className="grid gap-5 @lg:grid-cols-[minmax(0,1fr)_11rem]">
         <Field label="Nytt steg" name="title" required>
@@ -54,6 +54,9 @@ export function PlanStepForm({ planId, defaultDate }: { planId: number; defaultD
           <TextInput type="date" name="due_date" defaultValue={defaultDate} />
         </Field>
       </div>
+      <Field label="Beskrivning" name="description" hint="Valfri. Följer med när steget skickas till tavlan.">
+        <TextArea name="description" maxLength={2000} />
+      </Field>
     </ActionForm>
   );
 }

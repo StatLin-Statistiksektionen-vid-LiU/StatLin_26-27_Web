@@ -374,6 +374,22 @@ const steps: string[] = [
   );
   CREATE INDEX lecture_wishes_status ON lecture_wishes(status, votes DESC);
   `,
+  /* 13: projektplanens steg är egna rader och blir uppdrag först när någon skickar dem till tavlan. Uppdrag som redan hör till en plan blir skickade steg. */
+  `
+  CREATE TABLE plan_steps (
+    id          INTEGER PRIMARY KEY,
+    plan_id     INTEGER NOT NULL REFERENCES project_plans(id) ON DELETE CASCADE,
+    title       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    due_date    TEXT,                                                -- YYYY-MM-DD
+    task_id     INTEGER UNIQUE REFERENCES tasks(id) ON DELETE SET NULL, -- uppdraget på tavlan, NULL tills steget är skickat eller om uppdraget tas bort
+    done        INTEGER NOT NULL DEFAULT 0,                          -- avbockat i planen utan uppdrag
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX plan_steps_plan ON plan_steps(plan_id, due_date);
+  INSERT INTO plan_steps (plan_id, title, description, due_date, task_id)
+    SELECT project_plan_id, title, COALESCE(description, ''), due_date, id FROM tasks WHERE project_plan_id IS NOT NULL ORDER BY due_date, id;
+  `,
 ];
 
 export function migrate(db: Database.Database) {
