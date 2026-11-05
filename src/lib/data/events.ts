@@ -28,7 +28,7 @@ function map(r: Row): EventItem {
 }
 
 /**
- * Rader från före SB-32 kan ha ett datum som inte går att visa, och då skulle en enda rad ta ner startsidan, /evenemang och kalenderfilen.
+ * Rader från före SB-32 kan ha ett datum som inte går att visa, och ett kort med "NaN" eller en trasig kalenderfil hjälper ingen.
  * Sajten visar dem inte. Adminpanelen läser dem som vanligt, så att de går att rätta där.
  */
 function canShow(r: Pick<Row, "id" | "starts_at" | "ends_at">): boolean {
