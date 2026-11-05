@@ -19,7 +19,7 @@ import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
 import sharp from "sharp";
-import { skipEditGuide } from "./e2e-hjalp.mjs";
+import { skipEditGuide, waitForHydration } from "./e2e-hjalp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const SHOTS = fs.mkdtempSync(path.join(os.tmpdir(), "statlin-e2e-shots-"));
@@ -90,7 +90,7 @@ async function switchAccount(page, email) {
 /** Klickar Ta bort på en sida i adminpanelen och väntar in bekräftelsen. Knappen gör inget förrän den hydrerats. */
 async function openDeleteConfirm(page) {
   const button = page.getByRole("button", { name: "Ta bort" });
-  await page.waitForFunction((el) => Object.keys(el).some((k) => k.startsWith("__react")), await button.elementHandle());
+  await waitForHydration(page, button);
   await button.click();
   const dialog = page.getByRole("alertdialog");
   await dialog.waitFor();
