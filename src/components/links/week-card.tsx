@@ -10,14 +10,15 @@ export function WeekCard({ today }: { today: string }) {
   const day = useSyncExternalStore(subscribe, todayLocal, () => today);
   const p = parts(day);
   return (
-    <div className="@container flex w-full items-center justify-between gap-6 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 backdrop-blur pointer-coarse:backdrop-filter-none md:block md:max-w-xs md:rotate-2 md:p-7">
+    <div className="@container flex w-full items-center justify-between gap-6 max-[359px]:gap-2 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 backdrop-blur pointer-coarse:backdrop-filter-none md:block md:max-w-xs md:rotate-2 md:p-7">
       <div>
         <p className="kicker text-white/45">Vecka</p>
         <p className="mt-2 text-white/60 md:hidden">
           {capitalize(p.weekday)} {p.day} {p.monthLong}
         </p>
       </div>
-      <p className="display text-[3.5rem] leading-none md:mt-4 md:text-[min(5.5rem,34cqi)]">
+      {/* Fast bredd på telefon: annars tar veckonumret mer plats när typsnittet kommer, datumet bryts om och kortet växer. */}
+      <p className="display w-[9.5rem] shrink-0 text-right text-[3.5rem] leading-none md:mt-4 md:w-auto md:text-left md:text-[min(5.5rem,34cqi)]">
         <span className="mono-accent normal-case text-red">v.</span>
         {isoWeek(day)}
       </p>
