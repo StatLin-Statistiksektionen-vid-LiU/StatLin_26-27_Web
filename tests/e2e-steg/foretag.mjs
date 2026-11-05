@@ -18,6 +18,15 @@ const pickerInView = (p) =>
     return r.top >= 0 && r.bottom <= window.innerHeight;
   });
 
+// Med strömmad rendering hinner statuskoden bli 200 innan koden har kontrollerats, precis som för okända evenemang och nyheter.
+// Det som räknas är att inget av inbjudan syns och att sidan inte indexeras.
+async function assertNoInvite(p, url) {
+  await p.goto(url);
+  await p.getByRole("heading", { name: /^Utanför konfidens/ }).waitFor();
+  assert.equal(await p.getByRole("heading", { name: "Var med på STAR" }).count(), 0, "inbjudan får inte synas med fel kod");
+  assert.match(await p.locator('meta[name="robots"]').first().getAttribute("content"), /noindex/);
+}
+
 export default async function foretagSteg({ BASE, browser, page, step, switchAccount }) {
   const id = uniqueId();
   const company = `Exempelbolaget ${id}`;
@@ -114,7 +123,7 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     await context.close();
   });
 
-  await step("Inbjudningslänken: kommer från admin, sökmotorer ser den inte, och fel kod ger 404", async () => {
+  await step("Inbjudningslänken: kommer från admin, sökmotorer ser den inte, och fel kod visar ingenting", async () => {
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/star`);
     const link = page.locator('input[aria-label="Inbjudningslänk"]');
@@ -127,7 +136,7 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     assert.match(await p.locator('meta[name="robots"]').first().getAttribute("content"), /noindex/);
     await p.getByRole("heading", { name: "Var med på STAR" }).waitFor();
     await p.getByRole("heading", { name: "Statistics and Machine Learning" }).waitFor();
-    assert.equal((await p.goto(`${BASE}/star/inbjudan/fel-kod`)).status(), 404);
+    await assertNoInvite(p, `${BASE}/star/inbjudan/fel-kod`);
     const sitemap = await (await p.request.get(`${BASE}/sitemap.xml`)).text();
     assert.ok(!sitemap.includes("inbjudan"), "länken ska inte stå i sitemapen");
     await context.close();
@@ -143,7 +152,7 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
 
     // Webbläsaren stoppar en felaktig adress, så här måste servern själv få säga nej.
     await p.evaluate(() => {
-      document.querySelector('input[name="epost"]').type = "text";
+      document.querySelector('input[name="epost"]').form.noValidate = true;
     });
     await p.fill('input[name="epost"]', "inte-en-adress");
     await submit.click();
@@ -265,7 +274,7 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     const fresh = new URL(await page.locator('input[aria-label="Inbjudningslänk"]').inputValue()).pathname;
     assert.notEqual(fresh, invitePath, "länken ska ha bytts");
     const { page: p, context } = await newVisitor(browser);
-    assert.equal((await p.goto(`${BASE}${invitePath}`)).status(), 404, "den gamla länken");
+    await assertNoInvite(p, `${BASE}${invitePath}`);
     assert.equal((await p.goto(`${BASE}${fresh}`)).status(), 200, "den nya länken");
     await context.close();
   });
