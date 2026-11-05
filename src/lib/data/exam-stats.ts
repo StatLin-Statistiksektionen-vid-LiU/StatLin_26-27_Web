@@ -62,7 +62,7 @@ async function fetchSource(path: string): Promise<Response | null> {
 }
 
 /** Källans format → moment med tillfällen, nyast först och betygen från sämst till bäst. */
-export function normalizeSource(raw: SourceCourse): ExamStats {
+function normalizeSource(raw: SourceCourse): ExamStats {
   const modules = new Map<string, ExamModule>();
   for (const entry of raw.modules ?? []) {
     let m = modules.get(entry.moduleCode);

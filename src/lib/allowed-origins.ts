@@ -5,7 +5,7 @@
  *
  *   ALLOWED_ORIGINS=statlin.se,*.statlin.se
  */
-export function allowedOriginPatterns(): string[] {
+function allowedOriginPatterns(): string[] {
   return [
     ...(process.env.ALLOWED_ORIGINS ?? "")
       .split(",")
@@ -16,7 +16,7 @@ export function allowedOriginPatterns(): string[] {
 }
 
 /** `*` matchar exakt en del av värdnamnet, `**` en eller flera (som Next.js allowedOrigins). */
-export function hostMatches(host: string, pattern: string): boolean {
+function hostMatches(host: string, pattern: string): boolean {
   const re = pattern
     .split(".")
     .map((part) => (part === "**" ? ".+" : part === "*" ? "[^.]+" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
@@ -24,7 +24,7 @@ export function hostMatches(host: string, pattern: string): boolean {
   return new RegExp(`^${re}$`, "i").test(host);
 }
 
-export function isAllowedOrigin(originHost: string, requestHost: string | null): boolean {
+function isAllowedOrigin(originHost: string, requestHost: string | null): boolean {
   if (requestHost && originHost === requestHost) return true;
   return allowedOriginPatterns().some((p) => hostMatches(originHost, p));
 }

@@ -303,7 +303,7 @@ function FormStatus() {
   );
 }
 
-export function SubmitButton({
+function SubmitButton({
   label = "Spara",
   className,
   kind = "primary",

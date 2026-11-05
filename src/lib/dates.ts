@@ -3,7 +3,7 @@
  * Vid formatering tolkas strängen som UTC och formateras med timeZone UTC,
  * så att visningen aldrig förskjuts av serverns tidszon.
  */
-export const TZ = "Europe/Stockholm";
+const TZ = "Europe/Stockholm";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

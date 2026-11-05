@@ -26,7 +26,7 @@ export const FILE_AND_REMOVE: FormState = {
 export const formVersion = (fd: FormData) => String(fd.get("updated_at") ?? "");
 
 /** Plattar ut zod-fel till { fält: första felmeddelandet }. */
-export function zodFieldErrors(error: z.ZodError): Record<string, string> {
+function zodFieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
     const key = String(issue.path[0] ?? "_");

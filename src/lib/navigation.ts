@@ -1,6 +1,6 @@
 import type { Committee } from "@/lib/types";
 
-export type NavItem = { href: string; label: string; description?: string };
+type NavItem = { href: string; label: string; description?: string };
 export type NavGroup = { label: string; href: string; children?: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -49,7 +49,7 @@ export const PAGE_PATHS: Record<string, string> = {
 };
 
 /** Engelska sidor ligger under /en – resten av sajten är på svenska. */
-export const isEnglishPath = (pathname: string) => pathname === "/en" || pathname.startsWith("/en/");
+const isEnglishPath = (pathname: string) => pathname === "/en" || pathname.startsWith("/en/");
 
 /** Sidor som finns på båda språken: svenska, engelska. */
 const LANGUAGE_PAIRS = [
