@@ -218,8 +218,8 @@ export default async function StarPage(props: PageProps<"/star">) {
             <h2 className={cn(H2, "lg:col-span-5")}>Frågor</h2>
             <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
               <div className="star-faq">
-                {faq.map((f) => (
-                  <details key={f.question}>
+                {faq.map((f, i) => (
+                  <details key={`${i}-${f.question}`}>
                     <summary>{f.question}</summary>
                     <p>{f.answer}</p>
                   </details>

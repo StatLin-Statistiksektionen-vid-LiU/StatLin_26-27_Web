@@ -69,7 +69,8 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     const { page: p, context } = await visit();
     const bandColor = async () => {
       await p.goto(`${BASE}/`);
-      const band = p.locator(".tidsaxel").first();
+      // Platshållaren har samma klass men ingen färg, och den står kvar tills bandet har strömmats in.
+      const band = p.locator(".tidsaxel[data-farg]");
       await band.waitFor({ state: "attached" });
       return band.getAttribute("data-farg");
     };
@@ -85,7 +86,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.equal(await bandColor(), "vit");
     const row = p.locator('section[aria-labelledby="genvagar-start"]');
     await row.waitFor();
-    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel")) & Node.DOCUMENT_POSITION_FOLLOWING)), "Genvägarna ska ligga före bandet");
+    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel[data-farg]")) & Node.DOCUMENT_POSITION_FOLLOWING)), "Genvägarna ska ligga före bandet");
     await choose("natt");
     assert.equal(await bandColor(), "natt");
     await choose("rod");

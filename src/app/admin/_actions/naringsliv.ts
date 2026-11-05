@@ -106,7 +106,7 @@ export async function saveStarPage(_prev: FormState, fd: FormData): Promise<Form
   return { ok: true, message: "Texterna är sparade." };
 }
 
-/** Knappen som gör sidan live eller döljer den. Fungerar utan JavaScript, och samma svar som sidan själv om den nekas. */
+/** Knappen som gör sidan live eller döljer den. Den fungerar utan JavaScript och visas bara för dem som får trycka, så ett nekat anrop får inget besked. */
 export async function setStarLive(fd: FormData): Promise<void> {
   const user = await actionUser();
   if ("error" in user || !canManageNaringsliv(user)) return;
