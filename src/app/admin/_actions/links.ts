@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOrder, zRequired, zText, zUrl } from "@/lib/admin/form";
-import { audit, revalidateSite } from "@/lib/admin/helpers";
+import { audit, forbidden, revalidateSite } from "@/lib/admin/helpers";
 import { isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -11,7 +11,6 @@ import { markSeeded } from "@/lib/db/bootstrap";
 import { LINK_CATEGORIES, LINK_ICONS } from "@/lib/links";
 import type { LinkCategory } from "@/lib/types";
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 /* ---------- Länkar (redaktörer) ---------- */
 
@@ -30,7 +29,7 @@ const linkSchema = z.object({
 export async function saveLink(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = linkSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -63,7 +62,7 @@ export async function deleteLink(fd: FormData): Promise<FormState> {
   // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT label FROM links WHERE id = ?").get(id) as { label: string } | undefined;

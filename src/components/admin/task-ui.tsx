@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Calendar, Lock, MessageCircle } from "@/components/icons";
 import { formatDate, todayLocal } from "@/lib/dates";
 import { TASK_STATUSES, type Task, type TaskPerson, type TaskStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, simplify } from "@/lib/utils";
 
 export const STATUS_ORDER: TaskStatus[] = ["planerad", "pagar", "hjalp", "klar"];
 
@@ -32,9 +32,6 @@ export function PersonChip({ person, fallback = "Borttaget konto", className }: 
     </span>
   );
 }
-
-/** "e-STIG" och "eSTIG" är samma sak – utskottet visas bara när det säger något nytt. */
-const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
 
 export function DueLabel({ date, done }: { date: string; done?: boolean }) {
   const overdue = !done && date < todayLocal();

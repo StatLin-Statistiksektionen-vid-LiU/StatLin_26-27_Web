@@ -1,3 +1,4 @@
+import { json } from "@/lib/api";
 import { canEditCommittee, canEditImages, canEditOwned, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getBoardMember, getCommitteeById, getPage, getSettings, listCommittees } from "@/lib/data/content";
@@ -5,8 +6,7 @@ import { getEventById, listEventImages } from "@/lib/data/events";
 import { getNewsById } from "@/lib/data/news";
 import type { SessionUser } from "@/lib/types";
 
-const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
-const forbidden = () => json({ error: "Du har inte behörighet att ändra det här." }, 403);
+const denied = () => json({ error: "Du har inte behörighet att ändra det här." }, 403);
 const missing = () => json({ error: "Det finns inte längre." }, 404);
 
 /** Utskottskonton väljer inte arrangör – de ser bara sitt eget utskott i formuläret. */
@@ -30,47 +30,47 @@ export async function GET(request: Request) {
 
   switch (params.get("typ")) {
     case "page": {
-      if (!isEditor(user)) return forbidden();
+      if (!isEditor(user)) return denied();
       const page = await getPage(params.get("slug") ?? "");
       return page ? json({ page }) : missing();
     }
     case "home":
     case "footer": {
-      if (!canManageSettings(user)) return forbidden();
+      if (!canManageSettings(user)) return denied();
       return json({ settings: await getSettings() });
     }
     case "committee": {
-      if (!canEditCommittee(user, id)) return forbidden();
+      if (!canEditCommittee(user, id)) return denied();
       const committee = await getCommitteeById(id);
       return committee ? json({ committee, editor: isEditor(user) }) : missing();
     }
     case "event": {
       const event = await getEventById(id);
       if (!event) return missing();
-      if (!canEditOwned(user, event)) return forbidden();
+      if (!canEditOwned(user, event)) return denied();
       return json({ event, committees: await committeesFor(user), user: { role: user.role, committee_id: user.committee_id } });
     }
     case "news": {
       const item = await getNewsById(id);
       if (!item) return missing();
-      if (!canEditOwned(user, item)) return forbidden();
+      if (!canEditOwned(user, item)) return denied();
       return json({ item, committees: await committeesFor(user), user: { role: user.role, committee_id: user.committee_id } });
     }
     case "event-images": {
       const event = await getEventById(id);
       if (!event) return missing();
-      if (!canEditImages(user, event)) return forbidden();
+      if (!canEditImages(user, event)) return denied();
       const images = await listEventImages(event.id);
       return json({ cover: event.cover, images: images.map((i) => ({ id: i.id, caption: i.caption, image: i.image })) });
     }
     case "news-cover": {
       const item = await getNewsById(id);
       if (!item) return missing();
-      if (!canEditImages(user, item)) return forbidden();
+      if (!canEditImages(user, item)) return denied();
       return json({ cover: item.cover });
     }
     case "board": {
-      if (!isEditor(user)) return forbidden();
+      if (!isEditor(user)) return denied();
       const member = await getBoardMember(id);
       if (!member) return missing();
       const committees = (await listCommittees()).map((c) => ({ id: c.id, short_name: c.short_name }));

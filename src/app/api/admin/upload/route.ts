@@ -1,13 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
 import { isSameOriginRequest } from "@/lib/allowed-origins";
+import { json } from "@/lib/api";
 import { canEditImages, isEditor } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { MediaError, isImageUpload, storeFile, storeImage } from "@/lib/media-store";
 import { fileHref, toImageRef } from "@/lib/media-url";
-
-const json = (body: unknown, status = 200) => Response.json(body, { status });
 
 /**
  * Uppladdning från adminpanelen (bilder och dokument).

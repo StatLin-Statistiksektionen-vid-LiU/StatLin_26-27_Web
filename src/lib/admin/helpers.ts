@@ -1,10 +1,16 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
+import type { FormState } from "@/lib/admin/form";
 import { isEditor } from "@/lib/auth/permissions";
 import { getDb } from "@/lib/db";
 import { pruneAuditLog } from "@/lib/db/prune-audit-log";
 import type { SessionUser } from "@/lib/types";
 import { slugify } from "@/lib/utils";
+
+/** Svaret från en server action när användaren saknar behörighet. */
+export function forbidden(message = "Du har inte behörighet att göra det här."): FormState {
+  return { error: message };
+}
 
 /**
  * userId är den som gjorde något – null när ingen är inloggad, som vid en misslyckad inloggning. Gallrar loggen om senaste

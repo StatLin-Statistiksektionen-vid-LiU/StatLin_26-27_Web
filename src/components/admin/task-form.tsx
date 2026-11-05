@@ -1,6 +1,7 @@
 import { saveTask } from "@/app/admin/_actions/tasks";
 import { formatDate } from "@/lib/dates";
 import type { EventItem, Task, TaskPerson } from "@/lib/types";
+import { simplify } from "@/lib/utils";
 import { ActionForm } from "./action-form";
 import { Field, FormSection, Select, TextArea, TextInput } from "./fields";
 
@@ -22,7 +23,6 @@ export function TaskForm({
   const board = recipients.filter((r) => r.kind === "styrelse");
   const others = recipients.filter((r) => r.kind !== "styrelse");
   const inactive = task?.to && !recipients.some((r) => r.id === task.to?.id) ? task.to : null;
-  const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
   const label = (r: TaskPerson) => (r.committee && simplify(r.committee) !== simplify(r.label) ? `${r.label} (${r.committee})` : r.label);
   const toDefault = task ? task.to_user_id : (defaults?.to_user_id ?? null);
   const eventDefault = task ? task.event_id : (defaults?.event_id ?? null);

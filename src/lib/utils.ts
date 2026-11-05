@@ -1,5 +1,8 @@
 export { clsx as cn } from "clsx";
 
+/** "e-STIG" och "eSTIG" är samma sak: används för att inte visa samma namn två gånger. */
+export const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
+
 export function slugify(input: string): string {
   return slugifyWhileTyping(input).replace(/-+$/, "");
 }

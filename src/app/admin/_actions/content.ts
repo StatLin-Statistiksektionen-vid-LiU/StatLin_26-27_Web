@@ -17,7 +17,7 @@ import {
   zText,
   zUrl,
 } from "@/lib/admin/form";
-import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers";
+import { audit, canUseImage, forbidden, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { TEXT_LIMITS } from "@/lib/admin/limits";
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
@@ -29,7 +29,6 @@ import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
 import { DOCUMENT_CATEGORY_VALUES, type DocumentCategory, type Media } from "@/lib/types";
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 /* ---------- Markdown-förhandsvisning ---------- */
 
@@ -54,7 +53,7 @@ const boardSchema = z.object({
 export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = boardSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -86,7 +85,7 @@ export async function deleteBoardMember(fd: FormData): Promise<FormState> {
   // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT post, photo_media_id FROM board_members WHERE id = ?").get(id) as { post: string; photo_media_id: number | null } | undefined;
@@ -148,7 +147,7 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
   const id = Number(fd.get("id"));
-  if (!id || !canEditCommittee(user, id)) return forbidden;
+  if (!id || !canEditCommittee(user, id)) return forbidden();
   const parsed = committeeSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
@@ -215,7 +214,7 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
   // Sessionen förlängs först när sparningen gått igenom (renewSessionIfDue nedan): kakan renderar om sidan.
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const parsed = z
     .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(TEXT_LIMITS.page, "Texten") })
     .safeParse(formObject(fd));
@@ -249,7 +248,7 @@ const docSchema = z.object({
 export async function saveDocument(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageDocuments(user)) return forbidden;
+  if (!canManageDocuments(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = docSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -260,7 +259,7 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
     ? (db.prepare("SELECT media_id, category FROM documents WHERE id = ?").get(id) as { media_id: number | null; category: DocumentCategory } | undefined)
     : undefined;
   if (id && !old) return { error: "Dokumentet finns inte längre." };
-  if (old && !canManageDocument(user, old.category)) return forbidden;
+  if (old && !canManageDocument(user, old.category)) return forbidden();
 
   let mediaId: number | null = null;
   const file = fd.get("file");
@@ -304,13 +303,13 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
 export async function deleteDocument(fd: FormData): Promise<FormState> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!canManageDocuments(user)) return forbidden;
+  if (!canManageDocuments(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT title, media_id, category FROM documents WHERE id = ?").get(id) as
     | { title: string; media_id: number | null; category: DocumentCategory }
     | undefined;
-  if (row && !canManageDocument(user, row.category)) return forbidden;
+  if (row && !canManageDocument(user, row.category)) return forbidden();
   if (row) {
     db.prepare("DELETE FROM documents WHERE id = ?").run(id);
     markSeeded(db, "documents"); // SD-17: tömda dokument fylls inte på igen vid nästa start
@@ -337,7 +336,7 @@ const partnerSchema = z.object({
 export async function savePartner(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = partnerSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
@@ -364,7 +363,7 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
 export async function deletePartner(fd: FormData): Promise<FormState> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden;
+  if (!isEditor(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT name, logo_media_id FROM partners WHERE id = ?").get(id) as { name: string; logo_media_id: number | null } | undefined;
@@ -404,7 +403,7 @@ const settingsSchema = z.object({
 export async function saveSettings(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageSettings(user)) return forbidden;
+  if (!canManageSettings(user)) return forbidden();
   const raw = formObject(fd);
   type Key = keyof typeof settingsSchema.shape;
   const present = Object.keys(settingsSchema.shape).filter((k) => k in raw) as Key[];

@@ -4,13 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { changedId, type FormState, formObject, formVersion, invalid, STALE, zOptionalId, zRequired, zText } from "@/lib/admin/form";
-import { audit, nowIso } from "@/lib/admin/helpers";
+import { audit, forbidden, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/types";
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 type TaskRow = { id: number; title: string; from_user_id: number | null; to_user_id: number | null; shared: number; status: TaskStatus; assigned_at: string | null };
 
@@ -59,7 +58,7 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
 
   if (d.id) {
     const existing = loadTask(d.id);
-    if (!existing || !canEditTask(user, existing)) return forbidden;
+    if (!existing || !canEditTask(user, existing)) return forbidden();
     // Mottagaren skrivs bara när fältet ändrats, och bara om uppdraget fortfarande har mottagaren som formuläret
     // laddades med – annars släppte en sparning ett uppdrag som någon tagit under tiden.
     const to = changedId(fd, "to_user_id", d.to_user_id, existing.to_user_id);
@@ -136,7 +135,7 @@ export async function addTaskComment(_prev: FormState, fd: FormData): Promise<Fo
   const parsed = z.object({ task_id: zOptionalId, body: zRequired(2000, "Kommentaren") }).safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const existing = parsed.data.task_id ? loadTask(parsed.data.task_id) : undefined;
-  if (!existing || !canSeeTask(user, existing)) return forbidden;
+  if (!existing || !canSeeTask(user, existing)) return forbidden();
   const db = getDb();
   // Uppdragets updated_at skrivs inte: kommentarsfältet ligger på samma sida som uppdragets formulär, som inte rör
   // kommentarerna. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
@@ -152,7 +151,7 @@ export async function deleteTask(fd: FormData): Promise<FormState> {
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
   if (!existing) return { error: "Uppdraget finns inte längre." };
-  if (!canEditTask(user, existing)) return forbidden;
+  if (!canEditTask(user, existing)) return forbidden();
   getDb().prepare("DELETE FROM tasks WHERE id = ?").run(id);
   audit(user.id, "delete", "task", id, existing.title);
   await renewSessionIfDue();

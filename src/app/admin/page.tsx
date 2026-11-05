@@ -13,7 +13,7 @@ import { listOpenTasksTo } from "@/lib/data/tasks";
 import { eventEnd, formatDate, formatTimestamp, nowLocal, parts } from "@/lib/dates";
 import { committeeHref } from "@/lib/navigation";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS, type EventItem, type SessionUser, type Task } from "@/lib/types";
-import { cn, initials } from "@/lib/utils";
+import { cn, initials, simplify } from "@/lib/utils";
 
 const ENTITY_LABELS: Record<string, string> = {
   event: "evenemang",
@@ -65,8 +65,6 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
 
 const endOf = (e: EventItem) => eventEnd(e.starts_at, e.ends_at, !!e.all_day);
 const missingCovers = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now && !e.cover).slice(0, 6);
-/** "e-STIG" och "eSTIG" är samma sak – används för att inte visa samma namn två gånger. */
-const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
 
 /** Utskottens egen översikt: deras färg och logga, stora knappar för det vanligaste och bara deras eget innehåll. */
 async function CommitteeDashboard({ user }: { user: SessionUser }) {

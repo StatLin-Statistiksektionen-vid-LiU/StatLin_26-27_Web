@@ -1,12 +1,11 @@
 "use server";
 
 import type { FormState } from "@/lib/admin/form";
-import { audit } from "@/lib/admin/helpers";
+import { audit, forbidden } from "@/lib/admin/helpers";
 import { canManageImages } from "@/lib/auth/permissions";
 import { actionUser } from "@/lib/auth/session";
 import { pruneOrphanMedia } from "@/lib/media-store";
 
-const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -14,7 +13,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export async function pruneUnusedMedia(): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!canManageImages(user)) return forbidden;
+  if (!canManageImages(user)) return forbidden();
   const { rows, files } = await pruneOrphanMedia({ olderThanDays: 7 });
   if (rows + files === 0) return { ok: true, message: "Inget att rensa – allt som laddats upp används, eller är yngre än en vecka." };
   const summary = [

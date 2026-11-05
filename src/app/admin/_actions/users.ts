@@ -3,14 +3,14 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zEmail, zOptionalId, zRequired, zText } from "@/lib/admin/form";
-import { audit } from "@/lib/admin/helpers";
+import { audit, forbidden } from "@/lib/admin/helpers";
 import { generatePassword, hashPassword } from "@/lib/auth/password";
 import { isAdmin } from "@/lib/auth/permissions";
 import { actionUser, destroyAllSessionsForUser, renewSessionIfDue } from "@/lib/auth/session";
 import { ROLE_VALUES } from "@/lib/types";
 import { getDb } from "@/lib/db";
 
-const forbidden: FormState = { error: "Endast administratörer kan hantera konton." };
+const NOT_ADMIN = "Endast administratörer kan hantera konton.";
 
 const schema = z.object({
   email: zEmail,
@@ -33,7 +33,7 @@ function adminCount(excludeId?: number) {
 export async function saveUser(_prev: FormState, fd: FormData): Promise<FormState> {
   const me = await actionUser();
   if ("error" in me) return me;
-  if (!isAdmin(me)) return forbidden;
+  if (!isAdmin(me)) return forbidden(NOT_ADMIN);
   const id = Number(fd.get("id")) || null;
   const parsed = schema.safeParse({ ...formObject(fd), active: id ? fd.get("active") ?? undefined : "on" });
   if (!parsed.success) return invalid(parsed.error);
@@ -76,7 +76,7 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
 export async function resetUserPassword(_prev: FormState, fd: FormData): Promise<FormState> {
   const me = await actionUser();
   if ("error" in me) return me;
-  if (!isAdmin(me)) return forbidden;
+  if (!isAdmin(me)) return forbidden(NOT_ADMIN);
   const id = Number(fd.get("id"));
   const db = getDb();
   const user = db.prepare("SELECT email FROM users WHERE id = ?").get(id) as { email: string } | undefined;
@@ -95,7 +95,7 @@ export async function deleteUser(fd: FormData): Promise<FormState> {
   // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
   const me = await actionUser({ renew: false });
   if ("error" in me) return me;
-  if (!isAdmin(me)) return forbidden;
+  if (!isAdmin(me)) return forbidden(NOT_ADMIN);
   const id = Number(fd.get("id"));
   // Administratören som frågar är själv kvar, så det finns alltid minst en kvar efter raderingen.
   if (id === me.id) return { error: "Du kan inte ta bort ditt eget konto." };

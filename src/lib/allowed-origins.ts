@@ -1,11 +1,11 @@
 /**
  * Extra värdar som får skicka formulär och uppladdningar till sajten, utöver sajtens egen.
  * Behövs bakom en proxy som inte skickar vidare rätt host, och i GitHub Codespaces där
- * förhandsvisningen ligger på *.app.github.dev. Samma regler används i next.config.ts.
+ * förhandsvisningen ligger på *.app.github.dev. next.config.ts läser samma lista för server actions.
  *
  *   ALLOWED_ORIGINS=statlin.se,*.statlin.se
  */
-function allowedOriginPatterns(): string[] {
+export function allowedOriginPatterns(): string[] {
   return [
     ...(process.env.ALLOWED_ORIGINS ?? "")
       .split(",")
