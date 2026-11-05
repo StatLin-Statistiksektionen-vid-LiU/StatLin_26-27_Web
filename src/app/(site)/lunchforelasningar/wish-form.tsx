@@ -10,7 +10,7 @@ const NO_STATE: FormState = {};
 const inputClass =
   "w-full rounded-xl border border-white/25 bg-white/[0.07] px-4 py-3 text-white outline-none transition placeholder:text-white/55 focus:border-white focus:ring-4 focus:ring-white/15";
 
-/** Formuläret skickas också utan JavaScript: actionen ligger direkt på formuläret, och felen kommer tillbaka med sidan. */
+/** Formuläret skickas också utan JavaScript: actionen ligger direkt på formuläret, och felet kommer då tillbaka i adressen. */
 export function WishForm() {
   const [state, action, pending] = useActionState(submitWish, NO_STATE);
   const titleError = state.fieldErrors?.title;

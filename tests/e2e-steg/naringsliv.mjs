@@ -7,18 +7,6 @@ const ADMIN = "admin@statlin.se";
 const EDITOR = "info@statlin.se";
 const OTHER_COMMITTEE = "scb@statlin.se";
 
-/** En besökare utan JavaScript, på en egen IP-adress. */
-let noJsIp = 0;
-const ipBase = `10.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
-async function visitorWithoutJs(browser) {
-  const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
-    javaScriptEnabled: false,
-    extraHTTPHeaders: { "x-forwarded-for": `${ipBase}.${++noJsIp}` },
-  });
-  return { context, page: await context.newPage() };
-}
-
 /** Skapar ett utskottskonto för SASU och loggar in det i en egen webbläsarkontext. Sidan ska vara inloggad som administratör. */
 async function sasuAccount(page, browser, BASE) {
   const email = `e2e-sasu-${uniqueId()}@statlin.se`;
@@ -111,7 +99,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
 
     await page.getByRole("link", { name: company }).first().click();
     await waitForHydration(page, page.getByRole("button", { name: "Spara" }));
-    await page.locator('label:has(input[name="active"])').click();
+    await page.locator('label:has(input[name="active"]):visible').click();
     await page.getByRole("button", { name: "Spara" }).click();
     await page.getByText("Företaget är sparat.").waitFor();
 
@@ -162,7 +150,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await context.close();
   });
 
-  await step("Honungsfällan och för långa önskemål ger ingen rad", async () => {
+  await step("Honungsfällan ger ingen rad, men boten får samma svar", async () => {
     const { page: p, context } = await visit();
     await p.goto(`${BASE}/lunchforelasningar`);
     await waitForHydration(p, p.getByRole("button", { name: "Skicka önskemålet" }));
@@ -200,7 +188,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
   });
 
   await step("Önskelistan fungerar utan JavaScript: önska och ge en stjärna", async () => {
-    const { page: p, context } = await visitorWithoutJs(browser);
+    const { page: p, context } = await newVisitor(browser, { javaScriptEnabled: false });
     await p.goto(`${BASE}/lunchforelasningar`);
     const row = p.locator("#onskelistan li", { hasText: wish });
     const before = Number((await row.locator("span[aria-live]").innerText()).match(/\d+/)[0]);
@@ -213,11 +201,23 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await p.getByRole("button", { name: "Skicka önskemålet" }).click();
     await p.waitForURL(/tack=1/);
     await p.getByText("Tack! SASU läser ditt önskemål").waitFor();
+    // Felet kommer tillbaka i adressen, för Next ger inte formuläret svaret utan JavaScript.
+    for (let i = 1; i <= 5 && !p.url().includes("fel="); i++) {
+      await p.getByLabel("Ämne, företag eller person").fill(`Utan JavaScript ${id} ${i}`);
+      await p.getByRole("button", { name: "Skicka önskemålet" }).click();
+      await p.waitForLoadState("load");
+    }
+    assert.ok(p.url().includes("fel=fort"), "det sjätte önskemålet ska stoppas");
+    await p.getByText("Du har skickat många önskemål").waitFor();
+    // Utan JavaScript syns företagen också, och filtret är ren CSS.
+    await p.goto(`${BASE}/star`);
+    await p.getByRole("heading", { name: "Vilka kommer" }).waitFor();
+    await p.locator(".star-card", { hasText: other }).waitFor();
     await context.close();
   });
 
   await step("Spärren stoppar en som ger stjärnor på samma önskemål om och om igen", async () => {
-    const { page: p, context } = await visitorWithoutJs(browser);
+    const { page: p, context } = await newVisitor(browser, { javaScriptEnabled: false });
     let limited = false;
     for (let i = 0; i < 20 && !limited; i++) {
       await p.goto(`${BASE}/lunchforelasningar`);

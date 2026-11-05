@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { SmartImage } from "@/components/content/smart-image";
 import { ArrowRight, ArrowUpRight, Calendar, ChevronDown, Mail } from "@/components/icons";
 import { EmptySky, StarMap } from "@/components/star/star-map";
 import "@/components/star/star.css";
-import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
 import { listStarCompanies } from "@/lib/data/naringsliv";
@@ -18,15 +16,10 @@ export const metadata: Metadata = {
   description: "STAR är StatLins arbetsmarknadsdag i Linköping. Se vilka företag som kommer, vad de söker och hur dagen ser ut.",
 };
 
-export default function StarPage() {
-  return (
-    <Suspense fallback={<HeroSkeleton />}>
-      <Star />
-    </Suspense>
-  );
-}
+// Företagen, kartan och filtret fungerar utan JavaScript, så sidan renderas hel vid varje anrop i stället för med ett skelett.
+export const instant = false;
 
-async function Star() {
+export default async function StarPage() {
   const [companies, sasu, settings] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings()]);
   const event = await getStarEvent(Number(settings.star_event_id) || null);
   const contact = sasu?.email || "sasu@statlin.se";

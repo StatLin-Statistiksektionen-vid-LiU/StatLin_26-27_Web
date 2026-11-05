@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import { ArrowRight, ArrowUpRight, Mail, MapPin, Star } from "@/components/icons";
 import "@/components/star/star.css";
-import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listLunchEvents } from "@/lib/data/events";
 import { listPublicWishes } from "@/lib/data/naringsliv";
 import { formatDateLong, formatTimeRange, parts, relativeDay } from "@/lib/dates";
-import { canVoteOnWish, mailtoWithSubject, WISH_STATUS_LABELS, type LectureWish } from "@/lib/naringsliv";
+import { canVoteOnWish, mailtoWithSubject, wishErrorText, WISH_STATUS_LABELS, type LectureWish } from "@/lib/naringsliv";
 import type { EventItem } from "@/lib/types";
 import { cn, mulberry32 } from "@/lib/utils";
 import { WishForm } from "./wish-form";
@@ -21,15 +19,10 @@ export const metadata: Metadata = {
 
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 
-export default function LunchPage(props: PageProps<"/lunchforelasningar">) {
-  return (
-    <Suspense fallback={<HeroSkeleton />}>
-      <Lunch searchParams={props.searchParams} />
-    </Suspense>
-  );
-}
+// Önskelistan ska gå att använda utan JavaScript, så sidan renderas hel vid varje anrop i stället för med ett skelett.
+export const instant = false;
 
-async function Lunch({ searchParams }: { searchParams: PageProps<"/lunchforelasningar">["searchParams"] }) {
+export default async function LunchPage({ searchParams }: PageProps<"/lunchforelasningar">) {
   const [events, wishes, sasu, sp] = await Promise.all([listLunchEvents(5), listPublicWishes(), getCommitteeBySlug("sasu"), searchParams]);
   const contact = sasu?.email || "sasu@statlin.se";
   const [next, ...others] = events;
@@ -37,6 +30,7 @@ async function Lunch({ searchParams }: { searchParams: PageProps<"/lunchforelasn
   const done = wishes.filter((w) => w.status === "genomford");
   const totalVotes = wishes.reduce((sum, w) => sum + w.votes, 0);
   const litByServer = Number(sp.stjarna) || null;
+  const wishError = wishErrorText(sp.fel);
 
   return (
     <>
@@ -124,6 +118,11 @@ async function Lunch({ searchParams }: { searchParams: PageProps<"/lunchforelasn
                 </div>
               ) : (
                 <p className="mt-3 text-white/85">Ett ämne, ett företag eller en person. Du är anonym. SASU läser först, så önskemålet syns inte på listan direkt.</p>
+              )}
+              {wishError && (
+                <p role="alert" className="mt-5 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-red-dark">
+                  {wishError}
+                </p>
               )}
               <WishForm />
             </div>

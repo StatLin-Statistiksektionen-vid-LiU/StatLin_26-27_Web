@@ -111,3 +111,16 @@ export function parseProgram(bodyMd: string): ProgramStop[] {
 
 /** E-postlänk med ifyllt ämne. Ämnet kodas, så att åäö och mellanslag kommer fram i alla e-postprogram. */
 export const mailtoWithSubject = (email: string, subject: string) => `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+
+/**
+ * Felen som kan stå i adressen när ett önskemål skickats utan JavaScript. Next ger inte useActionState resultatet på en sådan
+ * sida, så actionen skickar besökaren tillbaka med en kod. Bara kända koder ger en text.
+ */
+const WISH_ERRORS = {
+  fel: "Kontrollera önskemålet: det får vara högst 120 tecken, och kommentaren högst 500.",
+  fort: "Du har skickat många önskemål på kort tid. Vänta en stund och försök igen.",
+  full: "Önskelådan är full just nu. Försök igen om några dagar.",
+} as const;
+export type WishErrorCode = keyof typeof WISH_ERRORS;
+export const wishErrorMessage = (code: WishErrorCode) => WISH_ERRORS[code];
+export const wishErrorText = (code: unknown): string | null => (typeof code === "string" && Object.hasOwn(WISH_ERRORS, code) ? WISH_ERRORS[code as WishErrorCode] : null);

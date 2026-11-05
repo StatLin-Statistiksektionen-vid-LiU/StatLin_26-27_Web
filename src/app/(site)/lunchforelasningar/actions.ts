@@ -7,7 +7,7 @@ import { type FormState, formObject, invalid, zRequired, zText } from "@/lib/adm
 import { clientIp } from "@/lib/auth/rate-limit";
 import { todayLocal } from "@/lib/dates";
 import { getDb } from "@/lib/db";
-import { WISH_COMMENT_MAX, WISH_TITLE_MAX } from "@/lib/naringsliv";
+import { WISH_COMMENT_MAX, WISH_TITLE_MAX, wishErrorMessage, type WishErrorCode } from "@/lib/naringsliv";
 import { voteLimitHit, wishLimitHit } from "@/lib/wish-limits";
 
 const PAGE = "/lunchforelasningar";
@@ -29,15 +29,21 @@ const clean = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 export async function submitWish(_prev: FormState, fd: FormData): Promise<FormState> {
   // Honungsfällan: fältet är dolt för människor. Boten får samma svar som alla andra och tror att det gick bra.
   if (String(fd.get("webbplats") ?? "") !== "") redirect(`${PAGE}?tack=1#onska`);
+  const requestHeaders = await headers();
+  // Utan JavaScript saknas rubriken next-action, och då når ett svar från actionen aldrig formuläret. Felet följer med adressen i stället.
+  const fail = (code: WishErrorCode, state?: FormState): FormState => {
+    if (!requestHeaders.get("next-action")) redirect(`${PAGE}?fel=${code}#onska`);
+    return state ?? { error: wishErrorMessage(code) };
+  };
   const parsed = wishSchema.safeParse(formObject(fd));
-  if (!parsed.success) return invalid(parsed.error);
-  if (wishLimitHit(clientIp(await headers()))) return { error: "Du har skickat många önskemål på kort tid. Vänta en stund och försök igen." };
+  if (!parsed.success) return fail("fel", invalid(parsed.error));
+  if (wishLimitHit(clientIp(requestHeaders))) return fail("fort");
 
   const db = getDb();
   const title = clean(parsed.data.title);
-  if (!title) return { fieldErrors: { title: "Önskemålet måste fyllas i." }, error: "Kontrollera fälten som är markerade." };
+  if (!title) return fail("fel", { fieldErrors: { title: "Önskemålet måste fyllas i." }, error: "Kontrollera fälten som är markerade." });
   const unread = db.prepare("SELECT COUNT(*) AS n FROM lecture_wishes WHERE status = 'ny'").get() as { n: number };
-  if (unread.n >= MAX_UNREAD) return { error: "Önskelådan är full just nu. Försök igen om några dagar." };
+  if (unread.n >= MAX_UNREAD) return fail("full");
   // Samma önskemål två gånger blir en rad. Besökaren behöver inte veta det, SASU slipper dubbletterna.
   const same = db.prepare("SELECT 1 FROM lecture_wishes WHERE title = ? COLLATE NOCASE").get(title);
   if (!same) db.prepare("INSERT INTO lecture_wishes (title, comment, created_on) VALUES (?, ?, ?)").run(title, parsed.data.comment, todayLocal());
