@@ -7,7 +7,7 @@ import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { dashboardStats, listAudit } from "@/lib/data/admin";
 import { getCommitteeById } from "@/lib/data/content";
-import { listEventsForAdmin } from "@/lib/data/events";
+import { listEventsForAdmin, listEventsToReview, listPastEventsWithoutImages } from "@/lib/data/events";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { listOpenTasksTo } from "@/lib/data/tasks";
 import { eventEnd, formatDate, formatTimestamp, nowLocal, parts } from "@/lib/dates";
@@ -64,9 +64,7 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
 }
 
 const endOf = (e: EventItem) => eventEnd(e.starts_at, e.ends_at, !!e.all_day);
-const upcomingOf = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now).reverse().slice(0, 5);
-const missingCovers = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now && !e.cover).reverse().slice(0, 6);
-const needingImages = (events: EventItem[], now: string) => events.filter((e) => endOf(e) < now && e.image_count === 0 && e.published).slice(0, 4);
+const missingCovers = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now && !e.cover).slice(0, 6);
 /** "e-STIG" och "eSTIG" är samma sak – används för att inte visa samma namn två gånger. */
 const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
 
@@ -75,17 +73,15 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   const committee = user.committee_id ? await getCommitteeById(user.committee_id) : null;
   // Grafiskt ansvarig sköter bilderna till alla utskott, så bildlistorna gäller hela sajten.
   const design = hasDesign(user);
-  const [events, news, myTasks, allEvents] = await Promise.all([
-    committee ? listEventsForAdmin(committee.id) : [],
-    committee ? listNewsForAdmin(committee.id) : [],
-    listOpenTasksTo(user.id, 4),
-    design ? listEventsForAdmin(null) : [],
-  ]);
   const now = nowLocal();
+  const [upcoming, latestNews, myTasks, needsImages, allEvents] = await Promise.all([
+    committee ? listEventsForAdmin(committee.id, { since: now, limit: 5 }) : [],
+    committee ? listNewsForAdmin(committee.id, { limit: 4 }) : [],
+    listOpenTasksTo(user.id, 4),
+    design ? listPastEventsWithoutImages(null, 4) : committee ? listPastEventsWithoutImages(committee.id, 4) : [],
+    design ? listEventsForAdmin(null, { since: now }) : [],
+  ]);
   const nowIso = new Date().toISOString();
-  const upcoming = upcomingOf(events, now);
-  const needsImages = needingImages(design ? allEvents : events, now);
-  const latestNews = news.slice(0, 4);
 
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) visas med sin post och har ingen egen sida.
   const board = committee?.kind === "styrelse";
@@ -223,11 +219,14 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
 }
 
 async function EditorDashboard({ user }: { user: SessionUser }) {
-  const [stats, events, audit, myTasks] = await Promise.all([dashboardStats(null), listEventsForAdmin(null), listAudit(10), listOpenTasksTo(user.id, 4)]);
-  const now = nowLocal();
-  const upcoming = upcomingOf(events, now);
-  const needsImages = needingImages(events, now);
-  const toReview = canReviewEvents(user) ? events.filter((e) => !e.checked_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at)) : null;
+  const [stats, upcoming, needsImages, toReview, audit, myTasks] = await Promise.all([
+    dashboardStats(null),
+    listEventsForAdmin(null, { since: nowLocal(), limit: 5 }),
+    listPastEventsWithoutImages(null, 4),
+    canReviewEvents(user) ? listEventsToReview() : null,
+    listAudit(10),
+    listOpenTasksTo(user.id, 4),
+  ]);
   const first = user.name.split(" ")[0];
 
   const cards = [

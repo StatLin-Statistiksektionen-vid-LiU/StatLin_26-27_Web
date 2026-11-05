@@ -58,11 +58,11 @@ export async function getNewsById(id: number): Promise<NewsItem | null> {
   return row ? map(row) : null;
 }
 
-export async function listNewsForAdmin(committeeId: number | null): Promise<NewsItem[]> {
+export async function listNewsForAdmin(committeeId: number | null, opts: { limit?: number } = {}): Promise<NewsItem[]> {
   const db = await readDb();
   const rows = db
-    .prepare(`${SELECT} ${committeeId ? "WHERE n.committee_id = ?" : ""} ORDER BY n.published_at DESC`)
-    .all(...(committeeId ? [committeeId] : [])) as Row[];
+    .prepare(`${SELECT} ${committeeId ? "WHERE n.committee_id = @committeeId" : ""} ORDER BY n.published_at DESC LIMIT @limit`)
+    .all({ committeeId, limit: opts.limit ?? -1 }) as Row[];
   return rows.map(map);
 }
 

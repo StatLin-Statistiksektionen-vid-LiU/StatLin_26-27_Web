@@ -114,11 +114,39 @@ export async function getEventById(id: number): Promise<EventItem | null> {
   return row ? map(row) : null;
 }
 
-export async function listEventsForAdmin(committeeId: number | null): Promise<EventItem[]> {
+/**
+ * Utan since: alla evenemang, senast först. Med since: de som inte är slut vid den tiden (pågående räknas), tidigast först.
+ * Adminöversikten väljer och begränsar här, så att den inte läser hela historiken för att visa fem rader.
+ */
+export async function listEventsForAdmin(committeeId: number | null, opts: { since?: string; limit?: number } = {}): Promise<EventItem[]> {
+  const db = await readDb();
+  const { since, limit = -1 } = opts;
+  const where = [committeeId ? "e.committee_id = @committeeId" : "", since ? `${EVENT_END} >= @since` : ""].filter(Boolean).join(" AND ");
+  const rows = db
+    .prepare(`${SELECT} ${where ? `WHERE ${where}` : ""} ORDER BY e.starts_at ${since ? "ASC" : "DESC"} LIMIT @limit`)
+    .all({ committeeId, since: since ?? null, limit }) as Row[];
+  return rows.map(map);
+}
+
+/** Publicerade evenemang som är slut och saknar bilder, senast först. committeeId null gäller hela sajten. */
+export async function listPastEventsWithoutImages(committeeId: number | null, limit: number): Promise<EventItem[]> {
   const db = await readDb();
   const rows = db
-    .prepare(`${SELECT} ${committeeId ? "WHERE e.committee_id = ?" : ""} ORDER BY e.starts_at DESC`)
-    .all(...(committeeId ? [committeeId] : [])) as Row[];
+    .prepare(
+      `${SELECT}
+       WHERE e.published = 1 AND ${EVENT_END} < @now
+         AND NOT EXISTS (SELECT 1 FROM event_images ei WHERE ei.event_id = e.id)
+         ${committeeId ? "AND e.committee_id = @committeeId" : ""}
+       ORDER BY e.starts_at DESC LIMIT @limit`,
+    )
+    .all({ now: nowLocal(), committeeId, limit }) as Row[];
+  return rows.map(map);
+}
+
+/** Evenemang som ingen granskat, senast ändrade först. */
+export async function listEventsToReview(): Promise<EventItem[]> {
+  const db = await readDb();
+  const rows = db.prepare(`${SELECT} WHERE e.checked_at IS NULL ORDER BY e.updated_at DESC, e.starts_at DESC`).all() as Row[];
   return rows.map(map);
 }
 
