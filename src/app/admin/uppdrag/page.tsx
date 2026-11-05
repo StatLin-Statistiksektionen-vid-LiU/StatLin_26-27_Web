@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { MarkTasksSeen } from "@/components/admin/mark-tasks-seen";
-import { sortTasksForList, STATUS_ORDER, STATUS_STYLES, TaskCard, TaskList } from "@/components/admin/task-ui";
+import { TaskBoardView } from "@/components/admin/task-board";
+import { TaskQuickAdd } from "@/components/admin/task-quick-add";
 import { AdminHeader, EmptyState, Notice } from "@/components/admin/ui";
-import { Plus } from "@/components/icons";
-import { seesAllTasks } from "@/lib/auth/permissions";
+import { canUpdateTask, seesAllTasks } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
-import { countUnseenTasks, listTasksFor, type TaskFilter } from "@/lib/data/tasks";
+import { countUnseenTasks, listTaskRecipients, listTasksFor, type TaskFilter } from "@/lib/data/tasks";
 import { todayLocal } from "@/lib/dates";
-import { TASK_STATUSES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Uppdragstavla" };
@@ -54,7 +53,7 @@ async function TaskBoard({ searchParams }: { searchParams: PageProps<"/admin/upp
   const sp = await searchParams;
   const filter: TaskFilter = sp.visa === "till" || sp.visa === "fran" ? sp.visa : "alla";
   const view: TaskView = sp.vy === "lista" ? "lista" : "tavla";
-  const [tasks, unseen] = await Promise.all([listTasksFor(user, filter), countUnseenTasks(user.id)]);
+  const [tasks, unseen, recipients] = await Promise.all([listTasksFor(user, filter), countUnseenTasks(user.id), listTaskRecipients()]);
   const tabs: { key: TaskFilter; label: string }[] = [
     { key: "alla", label: "Alla" },
     { key: "till", label: "Till dig" },
@@ -73,12 +72,8 @@ async function TaskBoard({ searchParams }: { searchParams: PageProps<"/admin/upp
             ? "Uppdrag mellan styrelsens poster. Du ser allt, även det som skickats privat."
             : "Uppdrag mellan styrelsens poster. Du ser det som delats med hela styrelsen och det som rör dig."
         }
-        actions={
-          <Link href="/admin/uppdrag/ny" className="btn btn-red">
-            <Plus size={18} /> Nytt uppdrag
-          </Link>
-        }
       />
+      <TaskQuickAdd recipients={recipients} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <Segments label="Vilka uppdrag" items={tabs.map((t) => ({ label: t.label, href: boardHref(t.key, view), active: filter === t.key }))} />
         <Segments
@@ -91,53 +86,24 @@ async function TaskBoard({ searchParams }: { searchParams: PageProps<"/admin/upp
       </div>
 
       {tasks.length === 0 ? (
-        <EmptyState
-          title={filter === "till" ? "Inga uppdrag till dig" : filter === "fran" ? "Du har inte skickat några uppdrag" : "Tavlan är tom"}
-          action={
-            <Link href="/admin/uppdrag/ny" className="btn btn-ink">
-              <Plus size={18} /> Skicka ett uppdrag
-            </Link>
-          }
-        >
-          Behöver ni en affisch, ett inlägg på Instagram eller hjälp på ett evenemang? Skicka det som ett uppdrag till rätt post.
+        <EmptyState title={filter === "till" ? "Inga uppdrag till dig" : filter === "fran" ? "Du har inte skickat några uppdrag" : "Tavlan är tom"}>
+          Behöver ni en affisch, ett inlägg på Instagram eller hjälp på ett evenemang? Skriv det i rutan ovanför och välj rätt post.
         </EmptyState>
       ) : (
-        // Antalet kolumner följer ytan tavlan har, så att den också passar bredvid sidomenyn. Staplade kolumner utan innehåll är bara i vägen.
+        // Antalet kolumner följer ytan tavlan har, så att den också passar bredvid sidomenyn.
         <div className="@container">
-          {view === "lista" ? (
-            <TaskList tasks={sortTasksForList(tasks, todayLocal())} />
-          ) : (
-            <div className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-4">
-              {STATUS_ORDER.map((status) => {
-                const column = tasks.filter((t) => t.status === status);
-                return (
-                  <section key={status} aria-labelledby={`kolumn-${status}`} className={cn("min-w-0 rounded-2xl bg-ink/[0.035] p-2", column.length === 0 && "@max-xl:hidden")}>
-                    <h2 id={`kolumn-${status}`} className="flex items-center justify-between px-1.5 pb-2 pt-1 text-sm font-bold">
-                      <span className="flex items-center gap-2">
-                        <span className={cn("size-2 rounded-full", STATUS_STYLES[status].dot)} aria-hidden />
-                        {TASK_STATUSES[status]}
-                      </span>
-                      <span className="tabular text-stone">{column.length}</span>
-                    </h2>
-                    {column.length === 0 ? (
-                      <p className="rounded-xl border border-dashed border-ink/15 px-3 py-4 text-center text-xs text-stone">Inget här</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {column.map((t) => (
-                          <li key={t.id}>
-                            <TaskCard task={t} />
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
-                );
-              })}
-            </div>
-          )}
+          <TaskBoardView
+            view={view}
+            today={todayLocal()}
+            me={recipients.find((r) => r.id === user.id) ?? null}
+            tasks={tasks.map((t) => ({ ...t, can_move: canUpdateTask(user, t) }))}
+          />
         </div>
       )}
-      <p className="mt-4 text-xs text-stone">Avklarade uppdrag försvinner från tavlan efter 30 dagar.</p>
+      <p className="mt-4 text-xs text-stone">
+        {view === "tavla" && <span className="pointer-coarse:hidden">Dra ett kort till en annan kolumn för att flytta det. </span>}
+        Avklarade uppdrag försvinner från tavlan efter 30 dagar.
+      </p>
     </>
   );
 }

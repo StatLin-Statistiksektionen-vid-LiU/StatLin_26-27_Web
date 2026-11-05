@@ -90,7 +90,17 @@ export async function saveTask(_prev: FormState, fd: FormData): Promise<FormStat
   audit(user.id, "create", "task", Number(res.lastInsertRowid), d.title);
   await renewSessionIfDue();
   revalidateBoard();
+  // Snabbskapet på tavlan stannar kvar, så att flera uppdrag kan läggas upp i rad.
+  if (fd.get("stay")) return { ok: true, message: quickAddMessage(d.to_user_id, user.id), data: { id: String(res.lastInsertRowid) } };
   redirect(`/admin/uppdrag/${res.lastInsertRowid}?skapat=1`);
+}
+
+/** Vart uppdraget tog vägen, eftersom ett filter på tavlan kan dölja det nya kortet. */
+function quickAddMessage(to: number | null, by: number) {
+  if (to === null) return "Uppdraget ligger öppet på tavlan.";
+  if (to === by) return "Uppdraget är ditt och ligger på tavlan.";
+  const row = getDb().prepare("SELECT COALESCE(NULLIF(post, ''), name) AS label FROM users WHERE id = ?").get(to) as { label: string } | undefined;
+  return `Skickat till ${row?.label ?? "mottagaren"}.`;
 }
 
 export async function setTaskStatus(fd: FormData): Promise<FormState> {
@@ -99,8 +109,13 @@ export async function setTaskStatus(fd: FormData): Promise<FormState> {
   const id = Number(fd.get("id"));
   const status = String(fd.get("status")) as TaskStatus;
   const existing = loadTask(id);
+  // Ett kort som står kvar på en äldre tavla ska förklara sig i stället för att bara hoppa tillbaka.
+  if (!existing) {
+    revalidateBoard();
+    return { error: "Uppdraget finns inte längre." };
+  }
   // Object.hasOwn och inte `in`: "constructor" och "toString" finns på alla objekt och hade räknats som giltiga statusar.
-  if (!existing || !Object.hasOwn(TASK_STATUSES, status) || !canUpdateTask(user, existing)) redirect("/admin/uppdrag");
+  if (!Object.hasOwn(TASK_STATUSES, status) || !canUpdateTask(user, existing)) return forbidden();
   if (existing.status === status) return {};
   // updated_at skrivs inte: statusknapparna ligger på samma sida som uppdragets formulär, som inte skriver status eller
   // completed_at. Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
@@ -118,7 +133,11 @@ export async function claimTask(fd: FormData): Promise<FormState> {
   if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const existing = loadTask(id);
-  if (!existing || existing.to_user_id !== null || !canSeeTask(user, existing)) redirect("/admin/uppdrag");
+  if (!existing || existing.to_user_id !== null) {
+    revalidateBoard();
+    return { error: existing ? "Någon annan hann ta uppdraget." : "Uppdraget finns inte längre." };
+  }
+  if (!canSeeTask(user, existing)) return forbidden();
   // updated_at skrivs inte: knappen ligger på samma sida som uppdragets formulär, som skriver mottagaren bara via changedId.
   // Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   getDb()

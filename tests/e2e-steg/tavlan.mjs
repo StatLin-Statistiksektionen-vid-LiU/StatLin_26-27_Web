@@ -1,5 +1,6 @@
 // Uppdragstavlans två vyer: korten på tavlan är länkar till uppdragen, listan sorterar efter vad som är närmast i tiden, och filter
-// och vy följer med varandra i adressen. På en smal telefon får inget sticka ut och tomma statuskolumner ska inte synas.
+// och vy följer med varandra i adressen. Uppdrag läggs till och flyttas direkt på tavlan, utan sidbyte. På en smal telefon får inget
+// sticka ut och tomma statuskolumner ska inte synas.
 import assert from "node:assert";
 import { uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 
@@ -30,8 +31,10 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
   };
 
   const taskLink = (text) => page.locator('main a[href^="/admin/uppdrag/"]', { hasText: text }).filter({ visible: true });
-  /** Uppdragen från det här steget i den ordning de står på sidan. Den föregående sidan ligger kvar dold, därav bara det synliga. */
-  const rows = () => taskLink(id).allInnerTexts();
+  /** Kortet eller raden som uppdraget står på. Den föregående sidan ligger kvar dold, därav bara det synliga. */
+  const taskItem = (text) => page.locator("main li", { has: page.locator('a[href^="/admin/uppdrag/"]', { hasText: text }) }).filter({ visible: true });
+  /** Uppdragen från det här steget i den ordning de står på sidan. */
+  const rows = () => taskItem(id).allInnerTexts();
   const order = (texts) => texts.map((text) => sorted.find((title) => text.includes(title)));
 
   const filters = () => page.getByRole("navigation", { name: "Vilka uppdrag" });
@@ -74,9 +77,10 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     const texts = await rows();
     assert.deepEqual(order(texts), sorted);
     assert.match(texts[0], /Försenat/);
-    assert.match(texts[0], /Planerat/i);
     assert.doesNotMatch(texts[4], /Försenat/);
-    assert.match(texts[4], /Klart/i);
+    // Statusen är en lista på raden. Texten i en lista tar med alla val, så det är värdet som säger vad som är valt.
+    assert.equal(await taskItem(overdue).locator("select").inputValue(), "planerad");
+    assert.equal(await taskItem(done).locator("select").inputValue(), "klar");
   });
 
   await step("Uppdragstavlan: filtret och vyn följer med varandra", async () => {
@@ -102,6 +106,92 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     await views().getByRole("link", { name: "Lista" }).click();
     await waitForActive(views(), "Lista");
     assert.equal(await filters().getByRole("link", { name: "Alla" }).getAttribute("href"), "/admin/uppdrag?vy=lista");
+  });
+
+  const quick = `E2E tavla snabb ${uniqueId()}`;
+  const column = (name) => page.getByRole("region", { name });
+  const inColumn = (name) => column(name).getByRole("link", { name: quick });
+  /** Kortet flyttas innan servern har svarat, så det syns inte på sidan när flytten är sparad. */
+  const saving = () => page.waitForResponse((res) => res.request().method() === "POST" && res.url().includes("/admin/uppdrag"));
+
+  await step("Uppdragstavlan: ett uppdrag läggs till på tavlan, utan sidbyte och med fokus kvar i rutan", async () => {
+    await page.goto(`${BASE}/admin/uppdrag`);
+    const title = page.locator('main input[name="title"]');
+    await waitForHydration(page, title);
+    const url = page.url();
+    await title.fill(quick);
+    await title.press("Enter");
+    await page.getByText("Uppdraget ligger öppet på tavlan.").waitFor();
+    await inColumn("Planerat").waitFor();
+    assert.equal(page.url(), url);
+    assert.equal(await title.inputValue(), "");
+    assert.equal(await title.evaluate((el) => el === document.activeElement), true, "fokus ska stå kvar i rutan");
+
+    // Utan rubrik händer inget på tavlan, men det står varför.
+    await title.fill("   ");
+    await title.press("Enter");
+    await page.getByText("Rubriken måste fyllas i.").waitFor();
+    await title.fill("");
+  });
+
+  await step("Uppdragstavlan: Jag tar den på kortet flyttar det till Pågår, och det är sparat", async () => {
+    const claim = taskItem(quick).getByRole("button", { name: "Jag tar den" });
+    await waitForHydration(page, claim);
+    await Promise.all([saving(), claim.click()]);
+    await inColumn("Pågår").waitFor();
+    await page.reload();
+    await inColumn("Pågår").waitFor();
+    assert.equal(await claim.count(), 0, "ett taget uppdrag är inte öppet längre");
+  });
+
+  await step("Uppdragstavlan: ett kort dras till en annan kolumn, och det är sparat", async () => {
+    const card = taskItem(quick);
+    await waitForHydration(page, card);
+    await card.scrollIntoViewIfNeeded();
+    const from = await card.boundingBox();
+    const to = await column("Klart").boundingBox();
+    const y = from.y + from.height / 2;
+    await page.mouse.move(from.x + from.width / 2, y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + from.width / 2 + 15, y + 5, { steps: 3 });
+    // Kolumnerna är lika höga, så Klart finns i höjd med kortet även när sidan är scrollad.
+    await page.mouse.move(to.x + to.width / 2, y, { steps: 8 });
+    await Promise.all([saving(), page.mouse.up()]);
+    await inColumn("Klart").waitFor();
+    await page.reload();
+    await inColumn("Klart").waitFor();
+  });
+
+  await step("Uppdragstavlan: statuslistan på kortet flyttar det", async () => {
+    const menu = taskItem(quick).locator("select");
+    await waitForHydration(page, menu);
+    await Promise.all([saving(), menu.selectOption("hjalp")]);
+    await inColumn("Behöver hjälp").waitFor();
+    await page.reload();
+    await inColumn("Behöver hjälp").waitFor();
+  });
+
+  await step("Uppdragstavlan: går det inte att spara står kortet kvar, och det står varför", async () => {
+    const menu = taskItem(quick).locator("select");
+    await waitForHydration(page, menu);
+    await page.context().setOffline(true);
+    try {
+      await menu.selectOption("klar");
+      await page.getByText("Det gick inte att spara.").waitFor();
+    } finally {
+      await page.context().setOffline(false);
+    }
+    await inColumn("Behöver hjälp").waitFor();
+  });
+
+  await step("Uppdragstavlan: statusen ändras direkt på raden i listan", async () => {
+    await page.goto(`${BASE}/admin/uppdrag?vy=lista`);
+    const menu = taskItem(quick).locator("select");
+    await waitForHydration(page, menu);
+    await Promise.all([saving(), menu.selectOption("pagar")]);
+    await page.reload();
+    await taskLink(quick).waitFor();
+    assert.equal(await menu.inputValue(), "pagar");
   });
 
   await step("Uppdragstavlan: inget sticker ut på en smal telefon, och tomma kolumner syns inte", async () => {

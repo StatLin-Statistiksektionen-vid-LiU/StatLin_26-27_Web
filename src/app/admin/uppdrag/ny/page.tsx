@@ -32,7 +32,12 @@ async function NewTask({ searchParams }: { searchParams: PageProps<"/admin/uppdr
       <TaskForm
         recipients={recipients}
         events={events.filter((e) => e.starts_at.slice(0, 10) >= today).reverse()}
-        defaults={{ to_user_id: num(sp.till), event_id: num(sp.evenemang) }}
+        defaults={{
+          to_user_id: num(sp.till),
+          event_id: num(sp.evenemang),
+          title: typeof sp.titel === "string" ? sp.titel.slice(0, 140) : undefined,
+          due_date: typeof sp.datum === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.datum) ? sp.datum : undefined,
+        }}
       />
     </>
   );
