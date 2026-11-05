@@ -14,6 +14,24 @@ export function normalizeCode(raw: unknown): string {
   return fromLink.toUpperCase().replace(NOT_IN_ALPHABET, "").slice(0, CODE_LENGTH);
 }
 
+/** En slumpad kod. Web Crypto finns både i webbläsaren och på servern. */
+export function generateCode(): string {
+  const picks = globalThis.crypto.getRandomValues(new Uint32Array(CODE_LENGTH));
+  return Array.from(picks, (n) => CODE_ALPHABET[n % CODE_ALPHABET.length]).join("");
+}
+
+/** En kod som ägaren har skrivit själv, som versaler utan mellanrum. Till skillnad från normalizeCode tas inga tecken bort i tysthet. */
+export function cleanOwnCode(raw: unknown): string {
+  return typeof raw === "string" ? raw.toUpperCase().replace(/\s/g, "") : "";
+}
+
+/** Vad som är fel med en egen kod, med ord som ägaren kan göra något åt, eller null om den går att använda. */
+export function ownCodeProblem(code: string): string | null {
+  if (code.length !== CODE_LENGTH) return `Koden ska ha ${CODE_LENGTH} tecken.`;
+  if ([...code].some((c) => !CODE_ALPHABET.includes(c))) return "Koden kan ha bokstäverna A–Z och siffrorna 2–9, men inte O, I och L eftersom de är lätta att blanda ihop med siffror.";
+  return null;
+}
+
 /** Det besökaren får veta om en öppen låda. Aldrig vem som äger den eller hur många frågor den har. */
 export type PublicBox = { slug: string | null; code: string | null; title: string; description: string };
 

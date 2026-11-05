@@ -1,10 +1,29 @@
 // Texterna för att dela frågelådans kod i ett mejl eller via läraren. Körs utan server: npx tsx --test tests/fragelada.test.mjs
 import assert from "node:assert";
 import test from "node:test";
-import { mailtoDraft, shareTexts } from "../src/lib/fragelada.ts";
+import { CODE_ALPHABET, CODE_LENGTH, cleanOwnCode, generateCode, mailtoDraft, normalizeCode, ownCodeProblem, shareTexts } from "../src/lib/fragelada.ts";
 
 const BOX = { title: "Regression", code: "STAT26", link: "https://statlin.se/fragelada?kod=STAT26", base: "https://statlin.se", sender: "Kim Svensson" };
 const PROMISE = "Vi sparar inget namn, ingen IP-adress och inget klockslag.";
+
+test("en slumpad kod har rätt längd, bara giltiga tecken och går att använda som egen kod", () => {
+  for (let i = 0; i < 200; i++) {
+    const code = generateCode();
+    assert.equal(code.length, CODE_LENGTH);
+    assert.ok([...code].every((c) => CODE_ALPHABET.includes(c)), code);
+    assert.equal(ownCodeProblem(code), null);
+    assert.equal(normalizeCode(code), code);
+  }
+});
+
+test("en egen kod: versaler och mellanrum städas, men fel tecken stoppas med ett begripligt fel", () => {
+  assert.equal(cleanOwnCode(" stat 26 "), "STAT26");
+  assert.equal(cleanOwnCode(undefined), "");
+  assert.equal(ownCodeProblem("STAT26"), null);
+  assert.match(ownCodeProblem("ABC"), /6 tecken/);
+  assert.match(ownCodeProblem("ABCDEFG"), /6 tecken/);
+  for (const bad of ["STAT20", "OOOOOO", "ILLA22", "ÅÄÖ234", "AB-C23"]) assert.match(ownCodeProblem(bad), /inte O, I och L/, bad);
+});
 
 test("en låda med kod: alla texter har koden, sidan och löftet", () => {
   const { mail, teacher, short } = shareTexts(BOX);

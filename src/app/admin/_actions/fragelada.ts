@@ -1,6 +1,5 @@
 "use server";
 
-import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -11,7 +10,7 @@ import { actionUser, renewSessionIfDue, requireUser } from "@/lib/auth/session";
 import { FRAGELADA_SETTING } from "@/lib/data/fragelada";
 import { todayLocal } from "@/lib/dates";
 import { getDb } from "@/lib/db";
-import { CODE_ALPHABET, CODE_LENGTH } from "@/lib/fragelada";
+import { cleanOwnCode, generateCode, ownCodeProblem } from "@/lib/fragelada";
 import { isValidDate } from "@/lib/projektplan-mallar";
 
 /*
@@ -21,10 +20,10 @@ import { isValidDate } from "@/lib/projektplan-mallar";
 
 const BOARD = "/admin";
 
-type BoxRow = { id: number; slug: string | null; title: string; owner_id: number | null; updated_at: string };
+type BoxRow = { id: number; slug: string | null; code: string | null; title: string; owner_id: number | null; updated_at: string };
 
 function loadBox(id: number): BoxRow | undefined {
-  return getDb().prepare("SELECT id, slug, title, owner_id, updated_at FROM question_boxes WHERE id = ?").get(id) as BoxRow | undefined;
+  return getDb().prepare("SELECT id, slug, code, title, owner_id, updated_at FROM question_boxes WHERE id = ?").get(id) as BoxRow | undefined;
 }
 
 const idFrom = (fd: FormData) => {
@@ -45,16 +44,18 @@ const revalidateInbox = () => revalidatePath(BOARD, "layout");
 /** Raderade frågor ska inte ligga kvar som lästa rester i databasfilen. */
 const eraseOnDelete = () => getDb().pragma("secure_delete = ON");
 
-function randomCode(): string {
-  let code = "";
-  for (let i = 0; i < CODE_LENGTH; i++) code += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
-  return code;
+/** Felet att visa för en egen kod: fel format, eller att en annan låda redan har den. */
+function ownCodeError(code: string, boxId: number | null): FormState | null {
+  const taken = getDb().prepare("SELECT 1 FROM question_boxes WHERE code = ? AND id IS NOT ?").get(code, boxId);
+  const problem = ownCodeProblem(code) ?? (taken ? "En annan låda har redan den koden. Skriv en annan eller slumpa en ny." : null);
+  return problem ? { error: "Kontrollera fälten som är markerade.", fieldErrors: { code: problem } } : null;
 }
 
 const boxSchema = z.object({
   id: zOptionalId,
   title: zRequired(80, "Titeln"),
   description: zText(300, "Beskrivningen"),
+  code: z.string().optional(),
   closes_on: z
     .string()
     .optional()
@@ -76,20 +77,33 @@ export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState
   if (d.id) {
     const box = loadBox(d.id);
     if (!box || !ownsBox(user, box)) return forbidden();
+    // En fast låda har ingen kod. Ett tomt fält betyder att koden får vara kvar.
+    const code = box.slug === null ? cleanOwnCode(d.code) || box.code : null;
+    const newCode = code !== box.code;
+    if (newCode && code) {
+      const problem = ownCodeError(code, box.id);
+      if (problem) return problem;
+    }
     const now = nowIso();
     const res = db
-      .prepare("UPDATE question_boxes SET title = ?, description = ?, closes_on = ?, updated_at = ? WHERE id = ? AND updated_at = ?")
-      .run(d.title, d.description, box.slug === null ? d.closes_on : null, now, d.id, formVersion(fd));
+      .prepare("UPDATE question_boxes SET title = ?, description = ?, closes_on = ?, code = ?, updated_at = ? WHERE id = ? AND updated_at = ?")
+      .run(d.title, d.description, box.slug === null ? d.closes_on : null, code, now, d.id, formVersion(fd));
     if (res.changes === 0) return STALE;
+    if (newCode) audit(user.id, "update", "question_box", box.id, `Bytte kod på lådan ${d.title}`);
     await renewSessionIfDue();
     revalidateInbox();
     return { ok: true, message: "Sparat.", data: { updated_at: now } };
   }
 
+  const own = cleanOwnCode(d.code);
+  if (own) {
+    const problem = ownCodeError(own, null);
+    if (problem) return problem;
+  }
   let id = 0;
   for (let attempt = 0; attempt < 8 && !id; attempt++) {
     const taken = db.prepare("SELECT 1 FROM question_boxes WHERE code = ?");
-    const code = randomCode();
+    const code = own || generateCode();
     if (taken.get(code)) continue;
     id = Number(
       db.prepare("INSERT INTO question_boxes (code, title, description, owner_id, closes_on) VALUES (?, ?, ?, ?, ?)").run(code, d.title, d.description, user.id, d.closes_on)

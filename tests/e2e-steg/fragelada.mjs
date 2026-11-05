@@ -8,6 +8,11 @@ const OWNER = "scb@statlin.se";
 const WRONG = "Koden fungerar inte";
 const CLOSED_PAGE = "Frågelådan öppnar snart";
 const RECEIPT = "Frågan ligger i lådan.";
+const CODE_FORMAT = /^[A-HJKMNP-Z2-9]{6}$/;
+const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+/** En kod som inte krockar med en tidigare körning. */
+const randomCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 
 const codeInput = (p) => p.locator('input[name="kod"]');
 
@@ -116,6 +121,69 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     }
     await page.getByRole("button", { name: "Kopiera texten" }).waitFor();
     await page.getByRole("button", { name: "Kopiera kort text" }).waitFor();
+  });
+
+  await step("Frågelådan: koden går att slumpa eller skriva själv, felen står vid fältet, och den går att byta", async () => {
+    await page.goto(`${BASE}/admin/fragelada/ny`);
+    const create = page.getByRole("button", { name: "Skapa låda" });
+    await create.waitFor();
+    await waitForHydration(page, create);
+    const field = page.locator('input[name="code"]');
+    const suggested = await field.inputValue();
+    assert.match(suggested, CODE_FORMAT, "fältet ska ha ett förslag");
+    await page.getByRole("button", { name: "Slumpa ny" }).click();
+    await page.waitForFunction((old) => document.querySelector('input[name="code"]').value !== old, suggested);
+    assert.match(await field.inputValue(), CODE_FORMAT);
+
+    const title = `Egen kod ${marker}`;
+    const tryCode = async (value) => {
+      await page.fill('input[name="title"]', title);
+      await field.fill(value);
+      await create.click();
+    };
+    await tryCode("ABC");
+    await page.getByText("Koden ska ha 6 tecken.").waitFor();
+    await tryCode(code);
+    await page.getByText("En annan låda har redan den koden").waitFor();
+
+    // Små bokstäver blir versaler redan i fältet, och det är de som sparas.
+    const ownCode = randomCode();
+    await field.fill(ownCode.toLowerCase());
+    assert.equal(await field.inputValue(), ownCode);
+    await tryCode(ownCode);
+    await page.waitForURL(/\/admin\/fragelada\/\d+\?skapad=1/);
+    const ownUrl = new URL(page.url()).pathname;
+    const shownCode = (value) => page.locator('section[aria-label="Kod och länk"] p.font-mono', { hasText: value });
+    await shownCode(ownCode).waitFor();
+
+    await page.goto(`${BASE}${ownUrl}`);
+    await page.locator("summary", { hasText: "Inställningar för lådan" }).click();
+    const save = page.getByRole("button", { name: "Spara", exact: true });
+    await save.waitFor();
+    await waitForHydration(page, save);
+    const newCode = randomCode();
+    await field.fill(newCode);
+    await save.click();
+    await shownCode(newCode).waitFor();
+
+    // Egen besökare med egen IP-adress, så att den felaktiga gissningen inte räknas in i spärren längre fram.
+    const { context: guest, page: g } = await newVisitor(browser);
+    await openCodePage(g, BASE);
+    await enterCode(g, ownCode);
+    await g.getByText(WRONG).waitFor();
+    await enterCode(g, newCode.toLowerCase());
+    await g.getByRole("heading", { name: title }).waitFor();
+    await guest.close();
+
+    // Stegen längre fram ska inte se lådan.
+    await page.goto(`${BASE}${ownUrl}`);
+    await page.locator("summary", { hasText: "Inställningar för lådan" }).click();
+    const remove = page.getByRole("button", { name: "Ta bort lådan" });
+    await remove.waitFor();
+    await waitForHydration(page, remove);
+    await remove.click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click();
+    await page.getByText("Lådan är borttagen").waitFor();
   });
 
   await step("Frågelådan: fel kod stoppas, rätt kod öppnar, och utloggad kan skicka", async () => {

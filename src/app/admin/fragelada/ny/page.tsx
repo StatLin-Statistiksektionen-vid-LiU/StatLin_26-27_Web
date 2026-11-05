@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { BoxForm } from "@/components/fragelada/box-form";
 import { AdminHeader } from "@/components/admin/ui";
 import { requireUser } from "@/lib/auth/session";
+import { generateCode } from "@/lib/fragelada";
 
 export const metadata = { title: "Ny låda" };
 
@@ -20,9 +21,9 @@ async function NewBox() {
       <AdminHeader
         back={{ href: "/admin/fragelada", label: "Frågelådan" }}
         title="Ny låda"
-        description="Koden skapas när du sparar. Du blir ägare, och bara du kan läsa frågorna."
+        description="Skriv en egen kod eller använd den slumpade. Du blir ägare, och bara du kan läsa frågorna."
       />
-      <BoxForm />
+      <BoxForm suggestedCode={generateCode()} />
     </>
   );
 }
