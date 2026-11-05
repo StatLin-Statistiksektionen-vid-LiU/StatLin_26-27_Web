@@ -68,6 +68,16 @@ function HeaderView({ pathname }: { pathname: string | null }) {
     if (open) return closeWhenWider("(min-width: 1024px)", () => setOpen(false));
   }, [open]);
 
+  // Med fingret finns ingen pekare som lämnar gruppen, så ett tryck utanför stänger den.
+  useEffect(() => {
+    if (!dropdown) return;
+    const onPress = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" && !(e.target as Element).closest(".meny-grupp")) setDropdown(null);
+    };
+    document.addEventListener("pointerdown", onPress);
+    return () => document.removeEventListener("pointerdown", onPress);
+  }, [dropdown]);
+
   const active = (href: string) =>
     pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
   const groupActive = (g: NavGroup) => active(g.href) || !!g.children?.some((c) => active(c.href));
@@ -119,18 +129,29 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                   <li
                     key={item.href}
                     className="meny-grupp relative"
-                    onMouseEnter={() => {
+                    // Bara en riktig mus öppnar med hovring. Ett tryck på en surfplatta skickar också hovring, och då skulle klicket direkt efteråt stänga gruppen.
+                    onPointerEnter={(e) => {
+                      if (e.pointerType !== "mouse") return;
                       clearTimeout(closeTimer.current);
                       setDropdown(item.label);
                     }}
-                    onMouseLeave={() => {
+                    onPointerLeave={(e) => {
+                      if (e.pointerType !== "mouse") return;
                       closeTimer.current = setTimeout(() => setDropdown(null), 160);
+                    }}
+                    // Tabbar man vidare ska gruppen inte ligga kvar över sidan.
+                    onBlur={(e) => {
+                      if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setDropdown(null);
                     }}
                   >
                     <button
                       type="button"
                       aria-expanded={dropdown === item.label}
-                      onClick={() => setDropdown((d) => (d === item.label ? null : item.label))}
+                      onClick={(e) => {
+                        // Musen har redan öppnat gruppen genom att hovra, så klicket ska inte stänga den igen.
+                        const mouse = (e.nativeEvent as PointerEvent).pointerType === "mouse";
+                        setDropdown((d) => (d === item.label && !mouse ? null : item.label));
+                      }}
                       className={cn(
                         "flex items-center gap-1 rounded-full px-3.5 py-2 text-[0.92rem] font-medium transition-colors hover:text-white",
                         groupActive(item) ? "text-white" : "text-white/70",
@@ -148,7 +169,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                     >
                       <ul
                         className={cn(
-                          "grid gap-1 rounded-3xl border border-white/10 bg-ink-2/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl",
+                          "grid gap-1 rounded-3xl border border-white/10 bg-ink-2/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl pointer-coarse:backdrop-filter-none",
                           item.children.length > 3 ? "grid-cols-2" : "grid-cols-1",
                         )}
                       >
@@ -236,10 +257,12 @@ function HeaderView({ pathname }: { pathname: string | null }) {
         ref={menuRef}
         id="mobilmeny"
         className={cn(
-          "fixed inset-0 z-40 overflow-y-auto bg-ink text-white transition-[opacity,visibility] duration-500 lg:hidden",
+          "fixed inset-0 z-40 overflow-y-auto overscroll-contain bg-ink text-white transition-[opacity,visibility] duration-500 lg:hidden",
           open ? "visible opacity-100" : "invisible opacity-0",
         )}
       >
+        {/* Rutnätet ska följa med hela vägen ner när grupperna är utfällda, så det får mäta innehållet och inte skärmen. */}
+        <div className="relative min-h-full">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white" aria-hidden />
         <nav aria-label="Mobilmeny" className="container-site relative pb-16 pt-[calc(var(--header-h)+2rem)]">
           {/* Grupperna visas som ett träd som går att fälla ut, i stället för en platt lista. */}
@@ -252,7 +275,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
               return (
                 <li
                   key={item.href + item.label}
-                  className={cn("transition-all duration-700 ease-[var(--ease-out-expo)]", open ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0")}
+                  className={cn("transition-[opacity,translate] duration-700 ease-[var(--ease-out-expo)]", open ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0")}
                   style={{ transitionDelay: open ? `${80 + i * 45}ms` : "0ms" }}
                 >
                   {children ? (
@@ -293,7 +316,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                                   className={cn("block py-2.5 transition-colors", here ? "text-red" : "text-white/80 hover:text-white")}
                                 >
                                   <span className="block text-[1.05rem] font-semibold">{c.label}</span>
-                                  {c.description && <span className="block truncate text-[0.78rem] text-white/40">{c.description}</span>}
+                                  {c.description && <span className="block text-[0.78rem] text-white/40">{c.description}</span>}
                                 </Link>
                               </li>
                             );
@@ -318,6 +341,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
             Logga in som post
           </Link>
         </nav>
+        </div>
       </div>
     </>
   );
