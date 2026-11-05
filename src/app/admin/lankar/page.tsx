@@ -40,7 +40,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/admin/lankar"
           </>
         }
       />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
           {groups.length === 0 ? (
             <EmptyState title="Inga länkar ännu">Lägg till den första med formuläret.</EmptyState>

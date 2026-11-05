@@ -40,7 +40,7 @@ async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dok
             : "Mallar och material till den grafiska profilen. De visas under Mallar och material på sidan Grafisk profil."
         }
       />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
             {docs.length === 0 && <li className="p-6 text-sm text-stone">Inga dokument ännu.</li>}
