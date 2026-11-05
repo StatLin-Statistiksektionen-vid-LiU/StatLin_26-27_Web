@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteEventImage, reorderEventImages, setEventCover, updateImageCaption } from "@/app/admin/_actions/events";
-import { Check, Grip, Image as ImageIcon, Star, Trash, Upload } from "@/components/icons";
+import { Check, ChevronLeft, ChevronRight, Grip, Image as ImageIcon, Star, Trash, Upload } from "@/components/icons";
 import { uploadFile } from "./upload";
 import type { ImageRef } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -40,6 +40,7 @@ export function GalleryManager({
   const [over, setOver] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
+  const [moved, setMoved] = useState("");
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const itemsRef = useRef(items);
@@ -136,6 +137,17 @@ export function GalleryManager({
     startTransition(() => reorderEventImages(eventId, list.map((x) => x.id)));
   };
 
+  /** Flyttar med knapparna, som alternativ till att dra. Fokus följer med knappen, också när den tar slut vid kanten. */
+  const move = (index: number, step: -1 | 1, button: HTMLButtonElement) => {
+    const list = [...items];
+    const [moved] = list.splice(index, 1);
+    list.splice(index + step, 0, moved);
+    setItems(list);
+    setMoved(`Bilden flyttades till plats ${index + step + 1} av ${list.length}.`);
+    startTransition(() => reorderEventImages(eventId, list.map((x) => x.id)));
+    requestAnimationFrame(() => (button.disabled ? button.parentElement?.querySelector<HTMLButtonElement>("button:not(:disabled)") : button)?.focus());
+  };
+
   return (
     <div>
       <div
@@ -182,10 +194,15 @@ export function GalleryManager({
       {(items.length > 0 || pending.length > 0) && (
         <>
           <p className="mt-6 text-sm text-stone">
-            {items.length} {items.length === 1 ? "bild" : "bilder"} · dra för att ändra ordning · ★ = omslagsbild
+            {items.length} {items.length === 1 ? "bild" : "bilder"} · dra eller använd pilarna för att ändra ordning · ★ = omslagsbild
+          </p>
+          <p role="status" className="sr-only">
+            {moved}
           </p>
           <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {items.map((item) => (
+            {items.map((item, i) => {
+              const name = `bild ${i + 1}${item.caption ? `, ${item.caption}` : ""}`;
+              return (
               <li
                 key={item.id}
                 draggable
@@ -213,14 +230,40 @@ export function GalleryManager({
                       type="button"
                       onClick={() => makeCover(item)}
                       title={cover === item.image.id ? "Omslagsbild (klicka för att ta bort)" : "Använd som omslagsbild"}
+                      aria-label={cover === item.image.id ? `Ta bort ${name} som omslagsbild` : `Använd ${name} som omslagsbild`}
+                      aria-pressed={cover === item.image.id}
                       className={cn("grid size-8 place-items-center rounded-full shadow", cover === item.image.id ? "bg-red text-white" : "bg-white/90 text-ink hover:bg-white")}
                     >
                       <Star size={15} fill={cover === item.image.id ? "currentColor" : "none"} />
                     </button>
-                    <button type="button" onClick={() => remove(item)} title="Ta bort" className="grid size-8 place-items-center rounded-full bg-white/90 text-red-deep shadow hover:bg-white">
+                    <button type="button" onClick={() => remove(item)} title="Ta bort" aria-label={`Ta bort ${name}`} className="grid size-8 place-items-center rounded-full bg-white/90 text-red-deep shadow hover:bg-white">
                       <Trash size={15} />
                     </button>
                   </div>
+                  {items.length > 1 && (
+                    <div className="absolute bottom-2 left-2 flex gap-1.5">
+                      <button
+                        type="button"
+                        disabled={i === 0}
+                        onClick={(e) => move(i, -1, e.currentTarget)}
+                        title="Flytta vänster"
+                        aria-label={`Flytta ${name} ett steg åt vänster`}
+                        className="grid size-8 place-items-center rounded-full bg-white/90 text-ink shadow hover:bg-white disabled:opacity-40"
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={i === items.length - 1}
+                        onClick={(e) => move(i, 1, e.currentTarget)}
+                        title="Flytta höger"
+                        aria-label={`Flytta ${name} ett steg åt höger`}
+                        className="grid size-8 place-items-center rounded-full bg-white/90 text-ink shadow hover:bg-white disabled:opacity-40"
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="relative">
                   <input
@@ -235,7 +278,8 @@ export function GalleryManager({
                   {saved === item.id && <Check size={15} className="absolute right-2.5 top-2.5 text-emerald-600" />}
                 </div>
               </li>
-            ))}
+              );
+            })}
             {pending.map((p) => (
               <li key={p.key} className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
                 <div className="relative aspect-[4/3]">

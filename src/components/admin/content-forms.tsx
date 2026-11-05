@@ -2,7 +2,7 @@ import { saveBoardMember, saveCommittee, savePage, saveSettings } from "@/app/ad
 import { formatDate } from "@/lib/dates";
 import type { BoardMember, Committee, EventItem, Page, SiteSettings } from "@/lib/types";
 import { ActionForm } from "./action-form";
-import { Field, FormSection, Select, TextArea, TextInput, Toggle } from "./fields";
+import { ColorInput, Field, FormSection, Select, TextArea, TextInput, Toggle } from "./fields";
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 
@@ -75,7 +75,7 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
           <FormSection title="Utseende">
             <Field label="Accentfärg" name="accent" hint="Används för detaljer och genererade omslag.">
               <div className="flex items-center gap-3">
-                <input type="color" name="accent" defaultValue={c.accent} className="h-11 w-16 cursor-pointer rounded-xl border border-ink/15 bg-white p-1" />
+                <ColorInput name="accent" defaultValue={c.accent} />
               </div>
             </Field>
             {editor && (
