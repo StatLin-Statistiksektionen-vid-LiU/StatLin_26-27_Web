@@ -999,3 +999,15 @@ html:not(.js) header.fixed {
     opacity: 0;
   }
 }
+
+/* Bubblan. När något annat ligger ovanpå (meny, bildvisare) går den inte att nå, och då ska den inte heller synas. */
+#admin-bar[inert] {
+  visibility: hidden;
+}
+/* Ligger bubblan i nederkanten ska den inte täcka knapparna i heron eller sidfotens sista rad. */
+html:has(#admin-bar[data-corner^="bottom"]) .hero-bunn {
+  padding-bottom: 5rem;
+}
+html:has(#admin-bar[data-corner^="bottom"]) footer {
+  padding-bottom: 4.5rem;
+}

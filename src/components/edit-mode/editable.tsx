@@ -44,15 +44,17 @@ export function Editable({
       {allowed && (
         <button
           type="button"
+          data-edit-pen
           onClick={() => editStore.open(target)}
           className={cn(
-            // Sitter som en flik på ramens överkant, så att den inte täcker texten.
-            inset ? "right-2 top-2" : "-top-5 right-3",
-            "absolute z-30 inline-flex items-center gap-1.5 rounded-full bg-red px-3.5 py-2 text-xs font-bold text-white shadow-[0_10px_30px_-10px_rgb(255_7_7/0.8)] transition-colors hover:bg-red-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
+            // Bara en rund penna på ramens hörn, så att den inte täcker texten. Texten fälls ut åt vänster vid hover och fokus.
+            inset ? "right-2 top-2" : "-right-3 -top-4",
+            "group/pen absolute z-30 inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-red-deep px-2.5 text-xs font-bold text-white shadow-[0_10px_30px_-10px_rgb(255_7_7/0.8)] transition-colors hover:bg-red-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
             penClassName,
           )}
         >
-          <Edit size={14} /> {label}
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-[max-width,margin] duration-300 group-hover/pen:mr-1.5 group-hover/pen:max-w-48 group-focus-visible/pen:mr-1.5 group-focus-visible/pen:max-w-48">{label}</span>
+          <Edit size={15} className="shrink-0" />
         </button>
       )}
     </div>
