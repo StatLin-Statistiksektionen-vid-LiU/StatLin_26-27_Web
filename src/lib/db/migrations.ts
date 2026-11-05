@@ -276,6 +276,36 @@ const steps: string[] = [
       (SELECT COALESCE(MIN(sort_order), 0) - 1 FROM links WHERE category = 'statlin')
     WHERE EXISTS (SELECT 1 FROM settings WHERE key = 'seeded_links');
   `,
+  /* 10: frågelådan – lådor med kod eller fast adress och anonyma frågor. Frågorna har med avsikt inga kolumner för namn, IP-adress,
+     webbläsare eller klockslag, bara månaden (för gallringen efter 12 månader). Deras id slumpas, så att ordningen inte heller syns. */ `
+  CREATE TABLE question_boxes (
+    id          INTEGER PRIMARY KEY,
+    slug        TEXT UNIQUE,                                        -- fast låda utan kod: /fragelada/<slug>
+    code        TEXT UNIQUE,                                        -- sex tecken, se src/lib/fragelada.ts
+    title       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    owner_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,    -- bara ägaren läser frågorna; utan ägare tar lådan inte emot något
+    closes_on   TEXT,                                               -- YYYY-MM-DD, sista dagen lådan är öppen
+    closed      INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    CHECK ((slug IS NULL) != (code IS NULL))
+  );
+  CREATE TABLE box_questions (
+    id      INTEGER PRIMARY KEY,                                    -- slumpat
+    box_id  INTEGER NOT NULL REFERENCES question_boxes(id) ON DELETE CASCADE,
+    body    TEXT NOT NULL,
+    month   TEXT NOT NULL,                                          -- YYYY-MM
+    seen    INTEGER NOT NULL DEFAULT 0,
+    handled INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX box_questions_box ON box_questions(box_id, handled);
+  CREATE INDEX box_questions_month ON box_questions(month);
+  -- De fasta lådorna följer posternas konton. Saknas kontot väljer en administratör ägare under Frågelådan.
+  INSERT INTO question_boxes (slug, title, description, owner_id) VALUES
+    ('ubu', 'UBU, utbildningsbevakningen', 'Kurser, examination och studiemiljö.', (SELECT id FROM users WHERE email = 'ubu@statlin.se' AND active = 1)),
+    ('amo', 'AMO, arbetsmiljöombudet', 'Något som inte känns okej, i studierna eller på sektionen.', (SELECT id FROM users WHERE email = 'amo@statlin.se' AND active = 1));
+  `,
 ];
 
 export function migrate(db: Database.Database) {

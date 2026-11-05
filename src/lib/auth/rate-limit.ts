@@ -5,7 +5,7 @@ const attempts = new Map<string, { count: number; reset: number }>();
 const WINDOW_MS = 15 * 60_000;
 const MAX_ATTEMPTS = 20;
 
-export function rateLimitHit(key: string): boolean {
+export function rateLimitHit(key: string, max = MAX_ATTEMPTS): boolean {
   const now = Date.now();
   const entry = attempts.get(key);
   if (!entry || entry.reset < now) {
@@ -16,7 +16,13 @@ export function rateLimitHit(key: string): boolean {
   if (attempts.size > 5000) {
     for (const [k, v] of attempts) if (v.reset < now) attempts.delete(k);
   }
-  return entry.count > MAX_ATTEMPTS;
+  return entry.count > max;
+}
+
+/** Är spärren redan nådd? Räknar inget, så att bara fel kod kostar ett försök i frågelådan: en hel föreläsningssal kan dela IP-adress. */
+export function rateLimitReached(key: string, max = MAX_ATTEMPTS): boolean {
+  const entry = attempts.get(key);
+  return !!entry && entry.reset >= Date.now() && entry.count >= max;
 }
 
 /**
@@ -31,8 +37,12 @@ const MAX_DELAY_MS = 60_000;
 /** IP-adressen ingår bara som HMAC med en nyckel som slumpas när processen startar. */
 const IP_KEY = crypto.randomBytes(32);
 
+export function hashedIp(ip: string): string {
+  return crypto.createHmac("sha256", IP_KEY).update(ip).digest("base64url");
+}
+
 export function loginDelayKey(userId: number, ip: string): string {
-  return `${userId}:${crypto.createHmac("sha256", IP_KEY).update(ip).digest("base64url")}`;
+  return `${userId}:${hashedIp(ip)}`;
 }
 
 /** Sant medan nästa försök mot kontot från den här IP-adressen ska vänta. */

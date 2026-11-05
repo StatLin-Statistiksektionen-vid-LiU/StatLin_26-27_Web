@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { PageHero } from "@/components/ui/page-hero";
+import { readDb } from "@/lib/data/db";
+import { frageladaIsOpen } from "@/lib/data/fragelada";
 
 export const metadata: Metadata = {
   title: "Integritet",
@@ -11,6 +14,28 @@ export const metadata: Metadata = {
  * Vad sajten faktiskt sparar i dag (SD-31). Tiderna för revisionsloggen kommer från src/lib/db/prune-audit-log.ts och sessionernas
  * från src/lib/auth/session.ts – ändras de där ska sidan ändras med.
  */
+/** Syns när frågelådan är på. Texten ska stämma med src/app/(site)/fragelada/actions.ts och migreringssteg 10. */
+async function QuestionBoxPrivacy() {
+  const db = await readDb();
+  if (!frageladaIsOpen(db)) return null;
+  return (
+    <>
+      <h2>Frågelådan</h2>
+      <p>
+        En fråga sparas med texten, vilken låda den gäller och månaden, och med inget annat. Sajten sparar inget namn, ingen IP-adress, ingen
+        webbläsaruppgift och inget klockslag för en fråga, och den sätter ingen kaka. Bara kontot som äger lådan kan läsa frågorna i sajten;
+        administratörer ser titlar och antal. Frågor raderas automatiskt när deras månad är mer än tolv månader gammal, eller tidigare av ägaren.
+      </p>
+      <p>
+        IP-adressen används i serverns minne, omgjord till en nyckel som inte går att läsa baklänges, för spärren mot gissade koder och spam. Den
+        försvinner senast när servern startar om. Vår leverantör Fly.io ser trafiken på nätnivå, som alla leverantörer gör, och det vi kan lova är
+        vad vi sparar. Tänk på att texten i sig kan avslöja vem du är.
+      </p>
+      <p>En raderad fråga finns kvar i ögonblicksbilderna av databasen i upp till fem dagar, se nedan.</p>
+    </>
+  );
+}
+
 export default function PrivacyPage() {
   return (
     <>
@@ -55,6 +80,10 @@ export default function PrivacyPage() {
             kvar tills uppdraget raderas (rubriken står kvar i revisionsloggen); då raderas kommentarerna med det. Raderas ett konto
             står texten kvar, utan namn.
           </p>
+
+          <Suspense fallback={null}>
+            <QuestionBoxPrivacy />
+          </Suspense>
 
           <h2>Revisionsloggen</h2>
           <p>

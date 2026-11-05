@@ -6,7 +6,8 @@ import { BoardCard } from "@/components/content/board-card";
 import { EventCard, EventRow } from "@/components/content/event-card";
 import { Markdown } from "@/components/content/markdown";
 import { NewsCard } from "@/components/content/news-card";
-import { ArrowLeft, Instagram, Mail } from "@/components/icons";
+import { FixedBoxLink } from "@/components/fragelada/box-link";
+import { ArrowLeft, Instagram, Mail, MessageCircle } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, listBoard } from "@/lib/data/content";
 import { listPastEvents, listUpcomingEvents } from "@/lib/data/events";
@@ -62,6 +63,11 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
                 <a href={`mailto:${c.email}`} className="btn btn-red">
                   <Mail size={18} /> {c.email}
                 </a>
+              )}
+              {(c.slug === "ubu" || c.slug === "amo") && (
+                <FixedBoxLink slug={c.slug} className="btn btn-light">
+                  <MessageCircle size={18} /> Skriv anonymt
+                </FixedBoxLink>
               )}
               {instagram && (
                 <a href={instagram} target="_blank" rel="noopener noreferrer" className="btn btn-ghost-dark">

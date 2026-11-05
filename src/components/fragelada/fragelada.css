@@ -1,0 +1,332 @@
+/* Frågelådan: låset och lappen. Kodrutorna är ett lås, och den skickade frågan viker sig och faller ner i en springa.
+   Vanlig CSS med prefix: regeln *.css i next.config.ts gör att CSS-moduler inte får egna klassnamn. */
+
+/* ---------- Låset ---------- */
+
+.fl-lock {
+  position: relative;
+  isolation: isolate;
+  margin-top: 3.9rem;
+  max-width: 27rem;
+}
+
+.fl-lock-body {
+  position: relative;
+  border-radius: 1.6rem;
+  background: var(--color-ink);
+  padding: 1.15rem;
+  box-shadow: 0 18px 40px -22px rgb(10 10 10 / 0.55);
+}
+
+.fl-shackle {
+  position: absolute;
+  bottom: calc(100% - 0.5rem);
+  left: 50%;
+  width: 6.4rem;
+  height: 2.9rem;
+  margin-left: -3.2rem;
+  border: 0.66rem solid var(--color-ink-4);
+  border-bottom: 0;
+  border-radius: 4rem 4rem 0 0;
+  transform-origin: 14% 100%;
+  transition: transform 0.5s var(--ease-out-expo);
+}
+
+.fl-cells-wrap {
+  position: relative;
+}
+
+.fl-cells {
+  display: none;
+}
+
+.js .fl-cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(0.3rem, 1.6vw, 0.5rem);
+}
+
+.fl-cell {
+  display: grid;
+  place-items: center;
+  height: clamp(3.4rem, 15vw, 4.4rem);
+  border-radius: 0.6rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: clamp(1.45rem, 6.6vw, 2.1rem);
+  font-weight: 700;
+  box-shadow: inset 0 3px 6px rgb(10 10 10 / 0.22);
+  transition:
+    background-color 0.3s,
+    box-shadow 0.3s;
+  transition-delay: calc(var(--i) * 45ms);
+}
+
+.fl-char {
+  animation: fl-char-in 0.22s var(--ease-out-expo);
+}
+
+/* Markören i rutan som står på tur. Syns bara när fältet har fokus. */
+.fl-current::after {
+  content: "";
+  width: 0.14em;
+  height: 1.05em;
+  background: var(--color-ink);
+  opacity: 0;
+}
+
+.fl-cells-wrap:focus-within .fl-current {
+  box-shadow:
+    inset 0 3px 6px rgb(10 10 10 / 0.22),
+    0 0 0 3px var(--color-paper-3);
+}
+
+.fl-cells-wrap:focus-within .fl-current::after {
+  animation: fl-caret 1.05s steps(1) infinite;
+}
+
+/* Utan JavaScript är det här ett vanligt, synligt textfält. Med JavaScript ligger det osynligt över rutorna och tar emot skrivande och inklistring. */
+.fl-input {
+  width: 100%;
+  height: 3.6rem;
+  border-radius: 0.6rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.js .fl-input {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px; /* under 16 px zoomar iOS in sidan */
+  outline: none;
+}
+
+.js .fl-input::selection {
+  background: transparent;
+  color: transparent;
+}
+
+.fl-opened .fl-shackle {
+  transform: translateY(-0.7rem) rotate(-9deg);
+}
+
+.fl-opened .fl-cell {
+  background: #fff;
+  box-shadow: none;
+}
+
+/* ---------- Lappen ---------- */
+
+.fl-rise {
+  animation: fl-rise 0.55s var(--ease-out-expo) both;
+}
+
+.fl-sheet {
+  position: relative;
+  border-radius: 0.4rem;
+  background: #fff;
+  /* Det vikta hörnet */
+  clip-path: polygon(0 0, calc(100% - 1.6rem) 0, 100% 1.6rem, 100% 100%, 0 100%);
+}
+
+.fl-sheet-wrap {
+  position: relative;
+  border-radius: 0.5rem;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  filter: drop-shadow(0 10px 18px rgb(10 10 10 / 0.1)) drop-shadow(0 0 1px rgb(10 10 10 / 0.25));
+  transition: outline-color 0.15s;
+}
+
+.fl-sheet-wrap:focus-within {
+  outline-color: var(--color-ink);
+}
+
+.fl-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-bottom-left-radius: 0.3rem;
+  background: var(--color-paper-3);
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.fl-writing {
+  display: block;
+  width: 100%;
+  min-height: 15.6rem;
+  resize: vertical;
+  padding: 0.65rem 1.25rem;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(1.95rem - 1px), rgb(10 10 10 / 0.08) calc(1.95rem - 1px) 1.95rem);
+  background-attachment: local;
+  background-position: 0 0.65rem;
+  color: var(--color-ink);
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.95rem;
+  outline: none;
+}
+
+/* ---------- Kvittot: lappen viker sig och faller ner i springan ---------- */
+
+.fl-scene {
+  position: relative;
+  height: 11rem;
+  max-width: 27rem;
+  /* När lappen fallit behövs inte luften ovanför springan. */
+  animation: fl-scene-shrink 0.5s var(--ease-in-out-quart) 1.6s forwards;
+}
+
+/* Allt under springan klipps bort, så att lappen försvinner ner i den. */
+.fl-clip {
+  position: absolute;
+  inset: 0 0 2.1rem;
+  overflow: hidden;
+  perspective: 620px;
+}
+
+.fl-paper {
+  position: absolute;
+  top: 4.4rem;
+  left: 50%;
+  width: 10rem;
+  height: 3.2rem;
+  margin-left: -5rem;
+  background: #fff repeating-linear-gradient(to bottom, transparent 0 0.7rem, rgb(10 10 10 / 0.09) 0.7rem calc(0.7rem + 1px));
+  box-shadow: 0 0 0 1px rgb(10 10 10 / 0.07);
+  transform-style: preserve-3d;
+  animation:
+    fl-settle 0.5s var(--ease-out-expo) both,
+    fl-drop 0.65s var(--ease-in-out-quart) 1s forwards;
+}
+
+.fl-flap {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 3.2rem;
+  background: #fff repeating-linear-gradient(to bottom, transparent 0 0.7rem, rgb(10 10 10 / 0.09) 0.7rem calc(0.7rem + 1px));
+  box-shadow: 0 0 0 1px rgb(10 10 10 / 0.07);
+  transform-origin: bottom;
+  animation: fl-fold 0.55s var(--ease-in-out-quart) 0.35s forwards;
+}
+
+.fl-slot-front {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2.5rem;
+  border-radius: 0.9rem 0.9rem 0.25rem 0.25rem;
+  background: var(--color-ink);
+}
+
+.fl-slot-front::before {
+  content: "";
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  width: 12.5rem;
+  height: 0.5rem;
+  margin-left: -6.25rem;
+  border-radius: 999px;
+  background: var(--color-ink-4);
+  box-shadow: inset 0 2px 3px #000;
+}
+
+.fl-receipt {
+  animation: fl-rise 0.55s var(--ease-out-expo) 1.45s both;
+}
+
+@keyframes fl-char-in {
+  from {
+    transform: translateY(0.35em);
+    opacity: 0;
+  }
+}
+
+@keyframes fl-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fl-rise {
+  from {
+    transform: translateY(1.1rem);
+    opacity: 0;
+  }
+}
+
+@keyframes fl-scene-shrink {
+  to {
+    height: 2.5rem;
+  }
+}
+
+@keyframes fl-settle {
+  from {
+    transform: scale(1.5) translateY(-0.6rem);
+    opacity: 0.4;
+  }
+}
+
+@keyframes fl-fold {
+  to {
+    transform: rotateX(-180deg);
+  }
+}
+
+@keyframes fl-drop {
+  to {
+    transform: translateY(7.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-char,
+  .fl-rise,
+  .fl-receipt {
+    animation: none;
+  }
+  .fl-cells-wrap:focus-within .fl-current::after {
+    animation: none;
+    opacity: 1;
+  }
+  .fl-shackle,
+  .fl-cell {
+    transition: none;
+  }
+  .fl-scene {
+    display: none;
+  }
+}
+
+/* Skärmen i föreläsningssalen */
+.fl-screen-code {
+  font-family: var(--font-mono);
+  font-size: clamp(3rem, 15vw, 15rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}

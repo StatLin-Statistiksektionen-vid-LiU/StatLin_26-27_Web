@@ -18,6 +18,7 @@ import {
   Layers,
   Logout,
   Menu,
+  MessageCircle,
   Newspaper,
   Settings,
   Users,
@@ -29,7 +30,7 @@ import { LogoutForm } from "./logout-form";
 
 type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
 
-export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
+export function AdminSidebar({ user, unseenTasks = 0, questionBox }: { user: SidebarUser; unseenTasks?: number; questionBox?: { show: boolean; unseen: number } }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const editor = user.role !== "committee";
@@ -38,6 +39,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const tasks = { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks };
   // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const ownPage = user.committee_id && user.committee_kind !== "styrelse" ? { href: `/admin/utskott/${user.committee_id}`, label: "Vår sida", Icon: Layers } : null;
+  const inbox = questionBox?.show ? { href: "/admin/fragelada", label: "Frågelådan", Icon: MessageCircle, badge: questionBox.unseen } : null;
   const images = { href: "/admin/bilder", label: "Bilder", Icon: ImageIcon };
   const resources = { href: "/admin/hjalpmedel", label: "Hjälpmedel", Icon: BookOpen };
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
@@ -49,6 +51,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         ? [
             { href: "/admin", label: "Översikt", Icon: Home, exact: true },
             tasks,
+            inbox,
             { href: "/admin/evenemang", label: "Evenemang", Icon: Calendar },
             { href: "/admin/nyheter", label: "Nyheter", Icon: Newspaper },
             images,
@@ -64,6 +67,7 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             ownPage,
             design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,
+            inbox,
           ],
     },
     {

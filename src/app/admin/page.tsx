@@ -28,6 +28,7 @@ const ENTITY_LABELS: Record<string, string> = {
   settings: "inställningar",
   task: "uppdraget",
   media: "oanvända filer",
+  question_box: "frågelådan",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FixedBoxLink } from "@/components/fragelada/box-link";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
@@ -63,6 +64,9 @@ async function Masters() {
                     <Mail size={15} /> Email UBU
                   </a>
                 )}
+                <FixedBoxLink slug="ubu" className="btn btn-light btn-sm">
+                  Write anonymously (in Swedish or English)
+                </FixedBoxLink>
                 <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
                   About UBU
                 </Link>
