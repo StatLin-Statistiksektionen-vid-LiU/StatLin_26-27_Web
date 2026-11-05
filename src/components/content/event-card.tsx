@@ -51,7 +51,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
           />
         )}
         <div className="absolute left-4 top-4 flex items-center gap-2">
-          <span className="chip bg-white/95 text-ink backdrop-blur pointer-coarse:backdrop-filter-none">{relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
+          <span className="chip bg-white/95 text-ink backdrop-blur pointer-coarse:backdrop-filter-none">{relativeDay(event.starts_at, event.ends_at, event.all_day)}</span>
         </div>
         <div className="absolute bottom-4 left-4 flex flex-col items-center rounded-2xl bg-ink/85 px-3.5 py-2 text-white backdrop-blur-md tabular pointer-coarse:bg-ink/95 pointer-coarse:backdrop-filter-none">
           <span className="kicker text-[0.6rem] text-red">{p.monthShort}</span>
@@ -70,7 +70,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
         <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-5 text-[0.85rem] text-ink/70">
           <span className="inline-flex items-center gap-1.5">
             <Clock size={15} className="text-red" />
-            {capitalizeFirst(p.weekday)} {formatTimeRange(event.starts_at, event.ends_at, !!event.all_day)}
+            {capitalizeFirst(p.weekday)} {formatTimeRange(event.starts_at, event.ends_at, event.all_day)}
           </span>
           {event.location && (
             <span className="inline-flex items-center gap-1.5">
@@ -100,7 +100,7 @@ export function EventRow({ event, dark, locale }: { event: EventItem; dark?: boo
       <DateBlock date={event.starts_at} dark={dark} locale={locale} />
       <div className="min-w-0 flex-1">
         <p className={cn("kicker", dark ? "text-white/45" : "text-stone")}>
-          {event.committee?.short_name ?? "StatLin"} · {formatTimeRange(event.starts_at, event.ends_at, !!event.all_day, locale)}
+          {event.committee?.short_name ?? "StatLin"} · {formatTimeRange(event.starts_at, event.ends_at, event.all_day, locale)}
         </p>
         <p className="mt-1 truncate text-lg font-bold tracking-tight">{event.title}</p>
         {event.location && <p className={cn("truncate text-sm", dark ? "text-white/55" : "text-stone")}>{event.location}</p>}

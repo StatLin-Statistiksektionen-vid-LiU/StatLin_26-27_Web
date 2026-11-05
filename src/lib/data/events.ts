@@ -4,7 +4,7 @@ import { nowLocal } from "@/lib/dates";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import type { EventImage, EventItem, Media } from "@/lib/types";
 
-type Row = Omit<EventItem, "committee" | "cover" | "published"> & { published: number; committee_json: string | null; cover_json: string | null };
+type Row = Omit<EventItem, "committee" | "cover" | "published" | "all_day"> & { published: number; all_day: number; committee_json: string | null; cover_json: string | null };
 
 const SELECT = `
   SELECT e.*,
@@ -22,6 +22,7 @@ function map(r: Row): EventItem {
   return {
     ...rest,
     published: Boolean(r.published),
+    all_day: Boolean(r.all_day),
     committee: parseCommitteeRef(committee_json),
     cover: toImageRef(parseMediaJson(cover_json)),
   };

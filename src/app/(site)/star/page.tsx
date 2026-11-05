@@ -198,7 +198,7 @@ function HeroGraph() {
   );
 }
 
-function CountdownFacts({ event }: { event: { starts_at: string; ends_at: string | null; all_day: number; location: string; price: string } }) {
+function CountdownFacts({ event }: { event: { starts_at: string; ends_at: string | null; all_day: boolean; location: string; price: string } }) {
   const countdown = countdownText(event.starts_at);
   return (
     <>
@@ -210,7 +210,7 @@ function CountdownFacts({ event }: { event: { starts_at: string; ends_at: string
         </div>
         <div>
           <dt className="sr-only">Tid</dt>
-          <dd>{formatTimeRange(event.starts_at, event.ends_at, !!event.all_day)}</dd>
+          <dd>{formatTimeRange(event.starts_at, event.ends_at, event.all_day)}</dd>
         </div>
         {event.location && (
           <div>

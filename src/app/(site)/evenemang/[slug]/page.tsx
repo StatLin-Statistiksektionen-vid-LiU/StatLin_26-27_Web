@@ -52,7 +52,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
     getSettings(),
   ]);
   const others = more.filter((e) => e.id !== event.id).slice(0, 3);
-  const isPast = eventEnd(event.starts_at, event.ends_at, !!event.all_day) < nowLocal();
+  const isPast = eventEnd(event.starts_at, event.ends_at, event.all_day) < nowLocal();
   const committeeLink = event.committee && committeeHref(event.committee);
   const signup = safeExternalUrl(event.signup_url);
   const mapUrl = safeExternalUrl(event.location_url) ?? (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location + ", Linköping")}` : null);
@@ -62,7 +62,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
     "@context": "https://schema.org",
     "@type": "Event",
     name: event.title,
-    ...eventSchemaDates(event.starts_at, event.ends_at, !!event.all_day),
+    ...eventSchemaDates(event.starts_at, event.ends_at, event.all_day),
     eventStatus: "https://schema.org/EventScheduled",
     location: place ? { "@type": "Place", name: place, address: place } : undefined,
     description: event.summary || stripMarkdown(event.body_md) || undefined,
@@ -88,7 +88,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
             <ArrowLeft size={14} /> Alla evenemang
           </Link>
           <div className="mt-8 flex flex-wrap items-center gap-2">
-            <span className={`chip ${isPast ? "bg-white/15 text-white" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
+            <span className={`chip ${isPast ? "bg-white/15 text-white" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at, event.ends_at, event.all_day)}</span>
             {event.committee &&
               (committeeLink ? (
                 <Link href={committeeLink} className="chip border border-white/20 text-white/85 hover:border-white/60">
@@ -117,7 +117,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
                 {formatDateLong(event.starts_at)}
               </InfoRow>
               <InfoRow icon={<Clock size={18} />} label="Tid">
-                {formatTimeRange(event.starts_at, event.ends_at, !!event.all_day)}
+                {formatTimeRange(event.starts_at, event.ends_at, event.all_day)}
               </InfoRow>
               {event.location && (
                 <InfoRow icon={<MapPin size={18} />} label="Plats">

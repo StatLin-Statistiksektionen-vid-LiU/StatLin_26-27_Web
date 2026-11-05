@@ -104,7 +104,7 @@ export interface EventItem {
   body_md: string;
   starts_at: string;
   ends_at: string | null;
-  all_day: number;
+  all_day: boolean;
   location: string;
   location_url: string;
   committee_id: number | null;

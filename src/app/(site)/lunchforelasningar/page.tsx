@@ -167,12 +167,12 @@ function NextLecture({ event, others }: { event: EventItem; others: EventItem[] 
         </div>
         <div className="flex flex-col p-6 md:p-8">
           <p className="kicker text-stone">
-            Nästa föreläsning · <span className="first-letter:uppercase">{relativeDay(event.starts_at, event.ends_at, !!event.all_day)}</span>
+            Nästa föreläsning · <span className="first-letter:uppercase">{relativeDay(event.starts_at, event.ends_at, event.all_day)}</span>
           </p>
           <p className="display-tight mt-3 text-2xl md:text-3xl">{event.title.replace(/^Lunchföreläsning:\s*/i, "")}</p>
           {event.summary && <p className="mt-3 text-stone">{event.summary}</p>}
           <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold">
-            <span>{formatTimeRange(event.starts_at, event.ends_at, !!event.all_day)}</span>
+            <span>{formatTimeRange(event.starts_at, event.ends_at, event.all_day)}</span>
             {event.location && (
               <span className="inline-flex items-center gap-1">
                 <MapPin size={15} className="text-red" /> {event.location}

@@ -39,7 +39,7 @@ function EventStop({ event, index, days, isStar }: { event: EventItem; index: nu
             <time dateTime={event.starts_at.slice(0, 10)}>
               {p.day} {p.monthShort}
             </time>
-            {first && ` · ${relativeDay(event.starts_at, event.ends_at, !!event.all_day)}`}
+            {first && ` · ${relativeDay(event.starts_at, event.ends_at, event.all_day)}`}
           </span>
         </span>
         <span className="tidsaxel-text">

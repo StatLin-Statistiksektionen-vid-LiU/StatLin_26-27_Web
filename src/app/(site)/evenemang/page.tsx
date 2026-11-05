@@ -219,8 +219,8 @@ async function MonthView({
   const prev = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
   const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
   // Rutnätet och mobillistan går på samma regel: flerdagars evenemang syns på alla sina dagar, kvällar som slutar efter midnatt bara på startdagen.
-  const byDay = (date: string) => events.filter((e) => e.starts_at.slice(0, 10) <= date && date <= eventLastDay(e.starts_at, e.ends_at, !!e.all_day));
-  const monthEvents = events.filter((e) => eventInMonth(e.starts_at, e.ends_at, !!e.all_day, month));
+  const byDay = (date: string) => events.filter((e) => e.starts_at.slice(0, 10) <= date && date <= eventLastDay(e.starts_at, e.ends_at, e.all_day));
+  const monthEvents = events.filter((e) => eventInMonth(e.starts_at, e.ends_at, e.all_day, month));
 
   return (
     <div className="mt-12">

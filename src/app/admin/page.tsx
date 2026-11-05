@@ -69,7 +69,7 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
   );
 }
 
-const endOf = (e: EventItem) => eventEnd(e.starts_at, e.ends_at, !!e.all_day);
+const endOf = (e: EventItem) => eventEnd(e.starts_at, e.ends_at, e.all_day);
 const missingCovers = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now && !e.cover).slice(0, 6);
 
 /** Utskottens egen översikt: deras färg och logga, stora knappar för det vanligaste och bara deras eget innehåll. */

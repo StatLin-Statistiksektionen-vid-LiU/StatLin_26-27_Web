@@ -25,7 +25,7 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
   const tab = sp.visa === "tidigare" ? "tidigare" : sp.visa === "ogranskade" && reviewer ? "ogranskade" : "kommande";
   const events = await listEventsForAdmin(user.role === "committee" ? user.committee_id : null);
   const now = nowLocal();
-  const isUpcoming = (e: (typeof events)[number]) => eventEnd(e.starts_at, e.ends_at, !!e.all_day) >= now;
+  const isUpcoming = (e: (typeof events)[number]) => eventEnd(e.starts_at, e.ends_at, e.all_day) >= now;
   const list =
     tab === "kommande"
       ? events.filter(isUpcoming).reverse()
