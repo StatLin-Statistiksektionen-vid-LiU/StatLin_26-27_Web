@@ -28,6 +28,9 @@ function titleSize(title: string) {
   return { text: "text-[clamp(1.05rem,1.6vw,1.45rem)]", col: "md:col-span-7 lg:col-span-8" };
 }
 
+// Meningen bryts olika med reservtypsnittet och Archivo. Tre rader håller platsen på telefon, så att loggan står still när typsnittet laddas.
+const SENTENCE = "mt-3 max-w-md text-[0.875rem] leading-relaxed pointer-coarse:min-h-[3lh]";
+
 function HeroBottom({ title, text }: { title: string | null; text: string | null }) {
   const size = titleSize(title ?? DEFAULT_SETTINGS.hero_title);
   return (
@@ -44,7 +47,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
               <p className={cn("display-tight leading-[1.02]", size.text)}>
                 <AccentText text={DEFAULT_SETTINGS.hero_title} />
               </p>
-              <p className="mt-3 max-w-md text-[0.875rem] leading-relaxed">{DEFAULT_SETTINGS.hero_text}</p>
+              <p className={SENTENCE}>{DEFAULT_SETTINGS.hero_text}</p>
             </div>
           </div>
         ) : (
@@ -52,7 +55,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
             <h1 className={cn("display-tight leading-[1.02]", size.text)}>
               <AccentText text={title} />
             </h1>
-            {text && <p className="mt-3 max-w-md text-[0.875rem] leading-relaxed text-white/60">{text}</p>}
+            {text && <p className={cn(SENTENCE, "text-white/60")}>{text}</p>}
           </>
         )}
       </Editable>
