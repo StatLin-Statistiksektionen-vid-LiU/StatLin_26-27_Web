@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Markdown } from "@/components/content/markdown";
+import { Editable } from "@/components/edit-mode/editable";
 import { Facebook, Instagram, Linkedin, Mail, MapPin } from "@/components/icons";
+import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { PageHero } from "@/components/ui/page-hero";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { getPage, getSettings, listBoard, listCommittees } from "@/lib/data/content";
@@ -26,24 +29,34 @@ async function Contact() {
     { href: settings.facebook, label: "Facebook", Icon: Facebook },
     { href: settings.linkedin, label: "LinkedIn", Icon: Linkedin },
   ].filter((s) => s.href);
+  const title = page?.title ?? "Kontakt";
+  const body = page?.body_md.trim();
 
   return (
     <>
-      <PageHero
-        kicker="Kontakt"
-        title={page?.title ?? "Kontakt"}
-        lead={page?.lead}
-      >
-        <a href={`mailto:${settings.contact_email}`} className="group inline-flex items-center gap-4 text-[clamp(1.3rem,3vw,2.2rem)] font-semibold">
-          <span className="grid size-12 place-items-center rounded-full bg-red text-white transition-transform group-hover:rotate-[-12deg]">
-            <Mail size={22} />
-          </span>
-          <span className="link-underline">{settings.contact_email}</span>
-        </a>
-      </PageHero>
+      <Editable target={{ type: "page", slug: "kontakt" }} label="Redigera sidan" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
+        <PageHero
+          kicker="Kontakt"
+          title={<AccentText text={title} accentClassName="text-red" />}
+          fitTitle={stripAccent(title)}
+          lead={page?.lead}
+        >
+          <a href={`mailto:${settings.contact_email}`} className="group inline-flex items-center gap-4 text-[clamp(1.3rem,3vw,2.2rem)] font-semibold">
+            <span className="grid size-12 place-items-center rounded-full bg-red text-white transition-transform group-hover:rotate-[-12deg]">
+              <Mail size={22} />
+            </span>
+            <span className="link-underline">{settings.contact_email}</span>
+          </a>
+        </PageHero>
+      </Editable>
 
       <section className="container-site grid gap-16 py-16 md:py-24 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+        <div className="min-w-0 lg:col-span-7">
+          {body && (
+            <Editable target={{ type: "page", slug: "kontakt" }} label="Redigera texten" className="mb-14">
+              <Markdown source={body} />
+            </Editable>
+          )}
           <h2 className="kicker text-stone">Styrelsen</h2>
           <ul className="mt-4 border-t border-ink/10">
             {board.map((m) => (
