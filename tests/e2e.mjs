@@ -1161,8 +1161,10 @@ async function openDeleteConfirm(page) {
       await page.goto(`${BASE}/admin/uppdrag`);
       await page.getByText("Affisch till testsittningen").waitFor();
       assert.equal(await page.getByText("Hemlig planering i testet").count(), 0, "privat uppdrag ska inte synas på tavlan");
-      const html = await (await page.goto(secret)).text();
+      // Sidan skickar vidare i webbläsaren, så svaret på själva sidbytet kan vara borta när det läses. Därför ett eget anrop med samma inloggning.
+      const html = await (await page.request.get(secret)).text();
       assert.ok(!html.includes("Hemlig planering i testet"), "privat uppdrag ska inte finnas i HTML:en");
+      await page.goto(secret);
       await page.waitForURL(/\/admin\/uppdrag$/);
     });
 
