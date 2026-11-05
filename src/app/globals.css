@@ -135,6 +135,21 @@
   size-adjust: 122%;
 }
 
+/* Samma sak för undersidornas rubriker, som är bredare. Skalan är uppmätt mot display på alla sidor i bredderna 320 till 430. Bokstäverna blir högre en kort stund, men rubriken bryts likadant och inget under den flyttas. */
+@font-face {
+  font-family: "Archivo Bred Reserv Arial";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 100 900;
+  size-adjust: 128%;
+}
+
+@font-face {
+  font-family: "Archivo Bred Reserv Roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 100 900;
+  size-adjust: 141%;
+}
+
 @utility display {
   font-family: var(--font-sans);
   font-stretch: 125%;
@@ -142,6 +157,10 @@
   text-transform: uppercase;
   letter-spacing: -0.02em;
   line-height: 0.92;
+
+  @media (pointer: coarse) {
+    font-family: "Archivo Variable", "Archivo Bred Reserv Arial", "Archivo Bred Reserv Roboto", var(--font-sans);
+  }
 }
 
 @utility display-tight {
