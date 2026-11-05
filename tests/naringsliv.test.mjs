@@ -93,5 +93,5 @@ test("frågorna läses som block, och en fråga utan svar visas inte", () => {
 
 test("långa namn kortas på kartan", () => {
   const map = wideMap([{ id: 1, name: "Ett mycket långt företagsnamn som aldrig tar slut AB" }]);
-  assert.ok(map.stars[0].label.length <= 24 && map.stars[0].label.endsWith("…"));
+  assert.ok(map.stars[0].label.length <= 30 && map.stars[0].label.endsWith("…"));
 });

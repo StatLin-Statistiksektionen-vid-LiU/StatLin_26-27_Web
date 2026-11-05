@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { setEventChecked } from "@/app/admin/_actions/events";
+import { InlineActionForm } from "@/components/admin/inline-action-form";
 import { AdminHeader, EmptyState, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Edit, Image as ImageIcon, Plus } from "@/components/icons";
+import { PendingButton } from "@/components/admin/wheel-buttons";
+import { ArrowUpRight, Check, Edit, Image as ImageIcon, Plus } from "@/components/icons";
 import { canReviewEvents } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { listEventsForAdmin } from "@/lib/data/events";
@@ -37,6 +40,9 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
     ...(drafts.length > 0 || tab === "utkast" ? [{ key: "utkast", href: "/admin/evenemang?visa=utkast", count: drafts.length }] : []),
     ...(reviewer ? [{ key: "ogranskade", href: "/admin/evenemang?visa=ogranskade", count: unreviewed.length }] : []),
   ];
+
+  // Fliken har en egen knapp på raden. På telefon får den platsen, och raden leder ändå till evenemanget.
+  const iconClass = cn("place-items-center rounded-full hover:bg-paper size-9", tab === "tidigare" || tab === "ogranskade" ? "hidden sm:inline-grid" : "inline-grid");
 
   return (
     <>
@@ -132,20 +138,21 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
                         Kopiera
                       </Link>
                     )}
-                    <Link
-                      href={`/admin/evenemang/${e.id}`}
-                      className={cn("place-items-center rounded-full hover:bg-paper", tab === "tidigare" ? "hidden size-9 sm:inline-grid" : "inline-grid size-9")}
-                      aria-label="Redigera"
-                    >
+                    {tab === "ogranskade" && (
+                      <InlineActionForm action={setEventChecked} className="mr-1 inline-block whitespace-normal text-left align-middle">
+                        <input type="hidden" name="id" value={e.id} />
+                        <input type="hidden" name="checked" value="1" />
+                        <PendingButton className="btn btn-ink btn-sm gap-1.5">
+                          <Check size={15} /> Granskad
+                          <span className="sr-only">: {e.title}</span>
+                        </PendingButton>
+                      </InlineActionForm>
+                    )}
+                    <Link href={`/admin/evenemang/${e.id}`} className={iconClass} aria-label="Redigera">
                       <Edit size={16} />
                     </Link>
                     {!!e.published && (
-                      <Link
-                        href={`/evenemang/${e.slug}`}
-                        target="_blank"
-                        className={cn("place-items-center rounded-full hover:bg-paper", tab === "tidigare" ? "hidden size-9 sm:inline-grid" : "inline-grid size-9")}
-                        aria-label="Visa på sajten"
-                      >
+                      <Link href={`/evenemang/${e.slug}`} target="_blank" className={iconClass} aria-label="Visa på sajten">
                         <ArrowUpRight size={16} />
                       </Link>
                     )}

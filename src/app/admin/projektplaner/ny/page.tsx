@@ -18,7 +18,7 @@ export default function NewPlanPage(props: PageProps<"/admin/projektplaner/ny">)
 }
 
 async function NewPlan({ searchParams }: { searchParams: PageProps<"/admin/projektplaner/ny">["searchParams"] }) {
-  await requireUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const today = todayLocal();
   const item = typeof sp.punkt === "string" && /^\d+$/.test(sp.punkt) ? await getWheelItem(Number(sp.punkt)) : null;
@@ -41,7 +41,7 @@ async function NewPlan({ searchParams }: { searchParams: PageProps<"/admin/proje
           title: item ? `${item.title} ${year}` : "",
           template: item?.template || "",
           date: item ? suggestedPlanDate(item, year, today) : "",
-          responsible: item?.responsible ?? "",
+          responsible: item?.responsible || (user.role === "committee" ? user.post : ""),
           goal: "",
           wheelItemId: item?.id ?? null,
           year: item ? year : null,

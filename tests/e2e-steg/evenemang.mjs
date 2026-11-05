@@ -420,6 +420,20 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await removeItem(url);
   });
 
+  await step("Ett ogranskat evenemang går att granska direkt i listan, och raden försvinner", async () => {
+    await switchAccount(page, "scb@statlin.se");
+    const title = `E2E-granska ${uniqueId()}`;
+    const { url } = await createEvent({ title, startsAt: `${dayOffset(20)}T18:00` });
+    await switchAccount(page, ADMIN);
+    await page.goto(`${BASE}/admin/evenemang?visa=ogranskade`);
+    const row = page.locator("tbody tr:visible", { hasText: title });
+    const button = row.getByRole("button", { name: "Granskad" });
+    await waitForHydration(page, button);
+    await button.click();
+    await row.waitFor({ state: "detached" });
+    await removeItem(url);
+  });
+
   await step("Ett evenemang går att kopiera: texterna följer med men inte omslag och anmälan, och sluttiden följer starten", async () => {
     await switchAccount(page, ADMIN);
     const title = `E2E-kopia ${uniqueId()}`;

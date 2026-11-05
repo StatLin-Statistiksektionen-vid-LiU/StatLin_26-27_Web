@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-/** Minuter sedan epoken för en lokal tid. Klockslagen räknas rakt av, så att sommartiden inte kan flytta dem. */
-const minutes = (local: string) => Date.parse(`${local}Z`) / 60_000;
+const DAY_MS = 86_400_000;
+/** Lokala tider räknas rakt av som UTC, så att sommartiden inte kan flytta klockslagen. */
+const dayOf = (local: string) => Date.parse(`${local.slice(0, 10)}T00:00Z`) / DAY_MS;
 
 /**
- * Flyttas starten följer sluttiden med, som i en kalender. Annars stod sluttiden kvar på det gamla datumet, ofta i ett
- * hopfällt avsnitt, och sparningen nekades med ett fel om något man inte hade rört.
+ * Flyttas evenemanget till en annan dag följer sluttiden med lika många dagar. Annars stod den kvar på det gamla datumet
+ * och sparningen nekades med ett fel om något man inte hade rört. Ett ändrat klockslag rör inte sluttiden: den är inte
+ * alltid i bild, och att ett evenemang börjar senare betyder inte att det slutar senare.
  */
 export function EndFollowsStart() {
   const anchor = useRef<HTMLSpanElement>(null);
@@ -23,10 +25,10 @@ export function EndFollowsStart() {
     const follow = () => {
       // Ett halvifyllt datum är tomt tills det är klart. Då räknas flytten från det senaste hela datumet.
       if (!start.value) return;
-      const moved = minutes(start.value) - minutes(before);
+      const moved = dayOf(start.value) - dayOf(before);
       before = start.value;
-      const next = minutes(end.value) + moved;
-      if (moved !== 0 && Number.isFinite(next)) end.value = new Date(next * 60_000).toISOString().slice(0, 16);
+      const next = Date.parse(`${end.value}Z`) + moved * DAY_MS;
+      if (moved !== 0 && Number.isFinite(next)) end.value = new Date(next).toISOString().slice(0, 16);
     };
     start.addEventListener("focus", remember);
     start.addEventListener("change", follow);

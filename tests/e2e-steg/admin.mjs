@@ -521,7 +521,7 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
       await page.waitForURL((u) => /\/admin\/utskott\/\d+/.test(u.pathname));
       const toggle = page.locator('input[name="visible"]');
       await waitForHydration(page, toggle);
-      await toggle.setChecked(visible, { force: true });
+      if ((await toggle.isChecked()) !== visible) await page.locator('label:has(input[name="visible"])').click();
       await page.getByRole("button", { name: "Spara", exact: true }).click();
       await page.getByText(/sparad|sparat/i).first().waitFor();
     };
