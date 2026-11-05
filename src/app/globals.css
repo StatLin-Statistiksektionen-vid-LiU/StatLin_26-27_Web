@@ -386,6 +386,24 @@ html:not(.js) header.fixed {
   background-color: var(--color-ink);
 }
 
+/* Sidhuvudets lilla logga. Där heron har den stora loggan glider namnet in på den lillas plats. Bara transform och opacity, så att inget läggs ut på nytt under scrollen. */
+.sidhuvud-logga,
+.sidhuvud-namn {
+  transition:
+    transform 0.7s var(--ease-out-expo),
+    opacity 0.7s var(--ease-out-expo);
+}
+/* Innan JavaScript har kommit vet sidhuvudet inte vilken sida det står på, men heron finns redan i dokumentet. */
+.sidhuvud-marke[data-storlogga="ja"] .sidhuvud-logga,
+html:has([data-startsida]) .sidhuvud-marke[data-storlogga="okant"] .sidhuvud-logga {
+  opacity: 0;
+  transform: scale(0.5);
+}
+.sidhuvud-marke[data-storlogga="ja"] .sidhuvud-namn,
+html:has([data-startsida]) .sidhuvud-marke[data-storlogga="okant"] .sidhuvud-namn {
+  transform: translateX(-3rem);
+}
+
 /* Sidhuvudet vet inte vilken sida det står på förrän JavaScript har kommit. Till dess står båda språklänkarna i koden. */
 .sprak-sv,
 html:has([data-engelsk-sida]) .sprak-en {

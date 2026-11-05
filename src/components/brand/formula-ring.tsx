@@ -36,6 +36,9 @@ const STOPS = Array.from({ length: 9 }, (_, i) => {
   return { offset: s.toFixed(3), opacity: (alpha * 0.85).toFixed(3) };
 });
 
+/** Modulen lever tills sidan laddas om. Det första svepet hör till introt, så när startsidan visas igen efter ett sidbyte väntar ringen på nästa ordinarie svep. */
+let sweptOnce = false;
+
 const shortestTurn = (to: number, from: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const smooth = (x: number) => x * x * (3 - 2 * x);
 /** Andel av vägen mot målet för den här bildrutan, oavsett skärmens uppdateringsfrekvens. */
@@ -143,6 +146,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     };
     const playSweep = () => {
       schedule();
+      sweptOnce = true;
       if (!visible || document.hidden) return;
       sweepStart = performance.now();
       start();
@@ -208,11 +212,14 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     window.addEventListener("pointermove", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
     root.addEventListener("click", onTap);
-    schedule(FIRST_SWEEP_MS);
+    schedule(sweptOnce ? SWEEP_PERIOD_MS : FIRST_SWEEP_MS);
     return () => {
       running = false;
       cancelAnimationFrame(raf);
       window.clearTimeout(timer);
+      // Sidan kan gömmas mitt i ett svep. Annars står en halv ring frusen där när den visas igen.
+      gradient.setAttribute("r", "0");
+      delete layer.dataset.shown;
       io.disconnect();
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);

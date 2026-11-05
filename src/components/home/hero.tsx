@@ -5,6 +5,7 @@ import { FloatingLogo } from "@/components/brand/floating-logo";
 import { FormulaRing } from "@/components/brand/formula-ring";
 import { ArrowRight } from "@/components/icons";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
+import { IntroOnce } from "@/components/ui/intro-once";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { cn } from "@/lib/utils";
 import { Editable } from "@/components/edit-mode/editable";
@@ -94,7 +95,8 @@ async function HeroText() {
 
 export function Hero() {
   return (
-    <section className="noise relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink text-white">
+    <section data-startsida className="noise relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink text-white">
+      <IntroOnce />
       {/* Bakgrund: rutnät + levande data */}
       <div
         aria-hidden

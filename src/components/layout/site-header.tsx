@@ -91,13 +91,13 @@ function HeaderView({ pathname }: { pathname: string | null }) {
         )}
       >
         <div className="container-site flex h-[var(--header-h)] items-center justify-between gap-6">
-          <Link href="/" className="group flex items-center gap-3" aria-label="StatLin, startsida">
-            <span
-              className={cn(
-                "relative block h-9 overflow-hidden transition-all duration-700 ease-[var(--ease-out-expo)]",
-                isHome && !scrolled && !open ? "-mr-3 w-0 scale-50 opacity-0" : "w-9 scale-100 opacity-100",
-              )}
-            >
+          <Link
+            href="/"
+            className="sidhuvud-marke group flex items-center gap-3"
+            aria-label="StatLin, startsida"
+            data-storlogga={pathname === null ? "okant" : isHome && !scrolled && !open ? "ja" : "nej"}
+          >
+            <span className="sidhuvud-logga relative block size-9">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/statlin.svg"
@@ -107,7 +107,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                 className="logo-kant size-9 transition-transform duration-700 [--kant:1px] group-hover:rotate-[-12deg]"
               />
             </span>
-            <span className="display-tight text-[1.05rem] tracking-tight" translate="no">
+            <span className="sidhuvud-namn display-tight text-[1.05rem] tracking-tight" translate="no">
               Stat<span className="text-red">Lin</span>
             </span>
           </Link>

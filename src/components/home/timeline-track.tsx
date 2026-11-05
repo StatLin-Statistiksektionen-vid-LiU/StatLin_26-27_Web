@@ -45,7 +45,11 @@ export function TimelineTrack({ children }: { children: ReactNode }) {
         { threshold: 0.01 },
       );
       seen.observe(section);
-      return () => seen.disconnect();
+      return () => {
+        seen.disconnect();
+        // Webbläsaren startar om animationerna när den dolda sidan visas igen, så markeringen får inte stå kvar.
+        delete section.dataset.intro;
+      };
     } catch {
       // Utan sessionStorage blir det inget intro, och linjen står där från början.
     }
