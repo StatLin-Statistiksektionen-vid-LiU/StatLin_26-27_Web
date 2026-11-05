@@ -51,7 +51,8 @@ async function Companies() {
     >
       {/* STAR */}
       <section className="relative overflow-hidden bg-star-navy py-24 text-white md:py-32">
-        <StarField />
+        {/* På telefon fyller texten hela bredden, så grafen skulle gå tvärs genom den. Loggan längre ner har samma motiv. */}
+        <StarField figureClassName="max-md:hidden" />
         <div className="container-site relative grid items-center gap-12 md:grid-cols-12">
           <Reveal className="md:col-span-7">
             <p className="kicker text-white/60">{settings.star_subtitle || STAR_COPY.subtitle}</p>

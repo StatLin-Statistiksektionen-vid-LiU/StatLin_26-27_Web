@@ -263,20 +263,21 @@ export async function HomeSections() {
  * Stjärnhimmel med en punkt-linje-graf, inspirerad av STAR-loggan.
  * Lägena är procent och radierna pixlar: med en viewBox som sträcks ut blir stjärnorna ovaler på breda ytor.
  */
-export function StarField() {
+export function StarField({ figureClassName }: { figureClassName?: string }) {
   const stars = Array.from({ length: 70 }, (_, i) => {
     const x = (i * 137.5) % 100;
     const y = (i * 61.8 + (i % 7) * 13) % 100;
     return { x, y, r: ((i * 7) % 10) / 10 + 0.3, o: 0.25 + ((i * 13) % 10) / 14 };
   });
+  // Grafen håller sig uppe till höger. Texten står längst ner till vänster, och en punkt mitt i en mening ser ut som ett skrivtecken.
   const constellation = [
-    [12, 78],
-    [26, 66],
-    [38, 70],
-    [52, 52],
-    [66, 48],
-    [78, 30],
-    [90, 22],
+    [58, 36],
+    [64, 31],
+    [69, 33],
+    [75, 25],
+    [81, 23],
+    [87, 15],
+    [92, 12],
   ];
   return (
     <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
@@ -290,13 +291,15 @@ export function StarField() {
       {stars.map((s, i) => (
         <circle key={i} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r * 1.1} fill="#fff" opacity={s.o} />
       ))}
-      {constellation.slice(1).map(([x, y], i) => {
-        const [fromX, fromY] = constellation[i];
-        return <line key={i} x1={`${fromX}%`} y1={`${fromY}%`} x2={`${x}%`} y2={`${y}%`} stroke="#fff" strokeOpacity="0.45" strokeWidth="0.75" />;
-      })}
-      {constellation.map(([x, y], i) => (
-        <circle key={i} cx={`${x}%`} cy={`${y}%`} r="2.5" fill="#fff" />
-      ))}
+      <g className={figureClassName}>
+        {constellation.slice(1).map(([x, y], i) => {
+          const [fromX, fromY] = constellation[i];
+          return <line key={i} x1={`${fromX}%`} y1={`${fromY}%`} x2={`${x}%`} y2={`${y}%`} stroke="#fff" strokeOpacity="0.45" strokeWidth="0.75" />;
+        })}
+        {constellation.map(([x, y], i) => (
+          <circle key={i} cx={`${x}%`} cy={`${y}%`} r="2.5" fill="#fff" />
+        ))}
+      </g>
     </svg>
   );
 }
