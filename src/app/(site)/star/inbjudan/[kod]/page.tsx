@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Branscher } from "@/components/foretag/branscher";
 import { StudenternasKompetens } from "@/components/foretag/studenternas-kompetens";
@@ -206,9 +207,9 @@ export default async function StarInvitation(props: PageProps<"/star/inbjudan/[k
                         <Calendar size={18} /> Lägg dagen i kalendern
                       </a>
                     )}
-                    <a href="/foretag" className="btn btn-ghost-dark">
+                    <Link href="/foretag" className="btn btn-ghost-dark">
                       Mer om StatLin
-                    </a>
+                    </Link>
                   </div>
                 </div>
               ) : (

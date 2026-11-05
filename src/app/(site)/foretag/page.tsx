@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
 import { SmartImage } from "@/components/content/smart-image";
@@ -80,14 +81,14 @@ async function Companies() {
             {settings.star_intro && <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/80">{settings.star_intro}</p>}
             <div className="mt-8 flex flex-wrap gap-3">
               {starIsLive(settings) && (
-                <a href="/star" className="btn btn-red">
+                <Link href="/star" className="btn btn-red">
                   Till STAR-sidan <ArrowRight size={18} />
-                </a>
+                </Link>
               )}
               {star && (
-                <a href={`/evenemang/${star.slug}`} className="btn btn-light">
+                <Link href={`/evenemang/${star.slug}`} className="btn btn-light">
                   {formatDateLong(star.starts_at)} <ArrowUpRight size={18} />
-                </a>
+                </Link>
               )}
             </div>
           </Reveal>
@@ -106,9 +107,9 @@ async function Companies() {
             <p className="display-tight mt-3 text-2xl md:text-3xl">Studenterna önskar, ni föreläser</p>
             <p className="mt-2 max-w-xl text-stone">Se vad studenterna vill höra om och hur det går till att hålla en lunchföreläsning.</p>
           </div>
-          <a href="/lunchforelasningar" className="btn btn-ink shrink-0">
+          <Link href="/lunchforelasningar" className="btn btn-ink shrink-0">
             Till önskelistan <ArrowRight size={18} />
-          </a>
+          </Link>
         </div>
       </section>
 

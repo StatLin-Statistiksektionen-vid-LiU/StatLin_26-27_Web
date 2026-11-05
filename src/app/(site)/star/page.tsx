@@ -60,9 +60,9 @@ export default async function StarPage(props: PageProps<"/star">) {
               <a href={companyMail} className="btn btn-light">
                 <Mail size={18} /> Vill ni vara med?
               </a>
-              <a href="/foretag" className="btn btn-ghost-dark">
+              <Link href="/foretag" className="btn btn-ghost-dark">
                 Fler sätt att samarbeta
-              </a>
+              </Link>
             </div>
           </div>
         </StarHero>
@@ -167,9 +167,9 @@ export default async function StarPage(props: PageProps<"/star">) {
               <h2 data-star-in className={H2}>Dagen</h2>
               <EventFacts event={event} stacked className="mt-6" />
               <p className="mt-5">
-                <a href={`/evenemang/${event.slug}`} className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
+                <Link href={`/evenemang/${event.slug}`} className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
                   Mer om dagen <ArrowRight size={15} />
-                </a>
+                </Link>
               </p>
             </div>
             {program.length > 0 ? <Route stops={program} /> : <p className="mt-8 max-w-xl text-lg text-white/85">Programmet kommer snart.</p>}
@@ -247,13 +247,13 @@ export default async function StarPage(props: PageProps<"/star">) {
             </Pen>
             <div className="mt-7 flex flex-wrap gap-3">
               {event && (
-                <a href={`/evenemang/${event.slug}`} className="btn btn-light">
+                <Link href={`/evenemang/${event.slug}`} className="btn btn-light">
                   Om evenemanget <ArrowRight size={18} />
-                </a>
+                </Link>
               )}
-              <a href="/lunchforelasningar" className="btn btn-ghost-dark">
+              <Link href="/lunchforelasningar" className="btn btn-ghost-dark">
                 Lunchföreläsningar
-              </a>
+              </Link>
             </div>
           </div>
           <div>
@@ -266,9 +266,9 @@ export default async function StarPage(props: PageProps<"/star">) {
               <a href={companyMail} className="btn btn-red">
                 <Mail size={18} /> {contact}
               </a>
-              <a href="/foretag" className="btn btn-ghost-dark">
+              <Link href="/foretag" className="btn btn-ghost-dark">
                 Fler sätt att samarbeta
-              </a>
+              </Link>
             </div>
           </div>
         </div>

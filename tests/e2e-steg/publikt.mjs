@@ -188,6 +188,41 @@ export default async function publiktSteg({ BASE, browser, step }) {
     await desktop.close();
   });
 
+  await step("Omladdning och bakåt från en annan webbplats lämnar besökaren där den var, fast sidan strömmas in", async () => {
+    for (const options of [{}, PHONE]) {
+      for (const path of ["/foretag", "/evenemang"]) {
+        const { page: p, context } = await newVisitor(browser, options);
+        await p.goto(`${BASE}${path}`);
+        await waitForHydration(p, p.locator("footer a").first());
+        const y = await p.evaluate(() => {
+          const target = Math.round((document.documentElement.scrollHeight - window.innerHeight) * 0.6);
+          window.scrollTo(0, target);
+          return target;
+        });
+        const stillThere = async (what) => {
+          await p.waitForFunction((target) => Math.abs(window.scrollY - target) < 150, y);
+          // Den ska stå kvar också när resten av sidan har kommit.
+          await p.waitForTimeout(1200);
+          const now = await p.evaluate(() => window.scrollY);
+          assert.ok(Math.abs(now - y) < 150, `${path}, ${what}: stod på ${now}, skulle stå på ${y}`);
+        };
+        await p.waitForTimeout(400);
+        await p.reload();
+        await stillThere("omladdning");
+        await p.goto(`${BASE}/integritet`);
+        await p.goBack();
+        await stillThere("bakåt");
+        assert.equal(await p.evaluate(() => history.scrollRestoration), "auto", "bakåt inom sajten ska webbläsaren få sköta själv");
+
+        // Den som öppnar sidan på nytt ska börja högst upp.
+        await p.goto(`${BASE}${path}`);
+        await p.waitForTimeout(800);
+        assert.equal(await p.evaluate(() => window.scrollY), 0, `${path} ska börja högst upp när den öppnas på nytt`);
+        await context.close();
+      }
+    }
+  });
+
   await step("Adresserna man gissar leder rätt: /nytt och /kalender", async () => {
     const { context, page } = await newVisitor(browser);
     await page.goto(`${BASE}/nytt`);

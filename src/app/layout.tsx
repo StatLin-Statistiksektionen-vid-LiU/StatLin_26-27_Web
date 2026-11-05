@@ -3,6 +3,7 @@ import "@fontsource-variable/archivo/standard.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
 import { SITE_ALTERNATES, SITE_OG } from "@/lib/site-metadata";
+import { SCROLL_RESTORE_SCRIPT } from "@/lib/scroll-restore";
 
 // Läses vid bygget för förrenderade sidor – se Dockerfile (ARG SITE_URL).
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         {/* Markerar att JS körs. Utan klassen döljs skeletten i globals.css, eftersom innehållet aldrig kommer i deras ställe. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORE_SCRIPT }} />
       </head>
       <body className="min-h-dvh">{children}</body>
     </html>
