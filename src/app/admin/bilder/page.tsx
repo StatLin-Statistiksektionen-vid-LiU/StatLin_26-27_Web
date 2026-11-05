@@ -161,7 +161,7 @@ function ImageCard({
             {meta.filter(Boolean).join(" · ")}
           </span>
           {link && (
-            <Link href={link.href} className="inline-flex items-center gap-1 font-semibold text-red-deep hover:underline">
+            <Link href={link.href} className="tryck inline-flex items-center gap-1 font-semibold text-red-deep hover:underline">
               {link.label} <ArrowRight size={13} />
             </Link>
           )}

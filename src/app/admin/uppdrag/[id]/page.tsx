@@ -192,7 +192,7 @@ async function TaskDetail({
 
       {mayEdit && (
         <details className="group mt-8 rounded-[1.5rem] border border-ink/10 bg-white/60 p-5 open:bg-transparent open:p-0 open:pt-2">
-          <summary className="cursor-pointer list-none font-bold group-open:mb-5">Redigera uppdraget</summary>
+          <summary className="tryck cursor-pointer list-none font-bold group-open:mb-5">Redigera uppdraget</summary>
           <TaskForm
             task={task}
             recipients={recipients}

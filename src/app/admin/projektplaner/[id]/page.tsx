@@ -74,7 +74,7 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/admin/projektplaner" className="kicker inline-flex items-center gap-2 text-stone hover:text-ink">
+        <Link href="/admin/projektplaner" className="tryck kicker inline-flex items-center gap-2 text-stone hover:text-ink">
           <ArrowLeft size={14} /> Projektplaner
         </Link>
         <div className="flex flex-wrap items-center gap-2">
@@ -148,13 +148,13 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
       {canChange && (
         <div className="mt-6 grid grid-cols-1 gap-4 print:hidden">
           <details className="rounded-[1.5rem] border border-ink/10 bg-white p-5" open={over && !plan.lessons}>
-            <summary className="cursor-pointer font-bold">Ändra planen</summary>
+            <summary className="tryck cursor-pointer font-bold">Ändra planen</summary>
             <div className="mt-4">
               <PlanEditForm plan={plan} responsibleOptions={options} />
             </div>
           </details>
           <details className="rounded-[1.5rem] border border-ink/10 bg-white p-5">
-            <summary className="cursor-pointer font-bold">Lägg till ett steg</summary>
+            <summary className="tryck cursor-pointer font-bold">Lägg till ett steg</summary>
             <div className="mt-4">
               <PlanStepForm planId={plan.id} defaultDate={plan.plan_date} />
             </div>

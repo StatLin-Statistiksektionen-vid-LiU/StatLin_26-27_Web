@@ -93,7 +93,7 @@ function StepRow({
         <span className="hidden font-mono text-[0.72rem] text-stone tabular sm:inline print:inline">{weeks}</span>
         <div className="min-w-0">
           {sent ? (
-            <Link href={`/admin/uppdrag/${step.task_id}`} className={cn(titleStyle, "underline decoration-ink/25 underline-offset-2 hover:decoration-ink")}>
+            <Link href={`/admin/uppdrag/${step.task_id}`} className={cn(titleStyle, "tryck underline decoration-ink/25 underline-offset-2 hover:decoration-ink")}>
               {step.title}
             </Link>
           ) : (
@@ -193,7 +193,7 @@ export function PlanSteps({
           Steg
         </h2>
         {onBoard > 0 && (
-          <Link href="/admin/uppdrag" className="inline-flex items-center gap-1 font-mono text-[0.7rem] text-ink/60 hover:text-ink print:hidden">
+          <Link href="/admin/uppdrag" className="tryck inline-flex items-center gap-1 font-mono text-[0.7rem] text-ink/60 hover:text-ink print:hidden">
             {onBoard} av {steps.length + hiddenCount} på tavlan <ArrowUpRight size={12} />
           </Link>
         )}

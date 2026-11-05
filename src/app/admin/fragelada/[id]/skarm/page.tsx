@@ -29,7 +29,9 @@ async function Screen({ params }: { params: PageProps<"/admin/fragelada/[id]/ska
   return (
     <div className="fixed inset-0 z-[80] flex flex-col overflow-auto bg-paper p-6 text-ink md:p-10">
       <div className="flex items-start justify-between gap-6">
-        <p className="min-w-0 text-[clamp(1.1rem,2.4vw,2rem)] font-bold break-words">{box.title}</p>
+        <p role="heading" aria-level={1} className="min-w-0 text-[clamp(1.1rem,2.4vw,2rem)] font-bold break-words">
+          {box.title}
+        </p>
         <Link href={`/admin/fragelada/${box.id}`} aria-label="Stäng skärmvisningen" className="grid size-11 shrink-0 place-items-center rounded-full border border-ink/20 bg-white hover:border-ink">
           <Close size={20} />
         </Link>

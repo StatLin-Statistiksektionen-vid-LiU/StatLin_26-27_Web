@@ -133,7 +133,7 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
               {month !== null ? ` i ${MONTHS[month - 1].toLowerCase()} ${year}` : ` under ${year}`}
             </span>
             {month !== null && (
-              <Link href={href(null)} scroll={false} className="font-semibold text-ink underline">
+              <Link href={href(null)} scroll={false} className="tryck font-semibold text-ink underline">
                 Visa hela året
               </Link>
             )}

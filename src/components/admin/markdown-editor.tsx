@@ -118,10 +118,10 @@ export function MarkdownEditor({
       <div className={cn("overflow-hidden rounded-xl border bg-white focus-within:ring-4 focus-within:ring-ink/[0.06]", invalid ? "border-red" : "border-ink/15 focus-within:border-ink")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-ink/10 bg-paper/60 px-2 py-1.5">
           <div className="mr-2 inline-flex rounded-lg bg-ink/[0.06] p-0.5 text-xs font-semibold">
-            <button type="button" onClick={() => setTab("write")} className={cn("rounded-md px-3 py-1.5", tab === "write" ? "bg-white shadow-sm" : "text-ink/60")}>
+            <button type="button" onClick={() => setTab("write")} className={cn("rounded-md px-3 py-1.5 pointer-coarse:py-2.5", tab === "write" ? "bg-white shadow-sm" : "text-ink/60")}>
               Skriv
             </button>
-            <button type="button" onClick={showPreview} className={cn("rounded-md px-3 py-1.5", tab === "preview" ? "bg-white shadow-sm" : "text-ink/60")}>
+            <button type="button" onClick={showPreview} className={cn("rounded-md px-3 py-1.5 pointer-coarse:py-2.5", tab === "preview" ? "bg-white shadow-sm" : "text-ink/60")}>
               Förhandsgranska
             </button>
           </div>
@@ -133,7 +133,7 @@ export function MarkdownEditor({
                 title={t.title}
                 aria-label={/^[\p{L}\p{N}]/u.test(t.label) ? `${t.label} ${t.title}` : t.title}
                 onClick={() => insert(t)}
-                className={cn("grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-sm text-ink/75 hover:bg-white hover:text-ink", t.label === "B" && "font-bold", t.label === "I" && "italic")}
+                className={cn("grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-sm text-ink/75 hover:bg-white hover:text-ink pointer-coarse:h-10", t.label === "B" && "font-bold", t.label === "I" && "italic")}
               >
                 {t.label}
               </button>
@@ -144,7 +144,7 @@ export function MarkdownEditor({
               title="Infoga bild"
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-ink/75 hover:bg-white hover:text-ink"
+              className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-ink/75 hover:bg-white hover:text-ink pointer-coarse:h-10"
             >
               <ImageIcon size={15} /> {uploading ? "Laddar upp…" : "Bild"}
             </button>

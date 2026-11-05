@@ -115,7 +115,7 @@ export function Select({
 
 export function Toggle({ name, label, defaultChecked, hint, disabled }: { name: string; label: string; defaultChecked?: boolean; hint?: string; disabled?: boolean }) {
   return (
-    <label className={cn("flex cursor-pointer items-start gap-3", disabled && "cursor-not-allowed opacity-60")}>
+    <label className={cn("tryck flex cursor-pointer items-start gap-3", disabled && "cursor-not-allowed opacity-60")}>
       <span className="relative mt-0.5 inline-flex shrink-0">
         <input type="checkbox" name={name} defaultChecked={defaultChecked} disabled={disabled} className="peer sr-only" />
         <span className="h-6 w-11 rounded-full bg-ink/15 transition-colors peer-checked:bg-red peer-focus-visible:ring-4 peer-focus-visible:ring-red/20" />

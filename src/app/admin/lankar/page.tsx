@@ -33,7 +33,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/admin/lankar"
         description={
           <>
             Länkarna på{" "}
-            <Link href="/studenter/lankar" className="link-underline text-ink">
+            <Link href="/studenter/lankar" className="tryck link-underline text-ink">
               Studenter → Länkar
             </Link>
             . Genvägarna (stjärna) visas också på startsidan och studentsidorna.
