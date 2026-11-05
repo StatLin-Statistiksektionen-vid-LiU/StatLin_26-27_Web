@@ -11,6 +11,8 @@ export function pruneAuditLog(db: Database.Database, { onlyIfDue = false } = {})
   try {
     const recent = "SELECT 1 FROM settings WHERE key = 'audit_pruned_at' AND value > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day')";
     if (onlyIfDue && db.prepare(recent).get()) return;
+    // Gallrade frågor ska inte ligga kvar som läsbara rester i databasfilen, samma krav som när ägaren raderar dem.
+    db.pragma("secure_delete = ON");
     db.transaction(() => {
       db.prepare(
         "DELETE FROM audit_log WHERE action IN ('login', 'login_failed') AND created_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-90 days')",
