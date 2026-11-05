@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
 import { SmartImage } from "@/components/content/smart-image";
+import { Branscher } from "@/components/foretag/branscher";
+import { StudenternasKompetens } from "@/components/foretag/studenternas-kompetens";
 import { StarField } from "@/components/home/home-sections";
 import { ArrowRight, ArrowUpRight, Mail } from "@/components/icons";
 import { Reveal } from "@/components/ui/reveal";
@@ -36,6 +38,19 @@ async function Companies() {
     <ContentPage
       slug="foretag"
       kicker="Näringsliv"
+      beforeBody={
+        <>
+          <StudenternasKompetens />
+          <Branscher
+            cta={{
+              href: `mailto:${contact}?subject=${encodeURIComponent("Vi söker studenter")}`,
+              label: "Kontakta SASU",
+              rubrik: "Har ni en fråga som behöver en statistiker?",
+              text: "Exjobb, sommarjobb eller ett case. Berätta vad ni vill lösa, så hjälper SASU er att nå rätt studenter.",
+            }}
+          />
+        </>
+      }
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] rounded-[1.75rem] bg-ink p-7 text-white">
           <p className="kicker text-white/50">Kontakt</p>

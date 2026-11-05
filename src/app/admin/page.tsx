@@ -28,6 +28,7 @@ const ENTITY_LABELS: Record<string, string> = {
   star_company: "STAR-företag",
   star_page: "STAR-sidan",
   lecture_wish: "lunchönskemål",
+  star_intresse: "intresseanmälan",
   user: "konto",
   settings: "inställningar",
   task: "uppdraget",

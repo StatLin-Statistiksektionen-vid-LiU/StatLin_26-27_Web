@@ -36,6 +36,7 @@ export const NAV: NavGroup[] = [
     href: "/foretag",
     children: [
       { href: "/foretag", label: "För företag", description: "Samarbeta med StatLin" },
+      { href: "/foretag#kompetens", label: "Vad studenterna kan", description: "Färdigheter och branscher" },
       { href: "/star", label: "STAR", description: "Arbetsmarknadsdagen: vilka kommer och när" },
       { href: "/lunchforelasningar", label: "Lunchföreläsningar", description: "Nästa föreläsning och önskelistan" },
     ],

@@ -9,7 +9,7 @@ const EDITOR = "info@statlin.se";
 const OTHER_COMMITTEE = "scb@statlin.se";
 
 /** Skapar ett utskottskonto för SASU och loggar in det i en egen webbläsarkontext. Sidan ska vara inloggad som administratör. */
-async function sasuAccount(page, browser, BASE) {
+export async function sasuAccount(page, browser, BASE) {
   const email = `e2e-sasu-${uniqueId()}@statlin.se`;
   await page.goto(`${BASE}/admin/konton`);
   await waitForHydration(page, page.getByRole("button", { name: "Skapa konto" }));

@@ -1,13 +1,18 @@
 "use server";
 
+import crypto from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, canUseImage, forbidden, revalidateSite } from "@/lib/admin/helpers";
 import { actionUser } from "@/lib/auth/session";
+import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
 import { canManageNaringsliv } from "@/lib/data/naringsliv";
 import { getDb } from "@/lib/db";
+import { sendMail } from "@/lib/mail";
 import { deleteMediaIfUnused } from "@/lib/media-store";
+import { siteUrl } from "@/lib/site-url";
+import { intresseMejl, type StarIntresse } from "@/lib/star-intresse";
 import { COMPANY_ROLES, SEEK_KINDS, WISH_COMMENT_MAX, WISH_STATUSES, WISH_STATUS_LABELS, WISH_TITLE_MAX, type WishStatus } from "@/lib/naringsliv";
 
 /* ---------- STAR-företagen ---------- */
@@ -144,6 +149,56 @@ export async function saveWish(_prev: FormState, fd: FormData): Promise<FormStat
 }
 
 /** Godkänn och dölj med en knapp. Formuläret skickar med vilken flik man stod på, så att man kommer tillbaka dit. */
+const INTEREST_PAGE = "/admin/intresseanmalningar";
+
+/** Intresseanmälan till STAR: markera som hanterad eller flytta tillbaka, och samma flik öppnas igen. */
+export async function setInterestStatus(fd: FormData): Promise<void> {
+  const user = await actionUser();
+  if ("error" in user) redirect(`/logga-in?next=${INTEREST_PAGE}`);
+  if (!canManageNaringsliv(user)) redirect("/admin?nekad=1");
+  const id = Number(fd.get("id"));
+  const status = String(fd.get("status")) === "hanterad" ? "hanterad" : "ny";
+  const row = getDb().prepare("UPDATE star_intresse SET status = ? WHERE id = ? RETURNING foretag").get(status, id) as { foretag: string } | undefined;
+  if (row) audit(user.id, "status", "star_intresse", id, `${row.foretag}: ${status}`);
+  redirect(`${INTEREST_PAGE}?klar=${status}`);
+}
+
+export async function deleteInterest(fd: FormData): Promise<FormState | void> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  if (!canManageNaringsliv(user)) return forbidden();
+  const id = Number(fd.get("id"));
+  const row = getDb().prepare("DELETE FROM star_intresse WHERE id = ? RETURNING foretag").get(id) as { foretag: string } | undefined;
+  if (row) audit(user.id, "delete", "star_intresse", id, row.foretag);
+  redirect(`${INTEREST_PAGE}?raderad=1`);
+}
+
+/** För en anmälan som kom in innan mejlet var inställt eller när det inte gick att skicka. */
+export async function resendInterestMail(fd: FormData): Promise<void> {
+  const user = await actionUser();
+  if ("error" in user) redirect(`/logga-in?next=${INTEREST_PAGE}`);
+  if (!canManageNaringsliv(user)) redirect("/admin?nekad=1");
+  const id = Number(fd.get("id"));
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM star_intresse WHERE id = ?").get(id) as (Omit<StarIntresse, "vill_boka_mote"> & { vill_boka_mote: number }) | undefined;
+  if (!row) redirect(INTEREST_PAGE);
+  const [sasu, settings, base] = await Promise.all([getCommitteeBySlug("sasu"), getSettings(), siteUrl()]);
+  const mail = intresseMejl({ ...row, vill_boka_mote: row.vill_boka_mote === 1 }, `${base}${INTEREST_PAGE}`);
+  const result = await sendMail({ to: sasu?.email || settings.contact_email, replyTo: row.epost, ...mail });
+  db.prepare("UPDATE star_intresse SET mejl_status = ? WHERE id = ?").run(result, id);
+  redirect(`${INTEREST_PAGE}?mejl=${result}`);
+}
+
+/** Byter koden i inbjudningslänken. Den gamla länken slutar fungera direkt. */
+export async function renewStarInvite(): Promise<FormState | void> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  if (!canManageNaringsliv(user)) return forbidden();
+  getDb().prepare(SAVE_SETTING).run("star_inbjudan_kod", crypto.randomBytes(12).toString("hex"));
+  audit(user.id, "update", "star_page", null, "Bytte inbjudningslänken");
+  redirect("/admin/star?nylank=1#inbjudan");
+}
+
 export async function setWishStatus(fd: FormData): Promise<void> {
   const user = await actionUser();
   if ("error" in user) redirect("/logga-in?next=/admin/lunchonskemal");

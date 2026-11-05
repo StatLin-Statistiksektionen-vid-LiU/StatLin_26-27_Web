@@ -12,12 +12,15 @@ export async function ContentPage({
   kicker,
   aside,
   heroAside,
+  beforeBody,
   children,
 }: {
   slug: string;
   kicker: string;
   aside?: ReactNode;
   heroAside?: ReactNode;
+  /** Det viktigaste på sidan, när det ska komma direkt efter hjälten och före den redigerbara texten. */
+  beforeBody?: ReactNode;
   children?: ReactNode;
 }) {
   const page = await getPage(slug);
@@ -33,6 +36,7 @@ export async function ContentPage({
           aside={heroAside}
         />
       </Editable>
+      {beforeBody}
       <section className="container-site grid gap-14 py-16 md:py-24 lg:grid-cols-12">
         {/* min-w-0: förkortade rader i sidokolumnen (t.ex. evenemangstitlar) får annars kolumnen att växa på mobil. */}
         <Editable target={{ type: "page", slug }} label="Redigera texten" className={aside ? "min-w-0 lg:col-span-7" : "min-w-0 lg:col-span-8"}>

@@ -236,21 +236,13 @@ UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination e
   {
     slug: "foretag",
     title: "För företag",
-    lead: "Nå Linköpings statistik- och data-studenter, framtidens analytiker, data scientists och statistiker.",
-    body_md: `## Varför StatLin?
-
-Våra medlemmar läser statistik, programmering och maskininlärning och möter arbetslivet med både teoretiskt djup och praktisk erfarenhet av riktiga data. Vi är en liten sektion, vilket betyder att ni når rätt personer, inte en anonym massa.
-
-## Det här kan vi göra tillsammans
+    lead: "Möt Linköpings blivande statistiker, analytiker och data scientists innan de har bestämt sig för var de vill jobba.",
+    body_md: `## Det här kan vi göra tillsammans
 
 - **STAR, StatLins arbetsmarknadsdag.** Sektionens största arbetsmarknadsevenemang.
 - **Lunchföreläsningar och case-kvällar** där studenterna får prova på era verkliga problem.
 - **Exjobb, praktik och sommarjobb** som vi sprider i våra kanaler.
-- **Profilkläder.** Sponsorloggor kan tryckas längs ärmarna på styrelsens och mästeriets hoodies.
-
-## Kontakt
-
-Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg som passar er.`,
+- **Profilkläder.** Sponsorloggor kan tryckas längs ärmarna på styrelsens och mästeriets hoodies.`,
   },
   {
     slug: "kontakt",

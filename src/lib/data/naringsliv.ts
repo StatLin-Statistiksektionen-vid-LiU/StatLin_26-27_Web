@@ -4,6 +4,7 @@ import { isEditor } from "@/lib/auth/permissions";
 import { getDb } from "@/lib/db";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import { PUBLIC_WISH_STATUSES, type LectureWish, type StarCompany } from "@/lib/naringsliv";
+import type { StarIntresse } from "@/lib/star-intresse";
 import type { SessionUser } from "@/lib/types";
 
 /** STAR och lunchföreläsningarna: administratörer, redaktörer och kontot som hör till SASU. */
@@ -46,6 +47,24 @@ export async function listPublicWishes(): Promise<LectureWish[]> {
 export async function listWishesForAdmin(): Promise<LectureWish[]> {
   const db = await readDb();
   return db.prepare(`${WISH_SELECT} ORDER BY w.id DESC`).all() as LectureWish[];
+}
+
+export async function countNewInterest(): Promise<number> {
+  const db = await readDb();
+  return (db.prepare("SELECT COUNT(*) AS n FROM star_intresse WHERE status = 'ny'").get() as { n: number }).n;
+}
+
+export async function listStarInterest(): Promise<StarIntresse[]> {
+  const db = await readDb();
+  const rows = db.prepare("SELECT * FROM star_intresse ORDER BY created_at DESC, id DESC").all() as (Omit<StarIntresse, "vill_boka_mote"> & { vill_boka_mote: number })[];
+  return rows.map((r) => ({ ...r, vill_boka_mote: r.vill_boka_mote === 1 }));
+}
+
+/** Koden i inbjudningslänken. Läses för sig och inte via getSettings, så att den inte kan följa med inställningarna någonstans. */
+export async function getStarInviteCode(): Promise<string> {
+  const db = await readDb();
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'star_inbjudan_kod'").get() as { value: string } | undefined;
+  return row?.value ?? "";
 }
 
 export async function countNewWishes(): Promise<number> {

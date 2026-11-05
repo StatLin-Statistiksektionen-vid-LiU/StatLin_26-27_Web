@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { setStarLive } from "@/app/admin/_actions/naringsliv";
+import { renewStarInvite, setStarLive } from "@/app/admin/_actions/naringsliv";
+import { ConfirmButton } from "@/components/admin/confirm-button";
 import { StarCompanyForm } from "@/components/admin/star-company-form";
 import { StarPageForm } from "@/components/admin/star-page-form";
 import { AdminHeader, EmptyState, JumpToForm, Notice, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Check, ChevronDown, Edit } from "@/components/icons";
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Edit, Handshake } from "@/components/icons";
+import { CopyButton } from "@/components/ui/copy-button";
 import { requireUser } from "@/lib/auth/session";
-import { getSettings } from "@/lib/data/content";
+import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
 import { getStarEvent, listUpcomingEvents } from "@/lib/data/events";
-import { canManageNaringsliv, listStarCompanies } from "@/lib/data/naringsliv";
+import { canManageNaringsliv, countNewInterest, getStarInviteCode, listStarCompanies } from "@/lib/data/naringsliv";
 import { formatDate } from "@/lib/dates";
+import { mailIsConfigured } from "@/lib/mail";
 import { COMPANY_ROLE_LABELS, parseProgram, parseSeeks, SEEK_LABELS, starIsLive } from "@/lib/naringsliv";
+import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "STAR" };
@@ -27,7 +31,18 @@ export default function AdminStar(props: PageProps<"/admin/star">) {
 async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/star">["searchParams"] }) {
   const user = await requireUser();
   if (!canManageNaringsliv(user)) redirect("/admin?nekad=1");
-  const [companies, settings, events, sp] = await Promise.all([listStarCompanies(), getSettings(), listUpcomingEvents(200), searchParams]);
+  const [companies, settings, events, sp, inviteCode, newInterest, sasu, base] = await Promise.all([
+    listStarCompanies(),
+    getSettings(),
+    listUpcomingEvents(200),
+    searchParams,
+    getStarInviteCode(),
+    countNewInterest(),
+    getCommitteeBySlug("sasu"),
+    siteUrl(),
+  ]);
+  const inviteUrl = `${base}/star/inbjudan/${inviteCode}`;
+  const interestTo = sasu?.email || settings.contact_email;
   const event = await getStarEvent(Number(settings.star_event_id) || null);
   const live = starIsLive(settings);
   const visible = companies.filter((c) => c.active);
@@ -37,6 +52,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
     <>
       {sp.sparad && <Notice>Företaget är tillagt.</Notice>}
       {sp.raderad && <Notice>Företaget är borttaget.</Notice>}
+      {sp.nylank && <Notice>Länken är bytt. Den gamla fungerar inte längre, så skicka den nya till företagen.</Notice>}
       <AdminHeader
         title="STAR"
         description="Datum, plats och program kommer från evenemanget. Resten sköts här."
@@ -76,6 +92,37 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
           <Ready ok={visible.length > 0} label="Företag" text={visible.length > 0 ? `${visible.length} syns på sidan` : "Inga än. Sidan säger att de presenteras snart."} href="#foretagen" />
           <Ready ok={sponsors.length > 0} label="Sponsorer" text={sponsors.length > 0 ? `${sponsors.length} syns på sidan` : "Inga än. Avsnittet syns inte förrän det finns någon."} href="#foretagen" />
         </ul>
+      </section>
+
+      <section id="inbjudan" aria-labelledby="star-inbjudan" className="mt-6 scroll-mt-24 rounded-[1.6rem] border border-ink/10 bg-white p-5 md:p-7">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+          <div className="min-w-0">
+            <h2 id="star-inbjudan" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight">
+              <Handshake size={20} /> Inbjudan till företag
+            </h2>
+            <p className="mt-2 max-w-2xl text-stone">
+              Skicka den här länken till företag ni vill ha med. Sidan säljer in studenterna och har en intresseanmälan med möjlighet att boka möte. Den syns inte i menyn eller på Google och fungerar även när STAR-sidan är dold.
+            </p>
+          </div>
+          <Link href="/admin/intresseanmalningar" className="btn btn-ink btn-sm shrink-0">
+            Anmälningar{newInterest > 0 && <span className="tabular opacity-80"> ({newInterest} nya)</span>} <ArrowRight size={15} />
+          </Link>
+        </div>
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input readOnly aria-label="Inbjudningslänk" value={inviteUrl} className="min-w-0 flex-1 rounded-xl border border-ink/15 bg-paper px-3.5 py-2.5 font-mono text-sm text-ink outline-none focus:border-ink focus:ring-4 focus:ring-ink/[0.06]" />
+          <div className="flex flex-wrap gap-2">
+            <CopyButton value={inviteUrl} label="Kopiera länken" className="btn btn-ink btn-sm font-sans" />
+            <Link href={inviteUrl} target="_blank" className="btn btn-ghost btn-sm">
+              Öppna <ArrowUpRight size={15} />
+            </Link>
+            <ConfirmButton action={renewStarInvite} id={0} pendingLabel="Byter länk…" message="Byta länk? Den gamla slutar fungera direkt, också för företag som redan har fått den." className="font-semibold">
+              Byt länk
+            </ConfirmButton>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-stone">
+          {mailIsConfigured() ? `Varje anmälan mejlas till ${interestTo} och syns under Intresseanmälningar.` : `Mejl är inte inställt än, så anmälningar syns bara under Intresseanmälningar. När SMTP är på plats mejlas de till ${interestTo}.`}
+        </p>
       </section>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3">

@@ -60,6 +60,13 @@ export default function PrivacyPage() {
             kurskoden. Din webbläsare kontaktar inte källan, och inga uppgifter om dig skickas dit.
           </p>
 
+          <h2>Företag som anmäler intresse</h2>
+          <p>
+            Företag som vi bjuder in till STAR kan anmäla intresse via en privat länk. Då sparas företagets namn, kontaktpersonens
+            namn och e-postadress och det ni själva skriver, till exempel telefonnummer och önskemål om möte. Anmälan mejlas till
+            SASU och finns i sektionens admin, så att vi kan svara. SASU tar bort den när den inte behövs längre.
+          </p>
+
           <h2>Sektionens poster</h2>
           <p>
             Varje post i styrelsen och utskotten har ett konto med e-postadress, namn, post och roll. Lösenordet sparas bara som

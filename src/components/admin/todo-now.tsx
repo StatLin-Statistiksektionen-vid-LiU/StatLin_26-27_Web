@@ -4,11 +4,11 @@ import { setTaskStatus } from "@/app/admin/_actions/tasks";
 import { TaskActionForm } from "@/components/admin/task-action-form";
 import { DueLabel, PersonChip } from "@/components/admin/task-ui";
 import { PendingButton } from "@/components/admin/wheel-buttons";
-import { ArrowRight, Board, Calendar, Check, Eye, Image as ImageIcon, Mail, MessageCircle, Newspaper } from "@/components/icons";
+import { ArrowRight, Board, Calendar, Check, Eye, Handshake, Image as ImageIcon, Mail, MessageCircle, Newspaper } from "@/components/icons";
 import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
 import { listEventsForAdmin, listEventsToReview, listPastEventsWithoutImages } from "@/lib/data/events";
 import { countUnseenQuestions } from "@/lib/data/fragelada";
-import { canManageNaringsliv, countNewWishes } from "@/lib/data/naringsliv";
+import { canManageNaringsliv, countNewInterest, countNewWishes } from "@/lib/data/naringsliv";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { countUnclaimedTasks, listOpenTasksTo, listTasksAskingForHelp } from "@/lib/data/tasks";
 import { addDaysLocal, formatDate, nowLocal, todayLocal } from "@/lib/dates";
@@ -97,12 +97,13 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
   const ownOrNothing = <T,>(load: (committeeId: number) => Promise<T[]>) => (own ? load(own) : Promise.resolve<T[]>([]));
   const forAll = editor || design;
 
-  const [tasks, askingForHelp, unclaimed, questions, wishes, toReview, events, news, withoutImages] = await Promise.all([
+  const [tasks, askingForHelp, unclaimed, questions, wishes, interest, toReview, events, news, withoutImages] = await Promise.all([
     listOpenTasksTo(user.id, 100),
     listTasksAskingForHelp(user.id, 3),
     countUnclaimedTasks(user),
     countUnseenQuestions(user.id),
     canManageNaringsliv(user) ? countNewWishes() : 0,
+    canManageNaringsliv(user) ? countNewInterest() : 0,
     canReviewEvents(user) ? listEventsToReview() : [],
     forAll ? listEventsForAdmin(null, { since: now }) : ownOrNothing((id) => listEventsForAdmin(id, { since: now })),
     editor ? listNewsForAdmin(null, { limit: 200 }) : ownOrNothing((id) => listNewsForAdmin(id, { limit: 200 })),
@@ -125,6 +126,9 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
 
   if (questions > 0) {
     todos.push({ key: "fragor", rank: 2, Icon: MessageCircle, title: questions === 1 ? "1 ny fråga i frågelådan" : `${questions} nya frågor i frågelådan`, href: "/admin/fragelada" });
+  }
+  if (interest > 0) {
+    todos.push({ key: "intresse", rank: 1, Icon: Handshake, title: interest === 1 ? "1 ny intresseanmälan till STAR" : `${interest} nya intresseanmälningar till STAR`, detail: "Ett företag väntar på svar.", href: "/admin/intresseanmalningar" });
   }
   if (wishes > 0) {
     todos.push({ key: "onskemal", rank: 2, Icon: Mail, title: wishes === 1 ? "1 nytt lunchönskemål" : `${wishes} nya lunchönskemål`, detail: "Syns på sajten först efter godkännande.", href: "/admin/lunchonskemal" });

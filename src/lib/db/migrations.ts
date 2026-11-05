@@ -430,6 +430,45 @@ const steps: string[] = [
   UPDATE pages SET body_md = replace(body_md, 'your study environment – anonymously if you prefer.', 'your study environment, anonymously if you prefer.');
   UPDATE wheel_items SET title = replace(title, 'STAR – arbetsmarknadsdagen', 'STAR, arbetsmarknadsdagen');
   `,
+  /* 15: Intresseanmälan till STAR från företag som fått inbjudningslänken, och koden som gör länken privat. */
+  `
+  CREATE TABLE star_intresse (
+    id INTEGER PRIMARY KEY,
+    foretag TEXT NOT NULL,
+    kontakt_namn TEXT NOT NULL,
+    epost TEXT NOT NULL,
+    telefon TEXT NOT NULL DEFAULT '',
+    val TEXT NOT NULL DEFAULT 'med' CHECK (val IN ('med','mer')),
+    vill_boka_mote INTEGER NOT NULL DEFAULT 0,
+    moteforslag TEXT NOT NULL DEFAULT '',
+    meddelande TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'ny' CHECK (status IN ('ny','hanterad')),
+    mejl_status TEXT NOT NULL DEFAULT 'vantar' CHECK (mejl_status IN ('vantar','skickat','misslyckades','ej_installt')),
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX star_intresse_status ON star_intresse(status, created_at);
+  INSERT OR IGNORE INTO settings (key, value) VALUES ('star_inbjudan_kod', lower(hex(randomblob(12))));
+  UPDATE pages SET lead = 'Möt Linköpings blivande statistiker, analytiker och data scientists innan de har bestämt sig för var de vill jobba.' WHERE slug = 'foretag' AND lead = 'Nå Linköpings statistik- och data-studenter, framtidens analytiker, data scientists och statistiker.';
+  UPDATE pages SET body_md = '## Det här kan vi göra tillsammans
+
+- **STAR, StatLins arbetsmarknadsdag.** Sektionens största arbetsmarknadsevenemang.
+- **Lunchföreläsningar och case-kvällar** där studenterna får prova på era verkliga problem.
+- **Exjobb, praktik och sommarjobb** som vi sprider i våra kanaler.
+- **Profilkläder.** Sponsorloggor kan tryckas längs ärmarna på styrelsens och mästeriets hoodies.' WHERE slug = 'foretag' AND body_md = '## Varför StatLin?
+
+Våra medlemmar läser statistik, programmering och maskininlärning och möter arbetslivet med både teoretiskt djup och praktisk erfarenhet av riktiga data. Vi är en liten sektion, vilket betyder att ni når rätt personer, inte en anonym massa.
+
+## Det här kan vi göra tillsammans
+
+- **STAR, StatLins arbetsmarknadsdag.** Sektionens största arbetsmarknadsevenemang.
+- **Lunchföreläsningar och case-kvällar** där studenterna får prova på era verkliga problem.
+- **Exjobb, praktik och sommarjobb** som vi sprider i våra kanaler.
+- **Profilkläder.** Sponsorloggor kan tryckas längs ärmarna på styrelsens och mästeriets hoodies.
+
+## Kontakt
+
+Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg som passar er.';
+  `,
 ];
 
 export function migrate(db: Database.Database) {

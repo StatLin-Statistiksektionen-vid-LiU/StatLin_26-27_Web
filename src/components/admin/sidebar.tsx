@@ -43,12 +43,14 @@ export function AdminSidebar({
   questionBox,
   naringsliv = false,
   newWishes = 0,
+  newInterest = 0,
 }: {
   user: SidebarUser;
   unseenTasks?: number;
   questionBox?: { show: boolean; unseen: number };
   naringsliv?: boolean;
   newWishes?: number;
+  newInterest?: number;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -77,6 +79,7 @@ export function AdminSidebar({
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
   const design = hasDesign(user);
   const star: NavItem = { href: "/admin/star", label: "STAR", Icon: Star };
+  const interest: NavItem = { href: "/admin/intresseanmalningar", label: "Intresseanmälningar", Icon: Handshake, badge: newInterest };
   const wishes: NavItem = { href: "/admin/lunchonskemal", label: "Lunchönskemål", Icon: Mail, badge: newWishes };
   const documents: NavItem = { href: "/admin/dokument", label: "Dokument", Icon: FileText };
   const editorGroups: { label: string; items: (NavItem | null)[] }[] = [
@@ -89,6 +92,7 @@ export function AdminSidebar({
         { href: "/admin/lankar", label: "Länkar", Icon: Chain },
         { href: "/admin/partners", label: "Partners", Icon: Handshake },
         star,
+        interest,
         wishes,
       ],
     },
@@ -124,7 +128,7 @@ export function AdminSidebar({
         !editor && design ? documents : null,
       ],
     },
-    ...(editor ? editorGroups : naringsliv ? [{ label: "Näringsliv", items: [star, wishes] }] : []),
+    ...(editor ? editorGroups : naringsliv ? [{ label: "Näringsliv", items: [star, interest, wishes] }] : []),
   ];
 
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname === href || pathname.startsWith(href + "/"));

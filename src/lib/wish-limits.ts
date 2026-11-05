@@ -30,6 +30,9 @@ const HOUR = 60 * 60_000;
 /** Sant när den här adressen har skickat för många önskemål. */
 export const wishLimitHit = (ip: string) => hit(`onskemal:${hashed(ip)}`, 5, HOUR);
 
+/** Sant när den här adressen har skickat för många intresseanmälningar till STAR. */
+export const interestLimitHit = (ip: string) => hit(`intresse:${hashed(ip)}`, 5, HOUR);
+
 /** Sant när den här adressen har gett för många stjärnor, totalt eller till samma önskemål. */
 export function voteLimitHit(ip: string, wishId: number): boolean {
   const ipHash = hashed(ip);

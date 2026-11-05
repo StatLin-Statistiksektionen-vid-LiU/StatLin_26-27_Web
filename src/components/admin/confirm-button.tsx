@@ -21,12 +21,15 @@ export function ConfirmButton({
   message,
   children,
   className,
+  pendingLabel = "Tar bort…",
 }: {
   action: (fd: FormData) => void | FormState | Promise<void | FormState>;
   id: number;
   message: string;
   children: ReactNode;
   className?: string;
+  /** Texten medan actionen körs, för knappar som gör något annat än att ta bort. */
+  pendingLabel?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const questionId = useId();
@@ -94,7 +97,7 @@ export function ConfirmButton({
               {pending ? (
                 <>
                   <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />
-                  Tar bort…
+                  {pendingLabel}
                 </>
               ) : (
                 children

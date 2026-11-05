@@ -1,0 +1,173 @@
+import { ArrowRight } from "@/components/icons";
+import { Reveal } from "@/components/ui/reveal";
+import { BRANSCHER } from "@/lib/foretag-kompetens";
+import { cn } from "@/lib/utils";
+
+const RED = "var(--color-red)";
+
+/** Prognos med osäkerhetskon. */
+function Prognos() {
+  return (
+    <>
+      <path d="M68 24 116 6v32Z" fill={RED} fillOpacity="0.12" stroke="none" />
+      <polyline points="4,42 16,35 28,38 40,29 52,31 68,24" />
+      <line x1="68" y1="24" x2="116" y2="22" stroke={RED} strokeDasharray="3 4" />
+    </>
+  );
+}
+
+/** Stickprov ur en population. */
+function Urval() {
+  const valda = new Set([14, 21, 29, 36, 40, 49, 3]);
+  return (
+    <>
+      {Array.from({ length: 52 }, (_, i) => (
+        <circle
+          key={i}
+          cx={6 + (i % 13) * 9}
+          cy={8 + Math.floor(i / 13) * 13}
+          r={valda.has(i) ? 3 : 1.5}
+          fill={valda.has(i) ? RED : "currentColor"}
+          fillOpacity={valda.has(i) ? 1 : 0.45}
+          stroke="none"
+        />
+      ))}
+    </>
+  );
+}
+
+/** Överlevnadskurvor med två grupper. */
+function Overlevnad() {
+  return (
+    <>
+      <path d="M4 7h20v7h18v9h16v8h22v8h36" />
+      <path d="M4 7h32v5h26v5h24v6h30" stroke={RED} />
+    </>
+  );
+}
+
+/** Punkter och en anpassad linje. */
+function Regression() {
+  const punkter = [
+    [8, 44],
+    [18, 36],
+    [27, 41],
+    [38, 30],
+    [47, 33],
+    [58, 24],
+    [66, 28],
+    [78, 18],
+    [88, 21],
+    [99, 11],
+    [110, 14],
+  ];
+  return (
+    <>
+      {punkter.map(([x, y]) => (
+        <circle key={x} cx={x} cy={y} r="2.5" fill="currentColor" fillOpacity="0.55" stroke="none" />
+      ))}
+      <line x1="4" y1="45" x2="116" y2="10" stroke={RED} />
+    </>
+  );
+}
+
+/** Ett litet neuralt nätverk. */
+function Natverk() {
+  const lager = [
+    [14, 28, 42],
+    [8, 22, 34, 48],
+    [20, 36],
+  ];
+  const xled = [18, 60, 102];
+  const stark = [
+    [0, 1, 1, 1],
+    [1, 1, 2, 0],
+  ];
+  return (
+    <>
+      {lager.slice(0, -1).flatMap((ys, l) =>
+        ys.flatMap((y, a) =>
+          lager[l + 1].map((y2, b) => (
+            <line key={`${l}-${a}-${b}`} x1={xled[l]} y1={y} x2={xled[l + 1]} y2={y2} strokeOpacity="0.2" strokeWidth="1" />
+          )),
+        ),
+      )}
+      {stark.map(([l, a, l2, b]) => (
+        <line key={`${l}-${a}-${b}`} x1={xled[l]} y1={lager[l][a]} x2={xled[l2]} y2={lager[l2][b]} stroke={RED} />
+      ))}
+      {lager.flatMap((ys, l) => ys.map((y) => <circle key={`${l}-${y}`} cx={xled[l]} cy={y} r="3.5" fill="var(--figur-bakgrund, var(--color-paper))" />))}
+    </>
+  );
+}
+
+/** Tre grupper av punkter. */
+function Kluster() {
+  const grupper = [
+    { fill: "currentColor", opacity: 0.55, punkter: [[14, 14], [22, 9], [25, 19], [16, 24], [31, 13]] },
+    { fill: RED, opacity: 1, punkter: [[58, 34], [66, 28], [70, 38], [61, 44], [75, 32], [52, 40]] },
+    { fill: "currentColor", opacity: 0.55, punkter: [[96, 12], [104, 8], [108, 18], [99, 21], [112, 11]] },
+  ];
+  return (
+    <>
+      {grupper.flatMap((g, i) => g.punkter.map(([x, y]) => <circle key={`${i}-${x}`} cx={x} cy={y} r="2.5" fill={g.fill} fillOpacity={g.opacity} stroke="none" />))}
+    </>
+  );
+}
+
+const FIGURER = { prognos: Prognos, urval: Urval, overlevnad: Overlevnad, regression: Regression, natverk: Natverk, kluster: Kluster };
+
+/**
+ * Branscher där färdigheterna gör nytta direkt. Figurerna är dekor i samma anda som ämnet, inte data. Natt är STAR-inbjudans utseende:
+ * genomskinliga bubblor på natthimlen i stället för rutnätet på den ljusa företagssidan.
+ */
+export function Branscher({ natt = false, cta }: { natt?: boolean; cta: { href: string; label: string; rubrik: string; text: string } }) {
+  return (
+    <section className={cn("py-16 md:py-24", natt && "star-avsnitt relative")}>
+      <div className="container-site">
+        <Reveal>
+          <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>Branscher</p>
+          <h2 className={cn("mt-3 max-w-4xl", natt ? "star-type text-[clamp(1.9rem,5vw,3.5rem)] font-light uppercase leading-[1.05] tracking-[0.06em]" : "display-tight text-3xl md:text-5xl")}>
+            Statistik är ett verktyg, inte en bransch
+          </h2>
+          <p className={cn("mt-4 max-w-2xl text-lg leading-relaxed", natt ? "text-white/85" : "text-stone")}>
+            Metoderna är desamma oavsett om datan kommer från kunder, patienter eller sensorer. Därför kommer våra studenter snabbt in i nya områden. Här gör färdigheterna nytta direkt.
+          </p>
+        </Reveal>
+
+        <ul className={cn("mt-10", natt ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-px overflow-hidden rounded-[1.75rem] border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3")}>
+          {BRANSCHER.map((b) => {
+            const Figur = FIGURER[b.figur];
+            return (
+              <li key={b.namn} className={cn("min-w-0", natt ? "rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 md:p-7" : "bg-paper p-7 md:p-8")}>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 120 56"
+                  className={cn("h-14 w-auto", natt ? "text-white [--figur-bakgrund:var(--color-star-navy)]" : "text-ink")}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <Figur />
+                </svg>
+                <h3 className={cn("mt-5 text-xl", natt ? "star-type font-normal" : "display-tight normal-case")}>{b.namn}</h3>
+                <p className={cn("mt-2 leading-relaxed", natt ? "text-white/85" : "text-stone")}>{b.text}</p>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="mt-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <p className={natt ? "star-type text-2xl font-light md:text-3xl" : "display-tight text-2xl md:text-3xl"}>{cta.rubrik}</p>
+            <p className={cn("mt-2 max-w-xl", natt ? "text-white/85" : "text-stone")}>{cta.text}</p>
+          </div>
+          <a href={cta.href} className={cn("btn shrink-0", natt ? "btn-red" : "btn-ink")}>
+            {cta.label} <ArrowRight size={18} />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
