@@ -513,6 +513,131 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), dialog.getByRole("button", { name: "Ta bort" }).click()]);
   });
 
+  await step("Ett dolt UBU syns inte på studiesidorna och länkas inte", async () => {
+    await switchAccount(page, ADMIN);
+    const setVisible = async (visible) => {
+      await page.goto(`${BASE}/admin/utskott`);
+      await page.locator('a[href^="/admin/utskott/"]', { hasText: "UBU" }).first().click();
+      await page.waitForURL((u) => /\/admin\/utskott\/\d+/.test(u.pathname));
+      const toggle = page.locator('input[name="visible"]');
+      await waitForHydration(page, toggle);
+      await toggle.setChecked(visible, { force: true });
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText(/sparad|sparat/i).first().waitFor();
+    };
+    const pages = [`${BASE}/studenter/kandidat`, `${BASE}/studenter/master`, `${BASE}/en/masters`];
+    const count = async (visitor, url) => {
+      await visitor.page.goto(url);
+      return visitor.page.locator('a[href="/utskott/ubu"]').count();
+    };
+    const visitor = await newVisitor(browser);
+    try {
+      for (const url of pages) assert.ok((await count(visitor, url)) > 0, `${url} ska länka till UBU`);
+      await setVisible(false);
+      for (const url of pages) assert.equal(await count(visitor, url), 0, `${url} ska inte länka till ett dolt UBU`);
+    } finally {
+      await setVisible(true);
+      await visitor.context.close();
+    }
+  });
+
+  await step("Översikten räknar ett pågående evenemang som kommande", async () => {
+    await switchAccount(page, ADMIN);
+    const dateOf = (days) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+    const title = `E2E-pågår ${uniqueId()}`;
+    const { url } = await createEvent(page, BASE, title);
+    await page.goto(url);
+    await waitForHydration(page, page.locator('input[name="starts_at"]'));
+    await page.fill('input[name="starts_at"]', `${dateOf(-2)}T18:00`);
+    const more = page.locator("details", { has: page.locator('input[name="ends_at"]') });
+    if ((await more.getAttribute("open")) === null) await more.locator("summary").click();
+    await page.fill('input[name="ends_at"]', `${dateOf(2)}T18:00`);
+    await page.locator('button[data-submit="primary"]').click();
+    await page.getByText("Sparat och publicerat.").first().waitFor();
+    await page.goto(`${BASE}/admin`);
+    await page.getByRole("link", { name: new RegExp(title) }).first().waitFor();
+    await page.goto(url);
+    const remove = page.getByRole("button", { name: "Ta bort" });
+    await waitForHydration(page, remove);
+    await remove.click();
+    await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+  });
+
+  await step("En ersatt fil behåller adressen och ger det nya innehållet (SD-35)", async () => {
+    await switchAccount(page, ADMIN);
+    const title = `E2E-fil ${uniqueId()}`;
+    const pdf = (text) => ({ name: "protokoll.pdf", mimeType: "application/pdf", buffer: Buffer.from(`%PDF-1.4\n%${text}\n`) });
+    await page.goto(`${BASE}/admin/dokument`);
+    await waitForHydration(page, page.locator('input[name="title"]'));
+    await page.fill('input[name="title"]', title);
+    await page.locator('input[name="file"]').setInputFiles(pdf("forsta"));
+    await Promise.all([page.waitForURL((u) => u.search.includes("sparad=1")), page.getByRole("button", { name: "Lägg till dokument" }).click()]);
+
+    const visitor = await newVisitor(browser);
+    try {
+      const fileHref = async () => {
+        await visitor.page.goto(`${BASE}/dokument`);
+        const row = visitor.page.locator("li", { hasText: title });
+        return new URL(await row.locator('a[href^="/media/"]').first().getAttribute("href"), BASE).href;
+      };
+      const before = await fileHref();
+      assert.match(await (await visitor.context.request.get(before)).text(), /forsta/);
+
+      await page.reload();
+      await page.getByRole("link", { name: title }).first().click();
+      await page.waitForURL((u) => /\/admin\/dokument\/\d+/.test(u.pathname));
+      const url = page.url();
+      await page.goto(url);
+      await waitForHydration(page, page.getByRole("button", { name: "Spara", exact: true }));
+      await page.locator('input[name="file"]').setInputFiles(pdf("andra"));
+      await page.getByRole("button", { name: "Spara", exact: true }).click();
+      await page.getByText(/sparat/i).first().waitFor();
+
+      assert.equal(await fileHref(), before, "Adressen ska bestå");
+      assert.match(await (await visitor.context.request.get(before)).text(), /andra/);
+
+      await page.goto(url);
+      const remove = page.getByRole("button", { name: "Ta bort" });
+      await waitForHydration(page, remove);
+      await remove.click();
+      await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+    } finally {
+      await visitor.context.close();
+    }
+  });
+
+  await step("Länkar och hjälpmedel går att lägga till, ändra och ta bort, och ändringen består (ST-07)", async () => {
+    await switchAccount(page, ADMIN);
+    const forms = [
+      { list: "/admin/lankar", field: "label", add: "Lägg till länk", saved: "Länken är sparad.", fill: { url: "https://example.com/e2e" } },
+      { list: "/admin/hjalpmedel", field: "title", add: "Lägg till hjälpmedel", saved: "Hjälpmedlet är sparat.", fill: { url: "https://example.com/e2e" } },
+    ];
+    for (const form of forms) {
+      const name = `E2E-rad ${uniqueId()}`;
+      await page.goto(`${BASE}${form.list}`);
+      await waitForHydration(page, page.locator(`input[name="${form.field}"]`));
+      await page.fill(`input[name="${form.field}"]`, name);
+      for (const [key, value] of Object.entries(form.fill)) await page.fill(`input[name="${key}"]`, value);
+      await Promise.all([page.waitForURL((u) => u.search.includes("sparad=1")), page.getByRole("button", { name: form.add }).click()]);
+      await page.getByRole("link", { name }).first().click();
+      await page.waitForURL((u) => new RegExp(`${form.list}/\\d+$`).test(u.pathname));
+      const url = page.url();
+      await page.goto(url);
+      const save = page.getByRole("button", { name: "Spara", exact: true });
+      await waitForHydration(page, save);
+      await page.fill('input[name="description"]', "Ändrad av testet");
+      await save.click();
+      await page.getByText(form.saved).first().waitFor();
+      await page.goto(url);
+      assert.equal(await page.inputValue('input[name="description"]'), "Ändrad av testet", `${form.list} ska ha sparat ändringen`);
+      const remove = page.getByRole("button", { name: "Ta bort" });
+      await waitForHydration(page, remove);
+      await remove.click();
+      await Promise.all([page.waitForURL((u) => u.search.includes("raderad=1")), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+      assert.equal(await page.getByRole("link", { name }).count(), 0, "Raden ska vara borta");
+    }
+  });
+
   await step("Rollfältet visar sitt eget fel (SB-35)", async () => {
     await page.goto(`${BASE}/admin/konton`);
     await waitForHydration(page, page.getByRole("button", { name: "Skapa konto" }));

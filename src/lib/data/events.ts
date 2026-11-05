@@ -27,7 +27,7 @@ function map(r: Row): EventItem {
 }
 
 /** Sista minuten ett evenemang pågår – samma regel som eventEnd i src/lib/dates.ts. */
-const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
+export const EVENT_END = `CASE WHEN e.all_day = 1 THEN substr(COALESCE(e.ends_at, e.starts_at), 1, 10) || 'T23:59'
   ELSE COALESCE(e.ends_at, substr(e.starts_at, 1, 10) || 'T23:59') END`;
 
 /** Kommande = ej avslutade (pågående räknas som kommande). */

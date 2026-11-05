@@ -68,6 +68,9 @@ function AdminLoading() {
   return (
     <div className="grid min-h-dvh place-items-center bg-paper">
       <div className="size-8 animate-spin rounded-full border-2 border-ink/15 border-t-red" aria-label="Laddar" />
+      <noscript>
+        <p className="mt-4 text-sm text-stone">Adminpanelen behöver JavaScript. Slå på det i webbläsaren och ladda om sidan.</p>
+      </noscript>
     </div>
   );
 }
