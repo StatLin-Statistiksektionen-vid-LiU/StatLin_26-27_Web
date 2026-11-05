@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { readDb } from "./db";
 import { fileHref, MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import { EDUCATION_COMMITTEE_SLUG } from "@/lib/seed-content";
@@ -26,13 +27,14 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   education_committee_id: "",
 };
 
-export async function getSettings(): Promise<SiteSettings> {
+/** Läses en gång per rendering, hur många komponenter som än frågar: startsidan frågar sju gånger. Utanför en rendering läses den på nytt. */
+export const getSettings = cache(async (): Promise<SiteSettings> => {
   const db = await readDb();
   const rows = db.prepare("SELECT key, value FROM settings").all() as { key: string; value: string }[];
   const s = { ...DEFAULT_SETTINGS };
   for (const r of rows) if (r.key in s) (s as Record<string, string>)[r.key] = r.value;
   return s;
-}
+});
 
 /* ---------- Utskott ---------- */
 
