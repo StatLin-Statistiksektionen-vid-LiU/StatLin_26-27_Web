@@ -85,6 +85,9 @@ async function EditEvent({ params, searchParams }: Pick<PageProps<"/admin/evenem
                 Visa sidan <ArrowUpRight size={15} />
               </Link>
             )}
+            <Link href={`/admin/evenemang/ny?fran=${event.id}`} className="btn btn-ghost btn-sm bg-white">
+              Kopiera
+            </Link>
             <ConfirmButton action={deleteEvent} id={event.id} message={`Ta bort "${event.title}" och alla dess bilder? Det går inte att ångra.`}>
               <Trash size={15} /> Ta bort
             </ConfirmButton>

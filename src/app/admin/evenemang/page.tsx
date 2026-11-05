@@ -127,11 +127,25 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-right">
-                    <Link href={`/admin/evenemang/${e.id}`} className="inline-grid size-9 place-items-center rounded-full hover:bg-paper" aria-label="Redigera">
+                    {tab === "tidigare" && (
+                      <Link href={`/admin/evenemang/ny?fran=${e.id}`} className="btn btn-ghost btn-sm mr-1 bg-white" aria-label={`Kopiera ${e.title}`}>
+                        Kopiera
+                      </Link>
+                    )}
+                    <Link
+                      href={`/admin/evenemang/${e.id}`}
+                      className={cn("place-items-center rounded-full hover:bg-paper", tab === "tidigare" ? "hidden size-9 sm:inline-grid" : "inline-grid size-9")}
+                      aria-label="Redigera"
+                    >
                       <Edit size={16} />
                     </Link>
                     {!!e.published && (
-                      <Link href={`/evenemang/${e.slug}`} target="_blank" className="inline-grid size-9 place-items-center rounded-full hover:bg-paper" aria-label="Visa på sajten">
+                      <Link
+                        href={`/evenemang/${e.slug}`}
+                        target="_blank"
+                        className={cn("place-items-center rounded-full hover:bg-paper", tab === "tidigare" ? "hidden size-9 sm:inline-grid" : "inline-grid size-9")}
+                        aria-label="Visa på sajten"
+                      >
                         <ArrowUpRight size={16} />
                       </Link>
                     )}

@@ -11,6 +11,7 @@ const FINNS_INTE = ["2025-02-30T12:00", "2025-02-28T24:00", "2025-13-01T12:00", 
 const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const dayOffset = (days) => new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 /** "21 augusti", så som datumet står på sajten. */
+const slugOf = (title) => title.toLowerCase().replaceAll("ä", "a").replace(/[^a-z0-9]+/g, "-");
 const longDate = (date, withYear = false) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "UTC", day: "numeric", month: "long", ...(withYear ? { year: "numeric" } : {}) }).format(new Date(`${date}T00:00:00Z`));
 
@@ -416,6 +417,37 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await page.getByRole("link", { name: "Visa sidan" }).waitFor({ state: "hidden" });
     await page.goto(`${BASE}/admin/evenemang?visa=utkast`);
     await page.locator("tbody tr", { hasText: title }).waitFor();
+    await removeItem(url);
+  });
+
+  await step("Ett evenemang går att kopiera: texterna följer med men inte omslag och anmälan, och sluttiden följer starten", async () => {
+    await switchAccount(page, ADMIN);
+    const title = `E2E-kopia ${uniqueId()}`;
+    const { url } = await createEvent({ title, startsAt: `${dayOffset(-30)}T17:30`, endsAt: `${dayOffset(-30)}T23:00`, location: "Kårallen" });
+    await page.fill('input[name="signup_url"]', "https://example.com/anmalan");
+    await page.getByRole("button", { name: "Spara ändringar" }).click();
+    await page.getByText("Sparat och publicerat.").waitFor();
+
+    await page.goto(`${BASE}/admin/evenemang?visa=tidigare`);
+    await Promise.all([page.waitForURL(/\/admin\/evenemang\/ny\?fran=\d+/), page.locator("tbody tr:visible", { hasText: title }).getByRole("link", { name: /^Kopiera/ }).click()]);
+    await page.getByText(`Kopia av ${title}`).waitFor();
+    await waitForHydration(page, page.locator('input[name="title"]:visible'));
+    assert.equal(await page.inputValue('input[name="title"]:visible'), title);
+    assert.equal(await page.inputValue('input[name="location"]:visible'), "Kårallen");
+    assert.equal(await page.inputValue('input[name="starts_at"]:visible'), `${dayOffset(7)}T17:30`, "starten ska flyttas fram men behålla klockslaget");
+    await page.locator("summary:visible", { hasText: "Fler detaljer" }).waitFor();
+    const main = page.locator("main#innehall");
+    assert.equal(await main.locator('input[name="ends_at"]').inputValue(), `${dayOffset(7)}T23:00`, "sluttiden ska flyttas lika långt");
+    assert.equal(await main.locator('input[name="signup_url"]').inputValue(), "", "anmälningslänken gällde det gamla evenemanget");
+
+    await page.fill('input[name="starts_at"]:visible', `${dayOffset(30)}T17:30`);
+    assert.equal(await main.locator('input[name="ends_at"]').inputValue(), `${dayOffset(30)}T23:00`, "sluttiden ska följa med när datumet ändras");
+
+    await page.fill('input[name="title"]:visible', `${title} igen`);
+    await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
+    await page.getByText("Evenemanget är publicerat!").waitFor();
+    assert.equal(await page.inputValue('input[name="slug"]:visible'), slugOf(`${title} igen`), "kopian ska få en egen adress");
+    await removeItem(page.url().split("?")[0]);
     await removeItem(url);
   });
 
