@@ -276,6 +276,30 @@ const steps: string[] = [
       (SELECT COALESCE(MIN(sort_order), 0) - 1 FROM links WHERE category = 'statlin')
     WHERE EXISTS (SELECT 1 FROM settings WHERE key = 'seeded_links');
   `,
+  /* 10: STAR-sidans företag och sponsorer, och önskelistan för lunchföreläsningar. Önskemålen har inga personuppgifter. */ `
+  CREATE TABLE star_companies (
+    id            INTEGER PRIMARY KEY,
+    name          TEXT NOT NULL,
+    url           TEXT NOT NULL DEFAULT '',
+    logo_media_id INTEGER REFERENCES media(id) ON DELETE SET NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    seeks         TEXT NOT NULL DEFAULT '',                          -- mellanslagsseparerat: exjobb sommarjobb trainee heltid
+    role          TEXT NOT NULL DEFAULT 'utstallare' CHECK (role IN ('utstallare','huvudsponsor','sponsor')),
+    sort_order    INTEGER NOT NULL DEFAULT 0,
+    active        INTEGER NOT NULL DEFAULT 1
+  );
+  -- AUTOINCREMENT: ett id används aldrig två gånger, så att en gammal röst i en webbläsares localStorage inte gäller ett nytt önskemål.
+  CREATE TABLE lecture_wishes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT NOT NULL,
+    comment    TEXT NOT NULL DEFAULT '',
+    status     TEXT NOT NULL DEFAULT 'ny' CHECK (status IN ('ny','dold','onskad','pa_gang','bokad','genomford')),
+    votes      INTEGER NOT NULL DEFAULT 0,
+    event_id   INTEGER REFERENCES events(id) ON DELETE SET NULL,
+    created_on TEXT NOT NULL                                         -- bara datumet
+  );
+  CREATE INDEX lecture_wishes_status ON lecture_wishes(status, votes DESC);
+  `,
 ];
 
 export function migrate(db: Database.Database) {

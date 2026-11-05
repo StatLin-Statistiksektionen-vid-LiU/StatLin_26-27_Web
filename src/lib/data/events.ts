@@ -100,6 +100,19 @@ export async function getStarEvent(chosenId: number | null): Promise<EventItem |
   return row ? map(row) : null;
 }
 
+/** Kommande lunchföreläsningar. Samma regel som isLunchEvent i src/lib/naringsliv.ts: titeln eller adressen säger det. */
+export async function listLunchEvents(limit = 5): Promise<EventItem[]> {
+  const db = await readDb();
+  const rows = db
+    .prepare(
+      `${SELECT}
+       WHERE e.published = 1 AND ${EVENT_END} >= @now AND (e.title LIKE 'Lunchföreläsning%' OR e.slug LIKE 'lunch%')
+       ORDER BY e.starts_at ASC LIMIT @limit`,
+    )
+    .all({ now: nowLocal(), limit }) as Row[];
+  return rows.map(map);
+}
+
 export async function getEventBySlug(slug: string, includeDrafts = false): Promise<EventItem | null> {
   const db = await readDb();
   const row = db
