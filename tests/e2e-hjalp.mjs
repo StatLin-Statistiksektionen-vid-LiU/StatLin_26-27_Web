@@ -21,9 +21,19 @@ export async function newVisitor(browser, options = {}) {
   return { context, page: await context.newPage() };
 }
 
-/** Väntar tills React har tagit över elementet. Före det gör knappar och formulär ingenting, eller skickar något annat. */
-export async function waitForHydration(page, locator) {
-  await page.waitForFunction((el) => Object.keys(el).some((k) => k.startsWith("__react")), await locator.elementHandle());
+/**
+ * Väntar tills React har tagit över elementet. Före det gör knappar och formulär ingenting, eller skickar något annat.
+ * Lokatorn frågas på nytt varje gång: strömmat innehåll byter ut sidans element en stund efter load, och ett handtag till det gamla
+ * elementet blir aldrig hydrerat. Mot next start föll CSP-steget på det, på ett evenemang vars sida fungerade.
+ */
+export async function waitForHydration(page, locator, timeout = 30_000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const hydrated = await locator.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__react")), undefined, { timeout }).catch(() => false);
+    if (hydrated) return;
+    await page.waitForTimeout(50);
+  }
+  throw new Error(`Elementet hydrerades inte på ${timeout} ms: ${locator} på ${page.url()}`);
 }
 
 export async function openLogin(page, BASE) {
