@@ -111,7 +111,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
       </header>
       </Editable>
 
-      <div className="container-site grid gap-12 py-14 md:py-20 lg:grid-cols-12">
+      <div className="container-site grid grid-cols-1 gap-12 py-14 md:py-20 lg:grid-cols-12">
         <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:self-start">
           <div className="overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white">
             <dl className="divide-y divide-ink/10">
@@ -220,7 +220,7 @@ function Organizer({ committee, href }: { committee: NonNullable<EventItem["comm
       )}
       <span className="min-w-0 flex-1">
         <span className="kicker block text-stone">Arrangör</span>
-        <span className="block truncate font-semibold">{committee.name}</span>
+        <span className="mt-0.5 block font-semibold leading-snug">{committee.name}</span>
       </span>
       {href && <ArrowUpRight size={18} className="text-red" />}
     </>

@@ -39,7 +39,7 @@ async function Masters() {
           <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
             <p className="kicker text-stone">Next up</p>
             <div className="mt-2">
-              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} locale="en-GB" />) : <p className="py-6 text-stone">New events are coming soon.</p>}
+              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} locale="en-GB" compact />) : <p className="py-6 text-stone">New events are coming soon.</p>}
             </div>
             <Link href="/evenemang" className="btn btn-ink mt-5 w-full">
               Full calendar <ArrowRight size={18} />

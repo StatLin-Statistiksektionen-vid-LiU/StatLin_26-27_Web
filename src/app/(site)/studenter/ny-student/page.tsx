@@ -45,7 +45,7 @@ async function NewStudent() {
             <p className="kicker text-stone">Nästa på schemat</p>
             <div className="mt-2">
               {events.length > 0 ? (
-                events.map((e) => <EventRow key={e.id} event={e} />)
+                events.map((e) => <EventRow key={e.id} event={e} compact />)
               ) : (
                 <p className="py-6 text-stone">Schemat publiceras snart.</p>
               )}

@@ -88,12 +88,14 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
 }
 
 /** Kompakt rad för listor och kalendervyer. */
-export function EventRow({ event, dark, locale }: { event: EventItem; dark?: boolean; locale?: DateLocale }) {
+/** compact är för smala kolumner, där pilen tar plats från titeln. */
+export function EventRow({ event, dark, locale, compact }: { event: EventItem; dark?: boolean; locale?: DateLocale; compact?: boolean }) {
   return (
     <Link
       href={`/evenemang/${event.slug}`}
       className={cn(
-        "group flex items-center gap-5 border-b py-5 transition-colors",
+        "group flex items-center border-b py-5 transition-colors",
+        compact ? "gap-3" : "gap-3 sm:gap-5",
         dark ? "border-white/10 hover:bg-white/[0.03]" : "border-ink/10 hover:bg-white/60",
       )}
     >
@@ -102,10 +104,10 @@ export function EventRow({ event, dark, locale }: { event: EventItem; dark?: boo
         <p className={cn("kicker", dark ? "text-white/45" : "text-stone")}>
           {event.committee?.short_name ?? "StatLin"} · {formatTimeRange(event.starts_at, event.ends_at, event.all_day, locale)}
         </p>
-        <p className="mt-1 truncate text-lg font-bold tracking-tight">{event.title}</p>
-        {event.location && <p className={cn("truncate text-sm", dark ? "text-white/55" : "text-stone")}>{event.location}</p>}
+        <p className={cn("mt-1 line-clamp-3 font-bold leading-snug tracking-tight hyphens-auto [overflow-wrap:anywhere]", compact ? "text-base" : "text-lg")}>{event.title}</p>
+        {event.location && <p className={cn("mt-0.5 line-clamp-2 text-sm", dark ? "text-white/55" : "text-stone")}>{event.location}</p>}
       </div>
-      <ArrowUpRight size={20} className="shrink-0 text-red opacity-40 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+      {!compact && <ArrowUpRight size={20} className="shrink-0 text-red opacity-40 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />}
     </Link>
   );
 }

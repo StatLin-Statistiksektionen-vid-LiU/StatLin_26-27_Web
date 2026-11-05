@@ -58,7 +58,7 @@ async function Master() {
           <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
             <p className="kicker text-stone">Nästa på schemat</p>
             <div className="mt-2">
-              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} />) : <p className="py-6 text-stone">Nya evenemang kommer snart.</p>}
+              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} compact />) : <p className="py-6 text-stone">Nya evenemang kommer snart.</p>}
             </div>
             <Link href="/evenemang" className="btn btn-ink mt-5 w-full">
               Hela kalendern <ArrowRight size={18} />
