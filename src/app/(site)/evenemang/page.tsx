@@ -156,7 +156,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
               <div className="flex items-baseline gap-4 border-b border-ink/10 pb-4">
                 <h2 className="display-tight text-[clamp(1.6rem,3vw,2.4rem)]">{monthLabel(y, m)}</h2>
                 <span className="kicker text-stone">
-                  {events.length} {events.length === 1 ? "evenemang" : "evenemang"}
+                  {events.length} evenemang
                 </span>
               </div>
               <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
