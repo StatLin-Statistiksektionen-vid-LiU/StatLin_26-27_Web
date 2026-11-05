@@ -84,9 +84,10 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
           </ul>
         </nav>
         {/* Vanliga länkar: varje vy är en egen adress, så flikar med tablist och panel skulle lova ett beteende som inte finns. */}
-        <nav aria-label="Vy" className="inline-flex shrink-0 rounded-full border border-ink/15 bg-white p-1">
+        <nav aria-label="Vy" className="inline-flex shrink-0 self-start rounded-full border border-ink/15 bg-white p-1 lg:self-auto">
           <Link
             href={href({ vy: undefined, manad: undefined })}
+            scroll={false}
             aria-current={view === "lista" ? "page" : undefined}
             className={cn("rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "lista" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
@@ -94,6 +95,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
           </Link>
           <Link
             href={href({ vy: "kalender" })}
+            scroll={false}
             aria-current={view === "kalender" ? "page" : undefined}
             className={cn("inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "kalender" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
@@ -114,8 +116,10 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
 function FilterChip({ href, active, color, children }: { href: string; active: boolean; color?: string; children: React.ReactNode }) {
   return (
     <li>
+      {/* Samma sida med ett annat urval, så sidan ska inte hoppa upp till toppen. */}
       <Link
         href={href}
+        scroll={false}
         aria-current={active ? "true" : undefined}
         className={cn(
           "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all",
@@ -196,7 +200,7 @@ function MonthStep({ month, href, label, children }: { month: string; href: stri
     );
   }
   return (
-    <Link href={href} rel="nofollow" aria-label={label} className={cn(className, "hover:border-ink")}>
+    <Link href={href} scroll={false} rel="nofollow" aria-label={label} className={cn(className, "hover:border-ink")}>
       {children}
     </Link>
   );
@@ -230,7 +234,7 @@ async function MonthView({
           <MonthStep month={prev} href={href({ manad: prev })} label="Föregående månad">
             <ChevronLeft size={18} />
           </MonthStep>
-          <Link href={href({ manad: undefined })} className="hidden h-11 items-center rounded-full border border-ink/15 bg-white px-4 text-sm font-semibold hover:border-ink sm:inline-flex">
+          <Link href={href({ manad: undefined })} scroll={false} className="hidden h-11 items-center rounded-full border border-ink/15 bg-white px-4 text-sm font-semibold hover:border-ink sm:inline-flex">
             I dag
           </Link>
           <MonthStep month={next} href={href({ manad: next })} label="Nästa månad">
