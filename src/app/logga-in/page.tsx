@@ -48,7 +48,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
           <Suspense fallback={null}>
             <LoggedInRedirect />
           </Suspense>
-          {utloggad &&<p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
+          {utloggad && <p className="mt-6 rounded-xl bg-emerald-600/[0.08] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>}
           <LoginForm error={loginErrorText(fel)}>
             {/* Sidan man skickades från, så att man hamnar rätt efter inloggningen. */}
             {typeof next === "string" && <input type="hidden" name="next" value={next} />}

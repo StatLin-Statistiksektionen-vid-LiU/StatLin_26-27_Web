@@ -18,7 +18,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Hjälpmedel** (`/studenter/hjalpmedel`): fusklappar, GitHub-länkar och guider under flikarna Kandidat och Master, sorterade på årskurs och termin med kategorin som etikett på raden. Det som gäller hela programmet ligger sist.
 - **In English** (`/en` och `/en/masters`) för masterprogrammet, som ges på engelska. Texterna redigeras under *Sidor*, och knappen EN/SV i sidhuvudet växlar språk. Övriga sidor är på svenska; inget på sajten blockerar webbläsarens inbyggda översättning.
 - SEO: metadata, Open Graph-bild, sitemap, robots och strukturerad data (schema.org/Event) för evenemang.
-- Fungerar på mobil, med tangentbord och skärmläsare, respekterar "minska rörelse". Utan JavaScript fungerar dokumenten, inloggningen, tentastatistikens startsida, integritetspolicyn och den grafiska profilen, och sidfoten visar kontaktuppgifter. Sidor som hämtar sitt innehåll efter att skalet visats säger i stället att de behöver JavaScript.
+- Fungerar på mobil, med tangentbord och skärmläsare, och respekterar "minska rörelse". Utan JavaScript fungerar dokumenten, inloggningen, tentastatistikens startsida, integritetspolicyn och den grafiska profilen, och sidfoten visar kontaktuppgifter. Sidor som hämtar sitt innehåll efter att skalet visats säger i stället att de behöver JavaScript.
 
 **Adminpanel för poster (`/admin`)**
 
