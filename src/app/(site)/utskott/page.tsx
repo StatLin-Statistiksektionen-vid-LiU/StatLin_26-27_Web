@@ -40,7 +40,7 @@ async function Committees() {
           <Reveal key={c.id} delay={(i % 2) * 90}>
             <Link
               href={`/utskott/${c.slug}`}
-              className="group relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-ink p-8 text-white sm:flex-row sm:items-center sm:gap-8 md:p-10"
+              className="group relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-ink p-8 text-white sm:flex-row sm:items-center sm:gap-8 md:flex-col md:items-start md:gap-0 md:p-10 lg:flex-row lg:items-center lg:gap-8"
             >
               <span
                 aria-hidden
@@ -57,7 +57,7 @@ async function Committees() {
                   loading="lazy"
                 />
               )}
-              <div className="relative mt-6 sm:mt-0">
+              <div className="relative mt-6 min-w-0 sm:mt-0 md:mt-6 lg:mt-0">
                 <p className="kicker text-white/50">{c.kind === "ovrigt" ? "Förtroendepost" : "Utskott"}</p>
                 <h2 className="display-tight mt-2 text-3xl normal-case">{c.short_name}</h2>
                 <p className="mt-1 text-sm text-white/60">{c.name}</p>

@@ -56,7 +56,8 @@ function FooterContactView({ s }: { s: SiteSettings }) {
         <Mail size={18} className="text-red" />
         <span className="link-underline">{s.contact_email}</span>
       </a>
-      {s.address && <p className="max-w-xs text-sm leading-relaxed text-white/50">{s.address}</p>}
+      {/* Postnumret ska inte delas mellan två rader. */}
+      {s.address && <p className="max-w-xs text-sm leading-relaxed text-white/50">{s.address.replace(/(\d{3}) (\d{2})/, "$1\u00a0$2")}</p>}
       {s.org_number && <p className="kicker text-white/40">Org.nr {s.org_number}</p>}
       {socials.length > 0 && (
         <ul className="flex gap-2">
@@ -108,7 +109,7 @@ export function SiteFooter() {
               </Suspense>
             </Editable>
           </div>
-          <nav aria-label="Sidfot" className="md:col-span-4 md:col-start-7">
+          <nav aria-label="Sidfot" className="md:col-span-7 lg:col-span-4 lg:col-start-7">
             <p className="kicker text-white/40">Utforska</p>
             <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2.5">
               {links.map((l) => (
@@ -120,9 +121,9 @@ export function SiteFooter() {
               ))}
             </ul>
           </nav>
-          <div className="md:col-span-2">
+          <div className="md:col-span-7 md:col-start-6 lg:col-span-2 lg:col-start-auto">
             <p className="kicker text-white/40">För poster</p>
-            <ul className="mt-5 space-y-2.5 text-[0.95rem]">
+            <ul className="mt-5 flex flex-col gap-2.5 text-[0.95rem] md:flex-row md:flex-wrap md:gap-x-6 lg:flex-col">
               <li>
                 <Link href="/admin" className="group inline-flex items-center gap-1.5 text-white/75 hover:text-white">
                   Logga in <ArrowUpRight size={14} className="text-red" />
