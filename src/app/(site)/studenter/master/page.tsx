@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
+import { GRADIENTNEDSTIGNING } from "@/components/content/formula-art";
+import { FormulaCard } from "@/components/content/formula-card";
 import { EventRow } from "@/components/content/event-card";
 import { UbuCard } from "@/components/content/ubu-card";
 import { ArrowRight } from "@/components/icons";
@@ -39,7 +41,7 @@ async function Master() {
       slug="master"
       kicker="Studenter / Master"
       heroAside={
-        <div className="hidden justify-end md:flex">
+        <div className="flex md:justify-end">
           <Gradient />
         </div>
       }
@@ -73,17 +75,17 @@ async function Master() {
 /** Dekor: ett steg i gradientnedstigning som "formelkort", syskon till kandidatens minsta kvadrat. */
 function Gradient() {
   return (
-    <div className="w-full max-w-sm -rotate-2 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-7 backdrop-blur">
-      <p className="kicker text-white/45">Gradientnedstigning</p>
-      <p className="mt-4 font-serif text-[2.1rem] italic leading-tight text-white">
-        θ<sub className="text-lg">t+1</sub> = θ<sub className="text-lg">t</sub> − η∇L(θ<sub className="text-lg">t</sub>)
-      </p>
-      <div className="mt-5 h-px bg-white/10" />
-      <p className="mt-4 font-mono text-xs leading-relaxed text-white/50">
-        epoker = 2 år · n = 120 hp
-        <br />
-        <span className="text-red">η = 0,01</span>
-      </p>
-    </div>
+    <FormulaCard
+      kicker="Gradientnedstigning"
+      tilt="left"
+      art={GRADIENTNEDSTIGNING}
+      facts={
+        <>
+          epoker = 2 år · n = 120 hp
+          <br />
+          <span className="text-red">η = 0,01</span>
+        </>
+      }
+    />
   );
 }

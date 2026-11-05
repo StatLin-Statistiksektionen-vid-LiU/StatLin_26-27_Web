@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
+import { MINSTA_KVADRAT } from "@/components/content/formula-art";
+import { FormulaCard } from "@/components/content/formula-card";
 import { UbuCard } from "@/components/content/ubu-card";
 import { QuickLinksCard } from "@/components/links/quick-links";
 import { HeroSkeleton } from "@/components/ui/skeletons";
@@ -33,7 +35,7 @@ async function Bachelor() {
       slug="utbildning"
       kicker="Studenter / Kandidat"
       heroAside={
-        <div className="hidden justify-end md:flex">
+        <div className="flex md:justify-end">
           <Formula />
         </div>
       }
@@ -50,17 +52,17 @@ async function Bachelor() {
 /** Dekor: minsta kvadrat-skattningen som "formelkort". */
 function Formula() {
   return (
-    <div className="w-full max-w-sm rotate-2 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-7 backdrop-blur">
-      <p className="kicker text-white/45">Minsta kvadrat</p>
-      <p className="mt-4 font-serif text-[2.1rem] italic leading-tight text-white">
-        β̂ = (X<sup className="text-lg">⊤</sup>X)<sup className="text-lg">−1</sup>X<sup className="text-lg">⊤</sup>y
-      </p>
-      <div className="mt-5 h-px bg-white/10" />
-      <p className="mt-4 font-mono text-xs leading-relaxed text-white/50">
-        R² = 0,94 · n = 180 hp
-        <br />
-        <span className="text-red">p &lt; 0,001</span>
-      </p>
-    </div>
+    <FormulaCard
+      kicker="Minsta kvadrat"
+      tilt="right"
+      art={MINSTA_KVADRAT}
+      facts={
+        <>
+          R² = 0,94 · n = 180 hp
+          <br />
+          <span className="text-red">p &lt; 0,001</span>
+        </>
+      }
+    />
   );
 }
