@@ -21,6 +21,8 @@ Datum: 2026-11-03, kontrollerad mot HEAD 93daf3b på Main-Real. Ingen kod är ä
 - `Öppen – delvis belagd (<vad som återstår>)`: kodraden är belagd men konsekvensen är inte provad – det som återstår är webbläsare, Fly, en minnesmätning eller produktionsdatabasen.
 - `Öppen – väntar på beslut B-n`: åtgärden beror på ett val i avsnitt 7 och får inte väljas här.
 - `Förslag – belagd`: en förbättring, inte ett fel.
+- `Åtgärdad <datum> (commit <hash>)`: lagad på samlingsgrenen. Står något efter hashen återstår ett prov eller en del som inte är kod.
+- `Delvis <datum> (commit <hash>): <vad som återstår>`: en del är lagad, resten väntar på det som står.
 - Avsnitt 9: `Refuterad` (koden säger emot påståendet), `Vederlagd åtgärd` (ett åtgärdsförslag som A:s egen dubbelkoll visade vara fel – listat så att ingen gör om det), `Obelagd – kräver <X>` (går inte att belägga i koden; X är det som skulle avgöra).
 
 **Ordning:** 1 Säkerhetsnät (backup, deploy-rutin, CI) → 2 Säkerhet och dataförlust → 3 Synliga buggar → 4 Node → 5 Beroenden → 6 Städning → 7 Beslut krävs → 8 Funktionsförslag och uppgifter utanför koden → 9 Refuterat → 10 Täckningstabell. Inom avsnitt 3 kommer den publika sajten före admin.
@@ -28,6 +30,8 @@ Datum: 2026-11-03, kontrollerad mot HEAD 93daf3b på Main-Real. Ingen kod är ä
 **Dubbletter och motsägelser:** ett id per fel. När ett käll-id avsiktligt delas mellan två punkter står `se <id>` i båda. Varje motsägelse mellan planerna, och inom plan A (fyndtext mot åtgärdsplan mot dubbelkoll), står i avsnitt 7 – ingen punkt väljer själv, utan får status `väntar på beslut`. Två planer som anger värden som ryms i varandra (≥ 30 min mot ~60 min) eller som kompletterar varandra räknas inte som motsägelse och står i listan "Ingen motsägelse" i avsnitt 7. Faktamotsägelser är avgjorda genom mätning och redovisas med båda planernas påstående.
 
 **Kontroll:** varje citat i Kodrad och Belägg, varje fil:rad, varje Saknas/Saknar, varje `se <id>` och `väntar på beslut B-n` samt täckningen av alla käll-id är kontrollerade maskinellt mot HEAD 2026-11-03 med ett skript (`kontroll.mjs`, utanför repot) som kräver att citatet står på just den raden i just den filen. Punkter vars konsekvens inte gick att prova står som *delvis belagd*; det som inte alls gick att belägga står i avsnitt 9.
+
+**Efter genomförandet (2026-11-05):** statusraderna visar läget på grenen `funktioner-samlad`. Citaten och radnumren beskriver koden när punkten skrevs och följer inte med när koden flyttas, så på grenen kontrolleras bara planens struktur: id, fält, statusar och hänvisningar.
 
 Exempel på en punkt:
 
@@ -217,7 +221,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Med `cacheComponents` (rad 20) göms upp till tre sidor i `<Activity>` i stället för att avmonteras (`layout-router.js:518-521`, `bfcache-state-manager.js:13`). Redigerarna initierar sitt tillstånd en gång från `defaultValue` (rad 35, 97–99, 28). Öppnar Info nyheten X, går till listan, rättar X på telefonen (eller en kollega gör det), och går tillbaka till fliken: formuläret visar den gamla texten. `UPDATE` (`news.ts:66-69`) har ingen `updated_at`-jämförelse, så nästa "Spara" skriver tyst över den nyare versionen. Inte provat i webbläsare; mekanismen är belagd i Nexts dokumentation och kod.
 - **Åtgärd:** `key={item.updated_at}` på formulären (nytt tillstånd när raden ändrats) och en `updated_at`-vakt i varje `UPDATE` ("Någon annan har sparat – ladda om") (`use-router.md:180` rekommenderar nyckel från data).
 - **Verifiering:** A:1030-1031 – öppna samma inlägg i två flikar, spara i den ena, spara i den andra → den andra får ett fel i stället för att skriva över.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-03 (commit 6257120, f375bef, f4ad067, c69f4c0, ef66c16); var Öppen – belagd 2026-11-03
 
 ### SD-07 Nyhetsformuläret skickar alltid omslagsvärdet och raderar bilden om fältet kommer tomt
 - **Källa:** A/M3; se SD-08
@@ -318,7 +322,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** `bootstrap()` körs vid första `getDb()` i varje process (`index.ts:27`), alltså efter varje kallstart (`fly.toml:33`). Tömmer styrelsen hela `board_members` inför ett nytt verksamhetsår (B/tre-2, F-04) kommer de tretton seedposterna tillbaka med tomma namn vid nästa start (rad 22–25); samma för utskott (rad 18) och dokument (rad 39). Sidor använder `INSERT OR IGNORE` (rad 27–28): en raderad sida återuppstår, men befintliga breddas inte. Länkarna seedas bara en gång (rad 31) – det mönstret borde gälla allt.
 - **Åtgärd:** En `seeded_*`-flagga per tabell som i länkfallet, eller en samlad `bootstrap_version` i `settings`; seedning bara när flaggan saknas.
 - **Verifiering:** A:1023, 1054-1055 – radera alla styrelseposter, starta om processen → tabellen är fortfarande tom.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 982b7f5); planen säger tretton grundposter och seedningen ger 8, medan README och create-accounts säger 13 konton (inte utrett); var Öppen – belagd 2026-11-03
 
 ### SD-18 Startskriptet kör som root, följer symlänkar vid `chown` och är skrivbart för appanvändaren
 - **Källa:** A/M17
@@ -327,7 +331,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Skriptet körs som root (Dockerfile:38–39) och går igenom hela `/data` (rad 24–25). `fs.chownSync` följer symlänkar (rad 18), och en symlänk till en katalog klassas inte som katalog av `Dirent` – så en symlänk i `/data` som pekar på `/etc/passwd` byter ägare på målet vid nästa start. För att lägga dit en symlänk krävs redan skrivåtkomst till volymen (appen skriver bara vanliga filer), så det är en andra-stegs-risk. Allvarligare: skriptet ägs av `statlin` (rad 37) och körs av root vid varje start – kan appprocessen (som kör som `statlin`) skriva till `/app/scripts/`, blir en kodexekvering i appen root i containern vid nästa omstart.
 - **Åtgärd:** `fs.lchownSync` och hoppa över symlänkar; kopiera startskriptet med `--chown=root:root` och läsrättigheter för övriga; överväg `fs.chownSync` bara på toppnivån plus `uploads/`.
 - **Verifiering:** `ln -s /etc/hostname /data/x` i en testcontainer och omstart → `/etc/hostname` ägs fortfarande av root; `ls -l /app/scripts` visar root som ägare.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 557fde4, c6b3fd3, e4e4f8a, 57a827b), provet i testcontainer väntar på nästa deploy; var Öppen – belagd 2026-11-03
 
 ### SD-19 Inga säkerhetsrubriker utöver fyra grundläggande; CSP bara på `/media`, ingen HSTS
 - **Källa:** A/L1
@@ -338,7 +342,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Sidorna skickar nosniff, Referrer-Policy, X-Frame-Options och Permissions-Policy (rad 3–8) men ingen CSP och ingen HSTS. Fly omdirigerar till HTTPS (`fly.toml:30`) men utan `Strict-Transport-Security` går första anropet från en ny webbläsare över http och kan kapas på ett öppet nät. Utan CSP kan ett framtida XSS-hål (Markdown renderas via `sanitize-html`; länkfält tillåter `/`-sökvägar) ladda externa skript fritt. Nexts egen vägledning (`content-security-policy.md:417-435`) ger en policy utan nonce som passar en statiskt levererad sajt.
 - **Åtgärd:** Lägg CSP enligt `Without Nonces`-exemplet (`default-src 'self'`, `img-src 'self' data:`, `form-action 'self'`, `frame-ancestors 'none'`, `base-uri 'self'`) och `Strict-Transport-Security: max-age=63072000; includeSubDomains` i `headers()`; nonce-varianten är vederlagd (R-26).
 - **Verifiering:** A:1069 – `curl -I https://statlin-web.fly.dev/` visar båda rubrikerna; sajten fungerar med DevTools-konsolen tom från CSP-fel (formelringen, bilder, `/media`).
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit c1cc0c5, 74c3432, ffa1405, 6b22f56), kontrollen mot fly.dev väntar på nästa deploy; img-src behöver också blob:, vilket planens Åtgärd saknar; var Öppen – belagd 2026-11-03
 
 ### SD-20 Uppladdningsrutten släpper igenom anrop utan `Origin`
 - **Källa:** A/L2
@@ -347,7 +351,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Kontrollen gäller bara när rubriken finns (rad 31: `origin &&`). Ett anrop utan `Origin` – äldre klienter, vissa inbäddningar, script – passerar. Kakan är `SameSite=Lax` (rad 41), så en vanlig webbplats på annan domän kan inte skicka POST med kakan; kvar är samma sajt-scenarier (en underdomän, ett XSS-hål) där `Origin` ändå skulle vara tillåtet. Lägst allvar i avsnittet.
 - **Åtgärd:** Kräv `Origin` eller `Sec-Fetch-Site: same-origin` för POST; lägg samma kontroll i proxyn för `/api/admin/*`.
 - **Verifiering:** `curl -X POST -b "statlin_session=…" /api/admin/upload` utan `Origin` ger 403.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 9c3cc81): kontrollen ligger i uppladdningsrutten, inte i proxyn, eftersom det är den enda POST-rutten under /api/admin (redigera tar bara GET); var Öppen – belagd 2026-11-03
 
 ### SD-21 Prototypnycklar passerar `in`-kontroller och tabelluppslag; filer skrivs till disk före databasraden
 - **Källa:** A/L4, A/L34, N3; se ST-17
@@ -376,7 +380,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Gäller bara om sajten någon gång körs med `docker-compose.yml` på en egen server (README:135 anvisar en proxy framför). `"3000:3000"` (rad 11) binder porten på alla gränssnitt, så appen nås direkt vid sidan av proxyn. Då är `X-Forwarded-For` och `X-Real-IP` besökarens egna rubriker (rad 29–30): inloggningsspärren kan kringgås med en ny adress per försök, och `x-forwarded-proto: https` (rad 23) ger `secure`-kakor över http. På Fly är `CLIENT_IP_HEADER` satt (rad 18) och Fly skriver rubriken, så där är det ofarligt.
 - **Åtgärd:** `"127.0.0.1:3000:3000"` i compose; kräv `CLIENT_IP_HEADER` i produktion (vägra starta annars) och ta bort `x-real-ip`-reserven.
 - **Verifiering:** `docker compose up` och `curl http://<server-ip>:3000` utifrån ger "connection refused"; utan `CLIENT_IP_HEADER` loggar starten en varning.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit b8f4e11, 5c35464), varning i stället för startvägran, Compose inte körd; planens Åtgärd och Verifiering säger emot varandra; var Öppen – belagd 2026-11-03
 
 ### SD-24 Engångslösenorden har 20–22 bitars entropi och går aldrig ut
 - **Källa:** A/L39
@@ -386,7 +390,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Skriptet väljer två av tolv ord plus ett fyrsiffrigt tal: 12 · 12 · 8 999 ≈ 1,3 miljoner ≈ 2^20,3. `password.ts` har 24 ord: ≈ 5,2 miljoner ≈ 2^22,3 (A/L39:s "~20 bitar" gäller skriptet). Mot inloggningen skyddar låset (SD-11), men en kopia av databasen (SN-04) ger alla hashar, och bcrypt med kostnad 11 klarar några hundra försök per sekund per kärna – ett engångslösenord som aldrig byttes knäcks på timmar. Det finns ingen utgångstid (`must_change_password` tvingar byte först vid inloggning), så ett konto som aldrig använts bär sitt engångslösenord för alltid.
 - **Åtgärd:** 4 ord ur en lista på 100+ (≈ 2^26,6 + siffror), eller 16 slumptecken; `password_expires_at` för engångslösenord (72 timmar) som kontrolleras vid inloggning; dela ordlistan med skriptet (ST-09).
 - **Verifiering:** Ett engångslösenord äldre än utgångstiden avvisas med egen text; `create-accounts` skriver ut lösenord med minst fyra ord.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-03 (commit 9cc99d6): fyra ord ur 128 är klart, utgångstiden på 72 timmar är inte byggd och kräver migrering (B-7); var Öppen – belagd 2026-11-03
 
 ### SD-25 Redigeringspanelen stängs med Escape, klick utanför eller adressbyte utan att fråga om osparade ändringar
 - **Källa:** A/M34; se SB-37
@@ -414,7 +418,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** Sessionen gäller 30 dagar (rad 11, 29) och kontrolleras mot `expires_at` vid varje anrop (rad 81). Proxyn tittar bara på om kakan *finns* (rad 16), så en sida med utgången kaka renderas; när användaren sedan sparar svarar `requireUser` med `redirect("/logga-in")` (rad 96). En omdirigering från en action avvisar löftet och låter `RedirectBoundary` montera om trädet (`server-action-reducer.js:237-254`, `redirect-boundary.js:57-66`) – inloggningssidan visas och texten är borta; `next` sätts inte (SB-38). Inte provat i webbläsare.
 - **Åtgärd:** Returnera `{ error: "Du har loggats ut – logga in i en ny flik och spara igen." }` från actions i stället för `redirect` när sessionen saknas; förläng sessionen vid aktivitet; varna i gränssnittet en dag före utgång.
 - **Verifiering:** A:1039 – sätt `expires_at` i det förflutna för en session, spara ett formulär → ett felmeddelande visas och texten finns kvar.
-- **Status:** Åtgärdad 2026-11-04 (commit 0036060); var Öppen – delvis belagd (utgången kaka är inte provad i webbläsare)
+- **Status:** Åtgärdad 2026-11-04 (commit 0036060), luckorna täppta i 1c0821a (status och övertagande) och 0b8f767 (setEventChecked, moveBoardMember, reorderEventImages); var Öppen – delvis belagd (utgången kaka är inte provad i webbläsare)
 
 ### SD-28 Effekter körs om när en dold sida blir synlig – engångslösenordet ligger kvar på skärmen och `onSuccess` körs igen
 - **Källa:** A/L44; se SD-06
@@ -443,7 +447,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** `storeImage` skriver tre WebP-varianter (rad 64–69) och ingenting annat; bufferten med originalet lever bara i funktionen. Varje sittningsfoto, affisch och porträtt finns därför bara som förlustkomprimerad WebP på max 2000 px. Vill sektionen om fem år trycka en jubileumsbok, byta format eller generera om varianter i högre kvalitet finns inget original. Förlusten växer för varje dag (D/rad-33) och går inte att reparera i efterhand – därför står punkten här och inte under städning. Förslag, inte ett fel.
 - **Åtgärd:** Spara originalet i `DATA_DIR/originals/<base>.<ext>` utanför `/media/` (nås inte publikt), ta med det i backupen (SN-01, B-16) och radera det i `deleteMediaIfUnused` (SD-09).
 - **Verifiering:** Efter en uppladdning finns `originals/<base>.jpg` med samma storlek som den uppladdade filen; `/media/<base>.jpg` ger 404.
-- **Status:** Förslag – belagd 2026-11-03
+- **Status:** Förslag – belagd 2026-11-03; byggd på grenen 2026-11-04 (commit 0786f35, a19ad21), väntar på användarens ja eftersom originalen tar plats på volymen
 
 ### SD-31 `audit_log` gallras aldrig, inloggningar loggas för alltid, och sajten saknar integritetssida
 - **Källa:** D#8, B/rad-68, C/rad-11, C/rad-17; se F-04, B-17
@@ -452,7 +456,7 @@ Trettiosex punkter. Väntar på beslut: SD-01 (B-6, B-13), SD-02 (B-12), SD-32 (
 - **Felscenario:** `grep -rn audit_log src scripts` (2026-11-03) träffar bara `CREATE TABLE`, `CREATE INDEX`, `INSERT` och `SELECT` – ingen `DELETE`. Varje inloggning (rad 58) och varje ändring loggas med namn och klockslag för alltid; vyn filtrerar bort inloggningar (rad 63) men raderna finns kvar. Kommande funktioner lovar gallring (Frågelådan raderar efter tolv månader, B/rad-68; kvittoplanen raderar kontonummer och filer efter 90 dagar, C/rad-11, C/rad-17) – löften som inte håller om loggen och backuperna (B-16) behåller allt. Sajten har ingen sida som berättar vad som sparas om besökare och förtroendevalda.
 - **Åtgärd:** Gallring i `migrate()`-närhet eller ett nattligt jobb: `login`-rader efter 90 dagar, övriga efter 24 månader; en integritetssida (`/integritet`) med vad som lagras och hur länge; loggningens innehåll avgörs av B-17.
 - **Verifiering:** `SELECT MIN(created_at) FROM audit_log WHERE action='login'` är aldrig äldre än 90 dagar; `/integritet` svarar 200.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 17c7ca0, 6441a7b, 202d1b9, 95ff4db); var Öppen – belagd 2026-11-03
 
 ### SD-32 Revisionsloggen saknar id för dokument och partner, och profiländringar och utloggning av andra enheter loggas inte
 - **Källa:** A/L14; se B-17
@@ -511,7 +515,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Ett heldagsevenemang 17–21 aug sparas med `ends_at = 2026-08-21T00:00` (slutfältet är `datetime-local` även för heldag, rad 54). Klockan 00:00 den 21 aug blir `COALESCE(e.ends_at, …) >= @now` falskt (rad 36) och evenemanget försvinner från Kommande, startsidan och marqueen; sidan visar "Har varit" (rad 49) hela sista dagen. Sidan visar dessutom bara startdatumet (rad 107) och tidsraden säger "Heldag" (rad 75), så besökaren ser aldrig att det pågår till den 21:a. Skickas ett slutvärde som inte matchar regexen (bara ett datum, eller sekunder från en webbläsare utan `datetime-local`-stöd) blir det tyst `null` (rad 52) eftersom formuläret har `noValidate` (rad 90) – sluttiden försvinner utan felmeddelande. Kalenderflödet är rätt (`DTEND` = dagen efter slutdagen, rad 79), så sajten och prenumerationen säger olika saker.
 - **Åtgärd:** Räkna heldag till `T23:59` på slutdagen i frågan och i `isPast` (använd slutdatumet + `T23:59` när `all_day`); visa "Heldag t.o.m. 21 augusti" i `formatTimeRange` och på sidan; ge heldagsfälten `type="date"` eller validera `ends_at` med ett fältfel i stället för `null`.
 - **Verifiering:** A:1021, A:1048 – heldag 17–21 aug → syns under Kommande hela 21 aug, `.ics` oförändrad; sidan och korten visar "Heldag t.o.m. 21 augusti".
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit e162a19); var Öppen – belagd 2026-11-03
 
 ### SB-02 Sidor med egen `openGraph`/`alternates` ersätter hela rotlayoutens block – evenemang utan omslag har inga og-taggar alls
 - **Källa:** A/M9; se SB-21
@@ -521,7 +525,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Rotlayouten sätter `og:type`, `og:locale`, `og:site_name` och `/og.png` (rad 18–23) och kalenderflödet som `alternates.types` (rad 27). Varje sida som själv exporterar `openGraph` eller `alternates` ersätter hela blocket (Belägg: ytlig sammanslagning, nästlade fält skrivs över av sista segmentet). Evenemangssidan (rad 26) och nyhetssidan (rad 21) tappar `og:locale`/`og:site_name`; ett evenemang utan omslag exporterar `openGraph: undefined`, som resolvern gör till `null` (Belägg rad 135) – då finns inga og-taggar alls. Live 2026-11-03: `/evenemang/hostsittning` innehåller inte strängen `og:` en enda gång. Sidorna med egna `alternates` (`/en`, `/en/masters`, `/tentastatistik`, `/tentastatistik/<kod>`, `/studenter/master`) tappar kalenderlänken `rel="alternate" type="text/calendar"`; startsidan har fått den återlagd för hand (rad 8–10). Delningar i Facebook, Slack och Discord visar fel eller ingen bild och fel språk.
 - **Åtgärd:** Samla rotens `openGraph`/`alternates` i ett delat objekt som varje sida spridar in (`openGraph: { ...SITE_OG, images: … }`, `alternates: { ...SITE_ALTERNATES, canonical: … }`) eller en hjälpfunktion `siteMetadata(partial)`; exportera aldrig `openGraph: undefined`.
 - **Verifiering:** A:1022 – `curl -s /evenemang/<slug> | grep og:` visar `og:site_name`, `og:locale`, `og:image`; `curl -s /en/masters | grep text/calendar` visar kalenderlänken.
-- **Status:** Öppen – belagd 2026-11-03 (live: inga og-taggar på `/evenemang/hostsittning`)
+- **Status:** Åtgärdad 2026-11-05 (commit 486cabe); var Öppen – belagd 2026-11-03 (live: inga og-taggar på /evenemang/hostsittning)
 
 ### SB-03 `.reveal` döljer innehållet tills en klienteffekt körs – uteblir bundlen står sidan tom
 - **Källa:** A/M13
@@ -530,7 +534,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Inline-skriptet (rad 40) sätter klassen `js` på `<html>` innan bundlen laddats, och `.js .reveal` (rad 345–347) gör varje `<Reveal>`-block osynligt tills `IntersectionObserver`-effekten (rad 24–27) sätter `data-shown` (rad 40). Blockeras eller misslyckas `/_next/static/*.js` (mobilnät som tappar, adblock, en deploy mitt i inläsningen som ger 404 på gamla chunkar, en hydreringskrasch) körs effekten aldrig, och startsidans sektioner, utskottskorten och sidfoten förblir `opacity: 0`. Helt utan JavaScript syns allt (klassen sätts inte), så felet gäller just "JS på, bundlen borta".
 - **Åtgärd:** Rendera synligt och lägg på den dolda startstilen först i effekten (klassen sätts från klienten när observern är registrerad), så att utebliven bundle aldrig döljer något; A:252–256 vederlägger CSS-fallback-animation och `data-shown` i inline-skriptet (se R-18).
 - **Verifiering:** A:1024-1025 – blockera `/_next/static/*.js` i devtools → innehållet syns ändå efter 3 s; med JS på spelas scrollavslöjandet fortfarande längre ner på sidan.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit ba66032); var Öppen – belagd 2026-11-03
 
 ### SB-04 Kalenderprenumerationen är en vanlig länk till `/kalender.ics` med UID bundet till värdnamnet – flödet importeras i stället för att prenumereras, och domänbytet dubblerar evenemangen
 - **Källa:** A/M21, D#3, NY-13; se ST-20, ST-22, U-02
@@ -549,7 +553,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Admin → Sidor → Kontakt visar titel, ingress och ett Markdown-fält (rad 17–26), men sidan läser bara `page.title` och `page.lead` (rad 34–35) – `body_md` används aldrig, så en redaktör som skriver öppettider eller en vägbeskrivning ser inget på `/kontakt`. Titeln går inte genom `AccentText`, så `*Kontakt*` (som formuläret lär ut, rad 17) ger stjärnor i rubriken i stället för rött. Sidan saknar `Editable` (jämför `content-page.tsx` rad 27, 39), så pennan i redigeringsläget finns inte där. Live 2026-11-03: `/kontakt` har inget `data-editable`-attribut.
 - **Åtgärd:** Rendera `<Markdown source={page.body_md} />` under hjältesektionen, kör titeln genom `AccentText` och slå in sidan i `Editable target={{ type: "page", slug: "kontakt" }}` som `ContentPage` gör.
 - **Verifiering:** A:1047 – skriv en rad under Sidor → Kontakt → Text → raden syns på `/kontakt`; `*Kontakt*` ger röd titel.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit aa1cd58); var Öppen – belagd 2026-11-03
 
 ### SB-06 STAR-mässan på företagssidan hittas med `/star/i` på sluggen bland de 20 närmaste evenemangen
 - **Källa:** A/L6, NY-12
@@ -558,7 +562,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Datumet för STAR visas bara om något av de 20 närmaste kommande evenemangen har "star" i sluggen (rad 30–31). Under hösten, när sittningar, pubar och möten fyller listan, hamnar en mässa i maj utanför de 20 och sidan säger inget; omvänt matchar `starta-terminen`, `startup-kvall` eller `hostarsmote` och visas som mässdatum. Live 2026-11-03 visar 3 dec – det är demoevenemanget (SD-36).
 - **Åtgärd:** Ge evenemang en typ (`kind = 'massa'`) eller en inställning `star_event_id` i Admin → Inställningar och läs det evenemanget direkt, oberoende av listans längd.
 - **Verifiering:** Skapa 21 kommande evenemang före ett med sluggen `star-2027` → företagssidan visar ändå STAR-datumet; skapa `starta-terminen` → det visas inte som STAR.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 249644a), med star_event_id eftersom kind kräver en migrering; var Öppen – belagd 2026-11-03
 
 ### SB-07 Pågående evenemang märks "I går"/"Har varit" eftersom etiketten räknas från starttiden
 - **Källa:** A/L7
@@ -567,7 +571,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `relativeDay` jämför bara `starts_at` med i dag (rad 93, 97). Ett flerdagarsevenemang (nollning 18–22 aug, LAN fredag–lördag) visas på korten som "I går" dag två och "Har varit" dag tre, fast det pågår och fortfarande ligger under Kommande (frågan i `events.ts:36` räknar med `ends_at`). Sidan använder `isPast` (slutet) för färgen, men för ett pågående evenemang blir texten ändå `relativeDay(starts_at)` = "I går" (rad 84).
 - **Åtgärd:** Låt `relativeDay` ta emot `ends_at`/`all_day` och svara "Pågår" när `starts_at <= nu <= slut`; använd samma funktion på kort och sida.
 - **Verifiering:** Evenemang som startade i går och slutar i morgon → kortet och sidan visar "Pågår", inte "I går".
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit ff3e937); var Öppen – belagd 2026-11-03
 
 ### SB-08 Startsidans siffra "Kommande evenemang" är längden på en lista begränsad till sex
 - **Källa:** A/L8
@@ -576,7 +580,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Statistikrutan visar `events.length` (rad 29) där `events` är `listUpcomingEvents(6)` (rad 18). Med tio kommande evenemang står det "6 kommande evenemang"; siffran kan aldrig bli högre än sex men ser ut som en räkning.
 - **Åtgärd:** Räkna med en egen `COUNT(*)`-fråga (`countUpcomingEvents()`) eller ta bort siffran.
 - **Verifiering:** Sju publicerade kommande evenemang → rutan visar 7.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit dcdc4ff); var Öppen – belagd 2026-11-03
 
 ### SB-09 Avatarens gradient-id innehåller postens namn med mellanslag – ogiltigt id som krockar mellan kort
 - **Källa:** A/L9, NY-7
@@ -585,7 +589,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `seed` är `${id}-${post}` (rad 13, 43) och blir `id="av-3-Vice ordförande"` (rad 31), refererat som `url(#av-3-Vice ordförande)` (rad 36). Mellanslag är inte tillåtna i ett id, och `url(#…)` med mellanslag tolkas inte lika av alla webbläsare – gradienten uteblir (grå platta) eller pekar på det första elementet med samma id när samma post renderas två gånger i dokumentet (styrelsesidan, kontaktsidan och admin lever samtidigt i `<Activity>`).
 - **Åtgärd:** Använd `useId()` eller bara `member.id` som seed och tvätta till `[a-z0-9-]`.
 - **Verifiering:** Posten "Vice ordförande" utan foto → DevTools visar `id="av-3"` (inga mellanslag) och gradienten renderas i Firefox och Safari.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit b78f5a7); var Öppen – belagd 2026-11-03
 
 ### SB-10 Kalendern trimmar bara en helt tom sjätte vecka – en tom femte står kvar
 - **Källa:** A/L10
@@ -594,7 +598,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `monthGrid` bygger alltid sex rader (42 dagar) och tar bara bort rad sex om den saknar dagar i månaden (rad 133). Februari 2027 börjar på en måndag och ryms på exakt fyra rader; rad fem och sex är helt nästa månad – rad sex tas bort, rad fem står kvar som en grå rad med 1–7 mars.
 - **Åtgärd:** Trimma i en loop: `while (days.length > 28 && !days.slice(-7).some((d) => d.inMonth)) days.splice(-7)`.
 - **Verifiering:** `/evenemang?vy=kalender&manad=2027-02` visar fyra rader.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 0182a99); var Öppen – belagd 2026-11-03
 
 ### SB-11 Mobilmenyn, adminmenyn, redigeringspanelen och bildvisaren saknar fokusfälla och `inert` – Escape återställer inte fokus
 - **Källa:** A/L19 (fokusdelen); se SB-12, SB-13, SB-14, SB-15
@@ -603,7 +607,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Mobilmenyn (rad 214–218) och adminmenyn (rad 169) är vanliga `div`:ar utan `role="dialog"`, `aria-modal` eller `inert` på resten av sidan; redigeringspanelen (rad 81–82) och bildvisaren (rad 90–91) har `aria-modal` men ingen fokusfälla. Tangentbordsanvändare: öppna mobilmenyn, Tab → fokus hamnar i sidan bakom menyn (osynligt); Escape stänger (rad 55) men fokus ligger kvar där det var i stället för på menyknappen. Skärmläsare läser sidan bakom panelen eftersom inget är `inert`.
 - **Åtgärd:** Använd `<dialog>` eller sätt `inert` på `main`/`footer` när ett lager är öppet, fånga Tab inom lagret och återställ fokus till öppnaren vid stängning.
 - **Verifiering:** A:1049 – mobilmenyn öppen → Tab går runt inne i menyn, Escape lägger fokus på menyknappen.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 3700737); var Öppen – belagd 2026-11-03
 
 ### SB-12 Varumärkesrött på vitt och de ljusa gråtonerna når inte WCAG-kontrast (beräknat ur tokens)
 - **Källa:** A/L19 (kontrastdelen), NY-3, NY-16; se SB-11, SB-13, SB-14, SB-15
@@ -621,7 +625,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Med "reducera rörelse" påslaget blir `fade-up` 0,001 ms lång (rad 117) men behåller fördröjningen 1,6 s (rad 38) respektive 1,85 s (rad 62), och `both` håller starttillståndet (osynligt) tills fördröjningen gått. Rubriken och knapparna är alltså osynliga i 1,6–1,85 s – längre än med animationen på. Formulärstatusen i admin rullar alltid med `behavior: "smooth"` (rad 116) oavsett inställning.
 - **Åtgärd:** Lägg `animation-delay: 0s !important` i reduced-motion-blocket (eller `motion-reduce:`-varianter utan `both`), och välj `behavior` efter `matchMedia("(prefers-reduced-motion: reduce)")`.
 - **Verifiering:** A:1050 – med "reducera rörelse" syns rubriken direkt.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit d40d10b); var Öppen – belagd 2026-11-03
 
 ### SB-14 Marqueen upprepar länkarna och namnger en `div` utan roll; filterchipparna är länkar med `role="listitem"`; vyväxlaren är en `tablist` utan flikar och panel
 - **Källa:** A/L19 (rolldelen); se SB-11, SB-12, SB-13, SB-15
@@ -630,7 +634,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Marqueen renderar varje länk `ceil(6/n)` gånger och sedan i två kopior (rad 18, 22): med ett evenemang får skärmläsaren tolv likadana länkar (sex tab-stoppbara); `aria-label` på en `div` utan roll (rad 20) läses inte upp. Filterchipparna är `<Link role="listitem">` (rad 110) – rollen skriver över länkrollen, så de annonseras som listpunkter, inte länkar. Vyväxlaren är `role="tablist"` (rad 77) med länkar i stället för `role="tab"` och utan `tabpanel`; hjälpmedelsflikarna har panel (rad 57) men saknar Home/End (rad 41).
 - **Åtgärd:** Ge marqueens kopior `aria-hidden` och exponera bara en uppsättning länkar; ta bort `role="listitem"` från länkarna (`<ul><li><Link>`); gör vyväxlaren till vanliga länkar med `aria-current` eller fulla flikar med `tab`/`tabpanel`; lägg Home/End i hjälpmedelsflikarna.
 - **Verifiering:** Skärmläsare (NVDA/VoiceOver) på startsidan: ett evenemang annonseras en gång i bandet; på `/evenemang` annonseras "Alla utskott" som länk.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 43ffe0e, 9a24f37, 17dc8e7); var Öppen – belagd 2026-11-03
 
 ### SB-15 Adminformulären: färgväljaren saknar `id`, `aria-describedby` pekar på element som bara finns vid fel, galleriknapparna har bara `title` och omsortering kräver mus
 - **Källa:** A/L19 (admindelen), NY-10; se SB-11, SB-12, SB-13, SB-14
@@ -639,7 +643,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `Field` kopplar etiketten med `htmlFor={name}` (rad 30), men färgväljaren renderar en rå `<input>` utan `id` (rad 77) – etiketten "Accentfärg" träffar inget och skärmläsaren läser "färgväljare" utan namn. `TextInput` sätter `aria-describedby="<name>-error"` (rad 44) även när `FieldError` inte renderar något – en referens till ett obefintligt id – och tipset (rad 37) har inget id, så det läses aldrig som beskrivning; `TextArea` och `Select` (rad 48, 54) saknar `aria-describedby` helt. Galleriknapparna har bara `title` (rad 209, 214) – det blir det tillgängliga namnet men syns inte på touch – och omsortering sker enbart med drag (rad 185–188).
 - **Åtgärd:** Ge färgväljaren `id={name}`; rendera tipset med `id="<name>-hint"` och sätt `aria-describedby` till de id:n som finns; `aria-label` på stjärna/papperskorg; knappar "Flytta vänster/höger" som alternativ till drag.
 - **Verifiering:** axe på `/admin/utskott/<id>` och `/admin/evenemang/<id>` utan fel av typen "label"/"aria-valid-attr-value"; Tab till en galleribild → den kan göras till omslag och flyttas utan mus.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit c0526c0); var Öppen – belagd 2026-11-03
 
 ### SB-16 Saknade sidor svarar 200 med `noindex` i stället för 404 (mjuk 404)
 - **Källa:** A/L24; se SB-20
@@ -658,7 +662,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `#####` och `######` blir `<h5>`/`<h6>` av marked, men vitlistan (rad 9) har bara h2–h4 och `transformTags` mappar bara `h1` (rad 25) – sanitize-html tar bort taggen och texten blir en vanlig rad utan rubrikformat. Redaktören ser samma sak i förhandsgranskningen och förstår inte varför femte nivån inte fungerar.
 - **Åtgärd:** Mappa `h5`/`h6` till `h4` i `transformTags` (eller tillåt dem).
 - **Verifiering:** A:1064 – `##### Rubrik` i förhandsgranskningen → `<h4>`.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 9acdd0f); var Öppen – belagd 2026-11-03
 
 ### SB-18 Kurskodlistan cachar ett tomt eller misslyckat svar för resten av sidvisningen
 - **Källa:** A/L28
@@ -667,7 +671,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `codesPromise` sätts en gång per sidladdning (rad 12). Svarar `/api/tentastatistik/koder` 503/500 eller `[]` (källan nere, SB-19) löses löftet till `[]` (rad 13) och behålls – bara ett nätverksfel (`.catch`, rad 15) nollställer. Sökrutan ger inga förslag tills användaren laddar om, även om källan kommit tillbaka. Rutten svarar `no-store` vid tom lista (rad 7), så omladdning hjälper – men klienten frågar aldrig igen.
 - **Åtgärd:** Nollställ `codesPromise` även när svaret inte är `ok` eller listan är tom, så nästa fokus försöker igen.
 - **Verifiering:** A:1064-1066 – låt `/api/tentastatistik/koder` svara 200 + `[]` (mock eller tillfällig `EXAM_STATS_URL`), fokusera sökrutan, återställ rutten, skriv igen → förslag visas utan omladdning.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 5647b27, 25c2af6); var Öppen – belagd 2026-11-03
 
 ### SB-19 En tom kodlista från källan sparas i databasen och gör tentastatistiken "otillgänglig" i 24 timmar
 - **Källa:** A/L30
@@ -676,7 +680,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Svarar källan med en tom array (tillfälligt fel, tom sida, ändrad API-form) sparas `[]` med färsk tidsstämpel (rad 105–111). `listExamCodes` ser en lista (rad 122 – `!codes` är falskt för `[]`) och uppdaterar först när den är gammal (rad 123, 24 h). Alla kurssidor säger "källan svarar inte" (rad 175) ett dygn, fast nästa hämtning hade lyckats.
 - **Åtgärd:** Behandla en tom lista som misslyckad hämtning: returnera `null` utan upsert, så nästa anrop försöker igen; behåll texten "källan svarar inte" utan `noindex`.
 - **Verifiering:** A:1051-1052 – peka `EXAM_STATS_URL` mot en mock som svarar `[]` → ingen rad i `settings`, nästa anrop försöker igen; tentastatistiksidan säger "källan svarar inte" utan `noindex`.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 9edfc12); var Öppen – belagd 2026-11-03
 
 ### SB-20 Dolda utskott läcker via evenemangens committee-JSON och `generateMetadata`; styrelsen länkas till en utskottssida som sitemapen utelämnar
 - **Källa:** A/L29; se SB-16
@@ -685,7 +689,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Evenemangets `committee_json` (rad 12) tar inte med `visible`/`kind`, så sidan länkar chippen och arrangörskortet (rad 86, 147) till `/utskott/<slug>` även för ett dolt utskott. Utskottssidan svarar då `notFound()` (rad 35) – men `generateMetadata` körs före och sätter titel och tagline (rad 21) för det dolda utskottet, som alltså syns i fliken och i förhandsvisningar av en mjuk 404 (SB-16). Styrelsen är ett utskott med `kind = 'styrelse'`: sitemapen utelämnar `/utskott/styrelsen` (rad 15) men evenemang arrangerade av styrelsen länkar dit.
 - **Åtgärd:** Ta med `visible` och `kind` i `committee_json`, länka bara synliga utskott (styrelsen → `/sektionen/styrelsen`), och gör `visible`-kontrollen även i `generateMetadata` (samma svar som för saknat utskott, rad 20).
 - **Verifiering:** Dölj ett utskott i Admin → dess evenemang visar namnet utan länk; `curl -s /utskott/<dolt> | grep '<title>'` visar inte utskottets namn.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit ecc3a15); var Öppen – belagd 2026-11-03
 
 ### SB-21 hreflang är ensidig, `og:locale` säger svenska på de engelska sidorna och språkväxlaren går alltid till roten
 - **Källa:** A/L31; se SB-02
@@ -694,7 +698,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `/studenter/master` pekar ut `/en/masters` som engelsk version (rad 17), men `/en/masters` pekar bara på sig själv (rad 15) – Google kräver ömsesidiga hreflang-länkar och ignorerar annars paret. `/en` och `/en/masters` ärver `og:locale = sv_SE` (rad 20), så delningar märks som svenska. Växlaren går från `/en/masters` till `/` och från `/studenter/master` till `/en` (rad 34–35), inte till motsvarande sida. Live 2026-11-03: `/en/masters` har `og:locale` = `sv_SE`.
 - **Åtgärd:** Ge `/en/masters` `languages: { sv: "/studenter/master", en: "/en/masters" }`, sätt `openGraph.locale = "en_GB"` på de engelska sidorna (utan att tappa resten av blocket, SB-02) och låt växlaren slå upp motsvarande sida i en tabell (`/en/masters` ↔ `/studenter/master`, `/en` ↔ `/`).
 - **Verifiering:** A:1053 – `curl -s /en/masters | grep -E 'hreflang|og:locale'` visar `sv`/`en` och `en_GB`.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 486cabe); var Öppen – belagd 2026-11-03
 
 ### SB-22 Strukturerad data för evenemang: `startDate` utan tidszon, heldag med klockslag, `location` och `description` kan saknas
 - **Källa:** A/L32
@@ -703,7 +707,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** JSON-LD:n skickar `startDate: "2026-11-05T18:00:00"` (rad 57) utan offset – Google tolkar tiden i okänd tidszon och Rich Results-testet varnar; ett heldagsevenemang får ändå ett klockslag; saknas plats blir `location` `undefined` (rad 60) fast Googles Event-schema kräver den; `description` är `event.summary` (rad 61), som kan vara tom medan metadatan faller tillbaka på brödtexten (rad 25). Live 2026-11-03: `/evenemang/hostsittning` har `"startDate":"2026-11-05T18:00:00"`.
 - **Åtgärd:** Formatera med offset (`+01:00`/`+02:00` med samma CET/CEST-logik som `stockholmToIso` i `src/app/admin/_actions/news.ts`), använd bara datum för heldag, sätt `location` till sektionens adress som reserv och `description` till `summary || stripMarkdown(body_md)`.
 - **Verifiering:** Rich Results-testet på en evenemangssida utan plats → inga fel; `startDate` innehåller `+01:00` eller `+02:00`.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 6328aa5), Rich Results återstår efter deploy; var Öppen – belagd 2026-11-03
 
 ### SB-23 Kalendervyn godtar vilket årtal som helst och saknar `canonical`/`robots` – oändligt många indexerbara månadssidor
 - **Källa:** A/L33
@@ -713,7 +717,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `manad` godtar alla år 0000–9999 (rad 51) och föregående/nästa-länkarna (rad 209, 215) leder vidare utan slut och utan `rel="nofollow"`; metadatan (rad 16–19) sätter varken `canonical` till `/evenemang` eller `robots: noindex` för filtrerade vyer. En sökmotor kan följa tusentals tomma månadssidor (gånger sex utskottsfilter), alla med samma titel. Live 2026-11-03: `/evenemang?vy=kalender&manad=1999-01` → 200, "Januari 1999", ingen `canonical`, ingen `robots`.
 - **Åtgärd:** Begränsa `manad` till t.ex. ±2 år från i dag (annars innevarande månad eller 404), sätt `alternates.canonical = "/evenemang"` och `robots: { index: false }` när `vy`/`manad`/`utskott` är satta, och `rel="nofollow"` på bläddringen.
 - **Verifiering:** `curl -s '/evenemang?vy=kalender&manad=1999-01' | grep -E 'canonical|robots'` visar `/evenemang` och `noindex`; `manad=1999-01` visar innevarande månad eller svarar 404.
-- **Status:** Öppen – belagd 2026-11-03 (live)
+- **Status:** Åtgärdad 2026-11-04 (commit 6e3be94); var Öppen – belagd 2026-11-03 (live)
 
 ### SB-24 PDF-dokument serveras `inline` under `Content-Security-Policy: sandbox` – obelagt om Safari/iOS renderar dem
 - **Källa:** A/L36
@@ -722,7 +726,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Stadgar och protokoll öppnas `inline` (rad 36) med en CSP som sätter `sandbox` (rad 37). Chrome visar PDF:er i sandlådan; Safari (särskilt iOS) har tidigare vägrat rendera sandlådade PDF-svar eller visat en tom sida. Brister det blir `/dokument` oanvändbar på iPhone – men det är inte provat.
 - **Åtgärd:** Prova i Safari/iOS; brister det: utelämna `sandbox` för `application/pdf` (behåll `default-src 'none'`) eller tvinga `attachment` för PDF. F-02 ärver rubrikerna (C/rad-52).
 - **Verifiering:** A:1063 – öppna ett PDF-dokument från `/dokument` i Safari på iPhone och i Chrome – renderas den?
-- **Status:** Öppen – delvis belagd (kräver Safari/iOS)
+- **Status:** Delvis 2026-11-05 (commit 17951bf): Chrome och Edge renderar, Safari/iOS kräver riktig enhet; var Öppen – delvis belagd (kräver Safari/iOS)
 
 ### SB-25 Småfel på publika sidor: månadslistan missar flerdagars från föregående månad, dubbla `key`, "1 bilder", fel förinläsning i bildvisaren, `/kalender.ics` som klientlänk
 - **Källa:** A/L21 (den publika delen), NY-15; se SN-10, ST-25
@@ -731,7 +735,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** (1) Listan under kalendern tar bara evenemang som börjar i månaden (rad 202) – nollningen 28 aug–3 sep syns inte under september, fast rutnätet (rad 200) markerar dagarna. (2) `key={o.date}` (rad 160, 212, 109): två tentatillfällen samma dag (olika moment) ger React-varning och fel rad vid uppdatering. (3) "1 bilder" (rad 68). (4) Bildvisaren förinläser `it.image.src` (rad 52) men visar `srcSet` med `sizes="100vw"` (rad 133–134), så webbläsaren väljer en annan kandidat och förinläsningen bommar. (5) `/kalender.ics` i länklistan (seedad med `url: "/kalender.ics"`) renderas som `<Link>` (rad 229, 258) eftersom den inte är extern – klienten förhämtar och försöker navigera med RSC-anrop innan den faller tillbaka på en hel sidladdning, och `webcal:` (SB-04) kan inte uttryckas som `<Link>`; genvägsraden visar bara `featured = 1` (rad 12), så felet ligger i link-board, inte quick-links.
 - **Åtgärd:** (1) filtrera på att intervallet överlappar månaden; (2) ``key={`${o.date}-${o.module}`}``; (3) "bild"/"bilder" efter antal; (4) förinläs med samma `srcset`/`sizes`; (5) rendera filer och `.ics` som `<a>` (utöka `isExternalUrl`-villkoret).
 - **Verifiering:** Evenemang 28 aug–3 sep → listas under september; `/galleri` med ett album på en bild visar "1 bild"; klick på Kalenderflöde i länklistan laddar `.ics` direkt (nätverksfliken visar inget `?_rsc=`).
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 001caaf, d059d2a), nyckeln blev datum och index eftersom o.module inte finns; var Öppen – belagd 2026-11-03
 
 ### SB-26 Sajten lovar anonymitet som bara e-post kan ge – i kod och i seedad text
 - **Källa:** B/tre-1; se F-01
@@ -750,7 +754,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Sidfotens kontakt (rad 88), dokumentlistan (rad 28) och headern (rad 13) ligger i Suspense-gränser. Det färdiga innehållet strömmas som `<div hidden id="S:…">` plus ett inline-skript som byter ut reservinnehållet (Belägg rad 39, 771); med skript avstängda står reservinnehållet kvar – en tom ruta i sidfoten och skelettet på `/dokument` (Belägg rad 582). Live 2026-11-03: `/` har `<div hidden id="S:0">` till `S:8`, `/dokument` har `S:0`, `S:1`, `S:4`. Botar får hela dokumentet (Belägg rad 781), så sökmotorer påverkas inte – men D:s rad 69 ("sajten visar allt innehåll utan JavaScript") stämmer inte.
 - **Åtgärd:** Ingen kodändring krävs om beteendet accepteras; vill man ha innehåll utan JS, lyft de små delarna (sidfotens kontakt, headern) ur Suspense eller rendera dem från statiska data. Rätta påståendet i D.
 - **Verifiering:** Chrome → Inställningar → JavaScript av → `/dokument` och sidfoten visar innehåll (inte skelett eller tom ruta).
-- **Status:** Öppen – delvis belagd (live-DOM:en har de dolda `S:`-segmenten; inte provat med JavaScript avstängt)
+- **Status:** Åtgärdad 2026-11-05 (commit 45de209, e57a680, 38c6dd8), fler sidor utan JavaScript är användarens beslut; var Öppen – delvis belagd
 
 ### SB-28 Sidfotens slogan renderas som ren text – Markdown-stjärnor syns live
 - **Källa:** NY-4, Live
@@ -759,7 +763,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Sidfoten skriver `s.tagline` rakt av (rad 45) medan sidformuläret lär redaktören att `*ord*` ger rött (`content-forms.tsx:17`) – inställningsfältet (rad 227) säger inget om det. Live 2026-11-03 visar sidfoten "Sektionen för dig som läser Statistik och Dataanalys samt **Statistics and Machine Learning ** och aster vid Linköpings universitet." – stjärnor, ett extra mellanslag och "aster" (trasigt "master").
 - **Åtgärd:** Innehållet rättas nu i Admin → Inställningar → Slogan. Koden: rendera sloganen genom `AccentText` (så `*ord*` blir rött som i rubrikerna) och säg det i fältets `hint`.
 - **Verifiering:** Sidfoten på `/` visar sloganen utan stjärnor; `*Statistics*` i fältet ger ett rött ord.
-- **Status:** Öppen – belagd 2026-11-03 (live)
+- **Status:** Åtgärdad 2026-11-05 (commit 4740d83), texten i produktionen rättas i Admin; var Öppen – belagd 2026-11-03 (live)
 
 ### SB-29 `/en/masters` visar svenska datumetiketter och "Heldag" i evenemangsraderna
 - **Källa:** NY-20 (A/rad-1113–1114 lämnade det "ej verifierat")
@@ -768,7 +772,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Masterssidan på engelska återanvänder `EventRow` (rad 39), som renderar `DateBlock` (rad 100, med `weekdayShort` rad 21) och `formatTimeRange` (rad 103); båda formaterar med `sv-SE` (rad 33) och fasta svenska strängar (rad 75). Live 2026-11-03: `/en/masters` visar `nov`, `ons`, `tors`, `lör`, `sön` – engelska läsare får "tors" i stället för "Thu", och "Heldag" i stället för "All day" så fort ett heldagsevenemang finns.
 - **Åtgärd:** Ge `EventRow`, `DateBlock` och `formatTimeRange` en `locale`-parameter (`en-GB` under `/en/*`) och översätt "Heldag"/"I dag"/"I morgon".
 - **Verifiering:** `curl -s https://statlin-web.fly.dev/en/masters | grep -o '>\(Thu\|Sat\|Sun\|Wed\)<'` ger träffar och `>tors<` ger ingen.
-- **Status:** Öppen – belagd 2026-11-03 (live)
+- **Status:** Åtgärdad 2026-11-05 (commit 798ce86); var Öppen – belagd 2026-11-03 (live)
 
 ### SB-30 Adminlisten stänger redigeringspanelen vid varje navigering – `setUser`-effekten körs om med ett nytt objekt och nollar `open`
 - **Källa:** A/M2
@@ -777,7 +781,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** `AdminBar` får `user` som ett nytt objektliteral från serverkomponenten (rad 8) och kör `setUser` i en effekt med `[user]` som beroende (rad 17–20). Varje gång RSC-payloaden hämtas om (navigering, `router.refresh()` efter en sparning, `revalidatePath` från en action) är objektet nytt → effekten körs igen → cleanupen `setUser(null)` (rad 19) blinkar bort listen och `setUser` sätter `open: null` (rad 55). Redaktören som har panelen öppen ("Byt bilder", "Redigera texten") och sparar får panelen stängd mitt i arbetet.
 - **Åtgärd:** Stabilisera beroendet (`[user.id]`, eller memoisera objektet) så effekten bara körs vid byte av användare; A:1187–1188 vederlägger att i stället låta `setUser` alltid behålla `open` (R-32).
 - **Verifiering:** A:1014 – redigeringsläge → "Byt bilder" → ändra bildtext → panelen är kvar och visar "Sparat".
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 01af83a); var Öppen – belagd 2026-11-03
 
 ### SB-31 Styrda rollknappar plus `form.reset()` – nästa konto får rollen som skickas, inte den som visas
 - **Källa:** A/M7
@@ -787,7 +791,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Radioknapparna är styrda (`checked={role === r}`, rad 39) av `role` i React-state (rad 12). Vid nytt konto är `resetOnSuccess` sant (rad 14) och `ActionForm` kör `form.reset()` efter lyckad sparning (rad 58). `reset()` återställer DOM:en till `defaultChecked`, som React satte vid monteringen till det ursprungliga valet (Belägg rad 1920) och vid uppdateringar bara rör när `checked` är null (Belägg rad 1869; annars sätts bara `element.checked`, rad 1871). Efter resetten visar DOM:en "Utskott" medan `role` i state – och markeringen – fortfarande är "Redaktör"; React skriver inte om `checked` eftersom propen inte ändrats. Nästa konto som skapas utan att rollen rörs skickar `role=committee` fast formuläret visar redaktör. Kontosidan renderar formuläret utan `user` (rad 65), så varje nytt konto går den vägen.
 - **Åtgärd:** Okontrollerade radioknappar (`defaultChecked`) med `setRole` i `onChange` för hjälptexten, och återställ `role` i `onSuccess`; A:1162 vederlägger `key`-varianten för `UserForm` (R-29).
 - **Verifiering:** A:1020 – skapa redaktör → skapa nästa konto utan att röra rollen → rollen är den som visas.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 8696c35); var Öppen – belagd 2026-11-03
 
 ### SB-32 Datum valideras bara med regex – `Invalid Date` ger `RangeError` på sajten och hela `/kalender.ics` faller
 - **Källa:** A/M15, NY-9
@@ -796,7 +800,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Regexen (rad 48, 52) godtar `2025-02-30T12:00`, `2025-02-28T24:00` och `2025-13-01T12:00`. Kontrollerat med `node -e` 2026-11-03 (Node 24.16): V8 rullar 02-30 till 2 mars och T24:00 till nästa dag 00:00 – evenemanget hamnar på fel dag utan att någon ser det – medan 13-01 ger `Invalid Date`, och `toISOString()` kastar då `RangeError: Invalid time value`. `formatDate` m.fl. går via `asUtc` → `Intl.DateTimeFormat.format` (rad 30, 33), som också kastar på `Invalid Date`: evenemangssidan, korten och startsidan faller med felskärm (ingen `error.tsx`, SD-04). I `ics.ts` kastar `nextDay` (rad 52–54) och `addHours` (rad 97–99) – ett enda ogiltigt datum tar ner hela `/kalender.ics` för alla prenumeranter.
 - **Åtgärd:** Validera med rundtur: parsa, kräv att `getTime()` inte är `NaN` och att formatering tillbaka ger samma sträng, och ge fältfel i stället för att spara; A:1159–1160 vederlägger ren `Date.parse`/rundtur utan vakt (R-21).
 - **Verifiering:** A:1056-1057 – `2025-02-30T12:00`, `2025-02-28T24:00`, `2025-13-01T12:00` och `2025-02-28T12:60` ger fältfel (ingen felskärm); `2025-02-28T12:00` sparas.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 4f2c519), och vakt vid läsning 2026-11-05 (commit 64c6d97, e6f03a0); var Öppen – belagd 2026-11-03
 
 ### SB-33 Nyhetens `published_at` sätts vid skapandet, skickas tillbaka av formuläret och flyttas aldrig till publiceringsögonblicket
 - **Källa:** A/M25
@@ -805,7 +809,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Ett utkast sparat på måndag får `published_at = nu` (rad 55, `nowIso` rad 45). Formuläret förifyller fältet med det värdet (rad 52, via `isoToLocalInput` rad 9–21) och skickar tillbaka det, så varje senare sparning – även knappen "Publicera" (rad 7–8) på fredag – behåller måndagens tid: nyheten sorteras (rad 34) under allt som publicerats under veckan och visas med fel datum. Uppdateringsgrenen läser inte `published` ur databasen (rad 59), så actionen kan inte veta att det är första publiceringen och sätta tiden då. Rundturen Stockholm → ISO → Stockholm (rad 30–42) tappar sekunderna, så sparningar kan byta ordning på nyheter publicerade samma minut.
 - **Åtgärd:** Lämna fältet tomt för utkast (fyll bara i när redaktören schemalagt), läs `published` i `existing` och sätt `published_at` när `published` går från 0 till 1; A:1189 vederlägger att jämföra ISO-strängar för "oförändrat datum" (R-23).
 - **Verifiering:** A:1058-1059 – skapa utkast, vänta en minut, tryck "Publicera" utan att röra datumet → `published_at` ≈ nu och nyheten ligger överst.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 55b2e9f); var Öppen – belagd 2026-11-03
 
 ### SB-34 Auth- och kontoactions svarar utan att uppdatera skalet – bannern "byt lösenord" och kontolistan är gamla tills nästa omladdning
 - **Källa:** A/L12, A/L40; se ST-12
@@ -825,7 +829,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Markdown-editorn renderar etikett och räknare (rad 86, 89) men ingen `FieldError`, så serverns fel för `body_md` ("Texten får vara högst 40000 tecken") visas bara i den generella statusraden – inte vid fältet. Räknaren säger "41 203 tecken" utan att visa taket (20 000 för evenemang rad 29, 40 000 för nyheter rad 16, 60 000 för sidor rad 173) och textarean har inget `maxLength`, så redaktören upptäcker gränsen först vid sparningen. Rollfältet (rad 28–45) saknar också `FieldError`, så "Välj en roll." (rad 18) hamnar bara i statusraden.
 - **Åtgärd:** Skicka `max` till `MarkdownEditor` (räknare "41 203 / 40 000" och `maxLength`), rendera `<FieldError name={name} />` under editorn och under rollfältet.
 - **Verifiering:** Klistra in 41 000 tecken i en nyhet → räknaren blir röd och fältet markeras; skicka formuläret utan roll (DevTools) → felet står under rollvalet.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 9ce9c43); var Öppen – belagd 2026-11-03
 
 ### SB-36 Galleriet: omsortering efter en batch utgår från en gammal ögonblicksbild, filsläpp på en ruta navigerar bort, misslyckade rutor ligger kvar, bildfältet tar bara första filen
 - **Källa:** A/L16
@@ -834,7 +838,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** (1) `before` tas när batchen startar (rad 57); laddar redaktören upp en andra batch, eller tar bort en bild, medan den första pågår, skickar `reorderEventImages` (rad 89–90) en lista som saknar de nya eller behåller de borttagna – ordningen skrivs tillbaka till det gamla läget. (2) `onDragOver` kallar `preventDefault` bara när en galleribild dras (rad 188); släpper man en fil från skrivbordet på en befintlig ruta öppnar webbläsaren filen och lämnar adminsidan. (3) Upp till `PARALLEL` uppladdningar körs samtidigt (rad 86) mot en server som kör `sharp` på en liten maskin (SD-22). (4) En misslyckad uppladdning blir en ruta med feltext (rad 239, 249) som varken går att ta bort eller försöka igen. (5) Bildfältet och editorn tar bara `files[0]` (rad 68, 146) – släpper man tre bilder försvinner två tyst.
 - **Åtgärd:** Beräkna ordningen från `itemsRef.current` när batchen är klar (bara id:n som fortfarande finns); `preventDefault` på `dragover`/`drop` för hela galleriet; kö med 1–2 parallella; "Försök igen"/"Ta bort" på felrutor; ta emot flera filer i editorn eller säg att bara en används.
 - **Verifiering:** Ladda upp fem bilder och ta bort en medan de laddar → ordningen stämmer och den borttagna är borta; släpp en fil på en befintlig bild → inget sidbyte.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 9ce9c43, 0e1852e); var Öppen – belagd 2026-11-03
 
 ### SB-37 Små actionfel: `sort_order` nollas, `dirty` nollas före svaret, dokument kan sparas utan fil eller länk, `resetOnSuccess` utan verkan vid omdirigering, förhandsgranskningen kapar vid 50 000 men sparningen tillåter 60 000
 - **Källa:** A/L17; se SD-25
@@ -843,7 +847,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** (1) `sort_order` får `default(0)` (rad 119): ett formulär eller anrop som inte skickar fältet nollar utskottets plats i listan. (2) `ActionForm` sätter `dirty = false` innan actionen svarat (rad 87) – misslyckas sparningen kan panelen stängas utan varning fast texten är osparad (SD-25). (3) `saveDocument` kontrollerar "fil eller länk" bara vid nyskapande (rad 235); i uppdateringsgrenen kan `remove_file` plus tom `url` ge ett dokument utan något att öppna (rad 225) – hjälpmedlen gör kontrollen i båda fallen (rad 40). (4) `resetOnSuccess` är verkningslöst för formulär vars action omdirigerar efter nyskapande (dokument rad 241, hjälpmedel rad 69): formuläret monteras av innan `state.ok` når det. (5) Förhandsgranskningen renderar högst 50 000 tecken (rad 32) medan sidtexten får vara 60 000 (rad 173) – de sista 10 000 syns inte i förhandsgranskningen men publiceras.
 - **Åtgärd:** Behåll det gamla `sort_order` när fältet saknas (`.optional()` + läs ur databasen); sätt `dirty = false` i `onSuccess` i stället för vid inskickning; kör "fil eller länk"-kontrollen även i uppdateringsgrenen; ta bort `resetOnSuccess` där actionen omdirigerar; ge förhandsgranskningen samma tak som sparningen.
 - **Verifiering:** Spara ett utskott via ett formulär utan `sort_order` → platsen består; ta bort filen på ett dokument utan länk → fältfel; klistra in 55 000 tecken → förhandsgranskningen visar slutet.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 0b8f767; punkt 2 i ef66c16, 6b101cc); var Öppen – belagd 2026-11-03
 
 ### SB-38 `next=/admin` är hårdkodat i layouten, `requireUser` skickar ingen `next` och proxyn tappar frågesträngen
 - **Källa:** A/L18, NY-6; se SD-27
@@ -852,7 +856,7 @@ Trettioåtta punkter: tjugonio för den publika sajten (SB-01–SB-29) och nio f
 - **Felscenario:** Tre vägar till inloggningen ger tre olika återhopp: proxyn (rad 18) skickar `pathname` utan frågesträng, så `/admin/evenemang?sparad=1` landar på sidan utan parametrar; layouten (rad 27) skickar alltid `/admin` oavsett vilken adminsida som efterfrågades (den träffas när kakan finns men sessionen gått ut); `requireUser` i en action (rad 96) skickar ingen `next` alls, så användaren hamnar på inloggningens standardmål och förlorar formuläret (SD-27).
 - **Åtgärd:** Bygg `next` av `pathname + search` i proxyn, låt layouten skicka den efterfrågade adressen (proxyn kan sätta en `x-pathname`-rubrik), och låt actions returnera ett felobjekt i stället för `redirect` (SD-27).
 - **Verifiering:** Logga ut, öppna `/admin/evenemang?sparad=1` → efter inloggning hamnar man där med frågesträngen kvar; låt sessionen gå ut, öppna `/admin/nyheter` → tillbaka till `/admin/nyheter`.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit ce62475); var Öppen – belagd 2026-11-03
 
 ## 4 Node
 
@@ -880,7 +884,7 @@ Sex punkter. Väntar på beslut: BE-02 (B-4). BE-05 avgör faktamotsägelsen mel
 - **Felscenario:** `npm ls playwright --depth=0` 2026-11-03 → `playwright@1.64.1 extraneous`: paketet ligger i `node_modules` utan att stå i `package.json` (rad 30–42). `npm ci` på en annan dator eller i CI installerar det inte, och `node tests/e2e.mjs` faller på `ERR_MODULE_NOT_FOUND` (rad 16); `npm prune` tar bort det lokalt.
 - **Åtgärd:** `npm i -D playwright` (låst version) och `npx playwright install chromium` i README och CI; lägg `test:e2e` under `scripts`.
 - **Verifiering:** A:1026 – `npm ci && npm run test:e2e` fungerar två gånger i rad.
-- **Status:** Åtgärdad 2026-11-03 (commit 35c72d6); var Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-03 (commit 35c72d6), omlåst till 1.64.1 2026-11-04 (commit 6bffca5); var Öppen – belagd 2026-11-03
 
 ### BE-02 Ingen Dependabot/Renovate – uppdateringar upptäcks bara när någon kör `npm outdated`
 - **Källa:** A/M16, D#5; se SN-06
@@ -899,7 +903,7 @@ Sex punkter. Väntar på beslut: BE-02 (B-4). BE-05 avgör faktamotsägelsen mel
 - **Felscenario:** `npm outdated` 2026-11-03: `@tailwindcss/turbopack` 4.3.3 → 4.3.4, `tailwindcss` 4.3.3 → 4.3.4 och `marked` 18.1.1 → 18.1.3 ligger inom intervallen (`npm update` räcker); `next` 16.4.3 → 16.4.4, `eslint-config-next` 16.4.3 → 16.4.4 (rad 38) och `react`/`react-dom` 19.3.0 → 19.3.1 är låsta (Wanted = Current) och kräver ändring i `package.json`. Patchar i Next innehåller ofta säkerhetsrättningar; utan BE-02 sker det först när någon tittar.
 - **Åtgärd:** `npm update` för intervallen; höj `next`, `eslint-config-next`, `react` och `react-dom` i `package.json`; kör `npm run lint`, `npm run typecheck`, `npm run build` och e2e ensamt.
 - **Verifiering:** `npm outdated` listar bara majorhoppen i BE-04.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 12ac06d), next 16.4.5 i stället för 16.4.4; var Öppen – belagd 2026-11-03
 
 ### BE-04 Majorhopp att ta var för sig: eslint 10, TypeScript 7, @types/node 26
 - **Källa:** A/rad-32, A/steg-21
@@ -908,7 +912,7 @@ Sex punkter. Väntar på beslut: BE-02 (B-4). BE-05 avgör faktamotsägelsen mel
 - **Felscenario:** `npm outdated` 2026-11-03: `eslint` 9.39.5 → 10.14.0, `typescript` 5.9.3 → 7.0.2, `@types/node` 20.19.43 → 26.6.6. ESLint 10 kräver att `eslint-config-next` stödjer det, TypeScript 7 är den Go-baserade kompilatorn med egna avvikelser, och `@types/node` ska följa körningens major (22 eller 24, NO-01) – inte 26. Tas de i klump syns inte vilket hopp som bröt bygget.
 - **Åtgärd:** Ett hopp per PR: `@types/node` till körningens major → `eslint` 10 (när `eslint-config-next` stödjer det) → TypeScript 7; `npm run lint && npm run typecheck && npm run build` efter varje.
 - **Verifiering:** Varje PR grön i CI (SN-06); `npm outdated` tomt.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit ec3c162, c2df58b): eslint 10 och TypeScript 6.0.3 är inne, @types/node väntar på B-9; CI-delen väntar på SN-06; var Öppen – belagd 2026-11-03
 
 ### BE-05 `npm audit`: 16 moderate i ESLint-kedjan, 0 i produktionsberoendena – båda planerna har rätt på sitt sätt
 - **Källa:** A/rad-30, A/rad-31, D/rad-41; se Fakta-1 i avsnitt 7
@@ -917,7 +921,7 @@ Sex punkter. Väntar på beslut: BE-02 (B-4). BE-05 avgör faktamotsägelsen mel
 - **Felscenario:** Mätt 2026-11-03: `npm audit` → "16 moderate severity vulnerabilities", alla `minimatch < 11.0.1` (GHSA-g3hv-75wg-m249, ReDoS via globparts) under `@typescript-eslint/typescript-estree` i ESLint-kedjan (dev, rad 30–37); `npm audit --omit=dev` → "found 0 vulnerabilities". A (rad 30–31) räknar de 16, D (rad 41) säger 0 utan att nämna flaggan. Sårbarheten ligger i lint-verktyg som aldrig körs på servern (standalone-bygget tar inte med dev-beroenden), men `npm audit fix --force` – som npm föreslår – installerar `eslint@4.0.0` (breaking).
 - **Åtgärd:** Vänta på att `@typescript-eslint` släpper med `minimatch >= 11`, eller lägg `overrides: { "minimatch": "^11.0.1" }` i `package.json` om kedjan tål det; kör aldrig `npm audit fix --force` (R-35); dokumentera att `npm audit --omit=dev` är måttet för sajten.
 - **Verifiering:** `npm audit --omit=dev` → 0; `npm audit` → 0 efter override eller uppdatering, och `npm run lint` fungerar.
-- **Status:** Öppen – belagd 2026-11-03 (faktamotsägelsen avgjord genom mätning)
+- **Status:** Åtgärdad 2026-11-04 (commit 6d72f70); var Öppen – belagd 2026-11-03 (faktamotsägelsen avgjord genom mätning)
 
 ### BE-06 Tailwind körs via `@tailwindcss/turbopack`-laddaren utan PostCSS – konfigurationsdokumentet säger att sådana laddare inte stöds
 - **Källa:** A/L26
@@ -928,7 +932,7 @@ Sex punkter. Väntar på beslut: BE-02 (B-4). BE-05 avgör faktamotsägelsen mel
 - **Felscenario:** CSS:en byggs av Tailwinds egen Turbopack-laddare (rad 54–55) och det finns ingen `postcss.config.*`. Nexts konfigurationsdokument säger att laddare som omvandlar stilmallar inte stöds (Belägg rad 169), medan Turbopack-översikten säger att PostCSS stöds (rad 99). Laddaren fungerar i dag (sajten byggs), men står utanför det dokumenterade stödet: en Next-uppgradering som ändrar laddar-API:t kan bryta bygget utan förvarning, och bygget körs bara lokalt och i Flys byggare (SN-06). Minnesanteckning: Turbopacks diskcache har redan gett gammal `globals.css` efter ändringar.
 - **Åtgärd:** Pinna `@tailwindcss/turbopack` till exakt version och kör `npm run build` i CI (SN-06); A:s dubbelkoll vederlägger en "reserv"-`postcss.config` bredvid laddaren (R-19). Om Tailwinds dokumentation pekar på `@tailwindcss/postcss` för Next 16, byt väg i en egen PR.
 - **Verifiering:** `npm run build` grönt efter varje Next-/Tailwind-uppdatering; `/_next/static/**/*.css` innehåller de nya klasserna efter en ändring i `globals.css` (töm `.next/cache` vid tvivel).
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 2abb7fa), CI-delen väntar på SN-06; var Öppen – belagd 2026-11-03
 
 ## 6 Städning
 
@@ -950,7 +954,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Evenemang lagras som lokal tid utan zon (`YYYY-MM-DDTHH:MM`, SB-32) och nyheter som ISO med Z (`published_at = nowIso()`, SB-33). Därför finns fyra separata omräkningar mot Europe/Stockholm: dates.ts:11 och :147, `stockholmToIso` i nyhetsactionen (:27), `isoToLocalInput` i formuläret (:9) och `isoToLocalDate` i kortet (:8). Varje ny vy som visar en nyhet skriver en femte, och ett fel vid sommartidsövergången måste rättas på fyra ställen. SB-32 och SB-33 är symtom av samma delning.
 - **Åtgärd:** Samla konverteringarna i `src/lib/dates.ts` (`localToIso`, `isoToLocal`, `isoToLocalInput`) och importera dem i nyhetsformulär, action och kort; välj ett lagringsformat för båda typerna i samma PR som SB-32/SB-33.
 - **Verifiering:** `grep -rn "Intl.DateTimeFormat" src` ger bara träffar i `src/lib/dates.ts`; ett datum över sommartidsgränsen (sista söndagen i mars 02:30) visas lika i admin och publikt; e2e:s nyhets- och evenemangssteg gröna.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-04 (commit 2b7ff29): konverteringarna samlade, gemensamt lagringsformat kräver migrering (B-7); var Öppen – belagd 2026-11-03
 
 ### ST-03 Zod-uppräkningar och `sort_order`-regeln skrivs om i varje action
 - **Källa:** A/S3
@@ -959,7 +963,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Samma `sort_order`-regel står tre gånger (content.ts:119 och :269, links.ts:14 som `zOrder`), och värdelistorna för dokumentkategori, roll och program finns både som Zod-enum i actionen och som TypeScript-typ (types.ts:153 mot content.ts:189). Lägger någon till kategorin `remiss` i typen utan att röra actionen avvisas formuläret med "Ogiltigt värde" – kompilatorn säger inget eftersom listorna inte delar källa. `form.ts` har redan `zText`/`zRequired`/`zCheckbox` (:35-39) som mönster.
 - **Åtgärd:** Definiera listorna en gång (`DOCUMENT_CATEGORIES = [...] as const` med `type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number]`) i `src/lib/types.ts` och härled Zod-enumen (`z.enum(DOCUMENT_CATEGORIES)`); gör `zOrder` till en delad hjälpare i `src/lib/admin/form.ts` bredvid `zRequired`.
 - **Verifiering:** `npm run typecheck` grönt; `grep -rn 'max(9999)' src` ger en träff; en ny kategori tillagd på ett ställe syns både i formuläret och i filtreringen.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 0b8f767); var Öppen – belagd 2026-11-03
 
 ### ST-04 `getSettings()` läser inställningarna på nytt för varje anrop i samma rendering
 - **Källa:** A/S4
@@ -970,7 +974,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** `getSettings()` anropas från tio ställen i åtta filer (grep 2026-11-03: `en/page`, `kontakt/page`, `installningar/page`, `redigera/route`, `hero`, `home-sections`, `announcement`, `site-footer`); på startsidan läser hjälten, sektionerna, meddelanderaden och sidfoten var för sig – fyra `SELECT` per rendering, eftersom funktionen inte är inslagen i Reacts `cache()` (Belägg: dedupering per request). Billigt i SQLite men onödigt, och skrivs inställningarna mitt i en rendering kan två delar av samma sida visa olika värden.
 - **Åtgärd:** `export const getSettings = cache(async (): Promise<SiteSettings> => …)` med `import { cache } from "react"`; samma för `listCommittees` om den anropas flera gånger per sida.
 - **Verifiering:** Logga satserna i dev (`new Database(path, { verbose: console.log })`) och ladda startsidan: en `SELECT … FROM settings` per request.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 7ec9ea6); var Öppen – belagd 2026-11-03
 
 ### ST-05 Adminöversikten läser alla evenemang och nyheter utan LIMIT och filtrerar i JS
 - **Källa:** A/S5
@@ -979,7 +983,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** `listEventsForAdmin` hämtar alla rader (events.ts:92, ingen LIMIT) och översikten skär sedan i JS till fem, sex och fyra (page.tsx:63-65); grafiskt ansvarig läser dessutom hela tabellen en gång till (:78). Med några hundra evenemang och bilder per rad är det fortfarande snabbt i SQLite, men varje visning av `/admin` serialiserar hela historiken. Växer sajten (galleri, Frågelådan F-01, kvitton F-02) är admin den första sidan som segar.
 - **Åtgärd:** Ge `listEventsForAdmin`/`listNewsForAdmin` `limit`- och `since`-parametrar och gör översiktens tre urval i SQL (`WHERE starts_at >= ? ORDER BY starts_at LIMIT 5`); sidindela listsidorna.
 - **Verifiering:** Med 500 seedade evenemang: `/admin` renderas under 200 ms på servern; `EXPLAIN QUERY PLAN` visar att `events_starts` används.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit 1e13a8e): översikten väljer i SQL, 15–58 ms med 512 evenemang; listsidornas sidindelning återstår och är användarens val; var Öppen – belagd 2026-11-03
 
 ### ST-06 Varje bild avkodas fyra gånger: tre bredder och `stats()`
 - **Källa:** A/S6; se SD-22, SD-30, F-02
@@ -997,7 +1001,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** `src/app/admin/{dokument,lankar,partners,hjalpmedel}/[id]/page.tsx` är 45, 44, 44 och 42 rader (`wc -l` 2026-11-03) med samma struktur: `requireUser`, `isEditor`-spärr med omdirigering till `/admin?nekad=1`, hämta rad på `params.id`, `notFound()`, rendera formulär – lika i upplägg, inte byte för byte (A:s dubbelkoll). Ändras spärren (SB-38:s `next=`) eller 404-hanteringen (SB-16) måste det göras fyra gånger, och de glider redan isär (tre raders skillnad).
 - **Åtgärd:** En delad `requireEditorAndLoad(params, loader)` i `src/lib/admin/helpers.ts` (spärr + `notFound()`), så att de fyra sidorna bara innehåller formuläret.
 - **Verifiering:** De fyra sidorna under 20 rader vardera; e2e:s redigeringssteg för dokument, länk, partner och hjälpmedel gröna.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit af9cd34): 23, 21, 21 och 20 rader mot tidigare 45, 44, 44 och 42; var Öppen – belagd 2026-11-03
 
 ### ST-08 `logo-paths.ts` (31 kB rå, 11,9 kB gzip) importeras av två klientkomponenter – mät innan något flyttas
 - **Källa:** A/S8; se B-19
@@ -1024,7 +1028,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** SQLite saknar boolean, så `visible`, `active`, `published`, `pinned`, `featured` och `must_change_password` är `number` i typerna (tio fält, grep 2026-11-03) och koden blandar `e.published` som sanningsvärde (admin/page.tsx:65) med `= 1`-jämförelser i SQL. Typen låter `active: 2` passera, och varje formulär gör samma 0/1-översättning via `zCheckbox` (content.ts:118) och tillbaka i varje `map()`.
 - **Åtgärd:** Behåll INTEGER i databasen men konvertera i `map()`-funktionerna i `src/lib/data/*` (`active: Boolean(r.active)`) och typa fälten som `boolean`; en `toBool`-hjälpare i `src/lib/db/`.
 - **Verifiering:** `npm run typecheck` grönt efter typbytet (kompilatorn pekar ut varje `=== 1`); e2e grönt.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit d5284a2, 772f28a); UserRow är den råa raden och står kvar som tal; var Öppen – belagd 2026-11-03
 
 ### ST-11 Kopierade småhjälpare: `simplify` ×3, `forbidden` ×5, `json()` ×2, två listor över tillåtna origin
 - **Källa:** A/S12
@@ -1033,7 +1037,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** `simplify` (admin/page.tsx:67, task-form.tsx:24, task-ui.tsx:37) är tecken för tecken samma; `forbidden` finns i fyra actions med samma text, en femte med annan (users.ts:12) och som funktion i `redigera/route.ts:9`; de två `json`-hjälparna skiljer sig i just det som spelar roll – `redigera` sätter `Cache-Control: private, no-store` (:8), uppladdningen inte (:10). Listan över tillåtna origin står i `next.config.ts:11` (server actions) och som `allowedOriginPatterns()` i `src/lib/allowed-origins.ts` (uppladdningen, :29) – kommentaren på `next.config.ts:10` ber läsaren hålla dem i synk för hand. Rättas ett meddelande, en regex eller en värd på ett ställe glider de andra.
 - **Åtgärd:** `forbidden(msg?)` och `simplify` i `src/lib/admin/helpers.ts`; `json()` med `no-store` som standard i en `src/lib/api.ts` som båda rutterna använder; en enda origin-lista som `next.config.ts` importerar från `src/lib/allowed-origins.ts`.
 - **Verifiering:** `grep -rn "const simplify\|const forbidden\|const json =" src` ger en träff vardera; svaret från `/api/admin/upload` bär `Cache-Control: private, no-store`; en ny värd tillagd på ett ställe gäller både actions och uppladdning.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 9102aa9, 342cf78); var Öppen – belagd 2026-11-03
 
 ### ST-12 Revalidering för hand: `revalidatePath("/", "layout")` tömmer alla skal, en verkningslös rad i uppladdningsrutten
 - **Källa:** A/S13; se SB-34
@@ -1053,7 +1057,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Galleriet kör en `SELECT` per album (events.ts:131 i loopen :129-133): 60 album är 61 frågor per sidvisning. Nio index finns (migrations.ts:66–245) men inget på FK-kolumnerna `committee_id` (fyra tabeller: :49, :75, :90, :119), `cover_media_id` (:91, :118), `photo_media_id` (:74) eller `logo_media_id` (:156): `deleteMediaIfUnused` (SD-09), utskottsfiltret `WHERE e.committee_id = ?` (events.ts:92) och `ON DELETE SET NULL` från `media` blir tabellsvep. Litet i dag, men det är just de frågorna som körs vid varje radering och varje utskottssida.
 - **Åtgärd:** Ett migreringssteg (numret ordnas i B-7) med `CREATE INDEX events_committee ON events(committee_id)` och motsvarande för alla `*_media_id`; skriv om `listGalleryAlbums` till en fråga (`ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY sort_order, id) <= 4`).
 - **Verifiering:** `EXPLAIN QUERY PLAN` för `DELETE FROM media WHERE id = ?` och för utskottsfiltret visar `USING INDEX`; galleriet gör en fråga (räknat med `verbose`-loggen).
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit 08cef06): galleriet gör en fråga; indexen väntar på B-7; var Öppen – belagd 2026-11-03
 
 ### ST-14 Döda exporter: `canManageUsers`, `canManageSiteContent`, `requireRole`, `initialFormState`
 - **Källa:** A/S15 (inkl. A/rad-886)
@@ -1062,7 +1066,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Grep 2026-11-03: `canManageUsers`, `canManageSiteContent`, `requireRole` och `initialFormState` förekommer bara i filen som exporterar dem, medan grannarna `canReviewEvents` och `canManageSettings` används i fyra respektive fem filer. A:s "~20 exporter som bara används i egen fil" (rad 886) är inte räknat här – de fyra är stickprov. Döda behörighetsalias är det farliga: nästa utvecklare tror att `canManageUsers` är spärren för kontosidan och ändrar regeln där, men ingen sida går genom aliaset.
 - **Åtgärd:** Kör `npx knip` (eller `ts-prune`) en gång och ta bort det som är dött; låt CI (SN-06) köra `knip` som varning.
 - **Verifiering:** `npx knip` rapporterar 0 oanvända exporter; `npm run typecheck` grönt.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit 515d89a): döda exporter borta, CI-varningen väntar på SN-06; var Öppen – belagd 2026-11-03
 
 ### ST-15 Testluckor: nyheter i admin, låst konto, `must_change_password`, CSRF, `/media`-traversering, Markdown, sista admin
 - **Källa:** A/S16 (A/rad-887–889)
@@ -1072,7 +1076,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Smoke täcker redan omdirigeringen (:76), ICS (:112), inloggningskravet (:137) och 404 (:140), så A:s förslag om dem är gjorda. Men "nyhet" förekommer i e2e bara i en kommentar (:1080) och i smoke bara som sökvägen `/nyheter` (:16): ingen test skapar eller redigerar en nyhet i admin (SB-33, SD-33). Ingen test rör kontolåsningen efter 20 försök (SD-11/SD-12; ordet "låst" i e2e gäller bara kategorifältet, :1129), tvångsbytet vid första inloggning (`must_change_password`), inaktiverat konto med levande session, POST utan `Origin` till uppladdningen (SD-20), `../` i `/media/`-sökvägar, Markdown-rensningen (SB-17) eller spärren mot att inaktivera sista admin.
 - **Åtgärd:** Ny `tests/auth.mjs` utan webbläsare (fetch mot `npm run start`): 21:a försöket, tvångsbyte, inaktiverat konto, `Origin`-saknad → 403, `GET /media/..%2f..%2fetc%2fpasswd` → 404, Markdown med `<script>` → rensat, sista admin; nyhetssteg i e2e.
 - **Verifiering:** Varje nytt steg rött när motsvarande skydd kommenteras bort, grönt annars; körs i CI (SN-06).
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 58d1c03), CI-delen väntar på SN-06; textens locked_until och kontolåsning är inaktuella (kolumnen skrivs men läses inte); var Öppen – belagd 2026-11-03
 
 ### ST-16 `priority` på tre evenemangskort som alltid ligger under vikningen
 - **Källa:** A/S17
@@ -1081,7 +1085,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Hjälten fyller hela första skärmen (`min-h-[100svh]`, hero.tsx:94), så de tre första evenemangskorten (home-sections.tsx:93) ligger alltid under vikningen – ändå får deras omslag `loading="eager"` och `fetchPriority="high"` (smart-image.tsx:27-29). Webbläsaren laddar tre omslag med hög prioritet i konkurrens med hjältens typsnitt och skript; LCP är hjälten, inte korten.
 - **Åtgärd:** Ta bort `priority={i < 3}` (låt korten vara `lazy`), eller sätt `priority` bara när hjälten är avstängd.
 - **Verifiering:** Nätverksfliken på startsidan: kortens bilder laddas först vid scroll; Lighthouse "Largest Contentful Paint" oförändrad eller bättre.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-05 (commit 7135371); var Öppen – belagd 2026-11-03
 
 ### ST-17 Inget `pruneOrphanMedia`: bilder laddas upp innan formuläret sparas och filer skrivs före raden
 - **Källa:** A/M5 (städdelen), A/L34 (del), N3; se SD-09, SD-21, SD-30
@@ -1090,7 +1094,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Bilder laddas upp i samma ögonblick som de väljs (image-field.tsx:44, markdown-editor.tsx:69 → upload/route.ts:75), innan formuläret sparas. Avbryter redaktören, laddar om sidan eller byter bild två gånger ligger tre WebP-varianter kvar på volymen med en `media`-rad som inget pekar på; `storeImage` (:69) och `storeFile` (:98) skriver filerna innan raden finns (SD-21), så ett fel däremellan ger filer utan rad. Inget rensar – `pruneOrphanMedia` finns inte – och volymen (10 GB, SN-07) växer tyst. Huvudkopiorna i D#4 (SD-30) ligger utanför `media` och måste undantas från gallringen.
 - **Åtgärd:** `pruneOrphanMedia({ olderThanDays: 7 })` i `media-store.ts`: rader utan referens (samma räkning som `deleteMediaIfUnused`, breddad enligt SD-09) och filer i `uploads/` utan rad; knapp i Admin → Bilder och en veckokörning när CI/cron finns (SN-06).
 - **Verifiering:** Ladda upp en bild i redigeringen och avbryt; efter gallring finns varken rad eller filer; en bild som bara används i Markdown (SD-09) överlever.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit f3fca6d, 6c5de5f, 9aedef5, 6e26046, 95f0cd5), veckokörningen väntar på SN-06; var Öppen – belagd 2026-11-03
 
 ### ST-18 `create-admin.mjs` gör UPDATE + `DELETE FROM sessions` utan transaktion; inget skript kontrollerar `user_version`
 - **Källa:** A/L11 (inkl. A/rad-583)
@@ -1110,7 +1114,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Koden läser `EXAM_STATS_URL` (exam-stats.ts:13), `DEMO_PASSWORD` (seed.ts:66) och `APP_UID`/`APP_GID` (docker-entrypoint.mjs:10-11) men `.env.example` nämner ingen av dem – nästa förvaltare hittar dem bara genom att läsa koden. Exemplet föreslår `webb@` som adminadress medan seed använder `admin@` (SD-15) och har Railway-rubriken `x-real-ip` (:19-20) fast driften är Fly (`fly-client-ip`, fly.toml:18; SN-09). `.claude/` hålls utanför `git status` bara av den lokala `.git/info/exclude:9` – på nästa dator dyker `.claude/launch.json` och worktrees upp som otrackade filer.
 - **Åtgärd:** Komplettera `.env.example` med de fyra (utkommenterade, med standardvärden) och Fly-rubrik; lägg `.claude/` i `.gitignore` bredvid `/data`.
 - **Verifiering:** `grep -c "EXAM_STATS_URL\|DEMO_PASSWORD\|APP_UID\|APP_GID" .env.example` → 4; `git status` i en ny klon med `.claude/` visar inget.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit 62eef4a, e1b6d41); var Öppen – belagd 2026-11-03
 
 ### ST-20 `SITE_URL` bakas in vid bygget; domänbytet kräver ombyggnad och en värdomdirigering som inte finns
 - **Källa:** A/L22 (inkl. A/rad-666, A/rad-973), D#3 (omdirigering); se SB-04, ST-22, U-02
@@ -1119,7 +1123,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** `SITE_URL` läses vid bygget för förrenderade sidor (layout.tsx:6-7, `ARG SITE_URL` i Dockerfile) och är `https://statlin-web.fly.dev` i både build-arg och env (fly.toml:13, :16): `og:image`, `canonical`, sitemap och robots pekar på fly.dev tills imagen byggs om – `fly secrets set` räcker inte, vilket README:168 också säger. Smoke kontrollerar bara att adresserna inte är `localhost` (:96, :123), inte att de är `SITE_URL` (A/rad-973). `redirects()` (next.config.ts:46-48) har tre sökvägar och ingen värdregel: efter domänbytet svarar `statlin-web.fly.dev` vidare med samma innehåll (dubblettinnehåll för Google) tills en `has: host`-omdirigering läggs till (D#3).
 - **Åtgärd:** I domänbytets PR (U-02): `SITE_URL=https://statlin.se` i `[build.args]` och `[env]`, bygg om; lägg `{ source: "/:path*", has: [{ type: "host", value: "statlin-web.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true }` i `redirects()`; låt smoke jämföra `og:image`, sitemap och robots mot `SITE_URL` (A/rad-973). ICS-UID:n byter värd samtidigt (SB-04/B-5).
 - **Verifiering:** `curl -sI https://statlin-web.fly.dev/` → 308 till `https://statlin.se/`; `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` → 0; smoke grönt mot den nya domänen.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-04 (commit 1791650, 9e8d9f4, 77269dd, 3d6de29): smoke och README klara, SITE_URL och omdirigeringen görs i domänbytet (U-02); location är utan avslutande snedstreck; var Öppen – belagd 2026-11-03
 
 ### ST-21 `kill_timeout` saknas – `after()`-jobben kan avbrytas när Fly stoppar maskinen (informativt)
 - **Källa:** A/L23
@@ -1130,7 +1134,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Maskinen stoppas när trafiken upphör (`auto_stop_machines = "stop"`, `min_machines_running = 0`). Tentastatistiken uppdateras i `after()` efter att svaret skickats (exam-stats.ts:123, :170); Nexts server fångar SIGTERM (start-server.js:379), slutar ta emot anslutningar och väntar in `after`-jobben i `nextServer.close()` (:317-331) – men bara så länge Fly väntar. Utan `kill_timeout` gäller Flys standard (5 s enligt Flys dokumentation; inte belagt i repot): en långsam hämtning från källan avbryts och raden förblir gammal till nästa besök. Inget går sönder – därav "informativt" – men förklaringen till att statistiken ibland inte uppdateras finns inte i repot.
 - **Åtgärd:** `kill_timeout = "30s"` i `fly.toml` med en kommentar som pekar på `after()`-jobben.
 - **Verifiering:** `fly machine stop` under en pågående uppdatering (logga start/slut i `refreshCourse`): loggen visar att jobbet hann klart.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit af4c83a), provet med fly machine stop väntar på nästa deploy; var Öppen – belagd 2026-11-03
 
 ### ST-22 Sitemapen cachas inte (`max-age=0`) och per-evenemangs-ICS saknar `Cache-Control` helt
 - **Källa:** A/L25, NY-13; se SB-04, ST-20
@@ -1140,7 +1144,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Live 2026-11-03: `/sitemap.xml` svarar `cache-control: public, max-age=0, must-revalidate` (Nexts standard för en dynamisk metadatarutt – ingen egen rubrik i `sitemap.ts`), `/evenemang/hostsittning/kalender.ics` svarar helt utan `cache-control`, medan `/kalender.ics` har `public, max-age=900`. Sitemapen läser tre tabeller per anrop (:9) och genereras om för varje sökmotorbesök; kalenderprogram som prenumererar på ett enskilt evenemang hämtar om vid varje uppdatering. Flödet (:13) och kodlistan (:7-8) har redan rubriker – A/rad-1091:s "bara sitemapen" stämde inte (R-06). Lasten är liten i dag; poängen är att det är de två rutterna som växer med fler evenemang.
 - **Åtgärd:** `"Cache-Control": "public, max-age=900"` i `[slug]/kalender.ics/route.ts` som i flödet; en `headers()`-regel för `/sitemap.xml` i `next.config.ts` (`public, max-age=3600`).
 - **Verifiering:** `curl -sI https://statlin-web.fly.dev/sitemap.xml` och `/evenemang/<slug>/kalender.ics` visar `cache-control: public, max-age=…`.
-- **Status:** Öppen – belagd 2026-11-03 (live)
+- **Status:** Åtgärdad 2026-11-04 (commit 1c599e5, 66153e8), kontrollen mot fly.dev väntar på nästa deploy; var Öppen – belagd 2026-11-03 (live)
 
 ### ST-23 Formelringens serif-typsnitt sätts i `globals.css` och på β̂-raden – inte på rad 238 som D anger
 - **Källa:** D#7 (formelringen, D/rad-48); se ST-24, ST-08
@@ -1149,7 +1153,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** D (rad 48) vill byta ringens typsnitt och pekar på `formula-ring.tsx:238`; den raden är `<text fill={…}>` – typsnittet kommer från `.logo-formler text { font-family: var(--font-serif) }` (globals.css:615-616) med `--font-serif: Georgia, "Times New Roman", serif` (:29), och β̂-raden tvingar `'Times New Roman'` separat (formula-ring.tsx:245; kommentaren på :244 förklarar hatten). Ett byte "på rad 238" ändrar inget; ett byte av `--font-serif` ändrar all serif-text på sajten, och β̂ följer inte med. Loggan som vektor i samma klientkomponent (`formula-ring.tsx:4`) är ST-08/B-19.
 - **Åtgärd:** Om typsnittet ska bytas (D#7, grafiskt ansvarig): ett eget `--font-formulas` som bara `.logo-formler` använder, och β̂-undantaget löst med samma typsnitt eller en kombinerande hatt (U+0302) kontrollerad i Safari/Firefox.
 - **Verifiering:** Ringen och β̂ renderas i samma typsnitt i Chrome, Firefox och Safari; `grep -n "Times New Roman" src` ger en träff (variabeln).
-- **Status:** Öppen – belagd 2026-11-03 (D:s radnummer rättat)
+- **Status:** Åtgärdad 2026-11-05 (commit 7d234e7); var Öppen – belagd 2026-11-03 (D:s radnummer rättat)
 
 ### ST-24 Loggorna: WebP 286–640 px visas i upp till 352 CSS-px, nedladdningarna är PNG, SVG tillåts inte som dokument
 - **Källa:** D#7 (loggor); se ST-23, U-03
@@ -1159,7 +1163,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Mätt 2026-11-03 (sharp): `public/brand/utskott/` har elva WebP mellan 286×282 (scb-rund) och 640×640 (statpub, ubu); `star.webp` är 360×360 men visas i upp till 352 CSS-px (`w-[min(70vw,22rem)]`, foretag:70) – på en 2×-skärm begärs 704 px och bilden skalas upp. `public/brand/download/` har tolv PNG (statlin 1042×1042, statpub 1625×1626, scb-rund 286×282) och `grafiskt-styrdokument.pdf` (1,3 MB) med 37 `/Subtype /Image`-objekt och inga Form-XObjects (grep) – stödjer D:s "loggorna som pixel" men bevisar det inte (R-48). Sektionsloggan finns som SVG (`public/brand/statlin*.svg`, fem filer), utskottens inte. `FILE_TYPES` (file-types.ts:2-13) saknar `svg`, så vektorloggor kan inte laddas upp som dokument – och SVG kan bära skript, så det kräver sanering eller `attachment` (jfr CSP-sandboxen i `/media`, SB-24).
 - **Åtgärd:** Be grafiskt ansvarig om originalen (U-03); lägg SVG/PNG ≥ 1024 px i `download/` och generera WebP i 2× (≥ 704 px för STAR) från dem; `svg` i `FILE_TYPES` bara tillsammans med `Content-Disposition: attachment` eller `svgo` med skript borttagna.
 - **Verifiering:** `node -e` med sharp: varje WebP i `utskott/` är ≥ 2× sin största CSS-bredd; Lighthouse "Properly size images" utan anmärkning på `/foretag`; en uppladdad SVG med `<script>` visas utan att köra.
-- **Status:** Öppen – belagd 2026-11-03 (PDF-delen heuristik)
+- **Status:** Delvis 2026-11-05 (commit 670809f): SVG klart, originalen väntar på U-03; var Öppen – belagd 2026-11-03 (PDF-delen heuristik)
 
 ### ST-25 Formelringssteget i e2e blandar fejkad klocka och realtid
 - **Källa:** A/L21 (e2e-delen 2); se SN-10, SB-25
@@ -1168,7 +1172,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Steget installerar Playwrights fejkade klocka (:133) för att styra ringens animation, men väntar sedan i riktig tid: `waitForFunction` med 10 och 15 s timeout (:137, :139) och `waitForTimeout(1000)` (:143) går på väggklockan medan sidans timers lyder den fejkade. Resultatet är ett steg som är känsligt för CPU-last (minnesanteckning: faller under belastning, grönt när det körs ensamt) och som inte provar det det påstår – att ringen syns efter N fejkade sekunder.
 - **Åtgärd:** Antingen helt fejkad tid (`clock.runFor(…)` i stället för `waitForTimeout`, `waitForFunction` med `polling: "raf"` efter `runFor`) eller helt riktig tid utan `clock.install` med `prefers-reduced-motion` emulerad för att korta animationen. Övriga e2e-fynd: SB-25; falskt grönt: SN-10.
 - **Verifiering:** Steget grönt tio gånger i rad med `npm run build` igång i bakgrunden (CPU-last), inte bara ensamt.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Åtgärdad 2026-11-04 (commit cd685af); var Öppen – belagd 2026-11-03
 
 ### ST-26 Grenar och worktrees: en patch-ekvivalent gren som inte räknas som inmergad, en försvunnen upstream, fyra worktrees
 - **Källa:** A/steg-26, NY-18
@@ -1186,7 +1190,7 @@ Tjugosju punkter. Väntar på beslut: ST-01 (B-7), ST-08 (B-19), ST-12 (B-14). S
 - **Felscenario:** Utskottslistan "SCB, UBU, SASU, StatPub, STIG, eSTIG" står i menyn (navigation.ts:13) och i sidbeskrivningen (utskott/page.tsx:12), "från SCB till eSTIG" och "2 program" i startsidans siffror (home-sections.tsx:27, :30), programnamn och poäng i sektionssidan (sektionen/page.tsx:64-72), `sasu@statlin.se` som reservadress (foretag:32) och "UBU" i knapptexter (ubu-card.tsx:23, :27; en/masters:63, :67) – medan utskottet i databasen heter "UB" (live `/utskott` 2026-11-03, B/småfel-4). Tre sidor hämtar kortet med `getCommitteeBySlug("ubu")` (en/masters:29, master:35, kandidat:30) och renderar inget om sluggen byts (kandidat:42 `{ubu && …}`) – kortet försvinner tyst. Databasdelen av UBU→UB (bio, fikaevenemanget, programsidorna) rättas i Admin (R-39).
 - **Åtgärd:** Läs listan ur `committees` (`listCommittees({ visibleOnly: true })`) i meny, beskrivning och siffror; flytta programfakta och reservadresser till `settings` eller `seed-content.ts` som en källa; peka ut UBU-kortet via en inställning (`settings.education_committee_id`) eller en flagga på utskottet i stället för sluggen, och logga när den saknas.
 - **Verifiering:** Döp om utskottet i Admin: menyn, `/utskott`, startsidan och kortet följer med utan deploy; `grep -rn '"ubu"' src` ger ingen träff utanför seed.
-- **Status:** Öppen – belagd 2026-11-03
+- **Status:** Delvis 2026-11-05 (commit f9117cb): koden klar, innehållet i databasen rättas i Admin (R-39); var Öppen – belagd 2026-11-03
 
 ## 7 Beslut krävs
 
@@ -1268,6 +1272,7 @@ Tjugoen beslut och två faktamotsägelser som avgjorts genom mätning. Varje bes
 - **Alternativ:** ändra texterna i kod och databas (SB-26) så att löftet försvinner tills en anonym väg finns.
 - **Anmärkning:** Texterna kan ändras på en timme; Frågelådan (F-01) är ett bygge med beslut B-7, B-17 och B-18 framför sig. Löftet står ute tills något av dem är gjort.
 - **Väntar:** SB-26
+- **Läge:** Användaren valde att bygga Frågelådan (F-01). Den är byggd men avstängd, och seed-texterna säger nu neutralt konfidentiellt. Texterna i produktionens databas rättas för hand i Admin (SB-26).
 
 ### B-12 A internt: M4:s vakt – byteräkning eller rubrikkontroll
 - **Källa:** A/M4 (A:137–143, A:916, A:1017, A:1167)
@@ -1362,6 +1367,7 @@ Tjugoen beslut och två faktamotsägelser som avgjorts genom mätning. Varje bes
 - **Källa:** B/fragelada (B:46–89), B/tre-1 (B:9)
 - **Innehåll:** Ny sida `/fragelada` med val av mottagare (B:50); svarskod som lagras hashad som sessionerna; `/admin/fragelada` med flagga per konto; inga namn, IP-adresser eller klockslag (B:58–61); radering efter 12 månader och knappen "Töm lådan" (B:68); avisering via SMTP om variablerna finns (B:73); migreringssteg 10 med `inbox_threads`/`inbox_messages` (B:77); e2e-steg enligt B:103–109.
 - **Beroenden:** B-11 (bygga eller ändra texterna; SB-26), B-7 (migreringsnumret), B-17 (loggning mot anonymiteten; SN-07, SD-32), B-18 (avisering), B-16 (kopiorna behåller det som raderas), U-04 (vem läser `amo@`), U-05 (SMTP). Obs: `rateLimitHit` håller räknaren i minnet och nollas vid varje kallstart (`src/lib/auth/rate-limit.ts:2`), och maskinen stoppas utan trafik (`fly.toml:35` `min_machines_running = 0`) – skräppostskyddet i B:59 är därför svagare än det låter.
+- **Läge:** Byggd 2026-11-05 (commit 7c38790, 639e86c, a3fe08c, b012d43, 114efb0) som kod plus låda: migreringssteg 11 med `question_boxes` och `box_questions`, poster läser bara sina egna lådor, envägs. Avstängd bakom inställningen `fragelada_oppen` tills U-04, B-16, B-17 och B-18 är avgjorda.
 
 ### F-02 Kvittokö och Fortnox-inkorg
 - **Källa:** C/fas-1 (C:24–63), C/fas-2 (C:64–82), C/fas-3 (C:83–93), B/post (B:19 "Kvittoinlämning med status: inskickad, godkänd, utbetald")
@@ -1387,16 +1393,48 @@ Tjugoen beslut och två faktamotsägelser som avgjorts genom mätning. Varje bes
 - **Källa:** B/verktyg-2, B/verktyg-3, B/verktyg-4, B/tre-3 (B:11), B/rad-31 (postpärm), D/rad-22 (årshjul, "större uppgraderingar i juni")
 - **Innehåll:** Publika formulär för anmälan till sittningar med platser, kö och specialkost som raderas efteråt (B:23), passlistor (B:24), "Jag kommer"-knapp (B:26), intresseanmälan (B:28); postpärm med anteckningar och filer som följer kontot (B:31); årshjul där återkommande uppgifter blir uppdrag på tavlan (B:17, D:22). B:11 "inte ett enda publikt formulär" är omformulerat i R-12: inget formulär som skickar något *till sektionen*.
 - **Beroenden:** F-01 (samma skräppost- och anonymitetsregler), B-16 (allergiuppgifter i kopiorna), SD-31 (gallring).
+- **Läge:** Årshjulet byggt 2026-11-05 (commit c67baf5), `/admin/arshjul`, med korten "Kommer nästa månad" och "Att planera in denna termin" på översikten. Anmälan, passlistor, "Jag kommer", intresseanmälan och postpärm återstår.
 
 ### F-07 Posttabellen – varje post väljer sin viktigaste punkt
 - **Källa:** B/post (B:15–29), B/rad-5, B/rad-44
 - **Innehåll:** B:s tabell med "störst nytta" och "också bra" per post: ordförande (årshjul, B:17), vice (utskottspuls, B:18), kassör (kvitton, B:19 → F-02), info (Veckans StatLin, B:20), utbildningsbevakare (anonym kursfeedback, B:21), näringsliv (företagsregister efter STAR, B:22), mästeri (anmälan, B:23), pub (passlista, B:24), grafiskt ansvarig (beställningsmall, B:25), STIG/eSTIG (B:26–27), masteransvarig vakant (B:28), AMO (Frågelådan, B:29 → F-01). B:5: "Låt gärna varje post välja sin viktigaste punkt på nästa styrelsemöte". Regeln B:44: "funktionen ska nå posten av sig själv".
 - **Beroenden:** B-18 (regeln kräver avisering); F-01, F-02, F-06 är de punkter som redan är planerade.
+- **Läge:** Ordförandens årshjul byggt 2026-11-05 (commit c67baf5); övriga poster kvar. Regeln B:44 uppfylls bara av korten på översikten, inget mejl (B-18). Frågelådan för AMO: se F-01.
 
 ### F-08 Spara gamla adresser och vidarebefordra när en slug ändras
 - **Källa:** D/rad-30 (D#3)
 - **Innehåll:** "Ändras adressen för hand dör den gamla länken, så spara gamla adresser och skicka dem vidare." (D:30). I dag finns bara tre fasta omdirigeringar (`next.config.ts:46-48`, ST-20); `uniqueSlug` (`src/lib/admin/helpers.ts:29`) hindrar krockar men minns inget.
 - **Beroenden:** B-7 (en `slug_history`-tabell är ett migreringssteg); SB-20 (länkar till dolda sidor) löses lämpligen i samma omdirigeringslager.
+
+### F-09 Projektplaner – mall vars steg blir uppdrag på tavlan
+- **Källa:** Användaren 2026-11-04 ("Projektplan/projektplans mall som alternativ för poster")
+- **Innehåll:** `/admin/projektplaner`: välj mall, se och ändra stegen, skapa planen, och stegen blir uppdrag på tavlan. Planen har mål, budget, lärdomar, framstegsmätare och utskrift på ett A4.
+- **Beroenden:** F-06 (en punkt på årshjulet kan få en plan).
+- **Läge:** Byggd 2026-11-05 (commit e1bd39c), migreringssteg 10.
+
+### F-10 STAR-sidan – vilka som kommer, företag och sponsorer
+- **Källa:** Användaren 2026-11-04 ("star dagen är en grej ... en egen sida med vem som kommer va där, företag, våra sonsorer osv.")
+- **Innehåll:** `/star` i nattblått med stjärnkarta, företagskort, filter, program och sponsorer. Sköts i `/admin/star` av admin, redaktörer och SASU.
+- **Beroenden:** SB-06 (STAR-evenemanget väljs i inställningarna eller heter `star` eller `star-<år>`).
+- **Läge:** Byggd 2026-11-05 (commit beced88, cf236d0, 5480fcd, 4b96391), migreringssteg 12. De riktiga företagen läggs in i Admin.
+
+### F-11 Lunchföreläsningar med önskelista
+- **Källa:** Användaren 2026-11-04 ("lunchföreläsningar önskemål ska finnas på ett snyggt och praktiskt sätt")
+- **Innehåll:** `/lunchforelasningar` med nästa föreläsning, en önskelista där röster är stjärnor och ett band till företag. Studenter önskar och röstar, SASU modererar i `/admin/lunchonskemal`.
+- **Beroenden:** Inga.
+- **Läge:** Byggd 2026-11-05 (commit ff66da3, 0c03103, 4b96391), migreringssteg 12. SASU läser bandets tre rader.
+
+### F-12 Redigeringsbubblan – utseende, guide och plats
+- **Källa:** Användaren 2026-11-04 ("någon hjälp guide på hur man använder redigerings bublan ...", svar "Utseendet, Guiden, Platsen.")
+- **Innehåll:** Svart kapsel med reglage och ikonknappar, guide i tre steg som öppnas första gången och med frågetecknet, fyra hörn med dragning och piltangenter, hopfällning till en rund knapp, runda pennor på ramens hörn.
+- **Beroenden:** Inga.
+- **Läge:** Byggd 2026-11-05 (commit 5fbd8dc).
+
+### F-13 Tidsaxeln ersätter löpbandet på startsidan
+- **Källa:** Användaren 2026-11-04, om det röda bandet på startsidan ("gör något bättre om detta desing/consept också")
+- **Innehåll:** Ett streck per dag, en stjärna per evenemang och STAR som en bit natthimmel med länk till `/star`. Står still utan intro vid "Reducera rörelse".
+- **Beroenden:** Inga.
+- **Läge:** Byggd 2026-11-05 (commit 9a24f37, 17dc8e7, 8b429f1).
 
 ### U-01 Ägarskap: Fly-konto, domän hos Name.com, betalkort, två personer per tjänst
 - **Källa:** D#2 (D:20–21), B/tre-2
