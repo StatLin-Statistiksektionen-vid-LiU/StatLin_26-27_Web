@@ -59,14 +59,23 @@ export function isValidLocalDateTime(local: string): boolean {
   return d.toISOString().slice(0, 16) === local;
 }
 
-/** Går tiden att visa? Formateringen kastar för en tid som blir Invalid Date. Bara datumet går bra, till skillnad från isValidLocalDateTime. */
+/** Går tiden att visa som ett datum? Bara datumet går bra, till skillnad från isValidLocalDateTime. */
 export function canFormatLocal(local: string): boolean {
   return Number.isFinite(asUtc(local).getTime());
 }
 
+/**
+ * Intl kastar för Invalid Date, och en enda gammal rad skulle då ta ner hela sidan, även adminlistan där raden ska rättas.
+ * Det som inte går att formatera visas som det står.
+ */
+function show(format: Intl.DateTimeFormat, d: Date, fallback: string): string {
+  return Number.isFinite(d.getTime()) ? format.format(d) : fallback;
+}
+
 /** ISO-tidsstämpel (UTC, från databasen) → lokal tid i Stockholm, "YYYY-MM-DDTHH:mm". */
 export function isoToLocal(iso: string): string {
-  return toLocal(new Date(iso));
+  const d = new Date(iso);
+  return Number.isFinite(d.getTime()) ? toLocal(d) : iso;
 }
 
 /** Värdet till ett datetime-local-fält, som har samma format som den lokala tiden. */
@@ -102,26 +111,27 @@ export function parts(local: string, locale: DateLocale = "sv-SE") {
     day: d.getUTCDate(),
     month: d.getUTCMonth() + 1,
     year: d.getUTCFullYear(),
-    weekday: weekdayLong.format(d),
-    weekdayShort: weekdayShort.format(d).replace(".", ""),
-    monthShort: monthShort.format(d).replace(".", ""),
-    monthLong: monthLong.format(d),
+    weekday: show(weekdayLong, d, ""),
+    weekdayShort: show(weekdayShort, d, "").replace(".", ""),
+    monthShort: show(monthShort, d, "").replace(".", ""),
+    monthLong: show(monthLong, d, ""),
     time: local.length > 10 ? local.slice(11, 16) : "",
   };
 }
 
 /** "12 jan 2024" – för diagram och tabeller, där det är trångt. */
 export function formatDateShort(local: string): string {
+  if (!canFormatLocal(local)) return local;
   const p = parts(local);
   return `${p.day} ${p.monthShort} ${p.year}`;
 }
 
 export function formatDate(local: string, withYear = false, locale: DateLocale = "sv-SE"): string {
-  const d = asUtc(local);
-  return (withYear ? FORMATS[locale].dayMonthYear : FORMATS[locale].dayMonth).format(d);
+  return show(withYear ? FORMATS[locale].dayMonthYear : FORMATS[locale].dayMonth, asUtc(local), local);
 }
 
 export function formatDateLong(local: string): string {
+  if (!canFormatLocal(local)) return local;
   const p = parts(local);
   const thisYear = Number(todayLocal().slice(0, 4));
   const base = `${capitalize(p.weekday)} ${p.day} ${p.monthLong}`;
@@ -265,11 +275,12 @@ export function isoUtc(): string {
 
 /** Formaterar ISO-tidsstämplar (UTC, från databasen) i svensk tid. */
 export function formatTimestamp(iso: string): string {
-  return new Intl.DateTimeFormat("sv-SE", {
+  const format = new Intl.DateTimeFormat("sv-SE", {
     timeZone: TZ,
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(iso));
+  });
+  return show(format, new Date(iso), iso);
 }
