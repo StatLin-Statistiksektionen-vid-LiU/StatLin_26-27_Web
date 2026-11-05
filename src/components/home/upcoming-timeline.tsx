@@ -44,7 +44,7 @@ function EventStop({ event, index, days, isStar, starLive }: { event: EventItem;
           </span>
         </span>
         <span className="tidsaxel-text">
-          <span className={cn("tidsaxel-rubrik [overflow-wrap:anywhere] group-hover:underline", isStar ? "tidsaxel-star-titel" : "display-tight", first ? "line-clamp-3 text-[1.2rem] leading-[1.05] md:line-clamp-2 md:text-[1.45rem]" : "line-clamp-2 text-[0.98rem] leading-[1.1]")}>
+          <span className={cn("tidsaxel-rubrik [overflow-wrap:anywhere] group-hover:underline", isStar ? "tidsaxel-star-titel" : "display-tight", first ? "line-clamp-3 text-[1.2rem] leading-[1.05] md:text-[1.45rem]" : "line-clamp-3 text-[0.98rem] leading-[1.1]")}>
             {event.title}
           </span>
           <span className="kicker mt-2 block text-xs">{event.committee?.short_name ?? "StatLin"}</span>
