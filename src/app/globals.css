@@ -5,7 +5,8 @@
  * Färger från grafiskt styrdokument (kap. 4): Röd 255/7/7, Svart, Vit.
  * Text på sektionshemsidan är undantagen från typsnittsregleringen (kap. 5),
  * så webben använder Archivo (rubriker/bröd) och JetBrains Mono (data och accentord i rubriker).
- * Citat och formler sätts i Georgia, styrdokumentets brödtypsnitt, som är ett systemtypsnitt.
+ * Citat sätts i Georgia, styrdokumentets brödtypsnitt, som är ett systemtypsnitt. Formlerna i loggan har ett eget typsnitt,
+ * --font-formulas, eftersom Georgia saknar hatten över β.
  */
 
 @theme {
@@ -26,7 +27,8 @@
   --color-star-navy: #0b1530;
 
   --font-sans: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-serif: Georgia, serif;
+  --font-formulas: "Times New Roman", Times, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -634,7 +636,7 @@ html:not(.js) header.fixed {
   --glow-far: rgb(255 255 255 / 0.5);
 }
 .logo-formler text {
-  font-family: var(--font-serif);
+  font-family: var(--font-formulas);
   font-style: italic;
   font-size: 27px;
 }
