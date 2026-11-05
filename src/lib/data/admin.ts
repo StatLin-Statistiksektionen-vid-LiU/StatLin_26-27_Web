@@ -12,36 +12,44 @@ export interface UserListItem {
   role: Role;
   committee_id: number | null;
   committee_name: string | null;
-  active: number;
-  must_change_password: number;
-  design: number;
+  active: boolean;
+  must_change_password: boolean;
+  design: boolean;
   last_login_at: string | null;
   created_at: string;
 }
 
+type UserListRow = Omit<UserListItem, "active" | "must_change_password" | "design"> & { active: number; must_change_password: number; design: number };
+const mapUser = (r: UserListRow): UserListItem => ({
+  ...r,
+  active: Boolean(r.active),
+  must_change_password: Boolean(r.must_change_password),
+  design: Boolean(r.design),
+});
+
 export async function listUsers(): Promise<UserListItem[]> {
   const db = await readDb();
-  return db
+  const rows = db
     .prepare(
       `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, c.short_name AS committee_name, u.active,
         u.must_change_password, u.design, u.last_login_at, u.created_at
        FROM users u LEFT JOIN committees c ON c.id = u.committee_id
        ORDER BY CASE u.role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, u.name`,
     )
-    .all() as UserListItem[];
+    .all() as UserListRow[];
+  return rows.map(mapUser);
 }
 
 export async function getUser(id: number): Promise<UserListItem | null> {
   const db = await readDb();
-  return (
-    (db
-      .prepare(
-        `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, c.short_name AS committee_name, u.active,
+  const row = db
+    .prepare(
+      `SELECT u.id, u.email, u.name, u.post, u.role, u.committee_id, c.short_name AS committee_name, u.active,
           u.must_change_password, u.design, u.last_login_at, u.created_at
          FROM users u LEFT JOIN committees c ON c.id = u.committee_id WHERE u.id = ?`,
-      )
-      .get(id) as UserListItem) ?? null
-  );
+    )
+    .get(id) as UserListRow | undefined;
+  return row ? mapUser(row) : null;
 }
 
 export interface AuditItem {

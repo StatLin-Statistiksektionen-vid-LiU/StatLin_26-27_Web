@@ -1,10 +1,10 @@
 import "server-only";
-import { readDb } from "./db";
+import { parseCommitteeRef, readDb } from "./db";
 import { isoUtc } from "@/lib/dates";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import type { NewsItem } from "@/lib/types";
 
-type Row = Omit<NewsItem, "committee" | "cover"> & { committee_json: string | null; cover_json: string | null };
+type Row = Omit<NewsItem, "committee" | "cover" | "published" | "pinned"> & { published: number; pinned: number; committee_json: string | null; cover_json: string | null };
 
 const SELECT = `
   SELECT n.*, u.name AS author_name, u.post AS author_post,
@@ -21,7 +21,9 @@ function map(r: Row): NewsItem {
   const { committee_json, cover_json, ...rest } = r;
   return {
     ...rest,
-    committee: committee_json ? JSON.parse(committee_json) : null,
+    published: Boolean(r.published),
+    pinned: Boolean(r.pinned),
+    committee: parseCommitteeRef(committee_json),
     cover: toImageRef(parseMediaJson(cover_json)),
   };
 }

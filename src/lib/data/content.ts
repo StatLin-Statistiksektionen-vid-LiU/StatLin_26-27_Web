@@ -38,18 +38,23 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
 
 /* ---------- Utskott ---------- */
 
+type CommitteeRow = Omit<Committee, "visible"> & { visible: number };
+const mapCommittee = (r: CommitteeRow): Committee => ({ ...r, visible: Boolean(r.visible) });
+
 export async function listCommittees(opts: { visibleOnly?: boolean } = {}): Promise<Committee[]> {
   const db = await readDb();
-  return db
+  const rows = db
     .prepare(
       `SELECT * FROM committees ${opts.visibleOnly ? "WHERE visible = 1" : ""} ORDER BY sort_order, name`,
     )
-    .all() as Committee[];
+    .all() as CommitteeRow[];
+  return rows.map(mapCommittee);
 }
 
 export async function getCommitteeBySlug(slug: string): Promise<Committee | null> {
   const db = await readDb();
-  return (db.prepare("SELECT * FROM committees WHERE slug = ?").get(slug) as Committee) ?? null;
+  const row = db.prepare("SELECT * FROM committees WHERE slug = ?").get(slug) as CommitteeRow | undefined;
+  return row ? mapCommittee(row) : null;
 }
 
 /**
@@ -65,7 +70,8 @@ export async function getEducationCommittee(): Promise<Committee | null> {
 
 export async function getCommitteeById(id: number): Promise<Committee | null> {
   const db = await readDb();
-  return (db.prepare("SELECT * FROM committees WHERE id = ?").get(id) as Committee) ?? null;
+  const row = db.prepare("SELECT * FROM committees WHERE id = ?").get(id) as CommitteeRow | undefined;
+  return row ? mapCommittee(row) : null;
 }
 
 /* ---------- Styrelse ---------- */
@@ -114,7 +120,7 @@ export async function listPages(): Promise<Page[]> {
 
 /* ---------- Partners ---------- */
 
-type PartnerRow = Omit<Partner, "logo"> & { logo_json: string | null };
+type PartnerRow = Omit<Partner, "logo" | "active"> & { active: number; logo_json: string | null };
 
 export async function listPartners(opts: { activeOnly?: boolean } = {}): Promise<Partner[]> {
   const db = await readDb();
@@ -126,12 +132,12 @@ export async function listPartners(opts: { activeOnly?: boolean } = {}): Promise
        ORDER BY CASE p.tier WHEN 'huvudpartner' THEN 0 ELSE 1 END, p.sort_order, p.name`,
     )
     .all() as PartnerRow[];
-  return rows.map(({ logo_json, ...p }) => ({ ...p, logo: toImageRef(parseMediaJson(logo_json)) }));
+  return rows.map(({ logo_json, ...p }) => ({ ...p, active: Boolean(p.active), logo: toImageRef(parseMediaJson(logo_json)) }));
 }
 
 /* ---------- Dokument ---------- */
 
-type DocRow = Omit<DocumentItem, "file"> & { media_json: string | null };
+type DocRow = Omit<DocumentItem, "file" | "published"> & { published: number; media_json: string | null };
 
 export async function listDocuments(opts: { publishedOnly?: boolean } = {}): Promise<DocumentItem[]> {
   const db = await readDb();
@@ -145,6 +151,6 @@ export async function listDocuments(opts: { publishedOnly?: boolean } = {}): Pro
     .all() as DocRow[];
   return rows.map(({ media_json, ...d }) => {
     const m = parseMediaJson(media_json);
-    return { ...d, file: m ? { href: fileHref(m), size: m.size, ext: m.ext } : null };
+    return { ...d, published: Boolean(d.published), file: m ? { href: fileHref(m), size: m.size, ext: m.ext } : null };
   });
 }

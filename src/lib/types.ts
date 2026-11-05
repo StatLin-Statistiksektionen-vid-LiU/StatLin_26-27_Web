@@ -55,7 +55,7 @@ export interface Committee {
   instagram: string;
   kind: "styrelse" | "utskott" | "ovrigt";
   sort_order: number;
-  visible: number;
+  visible: boolean;
   updated_at: string;
 }
 
@@ -111,7 +111,7 @@ export interface EventItem {
   cover_media_id: number | null;
   signup_url: string;
   price: string;
-  published: number;
+  published: boolean;
   created_by: number | null;
   created_at: string;
   updated_at: string;
@@ -139,8 +139,8 @@ export interface NewsItem {
   body_md: string;
   cover_media_id: number | null;
   committee_id: number | null;
-  published: number;
-  pinned: number;
+  published: boolean;
+  pinned: boolean;
   published_at: string;
   author_id: number | null;
   author_name: string | null;
@@ -213,7 +213,7 @@ export interface DocumentItem {
   media_id: number | null;
   url: string;
   doc_date: string | null;
-  published: number;
+  published: boolean;
   sort_order: number;
   created_at: string;
   file: { href: string; size: number; ext: string } | null;
@@ -236,7 +236,7 @@ export interface Partner {
   logo_media_id: number | null;
   tier: "huvudpartner" | "partner";
   sort_order: number;
-  active: number;
+  active: boolean;
   logo: ImageRef | null;
 }
 
@@ -250,9 +250,9 @@ export interface LinkItem {
   keywords: string;
   category: LinkCategory;
   icon: string;
-  featured: number;
+  featured: boolean;
   sort_order: number;
-  active: number;
+  active: boolean;
 }
 
 export type Program = "kandidat" | "master";

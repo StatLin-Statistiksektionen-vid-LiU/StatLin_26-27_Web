@@ -40,7 +40,7 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
             <li key={n.id} className="group flex items-center gap-4 px-5 py-4 hover:bg-paper/40">
               <Link href={`/admin/nyheter/${n.id}`} className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  {n.pinned === 1 && <span className="chip bg-red text-white">Fäst</span>}
+                  {n.pinned && <span className="chip bg-red text-white">Fäst</span>}
                   <span className="truncate font-semibold group-hover:text-red-deep">{n.title}</span>
                 </span>
                 <span className="mt-0.5 block text-xs text-stone">

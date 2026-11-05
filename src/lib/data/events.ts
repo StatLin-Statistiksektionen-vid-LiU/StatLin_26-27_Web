@@ -1,10 +1,10 @@
 import "server-only";
-import { readDb } from "./db";
+import { parseCommitteeRef, readDb } from "./db";
 import { nowLocal } from "@/lib/dates";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import type { EventImage, EventItem, Media } from "@/lib/types";
 
-type Row = Omit<EventItem, "committee" | "cover"> & { committee_json: string | null; cover_json: string | null };
+type Row = Omit<EventItem, "committee" | "cover" | "published"> & { published: number; committee_json: string | null; cover_json: string | null };
 
 const SELECT = `
   SELECT e.*,
@@ -21,7 +21,8 @@ function map(r: Row): EventItem {
   const { committee_json, cover_json, ...rest } = r;
   return {
     ...rest,
-    committee: committee_json ? JSON.parse(committee_json) : null,
+    published: Boolean(r.published),
+    committee: parseCommitteeRef(committee_json),
     cover: toImageRef(parseMediaJson(cover_json)),
   };
 }

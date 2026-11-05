@@ -36,7 +36,7 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
             className="h-full w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
           />
         )}
-        {item.pinned === 1 && <span className="chip absolute left-4 top-4 bg-red text-white">Fäst</span>}
+        {item.pinned && <span className="chip absolute left-4 top-4 bg-red text-white">Fäst</span>}
       </div>
       <div className={cn("flex flex-col pt-5", featured && "md:flex-1 md:justify-center md:pt-0")}>
         <p className="kicker flex flex-wrap items-center gap-x-3 gap-y-1 text-stone">
