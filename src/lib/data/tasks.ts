@@ -12,12 +12,13 @@ const person = (prefix: "f" | "t" | "a") => `
 
 const TASK_SELECT = `
   SELECT t.*, ${person("f")}, ${person("t")},
-    e.title AS event_title, e.slug AS event_slug, e.committee_id AS event_committee_id,
+    e.title AS event_title, e.slug AS event_slug, e.committee_id AS event_committee_id, pp.title AS plan_title,
     (SELECT COUNT(*) FROM task_comments c WHERE c.task_id = t.id) AS comment_count
   FROM tasks t
   LEFT JOIN users fu ON fu.id = t.from_user_id LEFT JOIN committees fc ON fc.id = fu.committee_id
   LEFT JOIN users tu ON tu.id = t.to_user_id LEFT JOIN committees tc ON tc.id = tu.committee_id
-  LEFT JOIN events e ON e.id = t.event_id`;
+  LEFT JOIN events e ON e.id = t.event_id
+  LEFT JOIN project_plans pp ON pp.id = t.project_plan_id`;
 
 type Row = Record<string, unknown>;
 
@@ -52,6 +53,7 @@ function toTask(r: Row): Task {
         ? { id: r.event_id as number, title: r.event_title as string, slug: r.event_slug as string, committee_id: r.event_committee_id as number | null }
         : null,
     comment_count: r.comment_count as number,
+    plan: r.project_plan_id != null && r.plan_title != null ? { id: r.project_plan_id as number, title: r.plan_title as string } : null,
   };
 }
 

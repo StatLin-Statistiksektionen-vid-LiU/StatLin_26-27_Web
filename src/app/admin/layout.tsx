@@ -31,7 +31,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   const naringsliv = canManageNaringsliv(user);
   const [unseenTasks, expiresAt, newWishes] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon(), naringsliv ? countNewWishes() : 0]);
   return (
-    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
       <AdminSidebar
         user={{
           name: user.name,
