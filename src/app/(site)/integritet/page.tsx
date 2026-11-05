@@ -14,7 +14,7 @@ export const metadata: Metadata = {
  * Vad sajten faktiskt sparar i dag (SD-31). Tiderna för revisionsloggen kommer från src/lib/db/prune-audit-log.ts och sessionernas
  * från src/lib/auth/session.ts – ändras de där ska sidan ändras med.
  */
-/** Syns när frågelådan är på. Texten ska stämma med src/app/(site)/fragelada/actions.ts och migreringssteg 10. */
+/** Syns när frågelådan är på. Texten ska stämma med src/app/(site)/fragelada/actions.ts och migreringssteg 11. */
 async function QuestionBoxPrivacy() {
   const db = await readDb();
   if (!frageladaIsOpen(db)) return null;

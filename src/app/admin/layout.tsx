@@ -32,7 +32,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   if (!user) redirect(await loginPath());
   const [unseenTasks, expiresAt, unseenQuestions, db] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon(), countUnseenQuestions(user.id), readDb()]);
   return (
-    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
       <AdminSidebar
         user={{
           name: user.name,
