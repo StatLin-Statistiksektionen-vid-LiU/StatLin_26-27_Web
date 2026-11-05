@@ -425,6 +425,10 @@ const steps: string[] = [
   UPDATE links SET label = replace(label, 'Betyg per tentatillfälle – sök på kurskod', 'Betyg per tentatillfälle, sök på kurskod'), description = replace(description, 'Betyg per tentatillfälle – sök på kurskod', 'Betyg per tentatillfälle, sök på kurskod');
   UPDATE links SET label = replace(label, 'UBU – studiebevakning', 'UBU: studiebevakning'), description = replace(description, 'UBU – studiebevakning', 'UBU: studiebevakning');
   UPDATE settings SET value = replace(value, 'kontakt med arbetslivet – drivet av studenter, för studenter.', 'kontakt med arbetslivet. Drivet av studenter, för studenter.');
+  UPDATE committees SET description_md = replace(description_md, 'Hör av dig – du kan alltid vara anonym.', 'Hör av dig, du kan alltid vara anonym.');
+  UPDATE pages SET body_md = replace(body_md, 'examination eller studiemiljö – anonymt om du vill.', 'examination eller studiemiljö, anonymt om du vill.');
+  UPDATE pages SET body_md = replace(body_md, 'your study environment – anonymously if you prefer.', 'your study environment, anonymously if you prefer.');
+  UPDATE wheel_items SET title = replace(title, 'STAR – arbetsmarknadsdagen', 'STAR, arbetsmarknadsdagen');
   `,
 ];
 

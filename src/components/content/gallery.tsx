@@ -141,7 +141,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
             )}
           </div>
           <p className={cn("min-h-14 px-6 py-4 text-center text-sm text-white/70", !current.caption && "opacity-0")}>
-            {current.caption || "–"}
+            {current.caption}
           </p>
         </div>
       )}

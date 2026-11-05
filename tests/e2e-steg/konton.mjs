@@ -122,7 +122,7 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     // Bara den som kan lösenordet får veta att kontot är avstängt.
     await waitForHydration(person.page, person.page.locator("#email"));
     assert.equal(await tryLogin(person.page, email, WRONG), DENIED, "fel lösenord på ett avstängt konto");
-    assert.equal(await tryLogin(person.page, email, newPassword), "Kontot är avstängt – kontakta en administratör.", "rätt lösenord på ett avstängt konto");
+    assert.equal(await tryLogin(person.page, email, newPassword), "Kontot är avstängt. Kontakta en administratör.", "rätt lösenord på ett avstängt konto");
 
     // Sessionen kommer inte tillbaka när kontot öppnas igen. Det krävs en ny inloggning.
     await setAccountActive(email, true);

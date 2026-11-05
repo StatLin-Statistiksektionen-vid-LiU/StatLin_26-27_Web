@@ -46,7 +46,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
                     {!!u.design && <span className="chip bg-paper text-ink">Grafiskt</span>}
                   </span>
                   <span className="block truncate text-xs text-stone">
-                    {u.email} · {u.post || "–"}
+                    {u.post ? `${u.email} · ${u.post}` : u.email}
                   </span>
                 </span>
                 <span className="hidden text-right sm:block">
