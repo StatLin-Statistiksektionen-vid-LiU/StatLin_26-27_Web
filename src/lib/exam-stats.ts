@@ -42,11 +42,11 @@ export function looksLikeCourseCode(raw: string): string | null {
  * tabellvyn, som diagrammen har.
  */
 const PASS_RAMPS = [
-  ["#0a0a0a"],
-  ["#6a665f", "#0a0a0a"],
-  ["#a19d95", "#6a665f", "#0a0a0a"],
-  ["#8f8b84", "#6a665f", "#3d3a35", "#0a0a0a"],
-  ["#b3afa7", "#8f8b84", "#6a665f", "#3d3a35", "#0a0a0a"],
+  ["#1d1b18"],
+  ["#9c978e", "#1d1b18"],
+  ["#b9b5ad", "#7b776f", "#1d1b18"],
+  ["#c4c0b8", "#8f8b84", "#5a564f", "#1d1b18"],
+  ["#d6d2ca", "#a19d95", "#6f6b64", "#45413b", "#1d1b18"],
 ];
 /** U eller F, sedan Fx. */
 const FAIL_COLORS = ["#d40000", "#ec7468"];

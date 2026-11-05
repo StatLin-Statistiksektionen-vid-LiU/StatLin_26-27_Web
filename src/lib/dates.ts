@@ -126,6 +126,13 @@ export function formatDateShort(local: string): string {
   return `${p.day} ${p.monthShort} ${p.year}`;
 }
 
+/** "12 jan", för listor som redan är samlade per år. */
+export function formatDayMonthShort(local: string): string {
+  if (!canFormatLocal(local)) return local;
+  const p = parts(local);
+  return `${p.day} ${p.monthShort}`;
+}
+
 export function formatDate(local: string, withYear = false, locale: DateLocale = "sv-SE"): string {
   return show(withYear ? FORMATS[locale].dayMonthYear : FORMATS[locale].dayMonth, asUtc(local), local);
 }

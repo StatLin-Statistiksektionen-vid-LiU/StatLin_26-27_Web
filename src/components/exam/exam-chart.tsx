@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { formatDateShort } from "@/lib/dates";
+import { useState, type CSSProperties } from "react";
+import { formatDateShort, formatDayMonthShort } from "@/lib/dates";
 import {
   MIN_RESULTS,
   formatPercent,
@@ -15,6 +15,8 @@ import {
   type ExamStats,
 } from "@/lib/exam-stats";
 import { cn } from "@/lib/utils";
+import "./exam.css";
+import { GrafIn } from "./graf-in";
 import { GradeDistribution } from "./grade-distribution";
 import { PassRateTrend } from "./pass-rate-trend";
 
@@ -22,18 +24,23 @@ import { PassRateTrend } from "./pass-rate-trend";
 const FIRST_ROWS = 12;
 const SHOW_ALL_UP_TO = 15;
 
-/** Datum, stapel och andel godkända – samma kolumner i rubrikraden och på varje rad. */
-const ROW =
-  "grid cursor-default grid-cols-[4.75rem_minmax(0,1fr)_5.75rem] items-center gap-3 px-2 py-1.5 sm:grid-cols-[6.5rem_minmax(0,1fr)_7.5rem] sm:px-3";
+/** Datum, stapel och andel godkända: samma kolumner i rubrikraden, på årsraderna och på varje tillfälle. */
+const ROW = "grid cursor-default grid-cols-[3.5rem_minmax(0,1fr)_5.75rem] items-center gap-3 px-2 py-1.5 sm:grid-cols-[4.5rem_minmax(0,1fr)_7.5rem] sm:px-3";
 
 /** Två tillfällen behövs för att något ska kunna ändras över tid. */
 const MIN_TREND_OCCASIONS = 2;
 
+/** Raderna ritas ut uppifrån och ner, men de sista i en lång lista ska inte behöva vänta. */
+const MAX_ROW_DELAY = 14;
+
+/** Ungefär så hög är rutan med siffrorna, i pixlar. */
+const TIP_ROOM = 190;
+
 /**
  * Kursens statistik: nyckeltal, godkända över tid, betygen de senaste åren och betygen per tentatillfälle
- * som 100 %-staplar, nyast först, med andelen godkända och antalet skrivande bredvid. Hovra eller tabba
- * till en rad för exakta siffror; tabellvyn visar allt utan diagram. Mönstret följer dataviz-skillen:
- * tunna staplar, 2 px mellanrum mellan betygen, teckenförklaring och en tabell som tvilling.
+ * som 100 %-staplar, nyast först och samlade per år, med andelen godkända och antalet skrivande bredvid.
+ * Hovra eller tabba till en rad för exakta siffror; tabellvyn visar allt utan diagram. Mönstret följer
+ * dataviz-skillen: tunna staplar, 2 px mellanrum mellan betygen, teckenförklaring och en tabell som tvilling.
  */
 export function ExamChart({ stats, today }: { stats: ExamStats; today: string }) {
   const now = new Date(today);
@@ -44,7 +51,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
   const [moduleCode, setModuleCode] = useState(primary?.code ?? modules[0]?.code);
   const [view, setView] = useState<"chart" | "table">("chart");
   const [showAll, setShowAll] = useState(false);
-  const [tip, setTip] = useState<{ index: number; top: number } | null>(null);
+  const [tip, setTip] = useState<{ index: number; place: TipPlace } | null>(null);
 
   const m = modules.find((x) => x.code === moduleCode) ?? modules[0];
   if (!m) return null;
@@ -62,6 +69,17 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
   const period = summary?.recent ? "de senaste tre åren" : fromYear === toYear ? fromYear : `${fromYear}–${toYear}`;
   const active = tip ? rows[tip.index] : null;
   const showTrend = occasions.length >= MIN_TREND_OCCASIONS;
+  const yearRates = new Map(passRateByYear(occasions).map((y) => [y.year, y]));
+  const groups = rows.reduce<{ year: string; items: { occasion: ExamOccasion; index: number }[] }[]>((all, occasion, index) => {
+    const year = occasion.date.slice(0, 4);
+    const group = all[all.length - 1];
+    if (group?.year === year) group.items.push({ occasion, index });
+    else all.push({ year, items: [{ occasion, index }] });
+    return all;
+  }, []);
+  // Staplarna börjar med de underkända, så snittlinjen visar direkt vilka tillfällen som gick sämre än vanligt.
+  const failShare = 1 - occasions.reduce((n, o) => n + o.passed, 0) / Math.max(1, occasions.reduce((n, o) => n + o.total, 0));
+  const showAverage = occasions.length >= MIN_TREND_OCCASIONS && failShare >= 0.01 && failShare <= 0.99;
 
   return (
     <div>
@@ -90,13 +108,14 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
 
       {summary && (
         <dl className="mt-8 grid grid-cols-2 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white lg:grid-cols-4">
-          <Tile label="Godkända" value={formatPercent(summary.passRate)} note={period} className="border-b border-r lg:border-b-0" />
+          <Tile label="Godkända" value={formatPercent(summary.passRate)} note={period} meter={summary.passRate} className="border-b border-r lg:border-b-0" />
           <Tile label="Skrivningar" value={String(summary.total)} note={period} className="border-b lg:border-b-0 lg:border-r" />
           <Tile label="Vanligaste betyg" value={summary.commonGrade ?? "–"} note={`bland godkända, ${period}`} className="border-r" />
           <Tile
             label="Godkända senast"
             value={formatPercent(summary.latest.passed / summary.latest.total)}
             note={`${formatDateShort(summary.latest.date)}, ${summary.latest.total} skrivande`}
+            meter={summary.latest.passed / summary.latest.total}
           />
         </dl>
       )}
@@ -109,7 +128,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
         )}
         {summary && (
           <section className={cn("flex min-w-0 flex-col rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6", showTrend ? "lg:col-span-5" : "lg:col-span-12")}>
-            <GradeDistribution grades={summary.grades} color={color} period={period} />
+            <GradeDistribution key={m.code} grades={summary.grades} color={color} period={period} />
           </section>
         )}
       </div>
@@ -148,40 +167,77 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
 
       {view === "chart" ? (
         // Med mus försvinner rutan när pekaren lämnar diagrammet. Med touch ligger den kvar tills man trycker någon annanstans.
-        <div className="relative mt-4" onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}>
-          <div aria-hidden className={cn(ROW, "kicker cursor-auto py-0 pb-2 text-stone-light")}>
+        <div className="mt-4 rounded-[1.5rem] border border-ink/10 bg-white px-2 py-4 sm:px-3 sm:py-5" onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}>
+          <div aria-hidden className={cn(ROW, "kicker cursor-auto py-0 pb-1 text-stone-light")}>
             <span>Datum</span>
-            <span>Betyg</span>
+            <span className="relative block h-lh">
+              {showAverage && (
+                <span
+                  className={cn("absolute whitespace-nowrap", failShare < 0.14 ? "translate-x-0" : failShare > 0.86 ? "-translate-x-full" : "-translate-x-1/2")}
+                  style={{ left: `${failShare * 100}%` }}
+                >
+                  snitt {formatPercent(failShare)}
+                </span>
+              )}
+            </span>
             <span className="text-right">Godkända</span>
           </div>
-          <ol className="space-y-1">
-            {rows.map((o, i) => (
-              <li
-                key={`${o.date}-${i}`}
-                tabIndex={0}
-                onPointerEnter={(e) => setTip({ index: i, top: e.currentTarget.offsetTop + e.currentTarget.offsetHeight })}
-                onFocus={(e) => setTip({ index: i, top: e.currentTarget.offsetTop + e.currentTarget.offsetHeight })}
-                onBlur={() => setTip(null)}
-                className={cn(
-                  ROW,
-                  "rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-red/50",
-                  tip?.index === i ? "bg-paper-2" : "hover:bg-paper-2",
-                )}
-              >
-                <span className="tabular text-[0.8rem] text-stone sm:text-sm">{formatDateShort(o.date)}</span>
-                <Bar occasion={o} color={color} />
-                <span className="tabular whitespace-nowrap text-right text-sm">
-                  <span className="font-semibold">{formatPercent(o.passed / o.total)}</span>
-                  <span className="text-stone"> av {o.total}</span>
+          <GrafIn key={m.code} className="relative" lista>
+            {showAverage && (
+              <div aria-hidden className={cn(ROW, "pointer-events-none absolute inset-0 cursor-auto items-stretch py-0")}>
+                <span />
+                <span className="relative block">
+                  <span className="absolute inset-y-0 border-l border-dashed border-ink/35" style={{ left: `${failShare * 100}%` }} />
                 </span>
-                <span className="sr-only">
-                  {" "}
-                  godkända av {o.total} skrivande. {o.grades.map((g) => `${g.grade}: ${g.count}`).join(", ")}.
-                </span>
-              </li>
-            ))}
-          </ol>
-          {active && tip && <Tooltip occasion={active} color={color} top={tip.top} />}
+                <span />
+              </div>
+            )}
+            {groups.map((group) => {
+              const rate = yearRates.get(group.year);
+              return (
+                <section key={group.year} aria-label={group.year} className="[&+section]:mt-3">
+                  <h3 className={cn(ROW, "cursor-auto")}>
+                    <span className="text-sm font-semibold">{group.year}</span>
+                    <span aria-hidden className="block h-px bg-ink/10" />
+                    {rate && (
+                      <span className="tabular whitespace-nowrap text-right text-sm text-stone">
+                        {formatPercent(rate.passed / rate.total)} av {rate.total}
+                        <span className="sr-only"> godkända under året</span>
+                      </span>
+                    )}
+                  </h3>
+                  <ol>
+                    {group.items.map(({ occasion: o, index: i }) => (
+                      <li
+                        key={`${o.date}-${i}`}
+                        tabIndex={0}
+                        onPointerEnter={(e) => setTip({ index: i, place: tipPlace(e.currentTarget) })}
+                        onFocus={(e) => setTip({ index: i, place: tipPlace(e.currentTarget) })}
+                        onBlur={() => setTip(null)}
+                        className={cn(
+                          ROW,
+                          "rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-red/50",
+                          tip?.index === i ? "bg-paper-2" : "hover:bg-paper-2",
+                        )}
+                      >
+                        <span className="tabular text-[0.8rem] text-stone sm:text-sm">{formatDayMonthShort(o.date)}</span>
+                        <Bar occasion={o} color={color} delay={Math.min(i, MAX_ROW_DELAY)} />
+                        <span className="tabular whitespace-nowrap text-right text-sm">
+                          <span className="font-semibold">{formatPercent(o.passed / o.total)}</span>
+                          <span className="text-stone"> av {o.total}</span>
+                        </span>
+                        <span className="sr-only">
+                          {" "}
+                          godkända av {o.total} skrivande. {o.grades.map((g) => `${g.grade}: ${g.count}`).join(", ")}.
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              );
+            })}
+            {active && tip && <Tooltip occasion={active} color={color} place={tip.place} />}
+          </GrafIn>
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-[1.25rem] border border-ink/10 bg-white">
@@ -230,6 +286,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
       <div className="mt-4 flex flex-col gap-3 text-sm text-stone sm:flex-row sm:items-center sm:justify-between">
         <p>
           Godkända = alla betyg utom U, F och Fx.
+          {view === "chart" && showAverage && " Den streckade linjen visar hur stor andel som brukar bli underkänd."}
           {hidden > 0 && ` ${hidden} ${hidden === 1 ? "tillfälle" : "tillfällen"} med färre än ${MIN_RESULTS} resultat visas inte.`}
         </p>
         {collapsible && (
@@ -289,21 +346,35 @@ function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption:
   );
 }
 
-function Tile({ label, value, note, className }: { label: string; value: string; note: string; className?: string }) {
+type TipPlace = { top: number } | { bottom: number };
+
+/** Rutan med siffrorna hamnar precis under raden, men vänder uppåt längst ner så att den inte hamnar över texten under diagrammet. */
+function tipPlace(row: HTMLElement): TipPlace {
+  const list = (row.closest("[data-graf-lista]") as HTMLElement).getBoundingClientRect();
+  const box = row.getBoundingClientRect();
+  return list.bottom - box.bottom < TIP_ROOM ? { bottom: list.bottom - box.top + 4 } : { top: box.bottom - list.top + 4 };
+}
+
+function Tile({ label, value, note, meter, className }: { label: string; value: string; note: string; meter?: number; className?: string }) {
   return (
-    <div className={cn("border-ink/10 p-5 md:p-6", className)}>
+    <div className={cn("relative border-ink/10 p-5 md:p-6", className)}>
       {/* På mobil bryts längre etiketter på två rader – samma höjd på alla gör att värdena hamnar i linje. */}
       <dt className="kicker min-h-[2lh] text-stone sm:min-h-0">{label}</dt>
       <dd className="mt-3 text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-none tracking-tight">{value}</dd>
       <dd className="mt-2 text-sm text-stone">{note}</dd>
+      {meter !== undefined && (
+        <dd aria-hidden className="absolute inset-x-5 bottom-0 h-0.5 bg-ink/[0.07] md:inset-x-6">
+          <span className="graf-stapel-ut block h-full bg-ink" style={{ width: `${meter * 100}%` }} />
+        </dd>
+      )}
     </div>
   );
 }
 
-/** En 100 %-stapel: ≤24 px hög, rak vid baslinjen till vänster och rundad i slutet, 2 px yta mellan betygen. */
-function Bar({ occasion, color }: { occasion: ExamOccasion; color: Map<string, string> }) {
+/** En 100 %-stapel: tunn, rak vid baslinjen till vänster och rundad i slutet, 2 px yta mellan betygen. */
+function Bar({ occasion, color, delay }: { occasion: ExamOccasion; color: Map<string, string>; delay: number }) {
   return (
-    <span aria-hidden className="flex h-5 gap-[2px] overflow-hidden rounded-r-[4px]">
+    <span aria-hidden className="graf-stapel-ut flex h-3 gap-[2px] overflow-hidden rounded-r-[4px]" style={{ "--i": delay } as CSSProperties}>
       {occasion.grades.map((g) =>
         g.count > 0 ? <span key={g.grade} className="min-w-[2px] basis-0" style={{ flexGrow: g.count, background: color.get(g.grade) }} /> : null,
       )}
@@ -311,13 +382,13 @@ function Bar({ occasion, color }: { occasion: ExamOccasion; color: Map<string, s
   );
 }
 
-/** Exakta siffror för raden. Värdet först och starkast, betyget efter – med en kort linje i betygets färg. */
-function Tooltip({ occasion, color, top }: { occasion: ExamOccasion; color: Map<string, string>; top: number }) {
+/** Exakta siffror för raden. Värdet först och starkast, betyget efter, med en kort linje i betygets färg. */
+function Tooltip({ occasion, color, place }: { occasion: ExamOccasion; color: Map<string, string>; place: TipPlace }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute left-[5.5rem] z-10 w-56 rounded-2xl border border-ink/10 bg-white p-4 text-sm shadow-[0_24px_50px_-24px_rgb(10_10_10/0.45)] sm:left-[8rem]"
-      style={{ top: top + 4 }}
+      className="pointer-events-none absolute left-[4.5rem] z-10 w-56 rounded-2xl border border-ink/10 bg-white p-4 text-sm shadow-[0_24px_50px_-24px_rgb(10_10_10/0.45)] sm:left-[6rem]"
+      style={place}
     >
       <p className="font-semibold">{formatDateShort(occasion.date)}</p>
       <p className="text-stone">

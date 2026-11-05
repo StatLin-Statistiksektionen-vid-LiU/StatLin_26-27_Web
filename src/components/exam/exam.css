@@ -1,0 +1,78 @@
+/*
+ * Diagrammen på tentastatistiken ritas upp en gång när de kommer in i bild. Bara transform och opacitet, så att det går på grafikkortet
+ * och inte stör scrollningen. Utan JavaScript syns diagrammen ändå: rörelsen spelas när de ritas första gången, och graf-in.tsx väntar bara
+ * med det som ligger utanför bilden.
+ */
+
+.graf-svep {
+  position: absolute;
+  inset: -12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.graf-svep-inre {
+  position: absolute;
+  inset: 0;
+}
+.graf-svep-yta {
+  position: absolute;
+  inset: 12px;
+}
+
+@keyframes graf-svep-ut {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes graf-svep-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes graf-upp {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes graf-ut {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes graf-tona {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .graf-svep {
+    animation: graf-svep-ut 1.4s var(--ease-out-expo) 0.1s backwards;
+  }
+  .graf-svep-inre {
+    animation: graf-svep-in 1.4s var(--ease-out-expo) 0.1s backwards;
+  }
+  .graf-stapel-upp {
+    transform-origin: 50% 100%;
+    animation: graf-upp 0.9s var(--ease-out-expo) calc(var(--i, 0) * 70ms + 0.1s) backwards;
+  }
+  .graf-stapel-ut {
+    transform-origin: 0 50%;
+    animation: graf-ut 0.9s var(--ease-out-expo) calc(var(--i, 0) * 30ms + 0.1s) backwards;
+  }
+  .graf-tona {
+    animation: graf-tona 0.5s ease-out calc(var(--i, 0) * 70ms + 0.5s) backwards;
+  }
+  @media screen {
+    [data-graf-vantar] .graf-svep-inre {
+      animation: none;
+    }
+    [data-graf-vantar] .graf-svep,
+    [data-graf-vantar] .graf-stapel-upp,
+    [data-graf-vantar] .graf-stapel-ut,
+    [data-graf-vantar] .graf-tona {
+      visibility: hidden;
+      animation: none;
+    }
+  }
+}
