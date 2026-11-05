@@ -24,6 +24,8 @@ const ENTITY_LABELS: Record<string, string> = {
   document: "dokument",
   resource: "hjälpmedel",
   partner: "partner",
+  star_company: "STAR-företag",
+  lecture_wish: "lunchönskemål",
   user: "konto",
   settings: "inställningar",
   task: "uppdraget",

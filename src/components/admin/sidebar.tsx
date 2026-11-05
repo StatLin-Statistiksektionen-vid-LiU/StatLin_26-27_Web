@@ -18,8 +18,10 @@ import {
   Layers,
   Logout,
   Menu,
+  MessageCircle,
   Newspaper,
   Settings,
+  Star,
   Users,
 } from "@/components/icons";
 import { hasDesign } from "@/lib/auth/permissions";
@@ -29,7 +31,7 @@ import { LogoutForm } from "./logout-form";
 
 type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
 
-export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; unseenTasks?: number }) {
+export function AdminSidebar({ user, unseenTasks = 0, naringsliv = false, newWishes = 0 }: { user: SidebarUser; unseenTasks?: number; naringsliv?: boolean; newWishes?: number }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const editor = user.role !== "committee";
@@ -42,6 +44,8 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
   const resources = { href: "/admin/hjalpmedel", label: "Hjälpmedel", Icon: BookOpen };
   // Grafiskt ansvarig: alla bilder, och dokumenten under Grafisk profil.
   const design = hasDesign(user);
+  const star = { href: "/admin/star", label: "STAR", Icon: Star };
+  const wishes = { href: "/admin/lunchonskemal", label: "Lunchönskemål", Icon: MessageCircle, badge: newWishes };
   const groups = [
     {
       label: "Innehåll",
@@ -62,6 +66,8 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
             design ? images : null,
             resources,
             ownPage,
+            naringsliv ? star : null,
+            naringsliv ? wishes : null,
             design ? { href: "/admin/dokument", label: "Dokument", Icon: FileText } : null,
             tasks,
           ],
@@ -75,6 +81,8 @@ export function AdminSidebar({ user, unseenTasks = 0 }: { user: SidebarUser; uns
         { href: "/admin/dokument", label: "Dokument", Icon: FileText },
         { href: "/admin/lankar", label: "Länkar", Icon: Chain },
         { href: "/admin/partners", label: "Partners", Icon: Handshake },
+        star,
+        wishes,
       ],
     },
     {

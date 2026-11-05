@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Notice } from "@/components/admin/ui";
 import { getSessionUser, sessionExpiresSoon } from "@/lib/auth/session";
+import { canManageNaringsliv, countNewWishes } from "@/lib/data/naringsliv";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
 
@@ -27,7 +28,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/logga-in?next=/admin");
-  const [unseenTasks, expiresAt] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon()]);
+  const naringsliv = canManageNaringsliv(user);
+  const [unseenTasks, expiresAt, newWishes] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon(), naringsliv ? countNewWishes() : 0]);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
       <AdminSidebar
@@ -41,6 +43,8 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           design: user.design,
         }}
         unseenTasks={unseenTasks}
+        naringsliv={naringsliv}
+        newWishes={newWishes}
       />
       <div className="min-w-0">
         {user.must_change_password && (
