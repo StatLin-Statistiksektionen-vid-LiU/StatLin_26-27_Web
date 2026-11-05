@@ -61,7 +61,7 @@ export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[];
             </li>
           )}
         </ul>
-        <Link href="/studenter/lankar" className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold lg:ml-auto">
+        <Link href="/studenter/lankar" className="tryck group inline-flex shrink-0 items-center gap-2 self-start text-sm font-semibold lg:ml-auto lg:self-auto">
           <span className="link-underline">Alla länkar</span>
           <span className="grid size-8 place-items-center rounded-full bg-red text-white transition-transform duration-500 group-hover:translate-x-1">
             <ArrowRight size={14} />

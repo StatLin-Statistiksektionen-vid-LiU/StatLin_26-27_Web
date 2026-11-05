@@ -86,25 +86,27 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
           {companies.length === 0 ? (
             <EmptyState title="Inga företag ännu">Lägg till det första med formuläret. Tills dess står det att företagen presenteras snart.</EmptyState>
           ) : (
-            <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+            <ul className="@container divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
               {companies.map((c) => (
-                <li key={c.id} className="flex items-center gap-4 px-5 py-4">
-                  <span className="grid h-10 w-20 shrink-0 place-items-center">
+                <li key={c.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3.5 py-3.5 @lg:flex @lg:gap-4 @lg:px-5 @lg:py-4">
+                  <span className="row-span-2 grid h-10 w-12 shrink-0 place-items-center @lg:w-20">
                     {c.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.logo.thumb} alt="" className="max-h-10 max-w-20 object-contain" />
+                      <img src={c.logo.thumb} alt="" className="max-h-10 max-w-12 object-contain @lg:max-w-20" />
                     ) : (
-                      <span className="text-xs text-stone">Ingen logga</span>
+                      <span className="text-center text-xs leading-tight text-stone">Ingen logga</span>
                     )}
                   </span>
                   <Link href={`/admin/star/${c.id}`} className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{c.name}</span>
+                    <span className="block truncate font-semibold leading-snug @max-lg:whitespace-normal @max-lg:[overflow-wrap:anywhere]">{c.name}</span>
                     <span className="block truncate text-xs text-stone">
                       {[COMPANY_ROLE_LABELS[c.role], ...parseSeeks(c.seeks).map((k) => SEEK_LABELS[k])].join(" · ")}
                     </span>
                   </Link>
-                  <StatusBadge published={!!c.active} label={c.active ? "Synlig" : "Dold"} />
-                  <Link href={`/admin/star/${c.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label={`Redigera ${c.name}`}>
+                  <span className="col-start-2 row-start-2 justify-self-start @lg:contents">
+                    <StatusBadge published={!!c.active} label={c.active ? "Synlig" : "Dold"} />
+                  </span>
+                  <Link href={`/admin/star/${c.id}`} className="col-start-3 row-span-2 row-start-1 grid size-9 place-items-center rounded-full hover:bg-paper pointer-coarse:size-11" aria-label={`Redigera ${c.name}`}>
                     <Edit size={16} />
                   </Link>
                 </li>

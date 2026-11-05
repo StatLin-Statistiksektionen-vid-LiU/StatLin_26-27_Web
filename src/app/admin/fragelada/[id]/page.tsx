@@ -122,7 +122,7 @@ async function Box({ params, searchParams }: { params: PageProps<"/admin/fragela
       )}
 
       <details className="mt-12 rounded-2xl border border-ink/10 bg-white p-5">
-        <summary className="cursor-pointer font-bold">Inställningar för lådan</summary>
+        <summary className="tryck cursor-pointer font-bold">Inställningar för lådan</summary>
         <div className="mt-5 space-y-6">
           <BoxForm box={box} />
           {box.slug === null && (

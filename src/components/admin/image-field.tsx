@@ -77,9 +77,11 @@ export function ImageField({
           if (first) upload(first, rest.length > 0 ? `Här används bara en bild: ${first.name}. De andra laddades inte upp.` : null);
         }}
         className={cn(
-          "group relative overflow-hidden rounded-2xl border-2 border-dashed transition-colors",
+          "group relative min-h-28 w-full overflow-hidden rounded-2xl border-2 border-dashed transition-colors",
           aspect,
           over ? "border-red bg-red/5" : image ? "border-transparent" : "border-ink/15 bg-paper/60 hover:border-ink/30",
+          // En logga ska synas hel. Med fingret står knapparna kvar, så där får de en egen plats under den.
+          image && fit !== "cover" && "bg-ink/[0.03] pointer-coarse:min-h-36",
         )}
       >
         {image ? (
@@ -90,10 +92,10 @@ export function ImageField({
               srcSet={image.srcSet}
               sizes="400px"
               alt=""
-              className={cn("absolute inset-0 h-full w-full", fit === "cover" ? "object-cover" : "object-contain p-4")}
+              className={cn("absolute inset-0 h-full w-full", fit === "cover" ? "object-cover" : "object-contain p-4 pointer-coarse:pb-16")}
               style={{ backgroundColor: fit === "cover" ? image.color : undefined }}
             />
-            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+            <div className={cn("absolute inset-x-0 bottom-0 flex justify-end gap-2 p-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 pointer-coarse:opacity-100", fit === "cover" ? "bg-gradient-to-t from-black/60 to-transparent" : "[&>button]:ring-1 [&>button]:ring-ink/10")}>
               <button type="button" onClick={() => inputRef.current?.click()} className="btn btn-light btn-sm">
                 <Upload size={15} /> Byt
               </button>

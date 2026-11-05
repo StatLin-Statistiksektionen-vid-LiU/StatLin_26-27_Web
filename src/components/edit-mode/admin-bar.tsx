@@ -163,7 +163,7 @@ export function AdminBar({ user }: { user: EditUser }) {
             <span className={cn("size-2 shrink-0 rounded-full", editing ? "bg-red" : "bg-white/30")} />
             {editing ? "Redigerar" : "Redigera"}
           </span>
-          <button type="button" role="switch" aria-checked={editing} aria-label="Redigeringsläge" onClick={() => editStore.setEditing(!editing)} className="grid h-9 w-11 place-items-center rounded-full">
+          <button type="button" role="switch" aria-checked={editing} aria-label="Redigeringsläge" onClick={() => editStore.setEditing(!editing)} className="relative grid h-9 w-11 place-items-center rounded-full after:absolute after:-inset-y-1 after:inset-x-0">
             <span className={cn("relative block h-5 w-9 rounded-full ring-1 transition-colors", editing ? "bg-red ring-red" : "bg-white/15 ring-white/30")} aria-hidden>
               <span className={cn("absolute top-0.5 size-4 rounded-full bg-white transition-[left]", editing ? "left-[1.125rem]" : "left-0.5")} />
             </span>
@@ -211,7 +211,7 @@ export function AdminBar({ user }: { user: EditUser }) {
   );
 }
 
-const ICON_BUTTON = "grid size-9 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white";
+const ICON_BUTTON = "relative grid size-9 place-items-center rounded-full text-white/80 transition-colors after:absolute after:-inset-y-1 after:inset-x-0 hover:bg-white/10 hover:text-white";
 
 /** Verktygstipset syns vid hover och tangentbordsfokus. Knapparna har sina namn själva, så skärmläsaren får inte höra det två gånger. */
 function Tip({ label, below, left, children }: { label: string; below: boolean; left: boolean; children: ReactNode }) {

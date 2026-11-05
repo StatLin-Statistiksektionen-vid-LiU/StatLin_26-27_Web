@@ -139,7 +139,7 @@ function WishCard({ wish, tab, events }: { wish: LectureWish; tab: string; event
         </div>
       </div>
       <details className="mt-4 border-t border-ink/10 pt-3">
-        <summary className="cursor-pointer text-sm font-semibold">Ändra text, status och evenemang</summary>
+        <summary className="tryck cursor-pointer text-sm font-semibold">Ändra text, status och evenemang</summary>
         <div className="mt-4">
           <ActionForm action={saveWish} stickyFooter={false}>
             <input type="hidden" name="id" value={wish.id} />

@@ -20,7 +20,7 @@ export function AdminHeader({
     <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
         {back && (
-          <Link href={back.href} className="kicker mb-4 inline-flex items-center gap-2 text-stone hover:text-ink">
+          <Link href={back.href} className="tryck kicker mb-4 inline-flex items-center gap-2 text-stone hover:text-ink">
             <ArrowLeft size={14} /> {back.label}
           </Link>
         )}

@@ -22,7 +22,7 @@ export function CopyButton({ value, label, className }: { value: string; label?:
       aria-label={`Kopiera ${label ?? value}`}
     >
       <span>{label ?? value}</span>
-      <span className={cn("transition-opacity", copied ? "opacity-100" : "opacity-0 group-hover:opacity-60")} aria-hidden>
+      <span className={cn("transition-opacity", copied ? "opacity-100" : "opacity-0 group-hover:opacity-60 pointer-coarse:hidden")} aria-hidden>
         {copied ? <Check size={13} /> : "⧉"}
       </span>
       <span className="sr-only" aria-live="polite">

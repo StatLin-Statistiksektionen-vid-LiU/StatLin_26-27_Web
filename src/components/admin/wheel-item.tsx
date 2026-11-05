@@ -12,8 +12,8 @@ const STATUS_CHIP: Partial<Record<WheelStatus, { label: string; className: strin
   hoppad: { label: "Hoppas över i år", className: "bg-ink/[0.07] text-ink/60" },
 };
 
-const smallBtn = "btn btn-sm btn-ghost bg-white";
-const quietBtn = "rounded-full px-3 py-1.5 text-sm font-semibold text-stone hover:bg-ink/[0.05] hover:text-ink";
+const smallBtn = "btn btn-sm btn-ghost bg-white !px-3";
+const quietBtn = "rounded-full px-3 py-1.5 text-sm font-semibold text-stone hover:bg-ink/[0.05] hover:text-ink pointer-coarse:py-3";
 
 /** Knapparna på en punkt. Lägga på tavlan och skapa en plan får alla poster, medan läget ändras av ägaren, ansvarig post och admin. */
 function WheelActions({ item, year, state, status, canChange }: { item: WheelItem; year: number; state: WheelState | undefined; status: WheelStatus; canChange: boolean }) {
@@ -81,22 +81,21 @@ export function WheelItemRow({
   const chip = STATUS_CHIP[status];
   const closed = status === "klar" || status === "hoppad";
   return (
-    <article className={cn("rounded-2xl border border-ink/10 bg-white p-4", closed && "bg-white/60")}>
-      <div className="flex items-start justify-between gap-3">
-        <h3 className={cn("min-w-0 font-semibold leading-snug", closed && "text-ink/60")}>{item.title}</h3>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {chip && (
-            <span className={cn("chip", chip.className)}>
-              {status === "klar" && <Check size={12} strokeWidth={2.5} />}
-              {chip.label}
-            </span>
-          )}
-          {canChange && (
-            <Link href={`/admin/arshjul/${item.id}`} className="grid size-8 place-items-center rounded-full text-stone hover:bg-ink/[0.05] hover:text-ink" aria-label={`Ändra ${item.title}`} title="Ändra">
-              <Edit size={15} />
-            </Link>
-          )}
-        </div>
+    <article className={cn("@container rounded-2xl border border-ink/10 bg-white p-4", closed && "bg-white/60")}>
+      {/* Är kortet smalt får etiketten en egen rad, annars krockar den med rubriken. */}
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
+        <h3 className={cn("min-w-0 flex-1 basis-[calc(100%-2.75rem)] font-semibold leading-snug [overflow-wrap:anywhere] @md:basis-0", closed && "text-ink/60")}>{item.title}</h3>
+        {chip && (
+          <span className={cn("chip order-last @md:order-none", chip.className)}>
+            {status === "klar" && <Check size={12} strokeWidth={2.5} />}
+            {chip.label}
+          </span>
+        )}
+        {canChange && (
+          <Link href={`/admin/arshjul/${item.id}`} className="relative grid size-8 shrink-0 place-items-center rounded-full text-stone after:absolute after:-inset-1.5 hover:bg-ink/[0.05] hover:text-ink" aria-label={`Ändra ${item.title}`} title="Ändra">
+            <Edit size={15} />
+          </Link>
+        )}
       </div>
       {item.description && !closed && !compact && <p className="mt-1 text-sm leading-relaxed text-stone">{item.description}</p>}
       <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.72rem] tracking-wide text-ink/70">

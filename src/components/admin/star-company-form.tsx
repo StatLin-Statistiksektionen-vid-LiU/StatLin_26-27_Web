@@ -21,16 +21,17 @@ export function StarCompanyForm({ company, nextOrder = 0 }: { company?: StarComp
         </Field>
         <fieldset>
           <legend className="mb-2 block text-sm font-semibold">Söker</legend>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 pointer-coarse:gap-y-0">
             {SEEK_KINDS.map((k) => (
-              <label key={k} className="flex cursor-pointer items-center gap-2 text-sm">
+              <label key={k} className="flex cursor-pointer items-center gap-2 text-sm pointer-coarse:py-3">
                 <input type="checkbox" name="seeks" value={k} defaultChecked={seeks.includes(k)} className="size-4 accent-red" />
                 {SEEK_LABELS[k]}
               </label>
             ))}
           </div>
         </fieldset>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="@container">
+          <div className="grid gap-5 @sm:grid-cols-2">
           <Field label="Roll" name="role">
             <Select name="role" defaultValue={company?.role ?? "utstallare"}>
               {COMPANY_ROLES.map((r) => (
@@ -43,6 +44,7 @@ export function StarCompanyForm({ company, nextOrder = 0 }: { company?: StarComp
           <Field label="Sortering" name="sort_order">
             <TextInput name="sort_order" type="number" min={0} defaultValue={company?.sort_order ?? nextOrder} />
           </Field>
+          </div>
         </div>
         <ImageField name="logo_media_id" label="Logga" defaultImage={company?.logo ?? null} aspect="aspect-[3/1]" fit="contain" />
         <Toggle name="active" label="Visas på STAR-sidan" defaultChecked={company ? !!company.active : true} />

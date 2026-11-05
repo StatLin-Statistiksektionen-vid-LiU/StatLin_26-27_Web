@@ -279,7 +279,7 @@ function Note({ box, autoFocus, onSent, onChangeCode }: { box: PublicBox; autoFo
       </form>
 
       {onChangeCode && (
-        <button type="button" onClick={onChangeCode} className="link-underline mt-5 text-sm font-semibold text-stone hover:text-ink">
+        <button type="button" onClick={onChangeCode} className="tryck link-underline mt-5 text-sm font-semibold text-stone hover:text-ink">
           Fel låda? Skriv en annan kod
         </button>
       )}

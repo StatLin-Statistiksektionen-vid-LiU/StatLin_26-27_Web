@@ -42,7 +42,7 @@ function WheelCard({
           </h2>
         </div>
         {rows.length > 0 && (
-          <Link href={more} className="shrink-0 text-sm font-semibold text-red-deep hover:underline">
+          <Link href={more} className="tryck shrink-0 text-sm font-semibold text-red-deep hover:underline">
             {rows.length > CARD_LIMIT ? `Alla ${rows.length}` : "Hjulet"}
           </Link>
         )}

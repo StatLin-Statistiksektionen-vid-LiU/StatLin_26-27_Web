@@ -175,7 +175,7 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
               {termGroup("ht")}
               {pastCount > 0 && (
                 <details className="mt-6 rounded-2xl border border-ink/10 bg-white/50 p-4">
-                  <summary className="kicker flex cursor-pointer items-center justify-between gap-3 text-ink">
+                  <summary className="tryck kicker flex cursor-pointer items-center justify-between gap-3 text-ink">
                     Tidigare i år
                     <span className="text-stone tabular">{pastCount}</span>
                   </summary>
@@ -194,9 +194,9 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
 }
 
 function YearLink({ year, href, show, label, Icon }: { year: number; href: string; show: boolean; label: string; Icon: typeof ChevronLeft }) {
-  if (!show) return <span className="size-9" aria-hidden />;
+  if (!show) return <span className="size-9 pointer-coarse:size-11" aria-hidden />;
   return (
-    <Link href={href} scroll={false} aria-label={`${label}, ${year}`} className="grid size-9 place-items-center rounded-full border border-white/15 hover:bg-white/10">
+    <Link href={href} scroll={false} aria-label={`${label}, ${year}`} className="grid size-9 place-items-center rounded-full border border-white/15 hover:bg-white/10 pointer-coarse:size-11">
       <Icon size={16} />
     </Link>
   );
@@ -211,7 +211,7 @@ function MonthChip({ href, active, now, all, children }: { href: string; active:
       data-alla={all ? "" : undefined}
       data-nu={now ? "" : undefined}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 font-mono text-[0.72rem] uppercase tracking-wider",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 font-mono text-[0.72rem] uppercase tracking-wider pointer-coarse:py-3",
         active ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink/70",
       )}
     >
