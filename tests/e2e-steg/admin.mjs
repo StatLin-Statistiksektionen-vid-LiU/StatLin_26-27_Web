@@ -4,7 +4,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { changeTemporaryPassword, createEditor, newVisitor, openLogin, tryLogin, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
+import { changeTemporaryPassword, createEditor, newVisitor, openLogin, tryLogin, uniqueId, gotoEditing, waitForHydration } from "../e2e-hjalp.mjs";
 
 const ADMIN = "admin@statlin.se";
 
@@ -75,10 +75,7 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
 
   await step("Redigeringspanelen ligger kvar när en sparning ritar om sidan (SB-30)", async () => {
     const { slug } = await createEvent(page, BASE, `E2E-panel ${uniqueId()}`);
-    await page.goto(`${BASE}/evenemang/${slug}`);
-    const toggle = page.locator('#admin-bar [role="switch"]');
-    await waitForHydration(page, toggle);
-    if ((await toggle.getAttribute("aria-checked")) !== "true") await toggle.click();
+    await gotoEditing(page, `${BASE}/evenemang/${slug}`);
     await page.locator("button:visible", { hasText: "Byt bilder" }).click();
     const panel = page.getByRole("dialog");
     await panel.locator('input[type="file"][multiple]').setInputFiles(await testImages(1));
@@ -297,10 +294,7 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     const dialog = page.getByRole("alertdialog");
 
     // Osparade ändringar i redigeringspanelen.
-    await page.goto(`${BASE}/evenemang/${slug}`);
-    const toggle = page.locator('#admin-bar [role="switch"]');
-    await waitForHydration(page, toggle);
-    if ((await toggle.getAttribute("aria-checked")) !== "true") await toggle.click();
+    await gotoEditing(page, `${BASE}/evenemang/${slug}`);
     await page.locator("button:visible", { hasText: "Redigera evenemanget" }).click();
     const panel = page.getByRole("dialog");
     const summary = panel.locator('textarea[name="summary"]');
