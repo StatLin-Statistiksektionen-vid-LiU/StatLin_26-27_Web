@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import "./hero.css";
 import { DataField } from "@/components/brand/data-field";
 import { FloatingLogo } from "@/components/brand/floating-logo";
 import { FormulaRing } from "@/components/brand/formula-ring";
@@ -95,7 +96,7 @@ async function HeroText() {
 
 export function Hero() {
   return (
-    <section data-startsida className="noise relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink text-white">
+    <section data-startsida className="hero noise relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink text-white">
       <IntroOnce />
       {/* Bakgrund: rutnät + levande data */}
       <div
@@ -116,8 +117,8 @@ export function Hero() {
         StatLin
       </div>
 
-      <div className="container-site relative flex flex-1 flex-col pt-[calc(var(--header-h)+1.5rem)]">
-        <div className="flex items-start justify-between gap-6">
+      <div className="hero-inre container-site relative flex flex-1 flex-col pt-[calc(var(--header-h)+1.5rem)]">
+        <div className="hero-topp flex items-start justify-between gap-6">
           <p className="kicker flex items-center gap-3 text-white/60 [animation:fade-up_1s_0.1s_var(--ease-out-expo)_both]">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red opacity-60" />
@@ -135,7 +136,7 @@ export function Hero() {
         </div>
 
         {/* Loggan */}
-        <div className="flex flex-1 items-center justify-center py-6 md:py-3">
+        <div className="hero-logga flex flex-1 items-center justify-center py-6 md:py-3">
           <FloatingLogo
             className="w-[min(82vw,56svh,640px)]"
             ring={
