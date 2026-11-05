@@ -3,10 +3,10 @@
  *
  * Sidorna strömmas in: först kommer ett kort skal, sedan innehållet. Webbläsaren lägger tillbaka platsen medan skalet är allt som finns, fastnar
  * i dess botten och följer sedan med sidfoten ner när innehållet kommer, så besökaren hamnar någon helt annanstans. Här sparar sajten platsen
- * själv och lägger tillbaka den när sidan är lång nog, och igen om något flyttar den innan sidan har slutat växa.
+ * själv och lägger tillbaka den när sidan är lång nog, och igen när sidan har blivit längre. Däremellan får sidan scrolla själv.
  *
- * Bakåt inom sajten sköter webbläsaren bra själv, utom till en adress med #ankare: då hoppar Chrome till ankaret i stället för till platsen man
- * lämnade. Bara det fallet tas om hand här.
+ * Bakåt inom sajten sköter webbläsaren bra själv, utom till en adress med #ankare: då hoppar Chrome till ankaret när innehållet kommer, i stället
+ * för till platsen man lämnade. Bara det fallet tas om hand här, och där hålls platsen fast tills sidan är klar.
  *
  * history.scrollRestoration står på "manual" bara medan det pågår, eftersom nya poster i historiken ärver läget. Skriptet ligger i head för att
  * hinna före webbläsarens första försök.
@@ -30,13 +30,13 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
     var takeover = ["wheel", "touchstart", "keydown", "mousedown"];
     var root = document.documentElement;
     var cancel = null;
-    var restore = function () {
+    var restore = function (hold) {
       var saved = store.getItem(key());
       if (saved === null) return;
       if (cancel) cancel();
       var target = Number(saved);
       var start = performance.now();
-      var height = -1, changed = start, parsed = 0, over = false;
+      var height = -1, changed = start, parsed = 0, applied = -1, over = false;
       var finish = function () {
         if (over) return;
         over = true;
@@ -55,9 +55,10 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
         var h = root.scrollHeight;
         if (h !== height) { height = h; changed = now; }
         if (!parsed && document.readyState !== "loading") parsed = now;
-        var settled = (parsed && now - parsed > 800 && now - changed > 300) || now - start > 8000;
         var max = h - innerHeight;
-        if (max >= target || settled) {
+        var settled = (parsed && now - parsed > (hold ? 800 : 500) && now - changed > 300 && (!hold || max >= target)) || now - start > 8000;
+        if ((max >= target || settled) && (hold || applied !== h)) {
+          applied = h;
           var y = Math.min(target, max);
           if (Math.abs(scrollY - y) > 1) scrollTo(0, y);
         }
@@ -68,7 +69,7 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
     };
 
     var nav = performance.getEntriesByType("navigation")[0];
-    if (nav && (nav.type === "reload" || nav.type === "back_forward")) restore();
-    addEventListener("popstate", function () { if (location.hash) restore(); });
+    if (nav && (nav.type === "reload" || nav.type === "back_forward")) restore(false);
+    addEventListener("popstate", function () { if (location.hash) restore(true); });
   } catch (e) {}
 })();`;
