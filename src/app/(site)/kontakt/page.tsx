@@ -66,7 +66,7 @@ async function Contact() {
                   <p className="text-sm text-stone">{m.name || "Vakant"}</p>
                 </div>
                 {m.email && (
-                  <a href={`mailto:${m.email}`} className="inline-flex items-center gap-2 font-mono text-sm text-red-deep">
+                  <a href={`mailto:${m.email}`} className="tryck inline-flex items-center gap-2 font-mono text-sm text-red-deep">
                     <Mail size={14} />
                     <span className="link-underline">{m.email}</span>
                   </a>

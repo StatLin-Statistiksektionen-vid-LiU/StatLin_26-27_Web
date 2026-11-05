@@ -45,7 +45,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
       <header className="noise relative overflow-hidden bg-ink text-white">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" aria-hidden />
         <div className="container-prose relative pb-14 pt-[calc(var(--header-h)+3rem)] md:pt-[calc(var(--header-h)+5rem)]">
-          <Link href="/nyheter" className="kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
+          <Link href="/nyheter" className="tryck kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
             <ArrowLeft size={14} /> Allt nytt
           </Link>
           <p className="kicker mt-8 flex flex-wrap items-center gap-3 text-white/60">

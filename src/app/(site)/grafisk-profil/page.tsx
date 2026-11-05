@@ -171,11 +171,11 @@ export default function BrandPage() {
                 <figcaption className="mt-3">
                   <span className="block text-sm font-bold">{v.name}</span>
                   <span className="block text-xs text-stone">{v.note}</span>
-                  <a href={`/brand/${v.file}.svg`} download className="mt-2 inline-flex items-center gap-1.5 font-mono text-xs text-red-deep hover:underline">
+                  <a href={`/brand/${v.file}.svg`} download className="tryck mt-2 inline-flex pointer-coarse:-mt-1 items-center gap-1.5 font-mono text-xs text-red-deep hover:underline">
                     <Download size={13} /> SVG
                   </a>
                   {v.file === "statlin" && (
-                    <a href="/brand/download/statlin.png" download className="ml-3 inline-flex items-center gap-1.5 font-mono text-xs text-red-deep hover:underline">
+                    <a href="/brand/download/statlin.png" download className="tryck ml-3 inline-flex items-center gap-1.5 font-mono text-xs text-red-deep hover:underline">
                       <Download size={13} /> PNG
                     </a>
                   )}
@@ -201,7 +201,7 @@ export default function BrandPage() {
                 <img src={`/brand/utskott/${l.file}.webp`} alt={`${l.name}-loggan`} className="mx-auto h-28 w-auto object-contain transition-transform duration-700 group-hover:-translate-y-1 group-hover:rotate-[-6deg] md:h-32" loading="lazy" />
                 <p className="mt-5 font-bold">{l.name}</p>
                 <p className="text-xs text-white/50">{l.note}</p>
-                <a href={`/brand/download/${l.file}.png`} download className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-red hover:underline">
+                <a href={`/brand/download/${l.file}.png`} download className="tryck mt-3 inline-flex pointer-coarse:mt-0 items-center gap-1.5 font-mono text-xs text-red hover:underline">
                   <Download size={13} /> PNG
                 </a>
               </li>
@@ -403,7 +403,7 @@ function ColorRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-2">
       <dt className="text-stone">{label}</dt>
       <dd>
-        <CopyButton value={value} className="text-ink hover:text-red-deep" />
+        <CopyButton value={value} className="text-ink hover:text-red-deep pointer-coarse:py-1" />
       </dd>
     </div>
   );

@@ -114,7 +114,7 @@ export function SiteFooter() {
             <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2.5">
               {links.map((l) => (
                 <li key={l.href + l.label}>
-                  <Link href={l.href} className="link-underline text-[0.95rem] text-white/75 hover:text-white">
+                  <Link href={l.href} className="link-underline text-[0.95rem] text-white/75 hover:text-white pointer-coarse:py-[9px] pointer-coarse:[background-position:0_calc(100%-9px)]">
                     {l.label}
                   </Link>
                 </li>
@@ -125,17 +125,17 @@ export function SiteFooter() {
             <p className="kicker text-white/40">För poster</p>
             <ul className="mt-5 flex flex-col gap-2.5 text-[0.95rem] md:flex-row md:flex-wrap md:gap-x-6 lg:flex-col">
               <li>
-                <Link href="/admin" className="group inline-flex items-center gap-1.5 text-white/75 hover:text-white">
+                <Link href="/admin" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
                   Logga in <ArrowUpRight size={14} className="text-red" />
                 </Link>
               </li>
               <li>
-                <a href="/kalender.ics" className="group inline-flex items-center gap-1.5 text-white/75 hover:text-white">
+                <a href="/kalender.ics" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
                   Kalenderflöde <Rss size={14} className="text-red" />
                 </a>
               </li>
               <li>
-                <Link href="/en" hrefLang="en" lang="en" className="group inline-flex items-center gap-1.5 text-white/75 hover:text-white">
+                <Link href="/en" hrefLang="en" lang="en" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
                   In English <ArrowUpRight size={14} className="text-red" />
                 </Link>
               </li>
@@ -167,7 +167,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-3 border-t border-white/10 py-8 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
           <p>
             © StatLin, Statistiksektionen i Linköping ·{" "}
-            <Link href="/integritet" className="link-underline text-white/70 hover:text-white">
+            <Link href="/integritet" className="tryck link-underline text-white/70 hover:text-white">
               Integritet
             </Link>
           </p>

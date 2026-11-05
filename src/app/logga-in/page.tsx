@@ -36,7 +36,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
       </section>
 
       <section className="flex flex-col px-6 py-8 sm:px-12">
-        <Link href="/" className="kicker inline-flex items-center gap-2 self-start text-stone hover:text-ink">
+        <Link href="/" className="tryck kicker inline-flex items-center gap-2 self-start text-stone hover:text-ink">
           <ArrowLeft size={14} /> Till startsidan
         </Link>
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">

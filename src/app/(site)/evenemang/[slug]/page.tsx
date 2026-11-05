@@ -84,7 +84,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/30" />
         </div>
         <div className="container-site relative pb-14 pt-[calc(var(--header-h)+3rem)] md:pb-20 md:pt-[calc(var(--header-h)+5rem)]">
-          <Link href="/evenemang" className="kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
+          <Link href="/evenemang" className="tryck kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
             <ArrowLeft size={14} /> Alla evenemang
           </Link>
           <div className="mt-8 flex flex-wrap items-center gap-2">

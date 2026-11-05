@@ -52,7 +52,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
         <div aria-hidden className="pointer-events-none absolute right-[-10%] top-[-20%] size-[42rem] rounded-full opacity-50 blur-3xl pointer-coarse:filter-none" style={{ background: `radial-gradient(closest-side, ${c.accent}, transparent)` }} />
         <div className="container-site relative grid items-center gap-10 pb-16 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-24 md:pt-[calc(var(--header-h)+5rem)]">
           <div className="md:col-span-7">
-            <Link href="/utskott" className="kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
+            <Link href="/utskott" className="tryck kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
               <ArrowLeft size={14} /> Alla utskott
             </Link>
             <h1 className="display mt-8 text-[clamp(3rem,10vw,8rem)] normal-case">{c.short_name}</h1>

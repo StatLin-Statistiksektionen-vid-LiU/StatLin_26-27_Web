@@ -78,7 +78,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
         <a
           href="#utforska"
           aria-label="Scrolla vidare"
-          className="ml-2 hidden h-12 items-center text-white/50 transition-colors hover:text-white lg:flex"
+          className="hidden h-12 w-8 items-center justify-center text-white/50 transition-colors hover:text-white lg:flex"
         >
           <span className="relative block h-12 w-px overflow-hidden bg-white/15">
             <span className="absolute inset-x-0 top-0 h-1/2 bg-red [animation:scroll-cue_2s_ease-in-out_infinite]" />
