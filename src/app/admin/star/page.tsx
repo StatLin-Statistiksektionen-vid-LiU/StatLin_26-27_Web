@@ -5,7 +5,7 @@ import { setStarLive } from "@/app/admin/_actions/naringsliv";
 import { StarCompanyForm } from "@/components/admin/star-company-form";
 import { StarPageForm } from "@/components/admin/star-page-form";
 import { AdminHeader, EmptyState, Notice, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Check, Edit } from "@/components/icons";
+import { ArrowUpRight, Check, ChevronDown, Edit, Plus } from "@/components/icons";
 import { requireUser } from "@/lib/auth/session";
 import { getSettings } from "@/lib/data/content";
 import { getStarEvent, listUpcomingEvents } from "@/lib/data/events";
@@ -39,7 +39,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
       {sp.raderad && <Notice>Företaget är borttaget.</Notice>}
       <AdminHeader
         title="STAR"
-        description="Allt på STAR-sidan: om den syns, företagen och sponsorerna, och texterna. Datum, plats och program kommer från evenemanget."
+        description="Datum, plats och program kommer från evenemanget. Resten sköts här."
         actions={
           <Link href="/star" target="_blank" className="btn btn-ghost btn-sm">
             {live ? "Visa sidan" : "Förhandsvisa"} <ArrowUpRight size={15} />
@@ -78,9 +78,15 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
         </ul>
       </section>
 
-      <h2 id="foretagen" className="mt-10 scroll-mt-24 text-xl font-extrabold tracking-tight">
-        Företag och sponsorer
-      </h2>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="foretagen" className="scroll-mt-24 text-xl font-extrabold tracking-tight">
+          Företag och sponsorer
+        </h2>
+        {/* På telefon ligger formuläret under hela listan. */}
+        <a href="#nytt-foretag" className="btn btn-ghost btn-sm bg-white lg:hidden">
+          <Plus size={15} /> Nytt företag
+        </a>
+      </div>
       <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           {companies.length === 0 ? (
@@ -103,9 +109,12 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
                       {[COMPANY_ROLE_LABELS[c.role], ...parseSeeks(c.seeks).map((k) => SEEK_LABELS[k])].join(" · ")}
                     </span>
                   </Link>
-                  <span className="col-start-2 row-start-2 justify-self-start @lg:contents">
-                    <StatusBadge published={!!c.active} label={c.active ? "Synlig" : "Dold"} />
-                  </span>
+                  {/* Bara undantaget syns: alla andra rader är på sidan. */}
+                  {!c.active && (
+                    <span className="col-start-2 row-start-2 justify-self-start @lg:contents">
+                      <StatusBadge published={false} label="Dold" />
+                    </span>
+                  )}
                   <Link href={`/admin/star/${c.id}`} className="col-start-3 row-span-2 row-start-1 grid size-9 place-items-center rounded-full hover:bg-paper pointer-coarse:size-11" aria-label={`Redigera ${c.name}`}>
                     <Edit size={16} />
                   </Link>
@@ -114,16 +123,24 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
             </ul>
           )}
         </div>
-        <div className="lg:col-span-2">
+        <div id="nytt-foretag" className="scroll-mt-24 lg:col-span-2">
           <StarCompanyForm nextOrder={(companies.length + 1) * 10} />
         </div>
       </div>
 
-      <h2 id="texterna" className="mt-12 scroll-mt-24 text-xl font-extrabold tracking-tight">
-        Texterna på sidan
-      </h2>
-      <p className="mb-4 mt-1 max-w-2xl text-[0.95rem] text-stone">Samma texter går att ändra med pennorna på sidan när du är inloggad. Ett tomt fält tar bort texten.</p>
-      <StarPageForm s={settings} events={events} />
+      {/* Texterna ändras sällan och är långa, och samma texter går att ändra med pennorna på sidan. */}
+      <details id="texterna" className="group mt-8 scroll-mt-24">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 outline-none focus-visible:ring-4 focus-visible:ring-ink/10 md:px-7 [&::-webkit-details-marker]:hidden">
+          <span>
+            <span className="block text-base font-bold">Evenemang och texter på sidan</span>
+            <span className="mt-1 block text-sm text-stone">Samma texter går att ändra med pennorna på sidan när du är inloggad. Ett tomt fält tar bort texten.</span>
+          </span>
+          <ChevronDown size={18} className="shrink-0 text-stone transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-5">
+          <StarPageForm s={settings} events={events} />
+        </div>
+      </details>
     </>
   );
 }

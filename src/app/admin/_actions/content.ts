@@ -396,7 +396,6 @@ const settingsSchema = z.object({
   home_intro: zRequired(400, "Texten"),
   announcement: zText(200),
   announcement_url: zUrl,
-  star_event_id: z.string().regex(/^\d*$/, "Välj ett evenemang i listan."),
   education_committee_id: z.string().regex(/^\d*$/, "Välj ett utskott i listan."),
 });
 

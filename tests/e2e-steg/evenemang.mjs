@@ -156,7 +156,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await removeItem(url);
   });
 
-  await step("SB-06: starta-terminen räknas inte som STAR, och mässan som valts i Inställningar visas på företagssidan", async () => {
+  await step("SB-06: starta-terminen räknas inte som STAR, och mässan som valts under STAR visas på företagssidan", async () => {
     await switchAccount(page, ADMIN);
     const starLinks = () => site.locator('main a[href^="/evenemang/"]');
 
@@ -166,14 +166,16 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await starLinks().first().waitFor();
     assert.deepEqual(await starLinks().evaluateAll((els) => els.map((a) => a.getAttribute("href"))), ["/evenemang/star"]);
 
-    // Långt bort och utan "star" i adressen: bara valet i Inställningar kan peka ut det.
+    // Långt bort och utan "star" i adressen: bara valet under STAR kan peka ut det.
     const massan = await createEvent({ title: `E2E-mässan ${uniqueId()}`, startsAt: `${dayOffset(400)}T10:00` });
     const save = async (value) => {
-      await page.goto(`${BASE}/admin/installningar`);
-      await waitForHydration(page, page.locator('select[name="star_event_id"]'));
+      await page.goto(`${BASE}/admin/star`);
+      const texts = page.locator("summary", { hasText: "Evenemang och texter på sidan" });
+      await waitForHydration(page, texts);
+      await texts.click();
       await page.selectOption('select[name="star_event_id"]', value);
-      await page.getByRole("button", { name: "Spara" }).first().click();
-      await page.getByText("Inställningarna är sparade.").waitFor();
+      await page.getByRole("button", { name: "Spara texterna" }).click();
+      await page.getByText("Texterna är sparade.").waitFor();
     };
     await save(massan.url.split("/").pop());
     await site.goto(`${BASE}/foretag`);

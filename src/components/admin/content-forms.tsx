@@ -1,6 +1,5 @@
 import { saveBoardMember, saveCommittee, savePage, saveSettings } from "@/app/admin/_actions/content";
-import { formatDate } from "@/lib/dates";
-import type { BoardMember, Committee, EventItem, Page, SiteSettings } from "@/lib/types";
+import type { BoardMember, Committee, Page, SiteSettings } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { ColorInput, Field, FormSection, Select, TextArea, TextInput, Toggle } from "./fields";
 import { ImageField } from "./image-field";
@@ -240,23 +239,6 @@ export function EducationCommitteeSection({ s, committees }: { s: SiteSettings; 
           {committees.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-    </FormSection>
-  );
-}
-
-export function StarSection({ s, events }: { s: SiteSettings; events: Pick<EventItem, "id" | "title" | "starts_at">[] }) {
-  return (
-    <FormSection title="STAR-mässan" description="Evenemanget vars datum visas under STAR på företagssidan.">
-      <Field label="Evenemang" name="star_event_id" hint="Automatiskt betyder nästa evenemang med adressen star eller star-2027.">
-        <Select name="star_event_id" defaultValue={s.star_event_id}>
-          <option value="">Automatiskt</option>
-          {events.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.title}, {formatDate(e.starts_at, true)}
             </option>
           ))}
         </Select>

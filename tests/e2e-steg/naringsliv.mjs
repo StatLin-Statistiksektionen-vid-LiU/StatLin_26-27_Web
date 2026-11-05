@@ -420,6 +420,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await sasu.page.getByText("Du har inte behörighet att göra det här.").waitFor();
     // Samma sak för STAR-sidans texter. Knappen för live svarar inte med något, så det är sidans läge efteråt som visar att inget hände.
     const deniedIntro = `Nekad text ${id}`;
+    await sasu.page.locator("summary", { hasText: "Evenemang och texter på sidan" }).click();
     await sasu.page.locator('textarea[name="star_intro"]').fill(deniedIntro);
     await sasu.page.getByRole("button", { name: "Spara texterna" }).click();
     await sasu.page.locator('form:has(textarea[name="star_intro"])').getByText("Du har inte behörighet att göra det här.").waitFor();
@@ -443,8 +444,10 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.ok(await sasu.page.locator('nav[aria-label="Adminmeny"]:visible a[href="/admin/star"]').count(), "SASU: menyraden");
 
     // SASU sköter sidan själv: ändrar en text i admin, ändrar tillbaka den med pennan och väljer om sidan syns.
+    const textsOpen = sasu.page.locator("summary", { hasText: "Evenemang och texter på sidan" });
+    await waitForHydration(sasu.page, textsOpen);
+    await textsOpen.click();
     const save = sasu.page.getByRole("button", { name: "Spara texterna" });
-    await waitForHydration(sasu.page, save);
     const introField = sasu.page.locator('textarea[name="star_intro"]');
     const oldIntro = await introField.inputValue();
     const newIntro = `Introduktion från SASU ${id}`;
