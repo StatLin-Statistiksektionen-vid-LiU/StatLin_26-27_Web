@@ -62,13 +62,14 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     const second = await submitNewUser(page, "Roll Andra");
     await page.getByRole("button", { name: "Skapa konto" }).click();
     await page.getByText("Ett utskottskonto måste kopplas till ett utskott.").waitFor();
-    await page.locator('label:has(input[name="role"][value="admin"])').click();
+    // Inte administratör: kontostegen förutsätter att det bara finns en.
+    await page.locator('label:has(input[name="role"][value="editor"])').click();
     await page.getByRole("button", { name: "Skapa konto" }).click();
     await page.getByText(`Kontot för ${second} är skapat`).waitFor();
     await page.reload();
     await page.getByText(second).first().waitFor();
     const row = page.locator("tr, li", { hasText: second }).first();
-    await row.getByText("Administratör").first().waitFor();
+    await row.getByText("Redaktör").first().waitFor();
     await page.locator("tr, li", { hasText: first }).first().getByText("Redaktör").waitFor();
   });
 

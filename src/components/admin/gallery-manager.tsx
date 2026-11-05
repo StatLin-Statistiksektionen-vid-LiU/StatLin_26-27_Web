@@ -249,6 +249,7 @@ export function GalleryManager({
           type="file"
           accept="image/*"
           multiple
+          aria-label="Välj bilder till galleriet"
           className="hidden"
           onChange={(e) => {
             addFiles([...(e.target.files ?? [])]);
