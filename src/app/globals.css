@@ -812,6 +812,10 @@ html:not(.js) .meny-knapp {
   scrollbar-width: none;
   mask-image: linear-gradient(90deg, transparent, #000 var(--tona-start), #000 calc(100% - var(--tona-slut)), transparent);
 }
+/* Med Tab ska hela länken fram, och snäppningen drog annars tillbaka spåret några pixlar. */
+.tidsaxel-spara:has(:focus-visible) {
+  scroll-snap-type: none;
+}
 .tidsaxel-spara::-webkit-scrollbar {
   display: none;
 }
