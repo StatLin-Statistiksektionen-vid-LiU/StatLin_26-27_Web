@@ -192,9 +192,11 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await context.close();
 
     await page.getByRole("link", { name: company }).first().click();
-    await waitForHydration(page, page.getByRole("button", { name: "Spara" }));
+    // Sidan med listan har också en spara-knapp och samma reglage, så testet måste vänta in sidbytet innan det klickar.
+    await page.waitForURL(/\/admin\/star\/\d+$/);
+    await waitForHydration(page, page.getByRole("button", { name: "Spara", exact: true }));
     await page.locator('label:has(input[name="active"]):visible').click();
-    await page.getByRole("button", { name: "Spara" }).click();
+    await page.getByRole("button", { name: "Spara", exact: true }).click();
     await page.getByText("Företaget är sparat.").waitFor();
 
     const hidden = await visit();
@@ -208,7 +210,8 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/star`);
     await page.getByRole("link", { name: company }).first().click();
-    await page.getByRole("button", { name: "Spara" }).waitFor();
+    await page.waitForURL(/\/admin\/star\/\d+$/);
+    await page.getByRole("button", { name: "Spara", exact: true }).waitFor();
     await openDeleteConfirm(page);
     await page.getByRole("alertdialog").getByRole("button", { name: /Ta bort/ }).click();
     await page.waitForURL(/\/admin\/star(\?|$)/);
