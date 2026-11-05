@@ -1,0 +1,172 @@
+// Det besökare möter på telefon och surfplatta: sidbyten fram och tillbaka, menyer, filter, bildvisaren och tryckytor.
+import assert from "node:assert";
+import { newVisitor, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
+
+const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+const TABLET = { viewport: { width: 1024, height: 768 }, isMobile: true, hasTouch: true };
+
+/** Animationer som tar slut och som kör just nu. Pulsen och gungningen är oändliga och får fortsätta. Nexts egna verktyg ligger i en shadow root. */
+const runningOnce = () =>
+  document
+    .getAnimations()
+    .filter((a) => a.animationName && a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity && a.effect?.target?.getRootNode() === document)
+    .map((a) => a.animationName);
+
+/** Väntar tills sidan har slutat scrolla och svarar med var den står. */
+const scrollSettled = (page) =>
+  page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        let last = window.scrollY;
+        let still = 0;
+        const check = () => {
+          still = window.scrollY === last ? still + 1 : 0;
+          last = window.scrollY;
+          if (still >= 20) resolve(last);
+          else requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      }),
+  );
+
+export default async function publiktSteg({ BASE, browser, step }) {
+  const visit = async (options, url) => {
+    const visitor = await newVisitor(browser, options);
+    await visitor.page.goto(`${BASE}${url}`);
+    return visitor;
+  };
+
+  await step("Startsidan spelar inte om introt när man går tillbaka till den", async () => {
+    const { context, page } = await visit(PHONE, "/");
+    const toEvents = page.locator('[data-startsida] a[href="/evenemang"]').first();
+    await waitForHydration(page, toEvents);
+    await page.waitForFunction(() => {
+      const finite = document.getAnimations().filter((a) => a.animationName && a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity);
+      return finite.length === 0;
+    }, null, { timeout: 15_000 });
+    await toEvents.click();
+    await page.waitForURL(`${BASE}/evenemang`);
+    await page.locator("[data-startsida]").waitFor({ state: "hidden" });
+    await page.goBack();
+    await page.waitForURL(`${BASE}/`);
+    await page.locator("[data-startsida]").waitFor();
+    assert.deepEqual(await page.evaluate(runningOnce), [], "heron ska stå still när den visas igen");
+    await context.close();
+  });
+
+  await step("Ett tryck öppnar menygruppen på surfplatta, och nästa tryck eller ett tryck utanför stänger den", async () => {
+    const { context, page } = await visit(TABLET, "/kontakt");
+    const group = page.locator("header .meny-grupp").first();
+    const button = group.locator("button");
+    const link = group.locator("a").first();
+    await waitForHydration(page, button);
+    await button.tap();
+    await link.waitFor();
+    assert.equal(await button.getAttribute("aria-expanded"), "true");
+    await button.tap();
+    await link.waitFor({ state: "hidden" });
+    await button.tap();
+    await link.waitFor();
+    await page.touchscreen.tap(4, 700);
+    await link.waitFor({ state: "hidden" });
+    await context.close();
+  });
+
+  await step("Filtren på evenemangssidan behåller platsen på sidan", async () => {
+    const { context, page } = await visit(PHONE, "/evenemang");
+    const chip = page.getByRole("navigation", { name: "Filtrera på utskott" }).locator('a[href*="utskott="]').first();
+    await waitForHydration(page, chip);
+    await page.evaluate(() => window.scrollTo({ top: 300, behavior: "instant" }));
+    const before = await scrollSettled(page);
+    const target = await chip.getAttribute("href");
+    await chip.tap();
+    await page.waitForURL((url) => `${url.pathname}${url.search}` === target);
+    await page.locator(`main a[href="${target}"][aria-current="true"]`).waitFor();
+    assert.equal(await scrollSettled(page), before, "sidan ska inte hoppa när ett filter väljs");
+    await context.close();
+  });
+
+  await step("Tillbaka stänger bilden i helskärm och stannar på sidan", async () => {
+    const { context, page } = await visit(PHONE, "/galleri");
+    const album = await page.locator('main a[href*="#galleri"]').first().getAttribute("href");
+    await page.goto(`${BASE}${album.split("#")[0]}`);
+    const thumbnail = page.locator('#galleri button[aria-label^="Visa bild 1"]');
+    await waitForHydration(page, thumbnail);
+    const url = page.url();
+    const dialog = page.getByRole("dialog");
+    await thumbnail.tap();
+    await dialog.waitFor();
+    await page.goBack();
+    await dialog.waitFor({ state: "hidden" });
+    assert.equal(page.url(), url, "Tillbaka ska bara stänga bilden");
+    await thumbnail.tap();
+    await dialog.waitFor();
+    await dialog.getByRole("button", { name: "Stäng" }).tap();
+    await dialog.waitFor({ state: "hidden" });
+    await page.waitForTimeout(300);
+    assert.equal(page.url(), url, "Stängknappen ska stanna på sidan");
+    await context.close();
+  });
+
+  await step("Overallens revärer klipps på telefon, trots att sidan har två kopior av den", async () => {
+    const { context, page } = await visit(PHONE, "/studenter/ny-student");
+    const clips = await page.locator('svg[aria-label^="Overallen"]').evaluateAll((svgs) =>
+      svgs.map((svg) => ({
+        own: svg.querySelector("clipPath").id,
+        used: svg.querySelector("g[clip-path]").getAttribute("clip-path"),
+      })),
+    );
+    assert.equal(clips.length, 4);
+    assert.equal(new Set(clips.map((c) => c.own)).size, 4, "varje kopia ska ha ett eget id");
+    for (const clip of clips) assert.equal(clip.used, `url(#${clip.own})`);
+    await context.close();
+  });
+
+  await step("Ankarlänkarna i grafiska profilen landar vid rubriken", async () => {
+    const { context, page } = await visit(PHONE, "/grafisk-profil");
+    await page.locator('nav[aria-label="Innehåll"] a[href="#farger"]').tap();
+    await page.waitForFunction(() => location.hash === "#farger");
+    await scrollSettled(page);
+    const { heading, bar } = await page.evaluate(() => ({
+      heading: document.querySelector("#farger h2").getBoundingClientRect().top,
+      bar: document.querySelector('nav[aria-label="Innehåll"]').getBoundingClientRect().bottom,
+    }));
+    assert.ok(heading >= bar, `rubriken ligger bakom raden med länkar: ${heading} < ${bar}`);
+    assert.ok(heading - bar < 120, `rubriken ligger långt under raden med länkar: ${heading - bar} px`);
+    await context.close();
+  });
+
+  await step("Rubrikerna på undersidorna har en reservfont lika bred som Archivo på telefon", async () => {
+    const { context, page } = await visit(PHONE, "/grafisk-profil");
+    const font = await page.locator("h1").first().evaluate((el) => getComputedStyle(el).fontFamily);
+    assert.ok(font.includes("Archivo Bred Reserv"), `fick ${font}`);
+    await context.close();
+  });
+
+  await step("Små länkar går att träffa med fingret", async () => {
+    const { context, page } = await visit(PHONE, "/kontakt");
+    const missed = await page.locator("footer nav a[href]").evaluateAll((links) =>
+      links.flatMap((link) => {
+        link.scrollIntoView({ block: "center", behavior: "instant" });
+        const box = link.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.left + 4, box.top + 2);
+        return box.height >= 24 && link.contains(hit) ? [] : [`${link.textContent.trim()}: ${Math.round(box.height)} px`];
+      }),
+    );
+    assert.deepEqual(missed, []);
+    await context.close();
+
+    const { context: desktop, page: wide } = await visit({}, "/");
+    const box = await wide.getByRole("link", { name: "Scrolla vidare" }).boundingBox();
+    assert.ok(box.width >= 24 && box.height >= 24, `Scrolla vidare är ${box.width} x ${box.height} px`);
+    await desktop.close();
+  });
+
+  await step("Sidan som inte finns svarar 404 och har en egen titel", async () => {
+    const { context, page } = await newVisitor(browser);
+    const response = await page.goto(`${BASE}/finns-inte-${uniqueId()}`);
+    assert.equal(response.status(), 404);
+    assert.equal(await page.title(), "Sidan finns inte · StatLin");
+    await context.close();
+  });
+}
