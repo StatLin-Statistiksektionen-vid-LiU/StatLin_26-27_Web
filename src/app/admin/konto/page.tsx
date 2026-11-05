@@ -25,7 +25,7 @@ async function Account({ searchParams }: { searchParams: PageProps<"/admin/konto
     <>
       {sp.byt && user.must_change_password && <Notice tone="warning">Välj ett eget lösenord för att komma igång.</Notice>}
       <AdminHeader title="Mitt konto" description={user.email} />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="space-y-8 lg:col-span-3">
           <ActionForm action={changePassword} submitLabel="Byt lösenord" resetOnSuccess stickyFooter={false}>
             <FormSection title="Lösenord" description="Minst 10 tecken. En fras med flera ord är både säker och lätt att komma ihåg.">

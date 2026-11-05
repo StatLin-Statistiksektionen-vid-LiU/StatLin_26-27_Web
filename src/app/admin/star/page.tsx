@@ -35,7 +35,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
           </Link>
         }
       />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           {companies.length === 0 ? (
             <EmptyState title="Inga företag ännu">Lägg till det första med formuläret. Tills dess står det att företagen presenteras snart.</EmptyState>

@@ -27,7 +27,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
       {sp.sparad && <Notice>Partnern är tillagd.</Notice>}
       {sp.raderad && <Notice>Partnern är borttagen.</Notice>}
       <AdminHeader title="Partners" description="Företag som visas på sidan För företag." />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           {partners.length === 0 ? (
             <EmptyState title="Inga partners ännu">Lägg till den första med formuläret.</EmptyState>

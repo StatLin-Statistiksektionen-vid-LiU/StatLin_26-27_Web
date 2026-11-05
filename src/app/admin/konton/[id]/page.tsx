@@ -43,7 +43,7 @@ async function EditUser({ params }: Pick<PageProps<"/admin/konton/[id]">, "param
           )
         }
       />
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <UserForm user={user} committees={committees} />
         </div>
