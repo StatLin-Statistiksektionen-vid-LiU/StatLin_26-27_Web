@@ -1,3 +1,4 @@
+import { matchesResponsible } from "@/lib/arshjul";
 import type { DocumentCategory, SessionUser } from "@/lib/types";
 
 type Owned = { committee_id: number | null };
@@ -38,6 +39,13 @@ export function canUpdateTask(u: SessionUser, t: TaskRef): boolean {
 export function canEditTask(u: SessionUser, t: TaskRef): boolean {
   return seesAllTasks(u) || t.from_user_id === u.id;
 }
+
+/* Årshjulet och projektplanerna: alla poster läser och lägger till. Ändra får admin, den som la in det och den ansvariga posten. */
+type Stewarded = { owner_user_id: number | null; responsible: string };
+type Steward = Pick<SessionUser, "id" | "role" | "committee_id" | "post" | "committee_name">;
+
+export const canChangeWheelItem = (u: Steward, item: Stewarded) => isAdmin(u) || item.owner_user_id === u.id || matchesResponsible(u, item.responsible);
+export const canChangePlan = canChangeWheelItem;
 
 /* Grafiskt ansvar (flaggan under Konton): bilderna på hela sajten. Texterna följer fortfarande rollen. */
 export const hasDesign = (u: Pick<SessionUser, "design">) => !!u.design;

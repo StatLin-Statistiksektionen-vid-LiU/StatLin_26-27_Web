@@ -276,6 +276,50 @@ const steps: string[] = [
       (SELECT COALESCE(MIN(sort_order), 0) - 1 FROM links WHERE category = 'statlin')
     WHERE EXISTS (SELECT 1 FROM settings WHERE key = 'seeded_links');
   `,
+  /* 10: årshjulet och projektplanerna – punkter som återkommer varje år, årets läge för dem och planer vars steg är uppdrag på tavlan */ `
+  CREATE TABLE wheel_items (
+    id            INTEGER PRIMARY KEY,
+    title         TEXT NOT NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    responsible   TEXT NOT NULL DEFAULT '',                       -- post eller utskott i klartext, så att punkten överlever att konton byts
+    month         INTEGER CHECK (month BETWEEN 1 AND 12),          -- NULL = ingen bestämd månad, då gäller term
+    term          TEXT CHECK (term IN ('vt','ht')),                -- följer månaden när den är satt
+    depends_on    TEXT NOT NULL DEFAULT '',                       -- vem punkten beror på; tomt = bara på oss själva
+    template      TEXT NOT NULL DEFAULT '',                       -- mallen en projektplan från punkten börjar med
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    seed_key      TEXT UNIQUE,                                     -- förslagets nyckel: samma förslag läggs aldrig in två gånger
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    CHECK (month IS NOT NULL OR term IS NOT NULL)
+  );
+  CREATE INDEX wheel_items_month ON wheel_items(month);
+  CREATE TABLE project_plans (
+    id            INTEGER PRIMARY KEY,
+    title         TEXT NOT NULL,
+    template      TEXT NOT NULL,
+    plan_date     TEXT NOT NULL,                                   -- dagen planen siktar på, YYYY-MM-DD
+    responsible   TEXT NOT NULL DEFAULT '',
+    goal          TEXT NOT NULL DEFAULT '',
+    budget        TEXT NOT NULL DEFAULT '',
+    lessons       TEXT NOT NULL DEFAULT '',                       -- lärdomar till nästa år, visas när nästa plan skapas från samma punkt
+    owner_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    wheel_item_id INTEGER REFERENCES wheel_items(id) ON DELETE SET NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX project_plans_item ON project_plans(wheel_item_id, plan_date);
+  CREATE TABLE wheel_item_state (
+    item_id         INTEGER NOT NULL REFERENCES wheel_items(id) ON DELETE CASCADE,
+    year            INTEGER NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'oppen' CHECK (status IN ('oppen','planerad','klar','hoppad')),
+    task_id         INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+    project_plan_id INTEGER REFERENCES project_plans(id) ON DELETE SET NULL,
+    updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (item_id, year)
+  );
+  ALTER TABLE tasks ADD COLUMN project_plan_id INTEGER REFERENCES project_plans(id) ON DELETE SET NULL;
+  CREATE INDEX tasks_plan ON tasks(project_plan_id);
+  `,
 ];
 
 export function migrate(db: Database.Database) {
