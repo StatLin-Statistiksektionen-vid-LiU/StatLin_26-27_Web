@@ -19,7 +19,7 @@ async function HeroRing() {
 
 async function HeroKicker() {
   const s = await getSettings();
-  return <>{s.hero_kicker}</>;
+  return <AccentText text={s.hero_kicker} accentClassName="text-red" />;
 }
 
 /** Längre rubriker får mindre text och bredare kolumn, så att de inte trycker in i loggan. */
@@ -57,7 +57,11 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
             <h1 className={cn("display-tight leading-[1.02]", size.text)}>
               <AccentText text={title} />
             </h1>
-            {text && <p className={cn(SENTENCE, "text-white/60")}>{text}</p>}
+            {text && (
+              <p className={cn(SENTENCE, "text-white/60")}>
+                <AccentText text={text} accentClassName="text-red" />
+              </p>
+            )}
           </>
         )}
       </Editable>
@@ -104,8 +108,10 @@ export function Hero() {
         className="grid-paper pointer-events-none absolute inset-0 -z-10 text-white [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]"
       />
       <DataField className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-90" />
+      {/* data-hero-botten: meddelandet från Inställningar väntar tills det här har lämnat skärmens nederkant, se AnnouncementPill. */}
       <div
         aria-hidden
+        data-hero-botten
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-48 bg-gradient-to-t from-ink to-transparent"
       />
 

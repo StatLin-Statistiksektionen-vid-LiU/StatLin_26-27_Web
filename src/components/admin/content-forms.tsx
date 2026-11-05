@@ -220,7 +220,7 @@ export function SocialSection({ s }: { s: SiteSettings }) {
 
 export function AnnouncementSection({ s }: { s: SiteSettings }) {
   return (
-    <FormSection title="Meddelande" description="En kort rad som visas högst upp på alla sidor, t.ex. inför årsmötet. Lämna tomt för att dölja.">
+    <FormSection title="Meddelande" description="En kort rad som dyker upp längst ned på sidorna, t.ex. inför årsmötet. På startsidan väntar den tills besökaren har scrollat en bit. Lämna tomt för att dölja.">
       <Field label="Text" name="announcement">
         <TextInput name="announcement" defaultValue={s.announcement} maxLength={200} placeholder="Årsmöte 12 mars: läs handlingarna" />
       </Field>

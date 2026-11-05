@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRight, Close } from "@/components/icons";
 import { hashString } from "@/lib/utils";
 
 export function AnnouncementPill({ text, href }: { text: string; href: string | null }) {
   const key = `statlin-announcement-${hashString(text)}`;
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [overHeron, setOverHeron] = useState(true);
 
   useEffect(() => {
     let dismissed = false;
@@ -20,7 +23,21 @@ export function AnnouncementPill({ text, href }: { text: string; href: string | 
     return () => clearTimeout(t);
   }, [key]);
 
-  if (!visible) return null;
+  // På startsidan fyller heron första skärmen, med knapparna där meddelandet ligger. Det väntar därför tills heron har lämnat skärmens nederkant.
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const botten = document.querySelector("[data-hero-botten]");
+    if (!botten) return;
+    const io = new IntersectionObserver(([entry]) => setOverHeron(entry.isIntersecting), { rootMargin: "-88% 0px 0px 0px" });
+    io.observe(botten);
+    return () => {
+      io.disconnect();
+      setOverHeron(true);
+    };
+  }, [pathname]);
+
+  // Inbjudan går till företag utanför sektionen, och meddelandena är till medlemmarna.
+  if (!visible || (pathname === "/" && overHeron) || pathname.startsWith("/star/inbjudan")) return null;
   const close = () => {
     setVisible(false);
     try {
