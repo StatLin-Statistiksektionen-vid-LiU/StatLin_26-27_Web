@@ -31,7 +31,7 @@ export function WishForm() {
           name="title"
           required
           maxLength={WISH_TITLE_MAX}
-          placeholder="Hur prissätter man risk med maskininlärning?"
+          placeholder="Hur prissätter man risk?"
           aria-invalid={titleError ? true : undefined}
           aria-describedby={titleError ? "onskan-titel-fel" : undefined}
           className={inputClass}

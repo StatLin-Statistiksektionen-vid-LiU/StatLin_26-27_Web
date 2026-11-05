@@ -158,7 +158,7 @@ export async function HomeSections() {
                       />
                     )}
                     <span className="display-tight relative mt-6 text-xl normal-case">{c.short_name}</span>
-                    <span className="relative mt-2 line-clamp-2 text-sm leading-snug text-white/55">{c.tagline}</span>
+                    <span className="relative mt-2 line-clamp-4 text-sm leading-snug text-white/55">{c.tagline}</span>
                   </Link>
                 </Reveal>
               </li>
