@@ -35,8 +35,13 @@ export function NewsForm({
           </FormSection>
 
           <MoreDetails summary="Schemalägg publiceringen till en senare tidpunkt." fields={["published_at"]} defaultOpen={scheduled}>
-            <Field label="Publiceringsdatum" name="published_at" hint="Lämna tomt för nu. Ett framtida datum schemalägger nyheten.">
-              <TextInput type="datetime-local" name="published_at" defaultValue={item ? isoToLocalInput(item.published_at) : ""} />
+            <Field
+              label="Publiceringsdatum"
+              name="published_at"
+              hint={item?.published ? "Datumet som visas på nyheten. Ett framtida datum schemalägger den." : "Lämna tomt för nu. Ett framtida datum schemalägger nyheten."}
+            >
+              {/* Ett utkast har inget publiceringsdatum att visa: det sätts när nyheten publiceras, om det inte är schemalagt. */}
+              <TextInput type="datetime-local" name="published_at" defaultValue={item?.published || scheduled ? isoToLocalInput(item!.published_at) : ""} />
             </Field>
           </MoreDetails>
         </div>
