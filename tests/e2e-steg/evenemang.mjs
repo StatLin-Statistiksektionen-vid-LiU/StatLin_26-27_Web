@@ -374,6 +374,8 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
       await page.fill('input[name="published_at"]', typed);
       await Promise.all([page.waitForURL(/\/admin\/nyheter\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       const url = page.url().split("?")[0];
+      // Efter omdirigeringen ligger det gamla formuläret kvar dolt en stund, med det som skrevs. Ladda om för att läsa det som sparades.
+      await page.reload();
       const slug = await page.inputValue('input[name="slug"]');
       assert.equal(await page.inputValue('input[name="published_at"]'), shown, "tiden i formuläret");
 
