@@ -92,6 +92,17 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await create.waitFor();
     await waitForHydration(page, create);
     await page.fill('input[name="title"]', `Testkurs ${marker}`);
+    // Datumfältet släpper inte igenom ett ogiltigt datum, så anropet görs för hand som ett textfält.
+    await page.locator('input[name="closes_on"]').evaluate((el) => {
+      el.type = "text";
+      el.value = "2099-13-45";
+    });
+    await create.click();
+    await page.getByText("Datumet är inte giltigt.").waitFor();
+    await page.locator('input[name="closes_on"]').evaluate((el) => {
+      el.value = "";
+    });
+    await page.fill('input[name="title"]', `Testkurs ${marker}`);
     await create.click();
     await page.waitForURL(/\/admin\/fragelada\/\d+\?skapad=1/);
     boxUrl = new URL(page.url()).pathname;
@@ -242,6 +253,25 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await waitForHydration(page, reopen);
     await reopen.click();
     await page.getByRole("button", { name: "Stäng lådan" }).waitFor({ state: "attached" });
+  });
+
+  await step("Frågelådan: en utgången session skickar knappen till inloggningen, och lådan är orörd", async () => {
+    await switchAccount(page, OWNER);
+    await page.goto(`${BASE}${boxUrl}`);
+    await page.getByText("Inställningar för lådan").click();
+    const close = page.getByRole("button", { name: "Stäng lådan" });
+    await waitForHydration(page, close);
+    const context = page.context();
+    const session = (await context.cookies()).filter((c) => c.name === "statlin_session");
+    assert.equal(session.length, 1);
+    await context.addCookies(session.map((c) => ({ ...c, value: "utgangen" })));
+    await close.click();
+    await page.waitForURL(/\/logga-in\?next=/);
+
+    await switchAccount(page, OWNER);
+    await page.goto(`${BASE}${boxUrl}`);
+    await page.getByText("Inställningar för lådan").click();
+    await page.getByRole("button", { name: "Stäng lådan" }).waitFor();
   });
 
   await step("Frågelådan: spärren för gissningar slår till, och stoppar även rätt kod", async () => {

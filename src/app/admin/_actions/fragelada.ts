@@ -7,15 +7,16 @@ import { z } from "zod";
 import { type FormState, formObject, formVersion, invalid, STALE, zCheckbox, zOptionalId, zRequired, zText } from "@/lib/admin/form";
 import { audit, forbidden, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { canDeleteBox, canManageFragelada, ownsBox } from "@/lib/auth/permissions";
-import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue, requireUser } from "@/lib/auth/session";
 import { FRAGELADA_SETTING } from "@/lib/data/fragelada";
 import { todayLocal } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { CODE_ALPHABET, CODE_LENGTH } from "@/lib/fragelada";
+import { isValidDate } from "@/lib/projektplan-mallar";
 
 /*
  * Posternas actions. Bara ägaren kommer åt frågorna, och varje action kontrollerar det själv. Audit-loggen får bara sådant som rör
- * lådorna (skapad, borttagen, tömd, ny ägare, på och av), aldrig något om enskilda frågor.
+ * lådorna (skapad, stängd, öppnad, borttagen, tömd, ny ägare, på och av), aldrig något om enskilda frågor.
  */
 
 const BOARD = "/admin";
@@ -30,6 +31,13 @@ const idFrom = (fd: FormData) => {
   const id = Number(fd.get("id"));
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 };
+
+/** Knapparna utan formulärtext har inget fält att visa ett fel i och inget som kan gå förlorat, så en utgången session går till inloggningen och tillbaka. */
+async function buttonUser() {
+  const user = await requireUser();
+  await renewSessionIfDue();
+  return user;
+}
 
 /** Sidan, sidomenyns siffra och översikten ligger alla under /admin. */
 const revalidateInbox = () => revalidatePath(BOARD, "layout");
@@ -50,7 +58,8 @@ const boxSchema = z.object({
   closes_on: z
     .string()
     .optional()
-    .transform((v) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null)),
+    .refine((v) => !v || isValidDate(v), "Datumet är inte giltigt.")
+    .transform((v) => v || null),
 });
 
 export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -96,18 +105,18 @@ export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState
 
 /** Stäng eller öppna en låda med kod. Fasta lådor är alltid öppna när funktionen är på. */
 export async function setBoxClosed(fd: FormData): Promise<void> {
-  const user = await actionUser();
-  if ("error" in user) return;
+  const user = await buttonUser();
   const id = idFrom(fd);
   const box = id ? loadBox(id) : undefined;
   if (!box || !ownsBox(user, box) || box.slug !== null) return;
-  getDb().prepare("UPDATE question_boxes SET closed = ?, updated_at = ? WHERE id = ?").run(fd.get("closed") === "1" ? 1 : 0, nowIso(), box.id);
+  const closed = fd.get("closed") === "1";
+  getDb().prepare("UPDATE question_boxes SET closed = ?, updated_at = ? WHERE id = ?").run(closed ? 1 : 0, nowIso(), box.id);
+  audit(user.id, "update", "question_box", box.id, `${closed ? "Stängde" : "Öppnade"} lådan ${box.title}`);
   revalidateInbox();
 }
 
 export async function setQuestionHandled(fd: FormData): Promise<void> {
-  const user = await actionUser();
-  if ("error" in user) return;
+  const user = await buttonUser();
   const id = idFrom(fd);
   if (!id) return;
   getDb()
@@ -174,8 +183,8 @@ function adoptFixedOwners() {
 }
 
 export async function setFrageladaOpen(fd: FormData): Promise<void> {
-  const user = await actionUser();
-  if ("error" in user || !canManageFragelada(user)) return;
+  const user = await buttonUser();
+  if (!canManageFragelada(user)) return;
   const open = fd.get("open") === "1";
   const db = getDb();
   if (open) adoptFixedOwners();
@@ -218,7 +227,7 @@ export async function setBoxOwner(_prev: FormState, fd: FormData): Promise<FormS
   return { ok: true, message: "Ägaren är bytt." };
 }
 
-/** Nollställer siffran i sidomenyn när ägaren har öppnat lådan. */
+/** Nollställer siffran i sidomenyn när ägaren har öppnat lådan. Körs av sig själv när sidan visas, så en utgången session ska inte kasta ut någon härifrån. */
 export async function markBoxSeen(boxId: number): Promise<void> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return;
