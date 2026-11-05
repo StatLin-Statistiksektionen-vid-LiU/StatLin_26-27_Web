@@ -42,8 +42,8 @@ export function ImageField({
   const [over, setOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const upload = async (file: File) => {
-    setError(null);
+  const upload = async (file: File, note: string | null = null) => {
+    setError(note);
     setProgress(0);
     // Formuläret runt fältet kan inte sparas förrän bilden är uppladdad.
     const done = beginUpload();
@@ -73,8 +73,8 @@ export function ImageField({
         onDrop={(e) => {
           e.preventDefault();
           setOver(false);
-          const f = e.dataTransfer.files?.[0];
-          if (f) upload(f);
+          const [first, ...rest] = e.dataTransfer.files;
+          if (first) upload(first, rest.length > 0 ? `Här används bara en bild: ${first.name}. De andra laddades inte upp.` : null);
         }}
         className={cn(
           "group relative overflow-hidden rounded-2xl border-2 border-dashed transition-colors",

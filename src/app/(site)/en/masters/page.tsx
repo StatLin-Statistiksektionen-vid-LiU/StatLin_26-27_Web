@@ -9,17 +9,19 @@ import { ArrowRight, Mail } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
+import { SITE_ALTERNATES, SITE_OG_EN } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Master's students",
   description: "For students on the master's programme Statistics and Machine Learning at Linköping University: events, contacts and how to get involved in StatLin.",
-  alternates: { canonical: "/en/masters" },
+  alternates: { ...SITE_ALTERNATES, canonical: "/en/masters", languages: { sv: "/studenter/master", en: "/en/masters" } },
+  openGraph: SITE_OG_EN,
 };
 
 export default function MastersPage() {
   return (
     <div lang="en">
-      <Suspense fallback={<HeroSkeleton />}>
+      <Suspense fallback={<HeroSkeleton english />}>
         <Masters />
       </Suspense>
     </div>
@@ -37,13 +39,13 @@ async function Masters() {
           <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
             <p className="kicker text-stone">Next up</p>
             <div className="mt-2">
-              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} />) : <p className="py-6 text-stone">New events are coming soon.</p>}
+              {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} locale="en-GB" />) : <p className="py-6 text-stone">New events are coming soon.</p>}
             </div>
             <Link href="/evenemang" className="btn btn-ink mt-5 w-full">
               Full calendar <ArrowRight size={18} />
             </Link>
           </div>
-          {ubu && (
+          {!!ubu?.visible && (
             <div className="overflow-hidden rounded-[1.75rem] bg-ink p-7 text-white">
               <div className="flex items-center gap-4">
                 {ubu.logo_url && (

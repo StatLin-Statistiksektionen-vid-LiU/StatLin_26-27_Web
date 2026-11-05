@@ -10,11 +10,13 @@ let lastIp = 0;
 /**
  * En besökare med egen webbläsarkontext och egen IP-adress, så att stegets inloggningar inte tär på svitens 20 försök
  * (rate-limit.ts räknar per IP). `npm run dev` läser adressen ur X-Forwarded-For. Mot `npm start` krävs CLIENT_IP_HEADER=x-forwarded-for.
+ * `options` går vidare till kontexten, till exempel `{ javaScriptEnabled: false }`.
  */
-export async function newVisitor(browser) {
+export async function newVisitor(browser, options = {}) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     extraHTTPHeaders: { "x-forwarded-for": `${ipPrefix}.${++lastIp}` },
+    ...options,
   });
   return { context, page: await context.newPage() };
 }

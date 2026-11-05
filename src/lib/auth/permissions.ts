@@ -57,8 +57,5 @@ type BoxRef = { owner_id: number | null; slug: string | null };
 export const ownsBox = (u: Pick<SessionUser, "id">, box: BoxRef) => box.owner_id === u.id;
 export const canDeleteBox = (u: Pick<SessionUser, "id" | "role" | "committee_id">, box: BoxRef) => box.slug === null && (ownsBox(u, box) || isAdmin(u));
 export const canManageFragelada = isAdmin;
-
-export const canManageUsers = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;
-export const canManageSiteContent = isEditor;

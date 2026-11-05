@@ -10,7 +10,8 @@ import { getCommitteeById } from "@/lib/data/content";
 import { listEventsForAdmin } from "@/lib/data/events";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { listOpenTasksTo } from "@/lib/data/tasks";
-import { formatDate, formatTimestamp, nowLocal, parts } from "@/lib/dates";
+import { eventEnd, formatDate, formatTimestamp, nowLocal, parts } from "@/lib/dates";
+import { committeeHref } from "@/lib/navigation";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS, type EventItem, type SessionUser, type Task } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
@@ -63,9 +64,10 @@ async function DashboardContent({ searchParams }: { searchParams: PageProps<"/ad
   );
 }
 
-const upcomingOf = (events: EventItem[], now: string) => events.filter((e) => e.starts_at >= now.slice(0, 10)).reverse().slice(0, 5);
-const missingCovers = (events: EventItem[], now: string) => events.filter((e) => e.starts_at >= now.slice(0, 10) && !e.cover).reverse().slice(0, 6);
-const needingImages = (events: EventItem[], now: string) => events.filter((e) => e.starts_at < now && e.image_count === 0 && e.published).slice(0, 4);
+const endOf = (e: EventItem) => eventEnd(e.starts_at, e.ends_at, !!e.all_day);
+const upcomingOf = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now).reverse().slice(0, 5);
+const missingCovers = (events: EventItem[], now: string) => events.filter((e) => endOf(e) >= now && !e.cover).reverse().slice(0, 6);
+const needingImages = (events: EventItem[], now: string) => events.filter((e) => endOf(e) < now && e.image_count === 0 && e.published).slice(0, 4);
 /** "e-STIG" och "eSTIG" är samma sak – används för att inte visa samma namn två gånger. */
 const simplify = (s: string) => s.toLowerCase().replace(/[^a-z0-9åäö]/g, "");
 
@@ -98,7 +100,7 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
       : null;
   const postIsName = [committee?.short_name, committee?.name].some((n) => n && simplify(n) === simplify(user.post));
   const kicker = board ? "Styrelsen" : user.post && !postIsName ? user.post : committee?.kind === "utskott" ? "Utskott" : "Post";
-  const publicHref = !committee ? null : board ? "/sektionen/styrelsen" : committee.visible ? `/utskott/${committee.slug}` : null;
+  const publicHref = committee ? committeeHref(committee) : null;
   const accent = committee?.accent ?? "#ff0707";
 
   const actions = [

@@ -15,13 +15,25 @@ export function proxy(request: NextRequest) {
   }
   // SD-27: server actions (POST med next-action) kontrollerar sessionen själva och svarar med ett fel som formuläret visar.
   // Omdirigerades själva anropet hit tappade formuläret beskedet. Sidornas omdirigering nedan är oförändrad.
-  if (request.method === "POST" && request.headers.has("next-action")) return NextResponse.next();
-  if (!request.cookies.has("statlin_session")) {
+  const requested = requestedPath(request);
+  if (!(request.method === "POST" && request.headers.has("next-action")) && !request.cookies.has("statlin_session")) {
     const url = new URL("/logga-in", request.url);
-    url.searchParams.set("next", pathname);
+    url.searchParams.set("next", requested);
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  // Layouten och requireUser skickar den vars session gått ut till inloggningen, med vägen tillbaka hit (SB-38).
+  const headers = new Headers(request.headers);
+  headers.set("x-pathname", requested);
+  return NextResponse.next({ request: { headers } });
+}
+
+/** Adressen som efterfrågades. _rsc är Nexts eget tillägg för sidbyten i klienten och hör inte till vägen tillbaka. */
+function requestedPath(request: NextRequest): string {
+  const { pathname, searchParams } = request.nextUrl;
+  const query = new URLSearchParams(searchParams);
+  query.delete("_rsc");
+  const search = query.toString();
+  return search ? `${pathname}?${search}` : pathname;
 }
 
 function examStatsRedirect(request: NextRequest): NextResponse | null {

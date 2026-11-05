@@ -7,7 +7,7 @@ import { formatBytes } from "@/lib/utils";
 /** category låser kategorin – grafiskt ansvarig lägger bara upp grafiskt material (servern kontrollerar också). */
 export function DocumentForm({ doc, category }: { doc?: DocumentItem | null; category?: DocumentCategory }) {
   return (
-    <ActionForm action={saveDocument} submitLabel={doc ? "Spara" : "Lägg till dokument"} resetOnSuccess={!doc} stickyFooter={false}>
+    <ActionForm action={saveDocument} submitLabel={doc ? "Spara" : "Lägg till dokument"} stickyFooter={false}>
       {doc && <input type="hidden" name="id" value={doc.id} />}
       <FormSection title={doc ? "Dokument" : "Nytt dokument"}>
         <div className="grid gap-5 sm:grid-cols-2">

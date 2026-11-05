@@ -2,7 +2,7 @@
 //   npx tsx --test tests/datum.test.mjs
 import assert from "node:assert";
 import { mock, test } from "node:test";
-import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatTimeRange, isoToLocal, isoToLocalInput, isValidLocalDateTime, localToIso, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
+import { calendarMonth, calendarMonthInRange, eventEnd, eventInMonth, eventLastDay, eventSchemaDates, formatDate, formatTimeRange, isoToLocal, parts, isoToLocalInput, isValidLocalDateTime, localToIso, monthGrid, relativeDay, stockholmOffset } from "../src/lib/dates.ts";
 import { zLocalDateTime, zOptionalLocalDateTime } from "../src/lib/admin/form.ts";
 import { isFileUrl } from "../src/lib/links.ts";
 
@@ -253,4 +253,26 @@ test("ST-02: ett datetime-local-fält får tiden i Stockholm", () => {
 
 test("ST-02: en tid som inte finns i kalendern går inte att räkna om", () => {
   for (const d of FINNS_INTE) assert.throws(() => localToIso(d), RangeError, d);
+});
+
+test("SB-29: tiden på engelska", () => {
+  assert.equal(formatTimeRange("2026-08-19T00:00", null, true, "en-GB"), "All day");
+  assert.equal(formatTimeRange("2026-08-19T00:00", "2026-08-19T00:00", true, "en-GB"), "All day");
+  assert.equal(formatTimeRange("2026-08-19T00:00", "2026-08-21T00:00", true, "en-GB"), "All day until 21 August");
+  assert.equal(formatTimeRange("2026-12-30T00:00", "2027-01-02T00:00", true, "en-GB"), "All day until 2 January 2027");
+  assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-19T21:00", false, "en-GB"), "18:00–21:00");
+  assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-21T02:00", false, "en-GB"), "18:00 – 21 August 02:00");
+});
+
+test("SB-29: veckodag och månad på engelska", () => {
+  const p = parts("2026-11-07T18:00", "en-GB");
+  assert.deepEqual([p.day, p.month, p.year, p.weekday, p.weekdayShort, p.monthShort, p.monthLong, p.time], [7, 11, 2026, "Saturday", "Sat", "Nov", "November", "18:00"]);
+  assert.equal(formatDate("2027-01-02T00:00", true, "en-GB"), "2 January 2027");
+});
+
+test("SB-29: svenska är fortfarande standard", () => {
+  const p = parts("2026-11-07T18:00");
+  assert.deepEqual([p.weekday, p.weekdayShort, p.monthShort, p.monthLong], ["lördag", "lör", "nov", "november"]);
+  assert.equal(formatDate("2027-01-02T00:00", true), "2 januari 2027");
+  assert.equal(formatTimeRange("2026-08-19T00:00", "2026-08-21T00:00", true), "Heldag t.o.m. 21 augusti");
 });

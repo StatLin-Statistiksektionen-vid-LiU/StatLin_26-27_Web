@@ -2,17 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { type FormState, formObject, invalid, zCheckbox, zRequired, zText, zUrl } from "@/lib/admin/form";
+import { type FormState, formObject, invalid, zCheckbox, zOrder, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, revalidateSite } from "@/lib/admin/helpers";
 import { isEditor } from "@/lib/auth/permissions";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { markSeeded } from "@/lib/db/bootstrap";
 import { LINK_CATEGORIES, LINK_ICONS } from "@/lib/links";
 import type { LinkCategory } from "@/lib/types";
 
 const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
-const zOrder = z.coerce.number().int().min(0).max(9999).default(0);
 
 /* ---------- Länkar (redaktörer) ---------- */
 
@@ -37,13 +36,14 @@ export async function saveLink(_prev: FormState, fd: FormData): Promise<FormStat
   if (!parsed.success) return invalid(parsed.error);
   const db = getDb();
   if (id) {
-    const res = db
+    const old = db.prepare("SELECT sort_order FROM links WHERE id = ?").get(id) as { sort_order: number } | undefined;
+    if (!old) return { error: "Länken finns inte längre." };
+    db
       .prepare(
         `UPDATE links SET label=@label, description=@description, url=@url, keywords=@keywords, category=@category, icon=@icon,
           featured=@featured, sort_order=@sort_order, active=@active WHERE id=@id`,
       )
-      .run({ ...parsed.data, id });
-    if (res.changes === 0) return { error: "Länken finns inte längre." };
+      .run({ ...parsed.data, sort_order: parsed.data.sort_order ?? old.sort_order, id });
     audit(user.id, "update", "link", id, parsed.data.label);
     revalidateSite();
     return { ok: true, message: "Länken är sparad." };
@@ -53,16 +53,17 @@ export async function saveLink(_prev: FormState, fd: FormData): Promise<FormStat
       `INSERT INTO links (label, description, url, keywords, category, icon, featured, sort_order, active)
        VALUES (@label, @description, @url, @keywords, @category, @icon, @featured, @sort_order, @active)`,
     )
-    .run(parsed.data);
+    .run({ ...parsed.data, sort_order: parsed.data.sort_order ?? 0 });
   audit(user.id, "create", "link", Number(res.lastInsertRowid), parsed.data.label);
   revalidateSite();
   redirect("/admin/lankar?sparad=1");
 }
 
-export async function deleteLink(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
-  if (!isEditor(user)) redirect("/admin");
+export async function deleteLink(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
+  if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT label FROM links WHERE id = ?").get(id) as { label: string } | undefined;
@@ -70,6 +71,7 @@ export async function deleteLink(fd: FormData) {
     db.prepare("DELETE FROM links WHERE id = ?").run(id);
     markSeeded(db, "links"); // SD-17: tömda länkar fylls inte på igen vid nästa start
     audit(user.id, "delete", "link", id, row.label);
+    await renewSessionIfDue();
     revalidateSite();
   }
   redirect("/admin/lankar?raderad=1");

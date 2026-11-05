@@ -4,7 +4,7 @@ import { deleteUser, resetUserPassword } from "@/app/admin/_actions/users";
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { UserForm } from "@/components/admin/user-form";
-import { AdminHeader, Card, Notice } from "@/components/admin/ui";
+import { AdminHeader, Card } from "@/components/admin/ui";
 import { Trash } from "@/components/icons";
 import { isAdmin } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -17,22 +17,20 @@ export const metadata = { title: "Konto" };
 export default function EditUserPage(props: PageProps<"/admin/konton/[id]">) {
   return (
     <Suspense>
-      <EditUser params={props.params} searchParams={props.searchParams} />
+      <EditUser params={props.params} />
     </Suspense>
   );
 }
 
-async function EditUser({ params, searchParams }: Pick<PageProps<"/admin/konton/[id]">, "params" | "searchParams">) {
+async function EditUser({ params }: Pick<PageProps<"/admin/konton/[id]">, "params">) {
   const me = await requireUser();
   if (!isAdmin(me)) redirect("/admin?nekad=1");
-  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const { id } = await params;
   const user = await getUser(Number(id));
   if (!user) notFound();
   const [committees, activity] = await Promise.all([listCommittees(), listAudit(8, user.id)]);
   return (
     <>
-      {sp.fel === "sjalv" && <Notice tone="warning">Du kan inte ta bort ditt eget konto.</Notice>}
-      {sp.fel === "sista" && <Notice tone="warning">Det måste finnas minst en administratör.</Notice>}
       <AdminHeader
         back={{ href: "/admin/konton", label: "Konton" }}
         title={user.name}

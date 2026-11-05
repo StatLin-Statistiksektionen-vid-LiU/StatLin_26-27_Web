@@ -10,8 +10,6 @@ export type FormState = {
   data?: Record<string, string>;
 };
 
-export const initialFormState: FormState = {};
-
 /** Svaret när raden ändrats sedan formuläret laddades (se ActionForm:s version). */
 export const STALE: FormState = { error: "Någon annan har sparat – ladda om sidan." };
 
@@ -28,7 +26,7 @@ export const FILE_AND_REMOVE: FormState = {
 export const formVersion = (fd: FormData) => String(fd.get("updated_at") ?? "");
 
 /** Plattar ut zod-fel till { fält: första felmeddelandet }. */
-export function zodFieldErrors(error: z.ZodError): Record<string, string> {
+function zodFieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
     const key = String(issue.path[0] ?? "_");
@@ -60,8 +58,22 @@ export function formObject(fd: FormData): Record<string, string> {
 }
 
 /* Återanvändbara zod-delar med svenska felmeddelanden */
+// Formulär skickar radbrytningar som CRLF. Webbläsaren räknar dem som ett tecken, och det ska servern också göra.
 export const zText = (max: number, label = "Fältet") =>
-  z.string().trim().max(max, `${label} får vara högst ${max} tecken.`).default("");
+  z
+    .string()
+    .overwrite((text) => text.replace(/\r\n?/g, "\n"))
+    .trim()
+    .max(max, `${label} får vara högst ${max} tecken.`)
+    .default("");
+/**
+ * Platsen i en lista. Saknas fältet eller är det tomt svarar den undefined, och actionen behåller den gamla platsen:
+ * `default(0)` skickade annars posten högst upp i listan (SB-37).
+ */
+export const zOrder = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.coerce.number("Ordningen måste vara ett tal.").int("Ordningen måste vara ett heltal.").min(0, "Ordningen kan inte vara negativ.").max(9999, "Ordningen får vara högst 9999.").optional(),
+);
 export const zRequired = (max: number, label = "Fältet") =>
   z.string().trim().min(1, `${label} måste fyllas i.`).max(max, `${label} får vara högst ${max} tecken.`);
 export const zCheckbox = z

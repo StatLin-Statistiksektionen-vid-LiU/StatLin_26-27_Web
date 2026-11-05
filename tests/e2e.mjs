@@ -731,7 +731,7 @@ async function openDeleteConfirm(page) {
     });
 
     await step("Ladda upp tre bilder till galleriet", async () => {
-      const input = page.locator('input[type="file"][multiple]');
+      const input = page.locator('input[aria-label="Välj bilder till galleriet"]');
       await input.setInputFiles([`${IMG}/test-1.jpg`, `${IMG}/test-2.jpg`, `${IMG}/test-3.jpg`]);
       await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 3, null, { timeout: 30000 });
       const caption = page.locator('input[aria-label="Bildtext"]').first();

@@ -6,6 +6,7 @@ import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
 import { isoToLocalInput } from "@/lib/dates";
 import type { Committee, NewsItem, SessionUser } from "@/lib/types";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 export function NewsForm({
   item,
@@ -31,12 +32,17 @@ export function NewsForm({
             <Field label="Ingress" name="excerpt" hint="Kort sammanfattning som visas i listor och delningar.">
               <TextArea name="excerpt" defaultValue={item?.excerpt} rows={2} maxLength={320} />
             </Field>
-            <MarkdownEditor name="body_md" label="Text" defaultValue={item?.body_md} rows={18} />
+            <MarkdownEditor name="body_md" label="Text" defaultValue={item?.body_md} rows={18} max={TEXT_LIMITS.news} />
           </FormSection>
 
           <MoreDetails summary="Schemalägg publiceringen till en senare tidpunkt." fields={["published_at"]} defaultOpen={scheduled}>
-            <Field label="Publiceringsdatum" name="published_at" hint="Lämna tomt för nu. Ett framtida datum schemalägger nyheten.">
-              <TextInput type="datetime-local" name="published_at" defaultValue={item ? isoToLocalInput(item.published_at) : ""} />
+            <Field
+              label="Publiceringsdatum"
+              name="published_at"
+              hint={item?.published ? "Datumet som visas på nyheten. Ett framtida datum schemalägger den." : "Lämna tomt för nu. Ett framtida datum schemalägger nyheten."}
+            >
+              {/* Ett utkast har inget publiceringsdatum att visa: det sätts när nyheten publiceras, om det inte är schemalagt. */}
+              <TextInput type="datetime-local" name="published_at" defaultValue={item?.published || scheduled ? isoToLocalInput(item!.published_at) : ""} />
             </Field>
           </MoreDetails>
         </div>
