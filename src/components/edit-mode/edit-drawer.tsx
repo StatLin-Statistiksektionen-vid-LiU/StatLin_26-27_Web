@@ -167,7 +167,7 @@ function DrawerBody({ target }: { target: EditTarget }) {
   if (!result) {
     return (
       <div className="grid h-48 place-items-center">
-        <div className="size-8 animate-spin rounded-full border-2 border-ink/15 border-t-red" aria-label="Laddar" />
+        <div role="status" className="size-8 animate-spin rounded-full border-2 border-ink/15 border-t-red" aria-label="Laddar" />
       </div>
     );
   }
