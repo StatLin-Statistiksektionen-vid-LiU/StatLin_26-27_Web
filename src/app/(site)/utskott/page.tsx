@@ -54,7 +54,8 @@ async function Committees() {
                   src={c.logo_url}
                   alt={`${c.short_name}-loggan`}
                   className="relative size-32 shrink-0 object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)] transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:-translate-y-1 group-hover:rotate-[-8deg] group-hover:scale-110 md:size-40"
-                  loading="lazy"
+                  loading={i < 2 ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : undefined}
                 />
               )}
               <div className="relative mt-6 min-w-0 sm:mt-0 md:mt-6 lg:mt-0">
