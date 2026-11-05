@@ -64,13 +64,14 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
         </div>
         <div className="space-y-6">
           <FormSection title="Logga" description="Utskottsloggor regleras av det grafiska styrdokumentet. Byt bara till en godkänd version.">
-            <ImageField name="logo_media_id" label="Ladda upp ny logga" defaultImage={null} aspect="aspect-square" fit="contain" hint="PNG med transparent bakgrund blir bäst." />
             {c.logo_url && (
               <div className="flex items-center gap-3 rounded-xl bg-paper p-3 text-sm text-stone">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={c.logo_url} alt="" className="size-12 object-contain" /> Nuvarande logga
               </div>
             )}
+            {/* Ny key när loggan sparats: den nya står då som nuvarande, och fältet är tomt igen. */}
+            <ImageField key={c.logo_url ?? "ingen"} name="logo_media_id" label="Ladda upp ny logga" defaultImage={null} aspect="aspect-[5/2]" fit="contain" hint="PNG med transparent bakgrund blir bäst." />
           </FormSection>
           <FormSection title="Utseende">
             <Field label="Accentfärg" name="accent" hint="Används för detaljer och genererade omslag.">
