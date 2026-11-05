@@ -110,6 +110,12 @@ await check("En kurskod som inte finns kan inte indexeras, men en kurs kan det",
   expect(!noindex(known), "/tentastatistik/732G33 har noindex");
 });
 
+await check("Tidslinjen på startsidan", async () => {
+  const { body } = await get("/");
+  expect(body.includes('aria-label="Kommande evenemang"'), "tidslinjen saknas");
+  expect(!body.includes("marquee"), "det gamla löpbandet finns kvar");
+});
+
 await check("Språkväxlare till /en på startsidan", async () => {
   const { body } = await get("/");
   expect(/href="\/en"[^>]*hrefLang="en"|hrefLang="en"[^>]*href="\/en"/i.test(body), "länken till /en saknas");
