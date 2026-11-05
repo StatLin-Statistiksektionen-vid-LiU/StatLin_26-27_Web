@@ -174,17 +174,22 @@ export async function listGalleryAlbums(): Promise<GalleryAlbum[]> {
   const db = await readDb();
   const rows = db
     .prepare(
-      `${SELECT} WHERE e.published = 1 AND EXISTS (SELECT 1 FROM event_images ei WHERE ei.event_id = e.id)
-       ORDER BY e.starts_at DESC`,
+      `WITH numbered AS (
+         SELECT ei.event_id, ${MEDIA_JSON_COLUMNS("m")} AS media_json,
+           ROW_NUMBER() OVER (PARTITION BY ei.event_id ORDER BY ei.sort_order, ei.id) AS n
+         FROM event_images ei JOIN media m ON m.id = ei.media_id
+       ), preview AS (
+         SELECT event_id, json_group_array(json(media_json) ORDER BY n) AS preview_json
+         FROM numbered WHERE n <= 4 GROUP BY event_id
+       )
+       SELECT album.*, preview.preview_json
+       FROM (${SELECT} WHERE e.published = 1) album
+       JOIN preview ON preview.event_id = album.id
+       ORDER BY album.starts_at DESC`,
     )
-    .all() as Row[];
-  const previewStmt = db.prepare(
-    `SELECT m.* FROM event_images ei JOIN media m ON m.id = ei.media_id
-     WHERE ei.event_id = ? ORDER BY ei.sort_order, ei.id LIMIT 4`,
-  );
-  return rows.map((r) => {
-    const event = map(r);
-    const preview = (previewStmt.all(event.id) as Media[]).map((m) => toImageRef(m)!).filter(Boolean);
-    return { event, preview };
-  });
+    .all() as (Row & { preview_json: string })[];
+  return rows.map(({ preview_json, ...row }) => ({
+    event: map(row),
+    preview: (JSON.parse(preview_json) as Media[]).map((m) => toImageRef(m)!).filter(Boolean),
+  }));
 }
