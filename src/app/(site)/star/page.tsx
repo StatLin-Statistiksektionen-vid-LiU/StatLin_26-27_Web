@@ -9,7 +9,7 @@ import { listStarCompanies } from "@/lib/data/naringsliv";
 import { formatDateLong, formatTimeRange } from "@/lib/dates";
 import { COMPANY_ROLE_LABELS, countdownText, mailtoWithSubject, parseProgram, parseSeeks, SEEK_KINDS, SEEK_LABELS, type ProgramStop, type StarCompany } from "@/lib/naringsliv";
 import { STAR_COPY } from "@/lib/seed-content";
-import { safeExternalUrl } from "@/lib/utils";
+import { cn, safeExternalUrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "STAR – arbetsmarknadsdagen",
@@ -261,9 +261,9 @@ function CompanyCard({ company }: { company: StarCompany }) {
   return (
     <li id={`foretag-${company.id}`} data-seeks={company.seeks} className="star-card flex flex-col rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6">
       <div className="flex items-center gap-4">
-        <span className="grid h-16 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-2 text-star-navy">
+        <span className={cn("grid h-20 w-32 shrink-0 place-items-center overflow-hidden rounded-xl p-2.5", company.logo ? "bg-white" : "border border-white/25")}>
           {company.logo ? (
-            <SmartImage image={company.logo} sizes="96px" className="h-full w-full !bg-transparent !object-contain" alt="" />
+            <SmartImage image={company.logo} sizes="128px" className="h-full w-full !bg-transparent !object-contain" alt="" />
           ) : (
             <span className="star-type text-2xl font-light uppercase tracking-[0.1em]" aria-hidden>
               {company.name.slice(0, 2)}

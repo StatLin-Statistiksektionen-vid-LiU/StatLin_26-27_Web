@@ -85,9 +85,9 @@ export function EmptySky() {
   ];
   return (
     <svg className="block h-auto w-full" viewBox="0 0 1000 360" aria-hidden>
-      <polyline points={points.map((p) => p.join(",")).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1" strokeDasharray="3 7" />
+      <polyline points={points.map((p) => p.join(",")).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="1" strokeDasharray="3 6" vectorEffect="non-scaling-stroke" />
       {points.map(([x, y]) => (
-        <circle key={x} cx={x} cy={y} r="6" fill="var(--color-star-navy)" stroke="#fff" strokeOpacity="0.6" strokeWidth="1.25" />
+        <circle key={x} cx={x} cy={y} r="9" fill="var(--color-star-navy)" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.25" vectorEffect="non-scaling-stroke" />
       ))}
     </svg>
   );

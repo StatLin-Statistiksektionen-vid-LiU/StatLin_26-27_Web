@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Mail, MapPin, Star } from "@/components/icons";
+import { EmptySky } from "@/components/star/star-map";
 import "@/components/star/star.css";
 import { getCommitteeBySlug } from "@/lib/data/content";
 import { listLunchEvents } from "@/lib/data/events";
@@ -74,10 +75,14 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
             {open.length > 0 ? (
               <>
                 <p className="mt-3 max-w-lg text-stone">Flest stjärnor överst. En stjärna per önskemål, och vi sparar inget om vem som gav den.</p>
-                <ol className="mt-7 divide-y divide-ink/10 overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white">
-                  {open.map((w) => (
-                    <WishRow key={w.id} wish={w} litByServer={litByServer === w.id} />
-                  ))}
+                <ol className="mt-7 overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white">
+                  {open.map((w, i) =>
+                    i === 0 && w.votes > 0 ? (
+                      <WishLeader key={w.id} wish={w} litByServer={litByServer === w.id} />
+                    ) : (
+                      <WishRow key={w.id} wish={w} most={open[0].votes} litByServer={litByServer === w.id} />
+                    ),
+                  )}
                 </ol>
               </>
             ) : (
@@ -194,11 +199,16 @@ function NextLecture({ event, others }: { event: EventItem; others: EventItem[] 
           </ul>
         </div>
       ) : (
-        <a href="#onska" className="group flex flex-col justify-between rounded-[1.75rem] border border-ink/10 bg-white p-6 transition-colors hover:border-ink/30 lg:col-span-4">
-          <p className="kicker text-stone">Sedan då?</p>
-          <p className="display-tight mt-3 text-2xl">Det bestämmer du</p>
-          <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-red-deep">
-            Önska nästa föreläsning <ArrowRight size={16} />
+        <a href="#onska" className="star-sky group flex flex-col justify-between overflow-hidden rounded-[1.75rem] p-6 text-white lg:col-span-4">
+          <div>
+            <p className="kicker text-white/70">Sedan då?</p>
+            <p className="display-tight mt-3 text-2xl">Det bestämmer du</p>
+          </div>
+          <div className="mt-4 transition-transform duration-500 group-hover:-translate-y-1">
+            <EmptySky />
+          </div>
+          <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold">
+            Önska nästa föreläsning <ArrowRight size={16} className="transition-transform duration-500 group-hover:translate-x-1" />
           </span>
         </a>
       )}
@@ -221,37 +231,93 @@ function NoLecture() {
   );
 }
 
-function WishRow({ wish, litByServer }: { wish: LectureWish; litByServer: boolean }) {
-  const chipClass: Record<string, string> = {
-    onskad: "bg-paper-2 text-ink",
-    pa_gang: "bg-star-navy text-white",
-    bokad: "bg-red text-white",
-  };
+const CHIP_CLASS: Record<string, string> = {
+  onskad: "bg-paper-2 text-ink",
+  pa_gang: "bg-star-navy text-white",
+  bokad: "bg-red text-white",
+};
+
+/** Stjärnan och antalet. Bokade och påbörjade önskemål går inte att rösta på längre, men antalet står kvar. */
+function WishVote({ wish, litByServer }: { wish: LectureWish; litByServer: boolean }) {
+  if (canVoteOnWish(wish.status)) return <WishStar id={wish.id} title={wish.title} votes={wish.votes} litByServer={litByServer} />;
   return (
-    <li id={`onskemal-${wish.id}`} className="flex scroll-mt-[calc(var(--header-h)+1rem)] items-start gap-4 p-5 md:gap-6 md:p-6">
-      {canVoteOnWish(wish.status) ? (
-        <WishStar id={wish.id} title={wish.title} votes={wish.votes} litByServer={litByServer} />
-      ) : (
-        <span className="flex flex-col items-center">
-          <span className="grid size-14 place-items-center rounded-full border border-ink/10 bg-paper">
-            <Star size={24} className="fill-red text-red" />
-          </span>
-          <span className="mono-accent mt-1.5 text-sm font-semibold tabular">
-            {wish.votes}
-            <span className="sr-only"> {wish.votes === 1 ? "stjärna" : "stjärnor"}</span>
-          </span>
-        </span>
+    <span className="flex flex-col items-center">
+      <span className="relative grid size-14 place-items-center rounded-full border border-ink/10 bg-paper">
+        <Star size={24} className="fill-red text-red" />
+      </span>
+      <span className="wish-count mono-accent mt-1.5 text-sm font-semibold tabular">
+        {wish.votes}
+        <span className="sr-only"> {wish.votes === 1 ? "stjärna" : "stjärnor"}</span>
+      </span>
+    </span>
+  );
+}
+
+function WishMeta({ wish, onSky = false }: { wish: LectureWish; onSky?: boolean }) {
+  return (
+    <>
+      <span className={cn("chip", CHIP_CLASS[wish.status])}>{WISH_STATUS_LABELS[wish.status]}</span>
+      {wish.event_slug && (
+        <Link href={`/evenemang/${wish.event_slug}`} className={cn("inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline", onSky ? "text-white" : "text-red-deep")}>
+          Till föreläsningen <ArrowUpRight size={14} />
+        </Link>
       )}
+    </>
+  );
+}
+
+/** Överst på listan: det mest önskade får en egen bit himmel, med en prick per stjärna. */
+function WishLeader({ wish, litByServer }: { wish: LectureWish; litByServer: boolean }) {
+  const random = mulberry32(wish.id);
+  const dots = Array.from({ length: Math.min(wish.votes, 90) }, () => `M${Math.round(random() * 800)} ${Math.round(random() * 260)}h0`).join("");
+  return (
+    <li id={`onskemal-${wish.id}`} className="wish-leader star-sky relative isolate flex scroll-mt-[calc(var(--header-h)+1rem)] items-start gap-4 p-5 text-white md:gap-6 md:p-7">
+      <svg className="pointer-events-none absolute inset-0 -z-10 h-full w-full" viewBox="0 0 800 260" preserveAspectRatio="xMidYMid slice" aria-hidden>
+        <path d={dots} stroke="#fff" strokeOpacity="0.6" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+      <WishVote wish={wish} litByServer={litByServer} />
+      <div className="min-w-0 flex-1">
+        <p className="kicker text-white/70">Högst på himlen just nu</p>
+        <p className="display-tight mt-2 text-xl [overflow-wrap:anywhere] sm:text-2xl md:text-3xl">{wish.title}</p>
+        {wish.comment && <p className="mt-2 text-[0.95rem] text-white/85 [overflow-wrap:anywhere]">{wish.comment}</p>}
+        <p className="mt-4 flex flex-wrap items-center gap-2">
+          <WishMeta wish={wish} onSky />
+        </p>
+      </div>
+    </li>
+  );
+}
+
+/** En komet: ju fler stjärnor önskemålet har jämfört med det översta, desto längre svans. */
+function WishComet({ wish, most }: { wish: LectureWish; most: number }) {
+  if (wish.votes === 0 || most === 0) return null;
+  const tail = Math.round(24 + 150 * (wish.votes / most));
+  const y = 8;
+  const x = tail + 8;
+  return (
+    <svg className="shrink-0" width={x + 8} height="16" viewBox={`0 0 ${x + 8} 16`} aria-hidden>
+      <defs>
+        <linearGradient id={`komet-${wish.id}`}>
+          <stop offset="0" stopColor="var(--color-star-navy)" stopOpacity="0" />
+          <stop offset="1" stopColor="var(--color-star-navy)" stopOpacity="0.6" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y={y - 0.75} width={tail} height="1.5" fill={`url(#komet-${wish.id})`} />
+      <path className="fill-red" d={`M${x} ${y - 8}Q${x + 1} ${y - 1} ${x + 8} ${y}Q${x + 1} ${y + 1} ${x} ${y + 8}Q${x - 1} ${y + 1} ${x - 8} ${y}Q${x - 1} ${y - 1} ${x} ${y - 8}Z`} />
+    </svg>
+  );
+}
+
+function WishRow({ wish, most, litByServer }: { wish: LectureWish; most: number; litByServer: boolean }) {
+  return (
+    <li id={`onskemal-${wish.id}`} className="wish-row relative flex scroll-mt-[calc(var(--header-h)+1rem)] items-start gap-4 p-5 md:gap-6 md:p-6">
+      <WishVote wish={wish} litByServer={litByServer} />
       <div className="min-w-0 flex-1 pt-1">
         <p className="text-lg font-semibold leading-snug [overflow-wrap:anywhere]">{wish.title}</p>
         {wish.comment && <p className="mt-1 text-[0.95rem] text-stone [overflow-wrap:anywhere]">{wish.comment}</p>}
-        <p className="mt-3 flex flex-wrap items-center gap-2">
-          <span className={cn("chip", chipClass[wish.status])}>{WISH_STATUS_LABELS[wish.status]}</span>
-          {wish.event_slug && (
-            <Link href={`/evenemang/${wish.event_slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-red-deep underline-offset-4 hover:underline">
-              Till föreläsningen <ArrowUpRight size={14} />
-            </Link>
-          )}
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <WishMeta wish={wish} />
+          <WishComet wish={wish} most={most} />
         </p>
       </div>
     </li>

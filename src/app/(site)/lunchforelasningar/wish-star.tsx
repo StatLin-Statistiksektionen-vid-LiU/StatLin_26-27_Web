@@ -90,12 +90,12 @@ export function WishStar({ id, title, votes, litByServer = false }: { id: number
           <span key={a} className="wish-spark" style={{ "--a": `${a}deg` } as React.CSSProperties} aria-hidden />
         ))}
       </button>
-      <span className="mono-accent mt-1.5 text-sm font-semibold tabular" aria-live="polite">
+      <span className="wish-count mono-accent mt-1.5 text-sm font-semibold tabular" aria-live="polite">
         {count}
         <span className="sr-only"> {count === 1 ? "stjärna" : "stjärnor"}</span>
       </span>
       {error && (
-        <span role="alert" className="mt-1 w-28 text-center text-xs font-semibold text-red-dark">
+        <span role="alert" className="wish-count mt-1 w-28 text-center text-xs font-semibold text-red-dark">
           {error}
         </span>
       )}

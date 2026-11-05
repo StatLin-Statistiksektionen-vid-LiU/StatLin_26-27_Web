@@ -98,6 +98,11 @@
 .star-name {
   fill: rgb(255 255 255 / 0.78);
   transition: fill 0.2s;
+  /* En kant i himlens färg, så att linjerna inte går rakt igenom namnen. */
+  paint-order: stroke;
+  stroke: var(--color-star-navy);
+  stroke-width: 5px;
+  stroke-linejoin: round;
 }
 .star-seeks {
   fill: rgb(255 255 255 / 0.75);
@@ -273,6 +278,42 @@
 }
 
 /* ---------- Stjärnan på önskelistan ---------- */
+
+/* Tråden: en linje från stjärna till stjärna, så att listan blir en stjärnbild. Mitten av knappen är radens utfyllnad plus halva knappen. */
+.wish-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--color-ink) 18%, transparent);
+}
+.wish-row:first-child::before {
+  top: 2rem;
+}
+.wish-row:last-child::before {
+  bottom: auto;
+  height: 2rem;
+}
+.wish-row:first-child:last-child::before {
+  display: none;
+}
+.wish-count {
+  position: relative;
+}
+.wish-row .wish-count {
+  padding-inline: 0.35rem;
+  background: #fff;
+}
+.wish-leader [role="alert"] {
+  color: #fff;
+}
+@media (min-width: 48rem) {
+  .wish-row::before {
+    left: 3.25rem;
+  }
+}
 
 .wish-star {
   transition:
