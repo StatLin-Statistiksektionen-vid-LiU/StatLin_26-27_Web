@@ -35,7 +35,7 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
 
   return (
     <>
-      <section className="star-sky relative isolate overflow-hidden pb-40 pt-[calc(var(--header-h)+3rem)] text-white md:pb-44 md:pt-[calc(var(--header-h)+5rem)]">
+      <section className="star-sky lunch-himmel relative isolate overflow-hidden pb-40 pt-[calc(var(--header-h)+3rem)] text-white md:pb-44 md:pt-[calc(var(--header-h)+5rem)]">
         <VoteSky votes={totalVotes} />
         <div className="container-site">
           <p className="kicker text-white/70">SASU / Näringsliv</p>
@@ -148,8 +148,11 @@ function VoteSky({ votes }: { votes: number }) {
   // Var femte lyser lite starkare, som på en riktig himmel.
   const bright = dots.filter((_, i) => i % 5 === 0).join("");
   const faint = dots.filter((_, i) => i % 5 !== 0).join("");
+  // Ett svagt djup bakom rösterna, så att himlen inte blir tom innan någon har röstat.
+  const depth = Array.from({ length: 90 }, () => `M${Math.round(random() * 1600)} ${Math.round(random() * 600)}h0`).join("");
   return (
     <svg className="pointer-events-none absolute inset-0 -z-10 h-full w-full" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <path d={depth} stroke="#cddbff" strokeOpacity="0.22" strokeWidth="1.5" strokeLinecap="round" />
       {faint && <path d={faint} stroke="#fff" strokeOpacity="0.75" strokeWidth="1.8" strokeLinecap="round" />}
       {bright && <path d={bright} stroke="#fff" strokeWidth="3" strokeLinecap="round" />}
     </svg>

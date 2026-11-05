@@ -34,6 +34,11 @@
   isolation: isolate;
   background-image: none;
 }
+/* Inget ska glöda på STAR. Knappen är röd nog ändå. */
+.star-sida .btn-red,
+.star-sida .btn-red:hover {
+  box-shadow: none;
+}
 .star-himmel {
   position: sticky;
   top: 0;
@@ -74,6 +79,12 @@
     1270px 1270px,
     100% 100%;
   background-repeat: repeat, repeat, no-repeat;
+}
+/* Lunchsidans himmel: stjärnorna där är rösterna, så bakgrunden har bara ett svagt sken och ritar inga egna. */
+.star-sky.lunch-himmel {
+  background-image: radial-gradient(70rem 42rem at 85% 0, color-mix(in oklab, #3d5bb8 38%, transparent), transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 .star-himmel-yta canvas {
   position: absolute;

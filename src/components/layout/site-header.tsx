@@ -301,7 +301,9 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                           groupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                         )}
                       >
-                        <ul className="overflow-hidden pb-2">
+                        {/* Luften ligger inuti den klippta ytan. Låg den på ytan själv blev en hopfälld grupp 8 px hög och trädets stam stack fram. */}
+                        <div className="overflow-hidden">
+                        <ul className="pb-2">
                           {children.map((c, j) => {
                             const last = j === children.length - 1;
                             const here = active(c.href);
@@ -322,6 +324,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
                             );
                           })}
                         </ul>
+                        </div>
                       </div>
                     </>
                   ) : (

@@ -56,7 +56,7 @@ export default async function StarPage(props: PageProps<"/star">) {
           <div className="md:col-span-7">
             <h2 className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">STAR-sidan kommer snart</h2>
             {event && <EventFacts event={event} className="mt-4" />}
-            {settings.star_teaser && <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80">{settings.star_teaser}</p>}
+            {settings.star_teaser && <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/90">{settings.star_teaser}</p>}
           </div>
           <div className="md:col-span-5">
             <div className="flex flex-wrap gap-3 md:justify-end">
@@ -98,7 +98,7 @@ export default async function StarPage(props: PageProps<"/star">) {
         <div className="md:col-span-7">
           {event ? <CountdownFacts event={event} /> : <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">Datum kommer snart</p>}
           <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
-            {settings.star_intro && <p className="text-lg leading-relaxed text-white/80">{settings.star_intro}</p>}
+            {settings.star_intro && <p className="text-lg leading-relaxed text-white/90">{settings.star_intro}</p>}
           </Pen>
         </div>
         <div className="md:col-span-5">
@@ -136,7 +136,7 @@ export default async function StarPage(props: PageProps<"/star">) {
               <div className="mt-8 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div>
                   <p className="star-type text-2xl md:text-3xl">Företagen presenteras snart</p>
-                  <p className="mt-2 max-w-lg text-white/75">Stjärnorna tänds en efter en i takt med att företagen bekräftar. Titta in igen längre fram.</p>
+                  <p className="mt-2 max-w-lg text-white/85">Stjärnorna tänds en efter en i takt med att företagen bekräftar. Titta in igen längre fram.</p>
                 </div>
                 <a href={companyMail} className="btn btn-ghost-dark shrink-0">
                   <Mail size={18} /> Vill ni vara med?
@@ -146,7 +146,7 @@ export default async function StarPage(props: PageProps<"/star">) {
           ) : (
             <>
               <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-2xl">
-                {settings.star_companies_intro && <p className="text-lg text-white/80">{settings.star_companies_intro}</p>}
+                {settings.star_companies_intro && <p className="text-lg text-white/90">{settings.star_companies_intro}</p>}
               </Pen>
               <SeekFilter companies={companies} />
               <div className="mt-8">
@@ -175,7 +175,7 @@ export default async function StarPage(props: PageProps<"/star">) {
                 </a>
               </p>
             </div>
-            {program.length > 0 ? <Route stops={program} /> : <p className="mt-8 max-w-xl text-lg text-white/75">Programmet kommer snart.</p>}
+            {program.length > 0 ? <Route stops={program} /> : <p className="mt-8 max-w-xl text-lg text-white/85">Programmet kommer snart.</p>}
           </div>
         </section>
       )}
@@ -185,7 +185,7 @@ export default async function StarPage(props: PageProps<"/star">) {
           <div className="container-site">
             <h2 data-star-in className={H2}>Sponsorer</h2>
             <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
-              {settings.star_sponsors_intro && <p className="text-lg text-white/80">{settings.star_sponsors_intro}</p>}
+              {settings.star_sponsors_intro && <p className="text-lg text-white/90">{settings.star_sponsors_intro}</p>}
             </Pen>
             {mainSponsors.map((s) => (
               <MainSponsor key={s.id} company={s} />
@@ -246,7 +246,7 @@ export default async function StarPage(props: PageProps<"/star">) {
             <p className="kicker text-white/65">För dig som student</p>
             <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
               {settings.star_student_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_student_title}</p>}
-              {settings.star_student_text && <p className="mt-4 max-w-md text-white/80">{settings.star_student_text}</p>}
+              {settings.star_student_text && <p className="mt-4 max-w-md text-white/90">{settings.star_student_text}</p>}
             </Pen>
             <div className="mt-7 flex flex-wrap gap-3">
               {event && (
@@ -263,7 +263,7 @@ export default async function StarPage(props: PageProps<"/star">) {
             <p className="kicker text-white/65">För er som företag</p>
             <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
               {settings.star_company_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_company_title}</p>}
-              {settings.star_company_text && <p className="mt-4 max-w-md text-white/80">{settings.star_company_text}</p>}
+              {settings.star_company_text && <p className="mt-4 max-w-md text-white/90">{settings.star_company_text}</p>}
             </Pen>
             <div className="mt-7 flex flex-wrap gap-3">
               <a href={companyMail} className="btn btn-red">
@@ -332,7 +332,7 @@ function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: 
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/utskott/star.webp" alt="" width={360} height={356} className="size-14 md:size-16" />
-          <p className="kicker text-white/75">{subtitle}</p>
+          <p className="kicker text-white/85">{subtitle}</p>
         </div>
         <div className="relative mt-6 md:mt-8">
           <div className={cn("star-linje absolute left-1/2 top-[56%] h-[max(2px,0.016em)] w-screen -translate-x-1/2", WORD_SIZE)} aria-hidden />
@@ -476,7 +476,7 @@ function CompanyCard({ company, delay }: { company: StarCompany; delay: number }
           {company.role !== "utstallare" && <p className="kicker mt-1 text-white/70">{COMPANY_ROLE_LABELS[company.role]}</p>}
         </div>
       </div>
-      {company.description && <p className="mt-4 text-[0.95rem] leading-relaxed text-white/80">{company.description}</p>}
+      {company.description && <p className="mt-4 text-[0.95rem] leading-relaxed text-white/90">{company.description}</p>}
       {seeks.length > 0 && (
         <p className="mt-4 flex flex-wrap gap-1.5">
           <span className="sr-only">Söker: </span>
@@ -549,7 +549,7 @@ function MainSponsor({ company }: { company: StarCompany }) {
       <div className="md:col-span-7">
         <p className="kicker text-white/65">Huvudsponsor</p>
         <p className="star-type mt-3 text-3xl leading-tight">{company.name}</p>
-        {company.description && <p className="mt-3 max-w-md leading-relaxed text-white/80">{company.description}</p>}
+        {company.description && <p className="mt-3 max-w-md leading-relaxed text-white/90">{company.description}</p>}
       </div>
     </div>
   );

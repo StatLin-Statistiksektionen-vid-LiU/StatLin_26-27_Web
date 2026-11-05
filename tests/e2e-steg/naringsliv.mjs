@@ -164,6 +164,37 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await context.close();
   });
 
+  await step("STAR-sidans himmel tänds och stjärnfall passerar, och den står helt still för den som inte vill ha rörelse", async () => {
+    const vantaPa = async (p, vad, fraga) => {
+      const slut = Date.now() + 15000;
+      while (Date.now() < slut) {
+        if (await p.evaluate(fraga)) return;
+        await p.waitForTimeout(150);
+      }
+      assert.fail(vad);
+    };
+    const { page: p, context } = await visit();
+    const fel = [];
+    p.on("pageerror", (e) => fel.push(String(e)));
+    await p.goto(`${BASE}/star`);
+    // Stjärnorna tänds i lager som läggs ihop till en enda duk, så att inget ligger kvar och drar kraft.
+    await vantaPa(p, "himlen ska ha lagt ihop lagren och tänt de ljusa stjärnorna", () => document.querySelectorAll(".star-himmel-yta canvas").length === 1 && document.querySelectorAll(".star-ljus").length > 0);
+    await vantaPa(p, "ett stjärnfall ska ha passerat", () => document.querySelector(".star-stjarnfall").getAnimations().length > 0);
+    // Himlen ligger kvar bakom innehållet när man scrollar.
+    await p.evaluate(() => window.scrollTo(0, 1200));
+    await vantaPa(p, "himlen ska ligga kvar överst i fönstret", () => Math.abs(document.querySelector(".star-himmel").getBoundingClientRect().top) < 2);
+    assert.deepEqual(fel, [], "himlen ska inte ge fel på sidan");
+    await context.close();
+
+    const lugn = await newVisitor(browser, { reducedMotion: "reduce" });
+    await lugn.page.goto(`${BASE}/star`);
+    await vantaPa(lugn.page, "stjärnorna ska finnas även utan rörelse", () => document.querySelectorAll(".star-himmel-yta canvas").length === 1);
+    await lugn.page.waitForTimeout(700);
+    assert.equal(await lugn.page.locator(".star-ljus").count(), 0, "inga stjärnor ska andas utan rörelse");
+    assert.equal(await lugn.page.evaluate(() => document.querySelector(".star-himmel").getAnimations({ subtree: true }).length), 0, "himlen ska stå helt still");
+    await lugn.context.close();
+  });
+
   await step("Ett företag som läggs till i admin syns på /star med kort, stjärna och filter, och försvinner när det döljs", async () => {
     await switchAccount(page, ADMIN);
     await addCompany(company, "trainee", "huvudsponsor");
