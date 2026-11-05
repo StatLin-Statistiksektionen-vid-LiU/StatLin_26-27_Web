@@ -79,7 +79,7 @@ export async function UpcomingTimeline() {
           {events.length === 0 && (
             <li className="tidsaxel-hallplats tidsaxel-tom">
               <span aria-hidden className="tidsaxel-datum" />
-              <span className="tidsaxel-text display-tight block text-[1.1rem] leading-[1.15]">Håll utkik – nya evenemang kommer snart</span>
+              <span className="tidsaxel-text display-tight block text-[1.1rem] leading-[1.15]">Håll utkik, nya evenemang kommer snart</span>
             </li>
           )}
           {events.map((event, i) => {

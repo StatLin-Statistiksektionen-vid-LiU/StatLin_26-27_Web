@@ -9,7 +9,7 @@ import { listCommittees } from "@/lib/data/content";
 
 export const metadata: Metadata = {
   title: "Utskott",
-  description: "Utskotten och grupperna på StatLin – hitta ditt sammanhang, från studiebevakning till pub och idrott.",
+  description: "Utskotten och grupperna på StatLin. Hitta ditt sammanhang, från studiebevakning till pub och idrott.",
 };
 
 export default function CommitteesPage() {
@@ -22,7 +22,7 @@ export default function CommitteesPage() {
             Utsk<span className="text-red">ott</span>
           </>
         }
-        lead="Utskotten är hjärtat i sektionen. Varje utskott har sin egen logga – alla byggda på samma baslogotyp, men med sin egen bakgrundsgrafik."
+        lead="Utskotten är hjärtat i sektionen. Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik."
       />
       <Suspense fallback={<PageSkeleton />}>
         <Committees />

@@ -32,7 +32,7 @@ const PLACEHOLDER_PASSWORDS = ["byt-mig-till-nagot-langt", "admin-statlin-2026",
 export function envPasswordProblem(variable: string, password: string | undefined): string | null {
   if (password === undefined) return null;
   if (PLACEHOLDER_PASSWORDS.includes(password.trim().toLowerCase())) {
-    return `${variable} är platshållaren "${password.trim()}", som står i repot och därför är känd för alla – välj ett eget lösenord.`;
+    return `${variable} är platshållaren "${password.trim()}", som står i repot och därför är känd för alla. Välj ett eget lösenord.`;
   }
   const problem = passwordProblem(password.trim());
   return problem ? `${variable} duger inte: ${problem}` : null;

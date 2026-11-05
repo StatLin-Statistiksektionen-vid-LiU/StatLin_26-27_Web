@@ -26,7 +26,7 @@ export function FillSuggestionsButton({ action, className, children = "Fyll med 
     } catch (err) {
       unstable_rethrow(err);
       console.error(err);
-      return { error: "Kunde inte fylla på – försök igen." };
+      return { error: "Kunde inte fylla på. Försök igen." };
     }
   }, NO_STATE);
   // Beskedet tas bort när sidan göms (Activity), annars står det kvar när man kommer tillbaka.

@@ -331,7 +331,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
           {upcoming.length === 0 ? (
             <p className="mt-6 text-sm text-stone">Inga kommande evenemang. Dags att planera något?</p>
           ) : (
-            <EventList events={upcoming} meta={(e) => e.committee?.short_name ?? "—"} />
+            <EventList events={upcoming} meta={(e) => e.committee?.short_name ?? "Styrelsen"} />
           )}
         </Card>
 
@@ -467,7 +467,7 @@ function NeedsImages({ events, href = (e) => `/admin/evenemang/${e.id}#galleri` 
   return (
     <Card className="mt-6 p-6">
       <h2 className="font-bold">Saknar bilder</h2>
-      <p className="mt-1 text-sm text-stone">De här evenemangen har varit – ladda upp bilder så hamnar de i galleriet.</p>
+      <p className="mt-1 text-sm text-stone">De här evenemangen har varit. Ladda upp bilder så hamnar de i galleriet.</p>
       <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {events.map((e) => (
           <li key={e.id}>

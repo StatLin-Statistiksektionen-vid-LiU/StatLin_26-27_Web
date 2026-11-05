@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   if (!starIsLive(settings)) return { title: "STAR kommer snart", description: settings.star_teaser, robots: { index: false, follow: false } };
   return {
-    title: "STAR – arbetsmarknadsdagen",
+    title: "STAR, arbetsmarknadsdagen",
     description: "STAR är StatLins arbetsmarknadsdag i Linköping. Se vilka företag som kommer, vad de söker och hur dagen ser ut.",
   };
 }

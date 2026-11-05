@@ -53,7 +53,7 @@ export function NewsForm({
           </FormSection>
           <FormSection title="Avsändare">
             {locked ? (
-              <FixedCommittee label="Utskott" name={own ? `${own.short_name} – ${own.name}` : "Ditt utskott"} hint="Nyheten visas med er logga och på er utskottssida." />
+              <FixedCommittee label="Utskott" name={own ? `${own.short_name}: ${own.name}` : "Ditt utskott"} hint="Nyheten visas med er logga och på er utskottssida." />
             ) : (
               <>
                 <Field label="Utskott" name="committee_id">

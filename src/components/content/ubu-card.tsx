@@ -17,7 +17,7 @@ export function UbuCard({ ubu }: { ubu: Committee }) {
           <p className="display-tight mt-1 text-2xl normal-case">{ubu.short_name}</p>
         </div>
       </div>
-      <p className="mt-5 text-[0.95rem] leading-relaxed text-white/70">{ubu.tagline} Hör av dig om kurser, examination eller studiemiljö – anonymt om du vill.</p>
+      <p className="mt-5 text-[0.95rem] leading-relaxed text-white/70">{ubu.tagline} Hör av dig om kurser, examination eller studiemiljö, anonymt om du vill.</p>
       <div className="mt-6 flex flex-wrap gap-2">
         {ubu.email && (
           <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">

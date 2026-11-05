@@ -33,11 +33,11 @@ export function ConfirmButton({
   // Som i ActionForm: ett nätverksfel blir ett besked i stället för en felgräns, och Nexts redirect() kastas vidare.
   const [state, formAction, pending] = useActionState(async (_prev: FormState, fd: FormData): Promise<FormState> => {
     try {
-      return (await action(fd)) ?? { error: "Det gick inte att ta bort – ladda om sidan och försök igen." };
+      return (await action(fd)) ?? { error: "Det gick inte att ta bort. Ladda om sidan och försök igen." };
     } catch (err) {
       unstable_rethrow(err);
       console.error(err);
-      return { error: "Kunde inte ta bort – försök igen." };
+      return { error: "Kunde inte ta bort. Försök igen." };
     }
   }, NO_STATE);
   // Beskedet gäller det senaste försöket. Öppnas dialogen igen börjar den utan det.

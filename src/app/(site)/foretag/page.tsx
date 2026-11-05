@@ -16,7 +16,7 @@ import { EditModeLink } from "@/components/edit-mode/editable";
 
 export const metadata: Metadata = {
   title: "För företag",
-  description: "Samarbeta med StatLin och nå Linköpings statistik- och datastudenter. STAR – StatLins arbetsmarknadsdag.",
+  description: "Samarbeta med StatLin och nå Linköpings statistik- och datastudenter. STAR är StatLins arbetsmarknadsdag.",
 };
 
 export default function CompaniesPage() {

@@ -76,7 +76,7 @@ async function CourseStats({ params }: { params: Params }) {
           <ExamChart stats={stats} today={todayLocal()} />
         ) : (
           <p className="max-w-2xl text-lg text-stone">
-            Det finns statistik för kursen, men inget tentatillfälle har minst fem resultat. Så små grupper visar vi inte – titta hos liustats om du
+            Det finns statistik för kursen, men inget tentatillfälle har minst fem resultat. Så små grupper visar vi inte. Titta hos liustats om du
             vill se mer.
           </p>
         )}
@@ -85,7 +85,7 @@ async function CourseStats({ params }: { params: Params }) {
           <a href="https://liustats.se/" target="_blank" rel="noopener noreferrer" className="link-underline text-ink">
             liustats.se
           </a>{" "}
-          använder, och hämtas om en gång per dygn{fetchedAt ? ` – senast ${formatTimestamp(fetchedAt)}` : ""}. Den räknar skrivningar, inte
+          använder, och hämtas om en gång per dygn{fetchedAt ? `, senast ${formatTimestamp(fetchedAt)}` : ""}. Den räknar skrivningar, inte
           studenter: den som skriver om tentan räknas på varje tillfälle.
         </p>
       </section>

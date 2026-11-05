@@ -27,7 +27,7 @@ async function NewTask({ searchParams }: { searchParams: PageProps<"/admin/uppdr
       <AdminHeader
         back={{ href: "/admin/uppdrag", label: "Uppdragstavla" }}
         title="Nytt uppdrag"
-        description="Skicka något som behöver göras till en annan post – till exempel en affisch till grafiskt ansvarig eller ett inlägg till info."
+        description="Skicka något som behöver göras till en annan post, till exempel en affisch till grafiskt ansvarig eller ett inlägg till info."
       />
       <TaskForm
         recipients={recipients}

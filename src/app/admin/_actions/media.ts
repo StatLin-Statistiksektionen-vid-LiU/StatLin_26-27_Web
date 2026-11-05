@@ -15,7 +15,7 @@ export async function pruneUnusedMedia(): Promise<FormState> {
   if ("error" in user) return user;
   if (!canManageImages(user)) return forbidden();
   const { rows, files } = await pruneOrphanMedia({ olderThanDays: 7 });
-  if (rows + files === 0) return { ok: true, message: "Inget att rensa – allt som laddats upp används, eller är yngre än en vecka." };
+  if (rows + files === 0) return { ok: true, message: "Inget att rensa. Allt som laddats upp används, eller är yngre än en vecka." };
   const summary = [
     rows && plural(rows, "uppladdning som inget använde", "uppladdningar som inget använde"),
     files && plural(files, "lös fil som ingen uppladdning hör till", "lösa filer som ingen uppladdning hör till"),

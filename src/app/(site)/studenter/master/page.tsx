@@ -16,7 +16,7 @@ import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Masterprogrammet",
-  description: "Statistics and Machine Learning, 120 hp, vid Linköpings universitet – StatLin är sektionen för masterstudenterna också.",
+  description: "Statistics and Machine Learning, 120 hp, vid Linköpings universitet. StatLin är sektionen för masterstudenterna också.",
   alternates: { ...SITE_ALTERNATES, languages: { sv: "/studenter/master", en: "/en/masters" } },
 };
 

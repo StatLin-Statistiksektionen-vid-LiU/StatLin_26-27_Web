@@ -33,7 +33,7 @@ export default function ExamStatsPage(props: PageProps<"/tentastatistik">) {
           </>
         }
         fitTitle="Tentastatistik"
-        lead="Hur brukar tentan gå? Sök på kurskoden – för vilken LiU-kurs som helst – och se betygen på varje tentatillfälle."
+        lead="Hur brukar tentan gå? Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle."
       />
       {/* Sökfältet ligger över hörnet på sidhuvudet, så att förslagslistan inte klipps av det. */}
       <div className="container-site relative z-20 -mt-8 pb-16 md:pb-24">
@@ -64,7 +64,7 @@ function MoreSources() {
           </h2>
           <p className="mt-4 leading-relaxed text-stone">
             Statistiken kommer från LiU via det öppna API som liustats.se använder, och hämtas om en gång per dygn. Den räknar skrivningar, inte
-            studenter – den som skriver om tentan räknas på varje tillfälle.
+            studenter: den som skriver om tentan räknas på varje tillfälle.
           </p>
         </div>
         <ul className="grid gap-4 self-start sm:grid-cols-2 lg:col-span-8">

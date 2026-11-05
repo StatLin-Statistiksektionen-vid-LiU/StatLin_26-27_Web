@@ -15,7 +15,7 @@ import { AccentText, stripAccent } from "@/components/ui/accent-text";
 
 export const metadata: Metadata = {
   title: "Om StatLin",
-  description: "StatLin – Statistiksektionen i Linköping. Om sektionen, styrelsen och utskotten.",
+  description: "StatLin är Statistiksektionen i Linköping. Om sektionen, styrelsen och utskotten.",
 };
 
 export default function AboutPage() {

@@ -5,7 +5,7 @@
 export const LOGIN_ERRORS = {
   uppgifter: "Fel e-postadress eller lösenord.",
   forsok: "För många inloggningsförsök. Vänta en stund och försök igen.",
-  avstangt: "Kontot är avstängt – kontakta en administratör.",
+  avstangt: "Kontot är avstängt. Kontakta en administratör.",
 } as const;
 
 /** Koden för ett fel från inloggningen. Ett tomt fält har ingen egen kod: webbläsaren stoppar det innan formuläret skickas. */

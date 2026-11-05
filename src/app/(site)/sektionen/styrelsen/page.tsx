@@ -8,7 +8,7 @@ import { listBoard } from "@/lib/data/content";
 
 export const metadata: Metadata = {
   title: "Styrelsen",
-  description: "StatLins styrelse – poster, ansvarsområden och kontaktuppgifter.",
+  description: "StatLins styrelse: poster, ansvarsområden och kontaktuppgifter.",
 };
 
 export default function BoardPage() {

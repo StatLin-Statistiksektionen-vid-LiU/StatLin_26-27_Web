@@ -101,7 +101,7 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
             viewBox={LOGO_VIEWBOX}
             className="logo-mark relative h-full w-full overflow-visible"
             role="img"
-            aria-label="StatLins sektionslogga – Statistiksektionen, Linköpings universitet"
+            aria-label="StatLins sektionslogga: Statistiksektionen, Linköpings universitet"
           >
             <defs>
               <clipPath id={`${id}-disc`}>

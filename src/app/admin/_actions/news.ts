@@ -63,7 +63,7 @@ export async function saveNews(_prev: FormState, fd: FormData): Promise<FormStat
   // Det som publiceras syns för alla – en nyhet med bara en rubrik (t.ex. efter ett Enter i rubriken) publiceras inte.
   if (d.published && !d.excerpt && !d.body_md) {
     return {
-      error: "Skriv en ingress eller en text innan nyheten publiceras – eller spara den som utkast.",
+      error: "Skriv en ingress eller en text innan nyheten publiceras, eller spara den som utkast.",
       fieldErrors: { excerpt: "Fyll i en ingress eller en text för att publicera." },
     };
   }

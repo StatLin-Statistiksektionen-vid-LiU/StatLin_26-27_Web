@@ -30,7 +30,7 @@ export function LogoutForm({ children }: { children: ReactNode }) {
             window.location.replace(LOGGED_OUT);
             return;
           }
-          window.alert("Det gick inte att logga ut – försök igen.");
+          window.alert("Det gick inte att logga ut. Försök igen.");
           return;
         }
         window.location.replace(LOGGED_OUT);

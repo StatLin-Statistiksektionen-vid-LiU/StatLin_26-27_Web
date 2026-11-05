@@ -19,7 +19,7 @@ export function PruneMedia({ action }: { action: () => Promise<FormState> }) {
       } catch (err) {
         // Som ActionForm: ett fel i anropet visas här i stället för att felgränsen byter ut sidan (Nexts egna kastas vidare).
         unstable_rethrow(err);
-        setState({ error: "Det gick inte att rensa – försök igen." });
+        setState({ error: "Det gick inte att rensa. Försök igen." });
       }
     });
   };

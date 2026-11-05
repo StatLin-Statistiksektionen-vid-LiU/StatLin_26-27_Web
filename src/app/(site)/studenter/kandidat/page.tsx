@@ -11,7 +11,7 @@ import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
   title: "Kandidatprogrammet",
-  description: "Statistik och dataanalys, 180 hp, vid Linköpings universitet – programmet, studiebevakning och stöd.",
+  description: "Statistik och dataanalys, 180 hp, vid Linköpings universitet: programmet, studiebevakning och stöd.",
 };
 
 const LINKS = [

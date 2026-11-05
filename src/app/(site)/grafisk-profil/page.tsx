@@ -70,7 +70,7 @@ const PALETTES: { title: string; note: string; colors: Swatch[] }[] = [
 ];
 
 const FONTS = [
-  { name: "Arial", use: "Rubriker och titlar – versaler, fet", style: { fontFamily: "Arial, Helvetica, sans-serif", fontWeight: 700, textTransform: "uppercase" as const } },
+  { name: "Arial", use: "Rubriker och titlar, versaler och fet stil", style: { fontFamily: "Arial, Helvetica, sans-serif", fontWeight: 700, textTransform: "uppercase" as const } },
   { name: "Arial Black", use: "Alternativ till Arial", style: { fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900, textTransform: "uppercase" as const } },
   { name: "Georgia", use: "Brödtext i dokument och protokoll", style: { fontFamily: "Georgia, serif" } },
   { name: "Chaparall Pro", use: "Fritext på profilkläder, fet", style: { fontFamily: '"Chaparral Pro", "Chaparall Pro", Georgia, serif', fontWeight: 700 } },
@@ -102,7 +102,7 @@ export default function BrandPage() {
             Grafisk <span className="text-red">profil</span>
           </>
         }
-        lead="Gemensamma symboler för gamla och nya medlemmar. En interaktiv sammanfattning av StatLins grafiska styrdokument – med loggor, färgkoder och typsnitt att ladda ner."
+        lead="Gemensamma symboler för gamla och nya medlemmar. En interaktiv sammanfattning av StatLins grafiska styrdokument, med loggor, färgkoder och typsnitt att ladda ner."
         aside={
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/brand/statlin.svg" alt="" className="logo-kant mx-auto hidden w-60 animate-float md:block" />
@@ -146,7 +146,7 @@ export default function BrandPage() {
           <Reveal delay={120} className="space-y-5 text-[1.05rem] leading-relaxed text-ink/80 lg:col-span-6 lg:col-start-7">
             <p>
               Grunden för en StatLin-logga är ett <strong>cirkulärt svart band</strong> med &quot;LINKÖPINGS UNIVERSITET&quot; i vit Arial
-              nedtill. Cirkeln korsas på snedden av en <strong>röd skrivstilstext – &quot;Statlin&quot;</strong> – inspirerad av en stigande graf
+              nedtill. Cirkeln korsas på snedden av en <strong>röd skrivstilstext, &quot;Statlin&quot;</strong>, inspirerad av en stigande graf
               i upp-höger-riktning.
             </p>
             <p>
@@ -155,7 +155,7 @@ export default function BrandPage() {
             </p>
             <p className="rounded-2xl border-l-4 border-red bg-white p-5 text-[0.95rem]">
               Sektionsloggans utseende skyddas av styrdokumentet och kan endast ändras genom beslut på årsmötet. Använd alltid originalfilerna
-              nedan – rita aldrig om loggan.
+              nedan. Rita aldrig om loggan.
             </p>
           </Reveal>
         </div>
@@ -246,7 +246,7 @@ export default function BrandPage() {
         <div className="container-site">
           <BrandHeading index="5" title="Typsnitt" />
           <p className="mt-5 max-w-2xl text-ink/70">
-            Typsnitten gäller dokument, protokoll och tryck. Text på sektionshemsidan är undantagen – webben använder Archivo och JetBrains Mono,
+            Typsnitten gäller dokument, protokoll och tryck. Text på sektionshemsidan är undantagen: webben använder Archivo och JetBrains Mono,
             och Georgia för citat.
           </p>
           <ul className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
@@ -271,7 +271,7 @@ export default function BrandPage() {
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <p className="text-[1.05rem] leading-relaxed text-ink/80 lg:col-span-5">
             StatLin står för <em>Statistiksektionen i Linköping</em> och skrivs med versalt S och versalt L. Där versaler och gemener inte kan blandas
-            skrivs STATLIN. Studiesociala utskottet heter StatLins Centrala Bärseri och förkortas alltid <strong>SCB</strong> – utan punkter.
+            skrivs STATLIN. Studiesociala utskottet heter StatLins Centrala Bärseri och förkortas alltid <strong>SCB</strong>, utan punkter.
           </p>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-6 lg:col-start-7">
             {NAMES.map(([n, note]) => (
@@ -354,7 +354,7 @@ async function Material() {
       <h2 id="material-rubrik" className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)]">
         Mallar och material
       </h2>
-      <p className="mt-5 max-w-2xl text-ink/70">Med rätt loggor, färger och typsnitt från början – för affischer, presentationer och inlägg.</p>
+      <p className="mt-5 max-w-2xl text-ink/70">Med rätt loggor, färger och typsnitt från början, för affischer, presentationer och inlägg.</p>
       <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {docs.map((d) => (
           <li key={d.id}>

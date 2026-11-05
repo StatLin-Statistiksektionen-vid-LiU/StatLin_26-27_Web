@@ -16,7 +16,7 @@ export function MoveButtons({ id, first, last }: { id: number; first: boolean; l
         if (res) setError(res.error);
       } catch (err) {
         unstable_rethrow(err);
-        setError("Det gick inte att flytta posten – försök igen.");
+        setError("Det gick inte att flytta posten. Försök igen.");
       }
     });
   return (

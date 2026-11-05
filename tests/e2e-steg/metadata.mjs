@@ -47,7 +47,7 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
       return visitor.locator('form [role="alert"]').allTextContents();
     };
     assert.deepEqual(await alertText("fel=forsok"), ["För många inloggningsförsök. Vänta en stund och försök igen."]);
-    assert.deepEqual(await alertText("fel=avstangt"), ["Kontot är avstängt – kontakta en administratör."]);
+    assert.deepEqual(await alertText("fel=avstangt"), ["Kontot är avstängt. Kontakta en administratör."]);
     for (const query of ["fel=constructor", "fel=__proto__", "fel=Ring+oss+p%C3%A5+070", "fel=a&fel=b"]) {
       const res = await visitor.goto(`${BASE}/logga-in?${query}`);
       assert.equal(res.status(), 200, `${query} gav status ${res.status()}`);

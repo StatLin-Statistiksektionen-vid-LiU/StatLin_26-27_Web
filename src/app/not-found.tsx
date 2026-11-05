@@ -29,7 +29,7 @@ export default function NotFound() {
           Utanför <span className="mono-accent text-red">konfidens&shy;</span>intervallet
         </h1>
         <p className="mx-auto mt-6 max-w-md text-lg text-white/65">
-          Sidan du letar efter finns inte – eller så har den flyttats. Vi förkastar nollhypotesen att du hamnade rätt.
+          Sidan du letar efter finns inte, eller så har den flyttats. Vi förkastar nollhypotesen att du hamnade rätt.
         </p>
         <Link href="/" className="btn btn-red mt-10">
           <ArrowLeft size={18} /> Tillbaka till startsidan

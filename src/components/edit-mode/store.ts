@@ -43,8 +43,8 @@ type State = {
 
 const KEY = "statlin-redigeringslage";
 const SERVER: State = { user: null, editing: false, open: null, flash: null, dirty: false, uploading: false, asking: null };
-const UPLOADING = "En bild laddas fortfarande upp – vänta tills den är klar innan du stänger panelen.";
-export const UNSAVED = "Du har osparade ändringar – stäng ändå?";
+const UPLOADING = "En bild laddas fortfarande upp. Vänta tills den är klar innan du stänger panelen.";
+export const UNSAVED = "Du har osparade ändringar. Stäng ändå?";
 let state: State = SERVER;
 const listeners = new Set<() => void>();
 let flashTimer: ReturnType<typeof setTimeout> | undefined;

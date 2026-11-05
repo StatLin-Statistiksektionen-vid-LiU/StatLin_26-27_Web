@@ -17,7 +17,7 @@ export const SEED_COMMITTEES = [
     accent: "#ff0707",
     email: "styrelsen@statlin.se",
     tagline: "Leder sektionen och företräder statistikstudenterna i Linköping.",
-    description_md: `Styrelsen ansvarar för sektionens löpande verksamhet, ekonomi och långsiktiga riktning. Vi företräder statistikstudenterna gentemot universitetet, kåren och näringslivet – och ser till att alla utskott har det de behöver för att göra studietiden bättre.
+    description_md: `Styrelsen ansvarar för sektionens löpande verksamhet, ekonomi och långsiktiga riktning. Vi företräder statistikstudenterna gentemot universitetet, kåren och näringslivet, och ser till att alla utskott har det de behöver för att göra studietiden bättre.
 
 Styrelsen väljs på sektionsmötet och sitter ett verksamhetsår. Vill du engagera dig, har en idé eller bara undrar något? Hör av dig eller kom förbi på ett styrelsemöte.`,
   },
@@ -37,7 +37,7 @@ Styrelsen väljs på sektionsmötet och sitter ett verksamhetsår. Vill du engag
 - Kursutvärderingar och återkoppling till lärare
 - Kontakt med programansvariga och studievägledning
 
-Trädet i vår logga – fem grenar som förgrenar sig i många små – står för hur utbildningen växer åt flera håll.`,
+Trädet i vår logga, fem grenar som förgrenar sig i många små, står för hur utbildningen växer åt flera håll.`,
   },
   {
     slug: "sasu",
@@ -48,7 +48,7 @@ Trädet i vår logga – fem grenar som förgrenar sig i många små – står f
     accent: "#ff0707",
     email: "sasu@statlin.se",
     tagline: "Bygger broar mellan statistikstudenter och arbetslivet.",
-    description_md: `SASU knyter ihop studenterna med framtida arbetsgivare. Vi anordnar lunchföreläsningar, case-kvällar och företagsbesök – och tillsammans med SCB:s sponsoransvariga står vi bakom **STAR**, StatLins arbetsmarknadsdag.
+    description_md: `SASU knyter ihop studenterna med framtida arbetsgivare. Vi anordnar lunchföreläsningar, case-kvällar och företagsbesök, och tillsammans med SCB:s sponsoransvariga står vi bakom **STAR**, StatLins arbetsmarknadsdag.
 
 Loggans sju prickar sammanlänkade i ett nätverk symboliserar just det: kontakter som leder vidare.`,
   },
@@ -60,7 +60,7 @@ Loggans sju prickar sammanlänkade i ett nätverk symboliserar just det: kontakt
     logo_url: "/brand/utskott/scb.webp",
     accent: "#d5252b",
     email: "scb@statlin.se",
-    tagline: "Sektionsmästeriet – sittningar, fester och gemenskap.",
+    tagline: "Sektionsmästeriet: sittningar, fester och gemenskap.",
     description_md: `SCB är StatLins studiesociala utskott, sektionsmästeriet. Vi ordnar sittningar, sektionsfester och allt däremellan som gör att man lär känna sina kursare på riktigt.
 
 Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag, röd fluga och röd-svart-randiga strumpor. Gamla mästerimedlemmar kallas för **XCB**.`,
@@ -74,7 +74,7 @@ Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag,
     accent: "#e8a33d",
     email: "statpub@statlin.se",
     tagline: "Pubkvällar för hela sektionen.",
-    description_md: `StatPub håller i sektionens pubverksamhet – från lugna afterworks till temapubar som folk pratar om i veckor. Alla är välkomna, oavsett om du dricker öl, alkoholfritt eller bara kommer för sällskapet.`,
+    description_md: `StatPub håller i sektionens pubverksamhet, från lugna afterworks till temapubar som folk pratar om i veckor. Alla är välkomna, oavsett om du dricker öl, alkoholfritt eller bara kommer för sällskapet.`,
   },
   {
     slug: "stig",
@@ -85,7 +85,7 @@ Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag,
     accent: "#111111",
     email: "stig@statlin.se",
     tagline: "Fotboll, innebandy och allt som får pulsen att stiga.",
-    description_md: `STIG samlar sektionen kring idrott. Vi bokar hallar, ställer upp i korpen och ordnar prova-på-aktiviteter. Ingen förkunskap krävs – det viktiga är att det är kul.`,
+    description_md: `STIG samlar sektionen kring idrott. Vi bokar hallar, ställer upp i korpen och ordnar prova-på-aktiviteter. Ingen förkunskap krävs, det viktiga är att det är kul.`,
   },
   {
     slug: "estig",
@@ -96,7 +96,7 @@ Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag,
     accent: "#2e3192",
     email: "estig@statlin.se",
     tagline: "LAN, turneringar och spelkvällar.",
-    description_md: `eSTIG är StatLins e-idrottsgrupp. Vi ordnar LAN, turneringar och spelkvällar – från tävlingsinriktat till sällskapsspel. Tetrisbitarna i loggan säger det mesta.`,
+    description_md: `eSTIG är StatLins e-idrottsgrupp. Vi ordnar LAN, turneringar och spelkvällar, från tävlingsinriktat till sällskapsspel. Tetrisbitarna i loggan säger det mesta.`,
   },
   {
     slug: "amo",
@@ -106,8 +106,8 @@ Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag,
     logo_url: "/brand/utskott/amo.webp",
     accent: "#111111",
     email: "amo@statlin.se",
-    tagline: "Studiemiljö och trivsel – för alla.",
-    description_md: `Arbetsmiljöombudet arbetar för en trygg och inkluderande studiemiljö, både i studierna och i sektionens verksamhet. Har du upplevt något som inte känns okej? Hör av dig – vi behandlar det konfidentiellt.`,
+    tagline: "Studiemiljö och trivsel för alla.",
+    description_md: `Arbetsmiljöombudet arbetar för en trygg och inkluderande studiemiljö, både i studierna och i sektionens verksamhet. Har du upplevt något som inte känns okej? Hör av dig, vi behandlar det konfidentiellt.`,
   },
 ] as const;
 
@@ -126,20 +126,20 @@ export const SEED_PAGES: { slug: string; title: string; lead: string; body_md: s
   {
     slug: "om",
     title: "Om *StatLin*",
-    lead: "StatLin – Statistiksektionen i Linköping – är sektionen för alla som läser statistik vid Linköpings universitet.",
+    lead: "StatLin, Statistiksektionen i Linköping, är sektionen för alla som läser statistik vid Linköpings universitet.",
     body_md: `## Vad gör en sektion?
 
-En sektion är studenternas egen förening på programmet. Vi ordnar det sociala – sittningar, pubar, idrott och spelkvällar – men också det som påverkar själva utbildningen: studiebevakning, kursutvärderingar och kontakt med arbetslivet. Allt drivs ideellt av studenter.
+En sektion är studenternas egen förening på programmet. Vi ordnar det sociala (sittningar, pubar, idrott och spelkvällar), men också det som påverkar själva utbildningen: studiebevakning, kursutvärderingar och kontakt med arbetslivet. Allt drivs ideellt av studenter.
 
 ## Grupperingar och gemenskap
 
 > Statistikstudenten vet mycket om grupperingar, både vad som skiljer dem åt och vad som för dem samman.
 
-Det står i vårt grafiska styrdokument, och det sammanfattar sektionen ganska bra. StatLin är liten nog för att alla ska känna igen varandra, men tillräckligt stor för att det alltid ska hända något. Gamla och nya medlemmar delar samma symboler – den rödsvarta overallen, loggan och traditionerna.
+Det står i vårt grafiska styrdokument, och det sammanfattar sektionen ganska bra. StatLin är liten nog för att alla ska känna igen varandra, men tillräckligt stor för att det alltid ska hända något. Gamla och nya medlemmar delar samma symboler: den rödsvarta overallen, loggan och traditionerna.
 
 ## Engagera dig
 
-Det enklaste sättet att engagera sig är att dyka upp på ett evenemang. Vill du göra mer finns det plats i alla utskott, och varje år väljs en ny styrelse på sektionsmötet. Ingen erfarenhet krävs – bara lust.
+Det enklaste sättet att engagera sig är att dyka upp på ett evenemang. Vill du göra mer finns det plats i alla utskott, och varje år väljs en ny styrelse på sektionsmötet. Ingen erfarenhet krävs, bara lust.
 
 ## Namnet
 
@@ -148,7 +148,7 @@ StatLin står för *Statistiksektionen i Linköping* och skrivs med versalt S oc
   {
     slug: "lankar",
     title: "Länkar",
-    lead: "Schema, tentor, Lisam och allt annat du behöver under studietiden – samlat på ett ställe. Fäst dina favoriter med stjärnan så hamnar de överst.",
+    lead: "Schema, tentor, Lisam och allt annat du behöver under studietiden, samlat på ett ställe. Fäst dina favoriter med stjärnan så hamnar de överst.",
     body_md: "",
   },
   {
@@ -160,14 +160,14 @@ StatLin står för *Statistiksektionen i Linköping* och skrivs med versalt S oc
   {
     slug: "ny-student",
     title: "Ny student",
-    lead: "Grattis till platsen! Här är allt du behöver veta inför starten – på kandidaten eller mastern.",
+    lead: "Grattis till platsen! Här är allt du behöver veta inför starten, på kandidaten eller mastern.",
     body_md: `## Mottagningen
 
 De första veckorna är fyllda av aktiviteter där du lär känna dina kursare, äldre studenter och Linköping. Allt är frivilligt och det finns alltid alkoholfria alternativ. Schemat publiceras under **Evenemang** och i våra kanaler i god tid innan terminsstart.
 
 ## Overallen
 
-Statistikstudenter bär **svart overall med röda revärer** – från halsen längs ärmarna och längs benens utsida. Ditt namn eller smeknamn sys på i rött tyg, och sektionsloggan sitter på ryggen. Du får veta hur du beställer under mottagningen.
+Statistikstudenter bär **svart overall med röda revärer**, från halsen längs ärmarna och längs benens utsida. Ditt namn eller smeknamn sys på i rött tyg, och sektionsloggan sitter på ryggen. Du får veta hur du beställer under mottagningen.
 
 ## Vanliga frågor
 
@@ -194,7 +194,7 @@ Prata med någon du litar på i sektionen, vårt arbetsmiljöombud eller univers
   {
     slug: "utbildning",
     title: "Kandidat",
-    lead: "Statistik och dataanalys vid Linköpings universitet – och hur sektionen hjälper dig genom studierna.",
+    lead: "Statistik och dataanalys vid Linköpings universitet, och hur sektionen hjälper dig genom studierna.",
     body_md: `## Programmet
 
 **Statistik och dataanalys, kandidatprogram (180 hp)** ges på Campus Valla och leder till en filosofie kandidatexamen med statistik som huvudområde. Programmet blandar matematik och statistisk teori med programmering, maskininlärning och tillämpade projekt mot verkliga data.
@@ -205,18 +205,18 @@ För dig som vill vidare finns masterprogrammet **Statistics and Machine Learnin
 
 Utbildningsutskottet (UBU) bevakar att utbildningen håller hög kvalitet. Vi sammanställer synpunkter, deltar i programråd och följer upp kursutvärderingar tillsammans med lärarna.
 
-- **Har du synpunkter på en kurs?** Kontakta UBU – vi tar det vidare och behandlar det konfidentiellt.
+- **Har du synpunkter på en kurs?** Kontakta UBU, så tar vi det vidare och behandlar det konfidentiellt.
 - **Kursutvärderingar** är det viktigaste verktyget för att förbättra kurser. Fyll i dem!
 - **Studievägledning** finns på universitetet för frågor om studieplanering och behörighet.
 
 ## Hjälp och stöd
 
-Universitetet erbjuder studenthälsa, studieverkstad och stöd vid funktionsnedsättning. Hör av dig till oss om du inte vet vart du ska vända dig – vi hjälper dig att hitta rätt.`,
+Universitetet erbjuder studenthälsa, studieverkstad och stöd vid funktionsnedsättning. Hör av dig till oss om du inte vet vart du ska vända dig, så hjälper vi dig att hitta rätt.`,
   },
   {
     slug: "master",
     title: "Master",
-    lead: "Läser du Statistics and Machine Learning? StatLin är din sektion också – här är det viktigaste för att komma igång.",
+    lead: "Läser du Statistics and Machine Learning? StatLin är din sektion också. Här är det viktigaste för att komma igång.",
     body_md: `## Programmet
 
 **Statistics and Machine Learning (120 hp)** är ett tvåårigt masterprogram vid Linköpings universitet som ges helt på engelska. Det bygger vidare på statistik, maskininlärning och programmering, och många av studenterna kommer från andra universitet och länder.
@@ -227,23 +227,23 @@ Sektionen representerar kandidat- och masterstudenterna lika mycket. Alla evenem
 
 - **Kom på ett evenemang.** Allt vi ordnar finns i kalendern.
 - **Prata med vår masteransvariga** i styrelsen om du har frågor eller idéer för masterstudenterna.
-- **Engagera dig** i ett utskott – fester, idrott, spel, karriär eller utbildning.
+- **Engagera dig** i ett utskott: fester, idrott, spel, karriär eller utbildning.
 
 ## Frågor om studierna?
 
-UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination eller studiemiljö – de behandlar det konfidentiellt.`,
+UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination eller studiemiljö. De behandlar det konfidentiellt.`,
   },
   {
     slug: "foretag",
     title: "För företag",
-    lead: "Nå Linköpings statistik- och data-studenter – framtidens analytiker, data scientists och statistiker.",
+    lead: "Nå Linköpings statistik- och data-studenter, framtidens analytiker, data scientists och statistiker.",
     body_md: `## Varför StatLin?
 
-Våra medlemmar läser statistik, programmering och maskininlärning och möter arbetslivet med både teoretiskt djup och praktisk erfarenhet av riktiga data. Vi är en liten sektion – vilket betyder att ni når rätt personer, inte en anonym massa.
+Våra medlemmar läser statistik, programmering och maskininlärning och möter arbetslivet med både teoretiskt djup och praktisk erfarenhet av riktiga data. Vi är en liten sektion, vilket betyder att ni når rätt personer, inte en anonym massa.
 
 ## Det här kan vi göra tillsammans
 
-- **STAR – StatLins arbetsmarknadsdag.** Sektionens största arbetsmarknadsevenemang.
+- **STAR, StatLins arbetsmarknadsdag.** Sektionens största arbetsmarknadsevenemang.
 - **Lunchföreläsningar och case-kvällar** där studenterna får prova på era verkliga problem.
 - **Exjobb, praktik och sommarjobb** som vi sprider i våra kanaler.
 - **Profilkläder.** Sponsorloggor kan tryckas längs ärmarna på styrelsens och mästeriets hoodies.
@@ -262,14 +262,14 @@ Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg s
   {
     slug: "en",
     title: "StatLin in English",
-    lead: "StatLin is the student association for everyone who studies statistics at Linköping University – on the bachelor's programme Statistik och dataanalys and the master's programme Statistics and Machine Learning.",
+    lead: "StatLin is the student association for everyone who studies statistics at Linköping University, on the bachelor's programme Statistik och dataanalys and the master's programme Statistics and Machine Learning.",
     body_md: `## What we do
 
-StatLin – *Statistiksektionen i Linköping* – is run entirely by students, on a voluntary basis. We take care of the social side of student life, from sittnings (formal student dinners) and pubs to sports and game nights. We also work on the education itself: following up on course quality, passing on student feedback and connecting students with future employers.
+StatLin (*Statistiksektionen i Linköping*) is run entirely by students, on a voluntary basis. We take care of the social side of student life, from sittnings (formal student dinners) and pubs to sports and game nights. We also work on the education itself: following up on course quality, passing on student feedback and connecting students with future employers.
 
 ## Everyone is welcome
 
-You are part of StatLin whether you speak Swedish or not. Most of our events are open to everyone in the section. If an event description is in Swedish, just ask the organisers – most of us are happy to switch to English.
+You are part of StatLin whether you speak Swedish or not. Most of our events are open to everyone in the section. If an event description is in Swedish, just ask the organisers. Most of us are happy to switch to English.
 
 ## Get involved
 
@@ -278,7 +278,7 @@ The easiest way to get involved is to turn up at an event. If you want to do mor
   {
     slug: "en-masters",
     title: "Master's students",
-    lead: "Studying Statistics and Machine Learning at LiU? StatLin is your student association too – here is how to get started.",
+    lead: "Studying Statistics and Machine Learning at LiU? StatLin is your student association too. Here is how to get started.",
     body_md: `## Welcome
 
 The master's programme Statistics and Machine Learning is a two-year programme taught in English. Whether you did your bachelor's here or are new to Linköping, StatLin is a good way to meet people from both programmes.
@@ -287,11 +287,11 @@ The master's programme Statistics and Machine Learning is a two-year programme t
 
 - **Come to an event.** Everything we organise is in the calendar, and you can add it to your phone so you never miss anything.
 - **Say hi to the board.** You will find everyone's e-mail address on the contact page.
-- **Join a committee** if you want to organise things yourself – parties, sports, gaming, careers or education.
+- **Join a committee** if you want to organise things yourself: parties, sports, gaming, careers or education.
 
 ## Questions about your studies?
 
-UBU, our education committee, works for the quality of both programmes. Contact them about courses, exams or your study environment – they treat it confidentially.
+UBU, our education committee, works for the quality of both programmes. Contact them about courses, exams or your study environment. They treat it confidentially.
 
 For housing, residence permits and other practical matters, Linköping University's support for international students is the best place to start.`,
   },
@@ -313,7 +313,7 @@ export const SEED_LINKS: SeedLink[] = [
   { label: "Skriva ut", description: "Utskrift, kopiering och skanning", url: "https://print.liu.se/", category: "it", keywords: "papercut skanna kopiera skrivare", icon: "printer", featured: true },
   { label: "Tentamensanmälan", description: "Anmäl dig till tentor i Lisam", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Tentamensanm%C3%A4lan.aspx", category: "tentor", keywords: "tentaanmälan anmälan tenta", icon: "pen", featured: true },
   { label: "E-post", description: "LiU-mejlen i Outlook", url: "https://outlook.office.com/mail/", category: "it", keywords: "outlook epost mejl mail", icon: "mail", featured: true },
-  { label: "Tentastatistik", description: "Betyg per tentatillfälle – sök på kurskod", url: "/tentastatistik", category: "tentor", keywords: "betyg statistik godkända underkända", icon: "chart", featured: true },
+  { label: "Tentastatistik", description: "Betyg per tentatillfälle, sök på kurskod", url: "/tentastatistik", category: "tentor", keywords: "betyg statistik godkända underkända", icon: "chart", featured: true },
   // Studier
   { label: "Kursrum (Lisam)", description: "Material och inlämningar för dina kurser", url: "https://liuonline.sharepoint.com/sites/Lisam/SitePages/Kurser-och-program.aspx", category: "studier", keywords: "lisam kurssida kursrum inlämning" },
   { label: "Kursregistrering (Ladok)", description: "Registrera dig på terminens kurser", url: "https://www.student.ladok.se/student/app/studentwebb/", category: "studier", keywords: "ladok registrera kurs" },
@@ -352,7 +352,7 @@ export const SEED_LINKS: SeedLink[] = [
   { label: "StuFF", description: "Studentkåren för filosofiska fakulteten", url: "https://stuff.liu.se/", category: "stod", keywords: "studentkår kår" },
   // StatLin
   { label: "Hjälpmedel", description: "Fusklappar, GitHub-länkar och guider per program", url: "/studenter/hjalpmedel", category: "statlin", keywords: "fusklapp formelblad github kod guide" },
-  { label: "UBU – studiebevakning", description: "Problem med en kurs? Säg till", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
+  { label: "UBU: studiebevakning", description: "Problem med en kurs? Säg till", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
   { label: "Evenemang", description: "Allt StatLin ordnar", url: "/evenemang", category: "statlin", keywords: "event sittning pub" },
   { label: "Kalenderflöde", description: "Prenumerera på evenemangen i din kalender", url: "/kalender.ics", category: "statlin", keywords: "ical ics kalender prenumerera" },
   { label: "Dokument", description: "Stadgar, protokoll och styrdokument", url: "/dokument", category: "statlin", keywords: "stadgar protokoll" },

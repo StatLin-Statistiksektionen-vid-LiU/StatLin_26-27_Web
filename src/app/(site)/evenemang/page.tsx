@@ -18,7 +18,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/evenemang">
   const { vy, manad, utskott } = await searchParams;
   return {
     title: "Evenemang",
-    description: "Sittningar, pubar, idrott, föreläsningar och sektionsmöten – allt som händer på StatLin.",
+    description: "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Allt som händer på StatLin.",
     alternates: { ...SITE_ALTERNATES, canonical: "/evenemang" },
     // Kalendervyn och filtren är samma innehåll under andra adresser.
     robots: vy !== undefined || manad !== undefined || utskott !== undefined ? { index: false } : undefined,
@@ -145,7 +145,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
         <div className="mt-12 rounded-[1.75rem] border border-dashed border-ink/20 p-14 text-center">
           <p className="display-tight text-2xl">Tomt i kalendern</p>
           <p className="mt-2 text-stone">
-            {committeeName ? `${committeeName} har inga kommande evenemang just nu.` : "Inga kommande evenemang just nu – håll utkik!"}
+            {committeeName ? `${committeeName} har inga kommande evenemang just nu.` : "Inga kommande evenemang just nu. Håll utkik!"}
           </p>
         </div>
       ) : (

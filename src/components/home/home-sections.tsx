@@ -104,7 +104,7 @@ export async function HomeSections() {
             </div>
           ) : (
             <div className="mt-14 rounded-[1.75rem] border border-dashed border-ink/20 p-12 text-center text-stone">
-              Inga evenemang inlagda just nu – håll utkik!
+              Inga evenemang inlagda just nu. Håll utkik!
             </div>
           )}
           <Reveal className="mt-10">
@@ -169,7 +169,7 @@ export async function HomeSections() {
                 <Link href="/sektionen" className="group flex h-full flex-col items-center justify-center gap-4 px-5 py-10 text-center transition-colors hover:bg-red">
                   <span className="grid size-16 place-items-center rounded-full border border-white/20 text-2xl transition-transform duration-500 group-hover:rotate-90 group-hover:border-white">+</span>
                   <span className="display-tight text-xl">Engagera dig</span>
-                  <span className="text-sm text-white/55 group-hover:text-white/85">Alla utskott söker folk – ingen erfarenhet krävs.</span>
+                  <span className="text-sm text-white/55 group-hover:text-white/85">Alla utskott söker folk, ingen erfarenhet krävs.</span>
                 </Link>
               </li>
             )}
@@ -211,7 +211,7 @@ export async function HomeSections() {
               <div className="relative">
                 <h2 className="display text-[clamp(2.4rem,5vw,4.4rem)] max-[22.5rem]:text-[10vw]">Ny student?</h2>
                 <p className="mt-4 max-w-md text-lg text-white/85">
-                  Mottagningen, overallen och allt du undrar inför första dagen – på kandidaten eller mastern.
+                  Mottagningen, overallen och allt du undrar inför första dagen, på kandidaten eller mastern.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-3 font-semibold">
                   Läs mer
@@ -239,7 +239,7 @@ export async function HomeSections() {
                 <p className="text-[clamp(2.4rem,5vw,4.4rem)] font-light uppercase leading-none tracking-[0.18em] [font-stretch:110%] max-[22.5rem]:text-[10vw]">STAR</p>
                 <div className="mt-2 h-[3px] w-40 bg-[#8f1d1d]" aria-hidden />
                 <p className="mt-5 max-w-md text-lg text-white/80">
-                  StatLins arbetsmarknadsdag – och fler sätt att möta Linköpings statistik- och datastudenter.
+                  StatLins arbetsmarknadsdag, och fler sätt att möta Linköpings statistik- och datastudenter.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-3 font-semibold">
                   {starIsLive(settings) ? "Vilka kommer?" : "Fler sätt att samarbeta"}

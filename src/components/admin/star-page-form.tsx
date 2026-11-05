@@ -17,7 +17,7 @@ export function StarPageForm({ s, events, onSaved }: { s: SiteSettings; events: 
             <option value="">Automatiskt</option>
             {events.map((e) => (
               <option key={e.id} value={e.id}>
-                {e.title} – {formatDate(e.starts_at, true)}
+                {e.title}, {formatDate(e.starts_at, true)}
               </option>
             ))}
           </Select>

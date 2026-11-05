@@ -102,7 +102,7 @@ export function ActionForm({
       } catch (err) {
         unstable_rethrow(err);
         console.error(err);
-        return { error: "Kunde inte spara – försök igen." };
+        return { error: "Kunde inte spara. Försök igen." };
       }
     },
     [action],

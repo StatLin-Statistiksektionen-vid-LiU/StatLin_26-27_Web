@@ -58,7 +58,7 @@ function stamp(iso: string): string {
   return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
-export function buildCalendar(events: EventItem[], siteUrl: string, name = "StatLin – evenemang"): string {
+export function buildCalendar(events: EventItem[], siteUrl: string, name = "StatLins evenemang"): string {
   const host = new URL(siteUrl).host;
   const lines = [
     "BEGIN:VCALENDAR",

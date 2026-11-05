@@ -713,7 +713,7 @@ async function openDeleteConfirm(page) {
       await page.fill('textarea[name="summary"]', "Ett evenemang skapat av det automatiska testet.");
       await page.fill('textarea[name="body_md"]', "## Program\n- Mingel\n- **Middag**\n\nVälkomna!");
       await page.fill('input[name="location"]', "Kårallen");
-      await page.selectOption('select[name="committee_id"]', { label: "SCB – StatLins Centrala Bärseri" });
+      await page.selectOption('select[name="committee_id"]', { label: "SCB: StatLins Centrala Bärseri" });
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/\d+\?skapad=1/), page.getByRole("button", { name: "Publicera", exact: true }).click()]);
       await page.getByText("Evenemanget är publicerat!").waitFor();
     });
@@ -802,7 +802,7 @@ async function openDeleteConfirm(page) {
       assert.ok(!titles.some((t) => t.includes("LAN")), "SCB ska inte se eSTIG:s evenemang");
       await page.goto(`${BASE}/admin/evenemang/ny`);
       assert.equal(await page.locator('select[name="committee_id"]').count(), 0, "utskottet ska inte gå att välja");
-      await page.getByText("SCB – StatLins Centrala Bärseri").waitFor();
+      await page.getByText("SCB: StatLins Centrala Bärseri").waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-committee-new.png` });
     });
 
@@ -921,7 +921,7 @@ async function openDeleteConfirm(page) {
       await page.fill('input[name="name"]', "Test Testsson");
       await page.fill('input[name="email"]', "stig@statlin.se");
       await page.fill('input[name="post"]', "Idrottsansvarig");
-      await page.selectOption('select[name="committee_id"]', { label: "STIG – StatLins Idrottsgrupp" });
+      await page.selectOption('select[name="committee_id"]', { label: "STIG: StatLins Idrottsgrupp" });
       await page.getByRole("button", { name: "Skapa konto" }).click();
       await page.getByText("Kontot för stig@statlin.se är skapat").waitFor();
       const pw = await page.locator("code").first().textContent();

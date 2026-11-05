@@ -20,7 +20,7 @@ export default function ErrorPage({ error, retry }: { error: unknown; retry: () 
       <div className="relative w-full max-w-xl">
         <p className="kicker text-red">Något gick fel</p>
         <h1 className="display mt-5 text-[clamp(1.9rem,6vw,3.5rem)]">Sidan kunde inte visas</h1>
-        <p className="mx-auto mt-6 max-w-md text-lg text-white/65">Ett oväntat fel inträffade. Försök igen – hjälper det inte, ladda om sidan eller gå till startsidan.</p>
+        <p className="mx-auto mt-6 max-w-md text-lg text-white/65">Ett oväntat fel inträffade. Försök igen. Hjälper det inte, ladda om sidan eller gå till startsidan.</p>
         {digest && <p className="mt-4 font-mono text-xs text-white/40">Felkod {digest}</p>}
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <button type="button" onClick={() => retry()} className="btn btn-red">

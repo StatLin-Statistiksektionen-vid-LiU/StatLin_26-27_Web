@@ -204,7 +204,7 @@ export function PlanSteps({
           <label className="min-w-0 flex-1 basis-44">
             <span className="mb-1 block text-[0.78rem] font-semibold">Mottagare på tavlan</span>
             <select name="to" value={to} onChange={(e) => setTo(e.target.value)} className="h-[2.4rem] w-full rounded-lg pointer-coarse:h-11 border border-ink/15 bg-white px-2.5 text-sm">
-              <option value="">Öppet – vem som helst kan ta det</option>
+              <option value="">Öppet, vem som helst kan ta det</option>
               {board.length > 0 && (
                 <optgroup label="Styrelsen">
                   {board.map((r) => (

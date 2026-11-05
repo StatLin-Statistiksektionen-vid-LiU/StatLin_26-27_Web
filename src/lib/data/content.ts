@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   tagline: "Sektionen för dig som läser statistik och dataanalys eller Statistics and Machine Learning vid Linköpings universitet.",
   hero_kicker: "Statistiksektionen i Linköping",
   hero_title: "Sektionen för *statistik*, dataanalys och maskininlärning vid LiU",
-  hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet – drivet av studenter, för studenter.",
+  hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet. Drivet av studenter, för studenter.",
   hero_ring_color: "red",
   band_color: "vit",
   home_intro: "Vi är statistikstudenternas sektion i Linköping. Här möts *gemenskap*, *utbildning* och vägen ut i *arbetslivet*.",

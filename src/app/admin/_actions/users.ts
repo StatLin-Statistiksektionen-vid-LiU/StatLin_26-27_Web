@@ -68,7 +68,7 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
   audit(me.id, "create", "user", Number(res.lastInsertRowid), d.email);
   return {
     ok: true,
-    message: `Kontot för ${d.email} är skapat. Ge personen lösenordet nedan – det visas bara en gång och måste bytas vid första inloggningen.`,
+    message: `Kontot för ${d.email} är skapat. Ge personen lösenordet nedan. Det visas bara en gång och måste bytas vid första inloggningen.`,
     data: { password, email: d.email },
   };
 }

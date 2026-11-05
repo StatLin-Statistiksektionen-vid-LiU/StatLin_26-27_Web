@@ -18,7 +18,7 @@ export function LogoutOthersButton() {
             // Svaret läses: utan giltig session loggades inget ut, och knappen får inte påstå det.
             const res = await logoutOtherSessions();
             if (res.ok) setDone(true);
-            else setError(res.error ?? "Det gick inte – försök igen.");
+            else setError(res.error ?? "Det gick inte. Försök igen.");
           })
         }
         className="btn btn-ghost btn-sm mt-4 bg-white disabled:opacity-60"

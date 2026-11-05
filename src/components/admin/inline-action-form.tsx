@@ -15,7 +15,7 @@ export function InlineActionForm({ action, className, children }: { action: (fd:
     } catch (err) {
       unstable_rethrow(err);
       console.error(err);
-      return { error: "Det gick inte att spara – försök igen." };
+      return { error: "Det gick inte att spara. Försök igen." };
     }
   }, NO_STATE);
   // Beskedet tas bort när sidan göms (Activity): när man kommer tillbaka kan man ha loggat in igen.

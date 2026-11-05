@@ -138,7 +138,7 @@ async function TaskDetail({
                 <button type="submit" className="btn btn-red w-full">
                   <Users size={17} /> Jag tar den
                 </button>
-                <p className="mt-2 text-xs text-stone">Uppdraget är öppet – den som tar det blir mottagare.</p>
+                <p className="mt-2 text-xs text-stone">Uppdraget är öppet. Den som tar det blir mottagare.</p>
               </TaskActionForm>
             )}
           </Card>
@@ -148,7 +148,7 @@ async function TaskDetail({
               <Meta label="Från">
                 <PersonChip person={task.from} />
               </Meta>
-              <Meta label="Till">{task.to_user_id === null ? <span className="font-semibold text-red-deep">Öppet – vem som helst</span> : <PersonChip person={task.to} />}</Meta>
+              <Meta label="Till">{task.to_user_id === null ? <span className="font-semibold text-red-deep">Öppet för alla</span> : <PersonChip person={task.to} />}</Meta>
               {task.due_date && (
                 <Meta label="Klart senast">
                   <DueLabel date={task.due_date} done={task.status === "klar"} />

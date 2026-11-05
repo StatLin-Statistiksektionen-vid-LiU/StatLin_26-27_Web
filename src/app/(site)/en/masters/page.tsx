@@ -59,7 +59,7 @@ async function Masters() {
                   </p>
                 </div>
               </div>
-              <p className="mt-5 text-[0.95rem] leading-relaxed text-white/70">Questions about courses, exams or your study environment? Contact UBU – anonymously if you prefer.</p>
+              <p className="mt-5 text-[0.95rem] leading-relaxed text-white/70">Questions about courses, exams or your study environment? Contact UBU, anonymously if you prefer.</p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {ubu.email && (
                   <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">

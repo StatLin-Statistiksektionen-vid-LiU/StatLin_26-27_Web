@@ -74,7 +74,7 @@ export function MarkdownEditor({
   /** En i taget: bilderna hamnar i den ordning de valdes, och servern slipper optimera flera samtidigt. */
   const onImages = async (files: File[]) => {
     const images = files.filter(isImageFile);
-    const problems = images.length < files.length ? ["Bara bilder kan infogas här – de andra filerna hoppades över."] : [];
+    const problems = images.length < files.length ? ["Bara bilder kan infogas här. De andra filerna hoppades över."] : [];
     setError(problems[0] ?? null);
     if (images.length === 0) return;
     setUploading(true);

@@ -26,7 +26,7 @@ export function TaskActionForm({
     } catch (err) {
       unstable_rethrow(err);
       console.error(err);
-      return { error: "Kunde inte spara – försök igen." };
+      return { error: "Kunde inte spara. Försök igen." };
     }
   }, NO_STATE);
   // Beskedet gäller det senaste klicket. Det tas bort när sidan göms (Activity), för när man kommer tillbaka kan man ha

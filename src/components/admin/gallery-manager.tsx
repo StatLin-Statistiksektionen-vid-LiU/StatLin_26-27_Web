@@ -77,7 +77,7 @@ export function GalleryManager({
       return true;
     } catch (err) {
       unstable_rethrow(err);
-      setNotice("Det gick inte att spara – ladda om sidan och försök igen.");
+      setNotice("Det gick inte att spara. Ladda om sidan och försök igen.");
       return false;
     }
   };
@@ -126,7 +126,7 @@ export function GalleryManager({
 
   const addFiles = (files: File[]) => {
     const images = files.filter(isImageFile);
-    setNotice(images.length < files.length ? "Bara bilder kan läggas i galleriet – de andra filerna hoppades över." : null);
+    setNotice(images.length < files.length ? "Bara bilder kan läggas i galleriet. De andra filerna hoppades över." : null);
     if (images.length === 0) return;
     const jobs = images.map((file) => ({ file, key: `${file.name}-${file.size}-${Math.random().toString(36).slice(2)}`, order: nextOrder.current++ }));
     setPending((p) => [...p, ...jobs.map((j) => ({ key: j.key, file: j.file, name: j.file.name, preview: URL.createObjectURL(j.file), progress: 0 }))]);
@@ -254,7 +254,7 @@ export function GalleryManager({
         </span>
         <div>
           <p className="font-semibold">Dra in bilder här</p>
-          <p className="text-sm text-stone">eller välj flera på en gång – de optimeras automatiskt, och bilderna på sajten saknar platsdata (originalet sparas internt, utan att vara åtkomligt från webben).</p>
+          <p className="text-sm text-stone">eller välj flera på en gång. De optimeras automatiskt, och bilderna på sajten saknar platsdata (originalet sparas internt, utan att vara åtkomligt från webben).</p>
         </div>
         <button type="button" onClick={() => inputRef.current?.click()} className="btn btn-ink btn-sm">
           <ImageIcon size={15} /> Välj bilder

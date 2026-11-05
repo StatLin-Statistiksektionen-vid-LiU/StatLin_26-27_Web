@@ -8,7 +8,7 @@ export const SITE_OG = {
   type: "website",
   locale: "sv_SE",
   siteName: "StatLin",
-  images: [{ url: "/og.png", width: 1200, height: 630, alt: "StatLin – Statistiksektionen i Linköping" }],
+  images: [{ url: "/og.png", width: 1200, height: 630, alt: "StatLin · Statistiksektionen i Linköping" }],
 } satisfies NonNullable<Metadata["openGraph"]>;
 
 export const SITE_OG_EN = { ...SITE_OG, locale: "en_GB" } satisfies NonNullable<Metadata["openGraph"]>;

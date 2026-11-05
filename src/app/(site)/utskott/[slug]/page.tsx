@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/utskott/[slug]">)
   const { slug } = await params;
   const c = await getCommitteeBySlug(slug);
   if (!c || !c.visible) return { title: "Utskottet hittades inte" };
-  return { title: `${c.short_name} – ${c.name}`, description: c.tagline };
+  return { title: `${c.short_name}: ${c.name}`, description: c.tagline };
 }
 
 export default function CommitteePage(props: PageProps<"/utskott/[slug]">) {

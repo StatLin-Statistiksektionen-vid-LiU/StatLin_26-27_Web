@@ -82,14 +82,14 @@ export function EventForm({
           </FormSection>
           <FormSection title="Arrangör">
             {lockedCommittee ? (
-              <FixedCommittee label="Utskott" name={own ? `${own.short_name} – ${own.name}` : "Ditt utskott"} hint="Evenemanget visas på er utskottssida och i kalendern." />
+              <FixedCommittee label="Utskott" name={own ? `${own.short_name}: ${own.name}` : "Ditt utskott"} hint="Evenemanget visas på er utskottssida och i kalendern." />
             ) : (
               <Field label="Utskott" name="committee_id">
                 <Select name="committee_id" defaultValue={String(event?.committee_id ?? user.committee_id ?? "")}>
                   <option value="">Ingen / hela sektionen</option>
                   {committees.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.short_name} – {c.name}
+                      {c.short_name}: {c.name}
                     </option>
                   ))}
                 </Select>

@@ -115,7 +115,7 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     await setAccountActive(email, false);
     await person.page.fill('input[name="title"]', `Ska inte sparas ${uniqueId()}`);
     await person.page.getByRole("button", { name: "Spara som utkast" }).click();
-    await person.page.getByText("Du har loggats ut – logga in i en ny flik och försök igen.").waitFor();
+    await person.page.getByText("Du har loggats ut. Logga in i en ny flik och försök igen.").waitFor();
     assert.equal((await person.context.request.get(`${BASE}${LOGGED_IN_API}`)).status(), 401, "redigeringens API efter avstängningen");
     await person.page.goto(`${BASE}/admin`);
     await person.page.waitForURL(/\/logga-in/);
@@ -163,7 +163,7 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     const title = `Från annat ursprung ${uniqueId()}`;
     await admin.page.fill('input[name="title"]', title);
     await admin.page.getByRole("button", { name: "Spara som utkast" }).click();
-    await admin.page.getByText("Kunde inte spara – försök igen.").waitFor();
+    await admin.page.getByText("Kunde inte spara. Försök igen.").waitFor();
     await admin.page.unrouteAll();
     await admin.page.goto(`${BASE}/admin/nyheter`);
     await admin.page.getByRole("heading", { name: "Nytt" }).first().waitFor();

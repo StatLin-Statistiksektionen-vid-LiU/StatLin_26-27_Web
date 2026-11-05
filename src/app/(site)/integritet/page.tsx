@@ -42,14 +42,14 @@ export default function PrivacyPage() {
       <PageHero
         kicker="Om sajten"
         title="Integritet"
-        lead="Vad sajten sparar om dig som besöker den och om sektionens poster – och hur länge."
+        lead="Vad sajten sparar om dig som besöker den och om sektionens poster, och hur länge."
       />
       <section className="container-prose py-16 md:py-24">
         <div className="prose-statlin">
           <h2>Besökare</h2>
           <p>
             Allt på sajten går att läsa utan att logga in. Sajten använder inga analysverktyg och laddar ingenting från andra
-            webbplatser, och den sätter inga kakor på besökare – den enda kakan är inloggningskakan för sektionens poster.
+            webbplatser, och den sätter inga kakor på besökare. Den enda kakan är inloggningskakan för sektionens poster.
           </p>
           <p>
             Några val sparas bara i din webbläsare och skickas aldrig till servern: vilka länkar du har fäst på länksidan, att du
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
           </p>
           <p>
             Uppdragstavlan sparar uppdrag och kommentarer med vem som skrivit dem, vem uppdraget gäller och när. De syns bara för
-            inloggade poster – ett privat uppdrag bara för avsändaren, mottagaren, administratörerna och redaktörerna – och finns
+            inloggade poster (ett privat uppdrag bara för avsändaren, mottagaren, administratörerna och redaktörerna) och finns
             kvar tills uppdraget raderas (rubriken står kvar i revisionsloggen); då raderas kommentarerna med det. Raderas ett konto
             står texten kvar, utan namn.
           </p>
@@ -87,15 +87,15 @@ export default function PrivacyPage() {
 
           <h2>Revisionsloggen</h2>
           <p>
-            Sajten loggar vem som skapat, ändrat eller tagit bort något i adminpanelen och när – med rubriken eller namnet på det
-            som ändrades, för konton e-postadressen –, varje inloggning och varje misslyckat inloggningsförsök – med den
-            e-postadress som skrevs in, men utan IP-adress. Inloggningar och misslyckade försök raderas efter 90 dagar, allt annat
+            Sajten loggar vem som skapat, ändrat eller tagit bort något i adminpanelen och när (med rubriken eller namnet på det
+            som ändrades, för konton e-postadressen), varje inloggning och varje misslyckat inloggningsförsök (med den
+            e-postadress som skrevs in, men utan IP-adress). Inloggningar och misslyckade försök raderas efter 90 dagar, allt annat
             i loggen efter 24 månader.
           </p>
 
           <h2>Innehåll och bilder</h2>
           <p>
-            Det som posterna lägger upp – evenemang, nytt, styrelsens namn och e-postadresser, bilder och dokument – är
+            Det som posterna lägger upp (evenemang, nytt, styrelsens namn och e-postadresser, bilder och dokument) är
             publikt tills det tas bort i adminpanelen. Bilder publiceras som omkodade kopior utan inbäddade uppgifter som
             kamerans GPS-position. Originalet sparas internt med sina uppgifter, går inte att nå från webben och raderas med
             bilden. Dokument publiceras som de laddas upp.

@@ -222,7 +222,7 @@ export function AnnouncementSection({ s }: { s: SiteSettings }) {
   return (
     <FormSection title="Meddelande" description="En kort rad som visas högst upp på alla sidor, t.ex. inför årsmötet. Lämna tomt för att dölja.">
       <Field label="Text" name="announcement">
-        <TextInput name="announcement" defaultValue={s.announcement} maxLength={200} placeholder="Årsmöte 12 mars – läs handlingarna" />
+        <TextInput name="announcement" defaultValue={s.announcement} maxLength={200} placeholder="Årsmöte 12 mars: läs handlingarna" />
       </Field>
       <Field label="Länk" name="announcement_url">
         <TextInput name="announcement_url" defaultValue={s.announcement_url} placeholder="/dokument" />
@@ -256,7 +256,7 @@ export function StarSection({ s, events }: { s: SiteSettings; events: Pick<Event
           <option value="">Automatiskt</option>
           {events.map((e) => (
             <option key={e.id} value={e.id}>
-              {e.title} – {formatDate(e.starts_at, true)}
+              {e.title}, {formatDate(e.starts_at, true)}
             </option>
           ))}
         </Select>

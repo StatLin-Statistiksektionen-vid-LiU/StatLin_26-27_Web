@@ -52,7 +52,7 @@ export function UserForm({ user, committees }: { user?: UserListItem | null; com
             <option value="">{role === "committee" ? "Välj utskott…" : "Inget"}</option>
             {committees.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.short_name} – {c.name}
+                {c.short_name}: {c.name}
               </option>
             ))}
           </Select>

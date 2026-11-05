@@ -10,7 +10,7 @@ import { SITE_ALTERNATES, SITE_OG_EN } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "StatLin in English",
-  description: "StatLin is the student association for statistics students at Linköping University – on both the bachelor's and the master's programme.",
+  description: "StatLin is the student association for statistics students at Linköping University, on both the bachelor's and the master's programme.",
   alternates: { ...SITE_ALTERNATES, canonical: "/en", languages: { sv: "/", en: "/en" } },
   openGraph: SITE_OG_EN,
 };

@@ -12,7 +12,7 @@ import { listFeaturedLinks } from "@/lib/data/links";
 
 export const metadata: Metadata = {
   title: "Nya studenter",
-  description: "Välkommen till StatLin – oavsett om du börjar på kandidaten eller mastern. Mottagningen, overallen och vanliga frågor.",
+  description: "Välkommen till StatLin, oavsett om du börjar på kandidaten eller mastern. Mottagningen, overallen och vanliga frågor.",
 };
 
 export default function NewStudentPage() {

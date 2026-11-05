@@ -44,7 +44,7 @@ export const WHEEL_SUGGESTIONS: WheelSuggestion[] = [
   item("mottagning-plan", "Mottagningen: schema och faddrar", 6, null, "SCB", "Schemat måste vara klart före sommaren, och faddrarna behöver veta vad som gäller.", "Faddrarna och LiU:s upprop"),
   item("mottagning", "Mottagningen", 8, null, "SCB", "Nya studenter börjar. Overaller, gasque och allt däremellan.", "", "evenemang"),
   item("hostmote", "Sektionsmöte på hösten", 10, null, "Sekreterare", "Kallelse, handlingar och protokoll. Verksamhetsplanen och kompletteringsval tas upp här."),
-  item("star", "STAR – arbetsmarknadsdagen", 10, null, "Näringslivsansvarig", "Sektionens största arbetsmarknadsevenemang. Företag, program och mässa.", "Företagen som ställer ut", "star"),
+  item("star", "STAR, arbetsmarknadsdagen", 10, null, "Näringslivsansvarig", "Sektionens största arbetsmarknadsevenemang. Företag, program och mässa.", "Företagen som ställer ut", "star"),
   item("hostsittning", "Höstsittning", 10, null, "SCB", "Mästeriet dukar upp för höstens finaste sittning.", "", "sittning"),
   item("julsittning", "Julsittning", 12, null, "SCB", "Terminens sista sittning, med julbord och snapsvisor.", "", "sittning"),
   item("bokslut", "Halvårskoll av ekonomin", 12, null, "Kassör", "Stäm av mot budgeten och samla ihop kvitton före årsskiftet."),

@@ -14,7 +14,7 @@ import { todayLocal } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "Länkar",
-  description: "Schema, tentor, Lisam och tentastatistik för alla LiU-kurser – allt du behöver som student, samlat på ett ställe.",
+  description: "Schema, tentor, Lisam och tentastatistik för alla LiU-kurser. Allt du behöver som student, samlat på ett ställe.",
 };
 
 export default function LinksPage() {

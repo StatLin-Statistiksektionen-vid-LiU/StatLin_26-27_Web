@@ -91,7 +91,7 @@ function HeaderView({ pathname }: { pathname: string | null }) {
         )}
       >
         <div className="container-site flex h-[var(--header-h)] items-center justify-between gap-6">
-          <Link href="/" className="group flex items-center gap-3" aria-label="StatLin – startsida">
+          <Link href="/" className="group flex items-center gap-3" aria-label="StatLin, startsida">
             <span
               className={cn(
                 "relative block h-9 overflow-hidden transition-all duration-700 ease-[var(--ease-out-expo)]",
