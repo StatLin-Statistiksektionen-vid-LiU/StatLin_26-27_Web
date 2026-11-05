@@ -75,7 +75,7 @@ export async function HomeSections() {
                   key={s.label}
                   className={`relative p-6 md:p-7 ${i % 2 === 0 ? "border-r" : ""} ${i < 2 ? "border-b" : ""} border-ink/10`}
                 >
-                  <dt className="kicker text-stone">{s.label}</dt>
+                  <dt className="kicker pr-6 text-stone">{s.label}</dt>
                   <dd className="display mt-4 text-[clamp(2.6rem,5vw,3.8rem)] text-ink">
                     <CountUp value={s.value} />
                   </dd>
@@ -256,7 +256,10 @@ export async function HomeSections() {
   );
 }
 
-/** Stjärnhimmel med en punkt-linje-graf, inspirerad av STAR-loggan. */
+/**
+ * Stjärnhimmel med en punkt-linje-graf, inspirerad av STAR-loggan.
+ * Lägena är procent och radierna pixlar: med en viewBox som sträcks ut blir stjärnorna ovaler på breda ytor.
+ */
 export function StarField() {
   const stars = Array.from({ length: 70 }, (_, i) => {
     const x = (i * 137.5) % 100;
@@ -273,28 +276,23 @@ export function StarField() {
     [90, 22],
   ];
   return (
-    <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+    <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
       <defs>
         <radialGradient id="star-glow" cx="80%" cy="10%" r="80%">
           <stop offset="0" stopColor="#3d5bb8" stopOpacity="0.55" />
           <stop offset="1" stopColor="#0b1530" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect width="100" height="100" fill="url(#star-glow)" />
+      <rect width="100%" height="100%" fill="url(#star-glow)" />
       {stars.map((s, i) => (
-        <circle key={i} cx={s.x} cy={s.y} r={s.r * 0.18} fill="#fff" opacity={s.o} />
+        <circle key={i} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r * 1.1} fill="#fff" opacity={s.o} />
       ))}
-      <polyline
-        points={constellation.map((p) => p.join(",")).join(" ")}
-        fill="none"
-        stroke="#fff"
-        strokeOpacity="0.6"
-        strokeWidth="0.25"
-        vectorEffect="non-scaling-stroke"
-        className="transition-all duration-700"
-      />
+      {constellation.slice(1).map(([x, y], i) => {
+        const [fromX, fromY] = constellation[i];
+        return <line key={i} x1={`${fromX}%`} y1={`${fromY}%`} x2={`${x}%`} y2={`${y}%`} stroke="#fff" strokeOpacity="0.45" strokeWidth="0.75" />;
+      })}
       {constellation.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="0.5" fill="#fff" />
+        <circle key={i} cx={`${x}%`} cy={`${y}%`} r="2.5" fill="#fff" />
       ))}
     </svg>
   );
