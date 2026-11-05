@@ -79,8 +79,22 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Ett tryck ska märkas, men utan telefonens hårda standardfärg över hela kort och länkar. */
+    -webkit-tap-highlight-color: rgb(128 128 128 / 0.16);
     text-rendering: optimizeLegibility;
     scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
+
+  /* Två snabba tryck på en knapp (nästa bild, nästa månad) ska bli två tryck, inte inzoomning på iPhone. Scrollning och nypzoom fungerar som vanligt. */
+  a,
+  button,
+  label,
+  summary,
+  select,
+  input,
+  textarea,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   /* Den publika sajten börjar och slutar mörkt. Drar man förbi kanten på en iPhone ska det inte synas en ljus rand. */
