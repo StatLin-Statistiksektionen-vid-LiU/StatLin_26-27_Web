@@ -7,17 +7,20 @@ import { Eye } from "@/components/icons";
 /**
  * Använder en riktig server action som form-action: formuläret fungerar då även innan
  * sidans JavaScript laddats (eller helt utan), och lösenordet skickas alltid som POST.
- * E-postadressen skickas tillbaka vid fel så att fältet står kvar efter återställningen.
+ * Med JavaScript kommer felet i state, och e-postadressen står kvar efter återställningen.
+ * Utan JavaScript leder actionen tillbaka hit och felet kommer som `error` från adressen.
+ * E-postadressen ska inte stå i en adress, så den får man då skriva igen.
  */
-export function LoginForm({ children }: { children?: ReactNode }) {
+export function LoginForm({ children, error }: { children?: ReactNode; error?: string }) {
   const [state, action, pending] = useActionState(login, {});
   const [show, setShow] = useState(false);
+  const message = state.error ?? error;
   return (
     <form action={action} className="mt-8 space-y-4">
       {children}
-      {state.error && (
+      {message && (
         <p role="alert" className="rounded-xl border border-red/30 bg-red/[0.06] px-4 py-3 text-sm font-semibold text-red-dark">
-          {state.error}
+          {message}
         </p>
       )}
       <div>

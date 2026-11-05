@@ -4,10 +4,10 @@ import { Hero } from "@/components/home/hero";
 import { HomeSections } from "@/components/home/home-sections";
 import { MarqueeFallback, UpcomingMarquee } from "@/components/home/upcoming-marquee";
 import { HomeSkeleton } from "@/components/ui/skeletons";
+import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
-// alternates ersätter rotlayoutens, så kalenderflödet måste med här också.
 export const metadata: Metadata = {
-  alternates: { canonical: "/", languages: { sv: "/", en: "/en" }, types: { "text/calendar": "/kalender.ics" } },
+  alternates: { ...SITE_ALTERNATES, canonical: "/", languages: { sv: "/", en: "/en" } },
 };
 
 export default function HomePage() {

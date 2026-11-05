@@ -1,4 +1,5 @@
-export type Role = "admin" | "editor" | "committee";
+export const ROLE_VALUES = ["admin", "editor", "committee"] as const;
+export type Role = (typeof ROLE_VALUES)[number];
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administratör",
@@ -117,7 +118,7 @@ export interface EventItem {
   /** Satt när en administratör granskat evenemanget. Styr aldrig om det visas på sajten. */
   checked_at: string | null;
   checked_by: number | null;
-  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent"> | null;
+  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent" | "visible" | "kind"> | null;
   cover: ImageRef | null;
   image_count: number;
 }
@@ -146,11 +147,12 @@ export interface NewsItem {
   author_post: string | null;
   created_at: string;
   updated_at: string;
-  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent"> | null;
+  committee: Pick<Committee, "id" | "slug" | "name" | "short_name" | "logo_url" | "accent" | "visible" | "kind"> | null;
   cover: ImageRef | null;
 }
 
-export type DocumentCategory = "styrdokument" | "protokoll" | "grafiskt" | "ovrigt";
+export const DOCUMENT_CATEGORY_VALUES = ["styrdokument", "protokoll", "grafiskt", "ovrigt"] as const;
+export type DocumentCategory = (typeof DOCUMENT_CATEGORY_VALUES)[number];
 
 export const DOCUMENT_CATEGORIES: Record<DocumentCategory, string> = {
   styrdokument: "Stadgar & reglemente",
@@ -256,10 +258,12 @@ export interface LinkItem {
 
 export type Program = "kandidat" | "master";
 
-export type ResourceCategory = "fusklapp" | "kod" | "guide" | "ovrigt";
+export const RESOURCE_CATEGORY_VALUES = ["fusklapp", "kod", "guide", "ovrigt"] as const;
+export type ResourceCategory = (typeof RESOURCE_CATEGORY_VALUES)[number];
 
 /** bada = syns under både Kandidat och Master. */
-export type ResourceProgram = Program | "bada";
+export const RESOURCE_PROGRAM_VALUES = ["kandidat", "master", "bada"] as const;
+export type ResourceProgram = (typeof RESOURCE_PROGRAM_VALUES)[number];
 
 export interface ResourceItem {
   id: number;

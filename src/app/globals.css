@@ -341,25 +341,37 @@
     white-space: nowrap;
   }
 
+  /* Utan JavaScript kommer innehållet aldrig i skelettets ställe, så då ska det inte heller pulsera. */
+  html:not(.js) .animate-pulse {
+    display: none;
+  }
+
   /* Reveal-animation som triggas av <Reveal> (IntersectionObserver). */
-  .js .reveal {
+  .reveal[data-hydrated] {
     opacity: 0;
     transform: translate3d(0, 28px, 0);
+  }
+  /* Övergången står här så att bara intoningen animeras, inte när blocket göms. */
+  .reveal[data-hydrated][data-shown="true"] {
+    opacity: 1;
+    transform: none;
     transition:
       opacity 0.9s var(--ease-out-expo),
       transform 1.1s var(--ease-out-expo);
     transition-delay: var(--reveal-delay, 0ms);
   }
-  .js .reveal[data-shown="true"] {
-    opacity: 1;
-    transform: none;
-  }
   @media (prefers-reduced-motion: reduce) {
-    .js .reveal {
+    .reveal[data-hydrated] {
       opacity: 1;
       transform: none;
     }
   }
+}
+
+/* Den mörka toppen kan ligga i det som aldrig kommer utan JavaScript, och då syns inte sidhuvudets vita text mot den ljusa sidan.
+   Regeln står utanför lagren, eftersom sidhuvudets bg-transparent annars vinner oavsett specificitet. */
+html:not(.js) header.fixed {
+  background-color: var(--color-ink);
 }
 
 /* ---------- Markdown-innehåll ---------- */
@@ -386,6 +398,11 @@
   font-weight: 700;
   font-size: 1.2rem;
   margin-top: 1.8em;
+  color: var(--color-ink);
+}
+.prose-statlin h4 {
+  font-weight: 700;
+  margin-top: 1.5em;
   color: var(--color-ink);
 }
 .prose-statlin a {
@@ -505,7 +522,8 @@
   color: rgb(255 255 255 / 0.78);
 }
 .prose-dark h2,
-.prose-dark h3 {
+.prose-dark h3,
+.prose-dark h4 {
   color: #fff;
 }
 .prose-dark a {

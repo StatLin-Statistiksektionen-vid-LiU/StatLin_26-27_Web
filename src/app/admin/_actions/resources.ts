@@ -4,20 +4,20 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { FILE_AND_REMOVE, type FormState, formObject, invalid, zRequired, zText, zUrl } from "@/lib/admin/form";
 import { audit, revalidateSite } from "@/lib/admin/helpers";
-import { actionUser } from "@/lib/auth/session";
+import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused, isImageUpload, isSameUpload, MediaError, replaceFile, storeFile, storeImage } from "@/lib/media-store";
 import { LAST_TERM } from "@/lib/resources";
-import type { Media } from "@/lib/types";
+import { type Media, RESOURCE_CATEGORY_VALUES, RESOURCE_PROGRAM_VALUES } from "@/lib/types";
 
 /* Alla konton är styrelseposter och sköter hjälpmedlen gemensamt, så det räcker att vara inloggad. Loggen visar vem som gjort vad. */
 
 const resourceSchema = z.object({
   title: zRequired(160, "Titeln"),
   description: zText(300, "Beskrivningen"),
-  program: z.enum(["kandidat", "master", "bada"]),
+  program: z.enum(RESOURCE_PROGRAM_VALUES),
   term: z.enum(["", "1", "2", "3", "4", "5", "6"]).transform((v) => (v ? Number(v) : null)),
-  category: z.enum(["fusklapp", "kod", "guide", "ovrigt"]),
+  category: z.enum(RESOURCE_CATEGORY_VALUES),
   url: zUrl,
 });
 
@@ -78,9 +78,10 @@ export async function saveResource(_prev: FormState, fd: FormData): Promise<Form
   redirect("/admin/hjalpmedel?sparad=1");
 }
 
-export async function deleteResource(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
+export async function deleteResource(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT title, media_id FROM resources WHERE id = ?").get(id) as { title: string; media_id: number | null } | undefined;
@@ -88,6 +89,7 @@ export async function deleteResource(fd: FormData) {
     db.prepare("DELETE FROM resources WHERE id = ?").run(id);
     await deleteMediaIfUnused(row.media_id);
     audit(user.id, "delete", "resource", id, row.title);
+    await renewSessionIfDue();
     revalidateSite();
   }
   redirect("/admin/hjalpmedel?raderad=1");

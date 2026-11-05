@@ -21,8 +21,10 @@ const SANITIZE: sanitizeHtml.IOptions = {
   allowedSchemesByTag: { img: ["http", "https"] },
   allowProtocolRelative: false,
   transformTags: {
-    // h1 är reserverad för sidans titel.
+    // h1 är reserverad för sidans titel, och de lägsta nivåerna blir den lägsta som finns kvar i stället för vanlig text.
     h1: "h2",
+    h5: "h4",
+    h6: "h4",
     a: (tagName, attribs) => {
       const href = attribs.href ?? "";
       const external = /^https?:\/\//i.test(href);

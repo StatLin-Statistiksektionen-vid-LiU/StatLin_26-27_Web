@@ -90,6 +90,8 @@ const nextConfig: NextConfig = {
       { source: "/utbildning", destination: "/studenter/kandidat", permanent: true },
       { source: "/ny-student", destination: "/studenter/ny-student", permanent: true },
       { source: "/studenter", destination: "/studenter/kandidat", permanent: false },
+      // PDF-visaren i Chrome och Edge frågar efter /favicon.ico, eftersom en PDF inte kan säga var ikonen finns. Annars blir det ett 404-fel i konsolen.
+      { source: "/favicon.ico", destination: "/icon.svg", permanent: true },
     ];
   },
   turbopack: {

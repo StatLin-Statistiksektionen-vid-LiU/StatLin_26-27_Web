@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { ArrowUpRight, Download, FileText } from "@/components/icons";
 import { PageHero } from "@/components/ui/page-hero";
-import { PageSkeleton } from "@/components/ui/skeletons";
 import { listDocuments } from "@/lib/data/content";
 import { formatDate } from "@/lib/dates";
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from "@/lib/types";
@@ -12,6 +10,9 @@ export const metadata: Metadata = {
   title: "Dokument",
   description: "Stadgar, reglemente, protokoll och grafiskt styrdokument för StatLin.",
 };
+
+// Stadgar och protokoll ska gå att läsa också utan JavaScript, så sidan renderas hel vid varje anrop i stället för med ett skal och ett skelett (SB-27).
+export const instant = false;
 
 export default function DocumentsPage() {
   return (
@@ -25,9 +26,7 @@ export default function DocumentsPage() {
         }
         lead="Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."
       />
-      <Suspense fallback={<PageSkeleton />}>
-        <Documents />
-      </Suspense>
+      <Documents />
     </>
   );
 }

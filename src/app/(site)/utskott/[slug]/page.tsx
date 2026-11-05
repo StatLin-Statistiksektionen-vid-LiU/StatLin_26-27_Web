@@ -17,7 +17,7 @@ import { EditModeLink, Editable } from "@/components/edit-mode/editable";
 export async function generateMetadata({ params }: PageProps<"/utskott/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const c = await getCommitteeBySlug(slug);
-  if (!c) return { title: "Utskottet hittades inte" };
+  if (!c || !c.visible) return { title: "Utskottet hittades inte" };
   return { title: `${c.short_name} – ${c.name}`, description: c.tagline };
 }
 

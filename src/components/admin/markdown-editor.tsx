@@ -3,8 +3,8 @@
 import { useRef, useState, useTransition } from "react";
 import { previewMarkdown } from "@/app/admin/_actions/content";
 import { Image as ImageIcon } from "@/components/icons";
-import { useFormCtx } from "./action-form";
-import { uploadFile } from "./upload";
+import { FieldError, useFormCtx } from "./action-form";
+import { isImageFile, uploadFile } from "./upload";
 import { cn } from "@/lib/utils";
 
 type Tool = { label: string; title: string; apply: (sel: string) => { text: string; cursorOffset?: number }; block?: boolean };
@@ -26,14 +26,17 @@ export function MarkdownEditor({
   defaultValue = "",
   rows = 14,
   hint,
+  max,
 }: {
   name: string;
   label: string;
   defaultValue?: string;
   rows?: number;
   hint?: string;
+  /** Samma tak som servern har, se TEXT_LIMITS. */
+  max: number;
 }) {
-  const { beginUpload, markDirty } = useFormCtx();
+  const { beginUpload, markDirty, state } = useFormCtx();
   const [value, setValue] = useState(defaultValue);
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [html, setHtml] = useState("");
@@ -64,18 +67,29 @@ export function MarkdownEditor({
     const pos = ta?.selectionStart ?? value.length;
     setValue((v) => v.slice(0, pos) + text + v.slice(pos));
     markDirty();
+    // Markören ska stå efter texten, så att flera bilder hamnar efter varandra.
+    requestAnimationFrame(() => ta?.setSelectionRange(pos + text.length, pos + text.length));
   };
 
-  const onImage = async (file: File) => {
-    setError(null);
+  /** En i taget: bilderna hamnar i den ordning de valdes, och servern slipper optimera flera samtidigt. */
+  const onImages = async (files: File[]) => {
+    const images = files.filter(isImageFile);
+    const problems = images.length < files.length ? ["Bara bilder kan infogas här – de andra filerna hoppades över."] : [];
+    setError(problems[0] ?? null);
+    if (images.length === 0) return;
     setUploading(true);
     // Formuläret kan inte sparas förrän bilden är uppladdad – annars sparades texten utan bildlänken.
     const done = beginUpload();
     try {
-      const res = await uploadFile(file, { purpose: "image" });
-      if (res.image) insertText(`\n\n![${file.name.replace(/\.[^.]+$/, "")}](${res.image.src})\n\n`);
-    } catch (e) {
-      setError((e as Error).message);
+      for (const file of images) {
+        try {
+          const res = await uploadFile(file, { purpose: "image" });
+          if (res.image) insertText(`\n\n![${file.name.replace(/\.[^.]+$/, "")}](${res.image.src})\n\n`);
+        } catch (e) {
+          problems.push(images.length > 1 ? `${file.name}: ${(e as Error).message}` : (e as Error).message);
+          setError(problems.join(" "));
+        }
+      }
     } finally {
       done();
       setUploading(false);
@@ -87,15 +101,21 @@ export function MarkdownEditor({
     startPreview(async () => setHtml(await previewMarkdown(value)));
   };
 
+  const full = value.length >= max;
+  const invalid = full || !!state.fieldErrors?.[name];
+  const format = (n: number) => n.toLocaleString("sv-SE");
+
   return (
     <div>
       <div className="mb-1.5 flex items-baseline justify-between">
         <label htmlFor={name} className="text-sm font-semibold">
           {label}
         </label>
-        <span className="font-mono text-[0.7rem] text-stone tabular">{value.length} tecken</span>
+        <span className={cn("font-mono text-[0.7rem] tabular", full ? "font-bold text-red-deep" : "text-stone")}>
+          {format(value.length)} / {format(max)}
+        </span>
       </div>
-      <div className="overflow-hidden rounded-xl border border-ink/15 bg-white focus-within:border-ink focus-within:ring-4 focus-within:ring-ink/[0.06]">
+      <div className={cn("overflow-hidden rounded-xl border bg-white focus-within:ring-4 focus-within:ring-ink/[0.06]", invalid ? "border-red" : "border-ink/15 focus-within:border-ink")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-ink/10 bg-paper/60 px-2 py-1.5">
           <div className="mr-2 inline-flex rounded-lg bg-ink/[0.06] p-0.5 text-xs font-semibold">
             <button type="button" onClick={() => setTab("write")} className={cn("rounded-md px-3 py-1.5", tab === "write" ? "bg-white shadow-sm" : "text-ink/60")}>
@@ -133,10 +153,10 @@ export function MarkdownEditor({
             ref={fileRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onImage(f);
+              onImages([...(e.target.files ?? [])]);
               e.target.value = "";
             }}
           />
@@ -146,22 +166,32 @@ export function MarkdownEditor({
           id={name}
           name={name}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (e.target.value.length < max) setError(null);
+          }}
           rows={rows}
+          maxLength={max}
+          aria-invalid={invalid || undefined}
+          aria-describedby={`${name}-error`}
           className={cn("block w-full resize-y px-4 py-3 font-mono text-[0.88rem] leading-relaxed outline-none", tab !== "write" && "hidden")}
           onDrop={(e) => {
-            const f = e.dataTransfer.files?.[0];
-            if (f?.type.startsWith("image/")) {
-              e.preventDefault();
-              onImage(f);
-            }
+            if (e.dataTransfer.files.length === 0) return;
+            e.preventDefault();
+            onImages([...e.dataTransfer.files]);
           }}
           onPaste={(e) => {
-            const f = [...e.clipboardData.files].find((x) => x.type.startsWith("image/"));
-            if (f) {
+            const images = [...e.clipboardData.files].filter(isImageFile);
+            if (images.length > 0) {
               e.preventDefault();
-              onImage(f);
+              onImages(images);
+              return;
             }
+            // Webbläsaren klipper en för lång text utan att säga något, och slutet av texten är borta.
+            const ta = e.currentTarget;
+            const room = max - (ta.value.length - (ta.selectionEnd - ta.selectionStart));
+            const over = e.clipboardData.getData("text").replace(/\r\n?/g, "\n").length - room;
+            if (over > 0) setError(`Texten får vara högst ${format(max)} tecken. De sista ${format(over)} tecknen klistrades inte in.`);
           }}
         />
         {tab === "preview" && (
@@ -177,6 +207,7 @@ export function MarkdownEditor({
         )}
       </div>
       {error && <p className="mt-1.5 text-sm text-red-deep">{error}</p>}
+      <FieldError name={name} />
       <p className="mt-1.5 text-[0.82rem] text-stone">
         {hint ?? "Formatera med Markdown: **fet**, *kursiv*, ## Rubrik, - lista. Dra in eller klistra in bilder direkt i textrutan."}
       </p>
