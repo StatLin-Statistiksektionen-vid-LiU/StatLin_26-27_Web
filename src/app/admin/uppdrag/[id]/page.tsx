@@ -161,6 +161,13 @@ async function TaskDetail({
                   </Link>
                 </Meta>
               )}
+              {task.plan && (
+                <Meta label="Projektplan">
+                  <Link href={`/admin/projektplaner/${task.plan.id}`} className="inline-flex items-center gap-1 font-semibold hover:underline">
+                    {task.plan.title} <ArrowUpRight size={13} className="text-red" />
+                  </Link>
+                </Meta>
+              )}
               <Meta label="Syns för">
                 {task.shared ? (
                   "Hela styrelsen"

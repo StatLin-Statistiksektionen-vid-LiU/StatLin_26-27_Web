@@ -193,6 +193,7 @@ export interface Task {
   to: TaskPerson | null;
   event: { id: number; title: string; slug: string; committee_id: number | null } | null;
   comment_count: number;
+  plan: { id: number; title: string } | null;
 }
 
 export interface TaskComment {
