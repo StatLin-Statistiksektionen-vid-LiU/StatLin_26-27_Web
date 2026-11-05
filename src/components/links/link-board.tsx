@@ -156,9 +156,9 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
               Hantera länkar
             </EditModeLink>
           </div>
-          <ul className="mt-4 flex flex-wrap gap-3">
+          <ul className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-3">
             {featured.map((l) => (
-              <li key={l.id} className="grow basis-[9.5rem]">
+              <li key={l.id}>
                 <LinkTile link={l} />
               </li>
             ))}

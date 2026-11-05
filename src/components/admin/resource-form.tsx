@@ -54,7 +54,7 @@ export function ResourceForm({ resource }: { resource?: ResourceItem | null }) {
               type="file"
               name="file"
               id="file"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,.zip,.jpg,.jpeg,.png,.webp"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,.zip,.jpg,.jpeg,.png,.webp,.svg"
               className="block w-full rounded-xl border border-dashed border-ink/20 bg-paper/50 px-3 py-2.5 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white"
             />
           </Field>

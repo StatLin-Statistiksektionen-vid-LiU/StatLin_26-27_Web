@@ -29,7 +29,7 @@ export default function CompaniesPage() {
 async function Companies() {
   const [partners, sasu, settings] = await Promise.all([listPartners({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings()]);
   const star = await getStarEvent(Number(settings.star_event_id) || null);
-  const contact = sasu?.email || "sasu@statlin.se";
+  const contact = sasu?.email || settings.contact_email;
 
   return (
     <ContentPage

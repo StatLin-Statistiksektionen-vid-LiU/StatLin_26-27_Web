@@ -205,6 +205,11 @@ export function isoWeek(local: string): number {
   return Math.ceil(((d.getTime() - yearStart) / 86_400_000 + 1) / 7);
 }
 
+/** Hela dagar från `from` till `to` räknat i kalendern, så att 23.00 och 01.00 dagen efter blir en dag. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((asUtc(to.slice(0, 10)).getTime() - asUtc(from.slice(0, 10)).getTime()) / 86_400_000);
+}
+
 export function addDaysLocal(local: string, days: number): string {
   const d = asUtc(local);
   d.setUTCDate(d.getUTCDate() + days);

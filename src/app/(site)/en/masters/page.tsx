@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FixedBoxLink } from "@/components/fragelada/box-link";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ContentPage } from "@/components/content/content-page";
@@ -6,7 +7,7 @@ import { EventRow } from "@/components/content/event-card";
 import { TranslateTip } from "@/components/content/translate-tip";
 import { ArrowRight, Mail } from "@/components/icons";
 import { HeroSkeleton } from "@/components/ui/skeletons";
-import { getCommitteeBySlug } from "@/lib/data/content";
+import { getEducationCommittee } from "@/lib/data/content";
 import { listUpcomingEvents } from "@/lib/data/events";
 import { SITE_ALTERNATES, SITE_OG_EN } from "@/lib/site-metadata";
 
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function MastersPage() {
   return (
-    <div lang="en">
+    <div lang="en" data-engelsk-sida>
       <Suspense fallback={<HeroSkeleton english />}>
         <Masters />
       </Suspense>
@@ -28,7 +29,7 @@ export default function MastersPage() {
 }
 
 async function Masters() {
-  const [ubu, events] = await Promise.all([getCommitteeBySlug("ubu"), listUpcomingEvents(4)]);
+  const [ubu, events] = await Promise.all([getEducationCommittee(), listUpcomingEvents(4)]);
   return (
     <ContentPage
       slug="en-masters"
@@ -62,11 +63,14 @@ async function Masters() {
               <div className="mt-6 flex flex-wrap gap-2">
                 {ubu.email && (
                   <a href={`mailto:${ubu.email}`} className="btn btn-red btn-sm">
-                    <Mail size={15} /> Email UBU
+                    <Mail size={15} /> Email {ubu.short_name}
                   </a>
                 )}
+                <FixedBoxLink slug="ubu" className="btn btn-light btn-sm">
+                  Write anonymously (in Swedish or English)
+                </FixedBoxLink>
                 <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
-                  About UBU
+                  About {ubu.short_name}
                 </Link>
               </div>
             </div>

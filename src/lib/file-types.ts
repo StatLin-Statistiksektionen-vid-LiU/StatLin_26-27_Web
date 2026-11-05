@@ -10,6 +10,8 @@ export const FILE_TYPES: Record<string, string> = {
   odt: "application/vnd.oasis.opendocument.text",
   txt: "text/plain; charset=utf-8",
   zip: "application/zip",
+  // Bara som nedladdning: /media skickar alltid SVG med attachment, eftersom en SVG kan bära skript.
+  svg: "image/svg+xml",
 };
 
 /**

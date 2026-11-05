@@ -28,7 +28,8 @@ export async function GET(request: Request, ctx: RouteContext<"/media/[...path]"
     return new Response("Hittades inte", { status: 404 });
   }
 
-  const download = new URL(request.url).searchParams.has("ladda-ner");
+  // En SVG kan bära skript och öppnas aldrig i webbläsaren. CSP-sandboxen nedan stoppar skriptet också, det här är det andra lagret.
+  const download = ext === "svg" || new URL(request.url).searchParams.has("ladda-ner");
   const headers = new Headers({
     "Content-Type": type,
     "Cache-Control": ext === "webp" ? "public, max-age=31536000, immutable" : "public, no-cache",

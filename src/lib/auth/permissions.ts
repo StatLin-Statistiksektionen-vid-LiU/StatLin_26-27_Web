@@ -60,5 +60,10 @@ export const canManageImages = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocuments = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocument = (u: Designer, category: DocumentCategory) => isEditor(u) || (hasDesign(u) && category === "grafiskt");
 
+/* Frågelådan: bara kontot som äger lådan läser frågorna. Administratörer ser titlar och antal och kan ta bort lådor med kod. */
+type BoxRef = { owner_id: number | null; slug: string | null };
+export const ownsBox = (u: Pick<SessionUser, "id">, box: BoxRef) => box.owner_id === u.id;
+export const canDeleteBox = (u: Pick<SessionUser, "id" | "role" | "committee_id">, box: BoxRef) => box.slug === null && (ownsBox(u, box) || isAdmin(u));
+export const canManageFragelada = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;

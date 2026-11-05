@@ -38,8 +38,13 @@ export function ResourceBoard({ resources, initialProgram }: { resources: Resour
               tabIndex={program === p.value ? 0 : -1}
               onClick={() => chooseProgram(p.value)}
               onKeyDown={(e) => {
-                if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-                const next = PROGRAMS[(PROGRAMS.indexOf(p) + 1) % PROGRAMS.length];
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+                e.preventDefault();
+                const at = PROGRAMS.indexOf(p);
+                const next =
+                  e.key === "Home" ? PROGRAMS[0]
+                  : e.key === "End" ? PROGRAMS[PROGRAMS.length - 1]
+                  : PROGRAMS[(at + (e.key === "ArrowRight" ? 1 : -1) + PROGRAMS.length) % PROGRAMS.length];
                 chooseProgram(next.value);
                 document.getElementById(`flik-${next.value}`)?.focus();
               }}

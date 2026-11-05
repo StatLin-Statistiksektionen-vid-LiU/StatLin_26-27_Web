@@ -68,3 +68,23 @@ export async function changeTemporaryPassword(page, temporary) {
   await page.getByText("Lösenordet är bytt.").waitFor();
   return next;
 }
+
+/**
+ * Guiden i redigeringsbubblan öppnas första gången någon är inloggad, och då står resten av sidan stilla. Alla steg utom de
+ * som provar guiden ska se sidan som en redaktör som redan har gått igenom den. `browser.newContextWithGuide` är den vanliga.
+ */
+export function skipEditGuide(browser) {
+  const plain = browser.newContext.bind(browser);
+  browser.newContextWithGuide = plain;
+  browser.newContext = async (options) => {
+    const context = await plain(options);
+    await context.addInitScript(() => {
+      try {
+        localStorage.setItem("statlin-redigeringsguide", "sedd");
+      } catch {
+        // Sidor utan lagring, som about:blank.
+      }
+    });
+    return context;
+  };
+}

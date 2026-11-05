@@ -34,6 +34,7 @@ const ENTITY_LABELS: Record<string, string> = {
   wheel_item: "årshjulet",
   project_plan: "projektplanen",
   media: "oanvända filer",
+  question_box: "frågelådan",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",

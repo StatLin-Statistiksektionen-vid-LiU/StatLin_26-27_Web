@@ -4,6 +4,9 @@
  */
 import type { LinkCategory } from "./types";
 
+/** Adressen på utbildningsutskottet tills någon valt ett annat under Admin → Inställningar. */
+export const EDUCATION_COMMITTEE_SLUG = "ubu";
+
 export const SEED_COMMITTEES = [
   {
     slug: "styrelsen",
@@ -104,7 +107,7 @@ Du känner igen oss på mästeristassen: svarta hängselbyxor med röda uppslag,
     accent: "#111111",
     email: "amo@statlin.se",
     tagline: "Studiemiljö och trivsel – för alla.",
-    description_md: `Arbetsmiljöombudet arbetar för en trygg och inkluderande studiemiljö, både i studierna och i sektionens verksamhet. Har du upplevt något som inte känns okej? Hör av dig – du kan alltid vara anonym.`,
+    description_md: `Arbetsmiljöombudet arbetar för en trygg och inkluderande studiemiljö, både i studierna och i sektionens verksamhet. Har du upplevt något som inte känns okej? Hör av dig – vi behandlar det konfidentiellt.`,
   },
 ] as const;
 
@@ -202,7 +205,7 @@ För dig som vill vidare finns masterprogrammet **Statistics and Machine Learnin
 
 Utbildningsutskottet (UBU) bevakar att utbildningen håller hög kvalitet. Vi sammanställer synpunkter, deltar i programråd och följer upp kursutvärderingar tillsammans med lärarna.
 
-- **Har du synpunkter på en kurs?** Kontakta UBU – vi tar det vidare, anonymt om du vill.
+- **Har du synpunkter på en kurs?** Kontakta UBU – vi tar det vidare och behandlar det konfidentiellt.
 - **Kursutvärderingar** är det viktigaste verktyget för att förbättra kurser. Fyll i dem!
 - **Studievägledning** finns på universitetet för frågor om studieplanering och behörighet.
 
@@ -228,7 +231,7 @@ Sektionen representerar kandidat- och masterstudenterna lika mycket. Alla evenem
 
 ## Frågor om studierna?
 
-UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination eller studiemiljö – anonymt om du vill.`,
+UBU bevakar kvaliteten i båda programmen. Kontakta dem om kurser, examination eller studiemiljö – de behandlar det konfidentiellt.`,
   },
   {
     slug: "foretag",
@@ -288,7 +291,7 @@ The master's programme Statistics and Machine Learning is a two-year programme t
 
 ## Questions about your studies?
 
-UBU, our education committee, works for the quality of both programmes. Contact them about courses, exams or your study environment – anonymously if you prefer.
+UBU, our education committee, works for the quality of both programmes. Contact them about courses, exams or your study environment – they treat it confidentially.
 
 For housing, residence permits and other practical matters, Linköping University's support for international students is the best place to start.`,
   },
@@ -349,7 +352,7 @@ export const SEED_LINKS: SeedLink[] = [
   { label: "StuFF", description: "Studentkåren för filosofiska fakulteten", url: "https://stuff.liu.se/", category: "stod", keywords: "studentkår kår" },
   // StatLin
   { label: "Hjälpmedel", description: "Fusklappar, GitHub-länkar och guider per program", url: "/studenter/hjalpmedel", category: "statlin", keywords: "fusklapp formelblad github kod guide" },
-  { label: "UBU – studiebevakning", description: "Problem med en kurs? Säg till, gärna anonymt", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
+  { label: "UBU – studiebevakning", description: "Problem med en kurs? Säg till", url: "/utskott/ubu", category: "statlin", keywords: "studiebevakning klagomål kurs utbildning" },
   { label: "Evenemang", description: "Allt StatLin ordnar", url: "/evenemang", category: "statlin", keywords: "event sittning pub" },
   { label: "Kalenderflöde", description: "Prenumerera på evenemangen i din kalender", url: "/kalender.ics", category: "statlin", keywords: "ical ics kalender prenumerera" },
   { label: "Dokument", description: "Stadgar, protokoll och styrdokument", url: "/dokument", category: "statlin", keywords: "stadgar protokoll" },

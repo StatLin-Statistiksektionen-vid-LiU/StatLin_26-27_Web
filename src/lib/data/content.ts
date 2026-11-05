@@ -1,6 +1,7 @@
 import "server-only";
 import { readDb } from "./db";
 import { fileHref, MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
+import { EDUCATION_COMMITTEE_SLUG } from "@/lib/seed-content";
 import type { BoardMember, Committee, DocumentItem, Page, Partner, SiteSettings } from "@/lib/types";
 
 /* ---------- Inställningar ---------- */
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   announcement: "",
   announcement_url: "",
   star_event_id: "",
+  education_committee_id: "",
 };
 
 export async function getSettings(): Promise<SiteSettings> {
@@ -46,6 +48,17 @@ export async function listCommittees(opts: { visibleOnly?: boolean } = {}): Prom
 export async function getCommitteeBySlug(slug: string): Promise<Committee | null> {
   const db = await readDb();
   return (db.prepare("SELECT * FROM committees WHERE slug = ?").get(slug) as Committee) ?? null;
+}
+
+/**
+ * Utskottet på programsidornas kontaktkort. Pekas ut i Admin → Inställningar. Utan val gäller adressen från grunddatan, så att
+ * en databas där ingen valt något fungerar som förut. Finns inget av dem syns inget kort, och då ska det gå att se varför.
+ */
+export async function getEducationCommittee(): Promise<Committee | null> {
+  const { education_committee_id: chosen } = await getSettings();
+  const found = (chosen ? await getCommitteeById(Number(chosen)) : null) ?? (await getCommitteeBySlug(EDUCATION_COMMITTEE_SLUG));
+  if (!found) console.warn("[statlin] Programsidorna saknar utbildningsutskott: välj ett under Admin → Inställningar.");
+  return found;
 }
 
 export async function getCommitteeById(id: number): Promise<Committee | null> {

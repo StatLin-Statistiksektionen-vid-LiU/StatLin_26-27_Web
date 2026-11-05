@@ -1,3 +1,4 @@
+import { programFacts } from "@/lib/links";
 import type { Committee } from "@/lib/types";
 
 type NavItem = { href: string; label: string; description?: string };
@@ -12,7 +13,7 @@ export const NAV: NavGroup[] = [
     children: [
       { href: "/sektionen", label: "Om StatLin", description: "Vilka vi är och vad vi gör" },
       { href: "/sektionen/styrelsen", label: "Styrelsen", description: "Poster och kontaktuppgifter" },
-      { href: "/utskott", label: "Utskott", description: "SCB, UBU, SASU, StatPub, STIG, eSTIG" },
+      { href: "/utskott", label: "Utskott", description: "Alla utskott och grupper på sektionen" },
       { href: "/galleri", label: "Galleri", description: "Bilder från evenemang" },
       { href: "/dokument", label: "Dokument", description: "Stadgar, protokoll och styrdokument" },
       { href: "/grafisk-profil", label: "Grafisk profil", description: "Loggor, färger och typsnitt" },
@@ -22,8 +23,8 @@ export const NAV: NavGroup[] = [
     label: "Studenter",
     href: "/studenter",
     children: [
-      { href: "/studenter/kandidat", label: "Kandidat", description: "Statistik och dataanalys, 180 hp" },
-      { href: "/studenter/master", label: "Master", description: "Statistics and Machine Learning, 120 hp" },
+      { href: "/studenter/kandidat", label: "Kandidat", description: programFacts("kandidat") },
+      { href: "/studenter/master", label: "Master", description: programFacts("master") },
       { href: "/studenter/ny-student", label: "Nya studenter", description: "Mottagning, overall och vanliga frågor" },
       { href: "/studenter/lankar", label: "Länkar", description: "Schema, tentor och genvägar" },
       { href: "/studenter/hjalpmedel", label: "Hjälpmedel", description: "Fusklappar, GitHub-länkar och guider per program" },

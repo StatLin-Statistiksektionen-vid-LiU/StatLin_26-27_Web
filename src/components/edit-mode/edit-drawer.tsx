@@ -13,6 +13,7 @@ import { EventImagesEditor } from "@/components/admin/event-images-editor";
 import { NewsForm } from "@/components/admin/news-form";
 import { ArrowUpRight, Close } from "@/components/icons";
 import type { BoardMember, Committee, EventItem, ImageRef, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
+import { useFocusLayer } from "@/lib/use-focus-layer";
 import { editStore, targetQuery, UNSAVED, useEditState, type EditTarget } from "./store";
 
 const TITLES: Record<EditTarget["type"], string> = {
@@ -60,10 +61,12 @@ export function EditDrawer() {
   const { open, asking } = useEditState();
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+
+  useFocusLayer({ active: !!open, layers: () => [layerRef.current], initial: () => closeRef.current });
 
   useEffect(() => {
     if (!open) return;
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const onKey = (e: KeyboardEvent) => {
       // Escape i en dialog ovanpå panelen stänger bara dialogen.
       if (e.key !== "Escape" || document.querySelector("dialog[open]")) return;
@@ -74,11 +77,9 @@ export function EditDrawer() {
     const overflow = document.body.style.overflow;
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
-      opener?.focus();
       // Galleribilderna laddas upp via API:t och inte med en server action, så sidan bakom visar dem först efter en uppdatering.
       if (open.type === "event-images") router.refresh();
     };
@@ -86,7 +87,7 @@ export function EditDrawer() {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[90]">
+    <div ref={layerRef} className="fixed inset-0 z-[90]">
       {asking && <ConfirmDialog message={UNSAVED} confirmLabel="Stäng utan att spara" onAnswer={editStore.answerClose} />}
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={() => editStore.requestClose()} aria-hidden />
       <div

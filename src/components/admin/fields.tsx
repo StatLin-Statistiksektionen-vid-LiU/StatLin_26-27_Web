@@ -1,12 +1,24 @@
 "use client";
 
-import { useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { createContext, useContext, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { ChevronDown } from "@/components/icons";
 import { FieldError, useFormCtx } from "./action-form";
 import { cn, slugify, slugifyWhileTyping } from "@/lib/utils";
 
 const inputBase =
   "w-full rounded-xl border border-ink/15 bg-white px-3.5 py-2.5 text-[0.95rem] text-ink shadow-[0_1px_0_rgba(0,0,0,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-ink/35 focus:border-ink focus:ring-4 focus:ring-ink/[0.06] disabled:bg-paper-2 disabled:text-ink/50";
+
+/** Namnet på fältet vars Field har ett tips, så att kontrollen inuti kan peka på det. */
+const HintCtx = createContext<string | null>(null);
+
+/** aria-describedby och aria-invalid för en kontroll, med bara de id:n som faktiskt finns i dokumentet. */
+function useDescription(name: string) {
+  const { state } = useFormCtx();
+  const hinted = useContext(HintCtx) === name;
+  const invalid = !!state.fieldErrors?.[name];
+  const ids = [hinted && `${name}-hint`, invalid && `${name}-error`].filter(Boolean).join(" ");
+  return { "aria-describedby": ids || undefined, "aria-invalid": invalid || undefined };
+}
 
 export function Field({
   label,
@@ -36,19 +48,32 @@ export function Field({
           {required && <span className="text-red-deep"> *</span>}
         </span>
       </label>
-      <div className={cn(hasError && "field-invalid")}>{children}</div>
-      {hint && <p className="mt-1.5 text-[0.82rem] leading-snug text-stone">{hint}</p>}
+      <div className={cn(hasError && "field-invalid")}>
+        <HintCtx value={hint ? name : null}>{children}</HintCtx>
+      </div>
+      {hint && (
+        <p id={`${name}-hint`} className="mt-1.5 text-[0.82rem] leading-snug text-stone">
+          {hint}
+        </p>
+      )}
       <FieldError name={name} />
     </div>
   );
 }
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement> & { name: string }) {
-  return <input id={props.name} aria-describedby={`${props.name}-error`} className={cn(inputBase, className)} {...props} />;
+  const description = useDescription(props.name);
+  return <input id={props.name} {...description} className={cn(inputBase, className)} {...props} />;
 }
 
 export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { name: string }) {
-  return <textarea id={props.name} className={cn(inputBase, "min-h-24 resize-y leading-relaxed", className)} {...props} />;
+  const description = useDescription(props.name);
+  return <textarea id={props.name} {...description} className={cn(inputBase, "min-h-24 resize-y leading-relaxed", className)} {...props} />;
+}
+
+export function ColorInput({ name, defaultValue }: { name: string; defaultValue: string }) {
+  const description = useDescription(name);
+  return <input type="color" id={name} name={name} defaultValue={defaultValue} {...description} className="h-11 w-16 cursor-pointer rounded-xl border border-ink/15 bg-white p-1" />;
 }
 
 /**
@@ -64,10 +89,12 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement> & { name: string; trackChanges?: boolean }) {
   const [changed, setChanged] = useState(false);
   const [loaded] = useState(() => String(props.defaultValue ?? ""));
+  const description = useDescription(props.name);
   return (
     <>
       <select
         id={props.name}
+        {...description}
         className={cn(
           inputBase,
           "appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%230a0a0a%22 stroke-width=%222%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.9rem_center] bg-no-repeat pr-10",

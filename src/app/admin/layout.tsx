@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Notice } from "@/components/admin/ui";
+import { canManageFragelada } from "@/lib/auth/permissions";
 import { getSessionUser, loginPath, sessionExpiresSoon } from "@/lib/auth/session";
+import { readDb } from "@/lib/data/db";
+import { countUnseenQuestions, frageladaIsOpen } from "@/lib/data/fragelada";
 import { canManageNaringsliv, countNewWishes } from "@/lib/data/naringsliv";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
@@ -29,7 +32,13 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect(await loginPath());
   const naringsliv = canManageNaringsliv(user);
-  const [unseenTasks, expiresAt, newWishes] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon(), naringsliv ? countNewWishes() : 0]);
+  const [unseenTasks, expiresAt, unseenQuestions, db, newWishes] = await Promise.all([
+    countUnseenTasks(user.id),
+    sessionExpiresSoon(),
+    countUnseenQuestions(user.id),
+    readDb(),
+    naringsliv ? countNewWishes() : 0,
+  ]);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
       <AdminSidebar
@@ -43,6 +52,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           design: user.design,
         }}
         unseenTasks={unseenTasks}
+        questionBox={{ show: canManageFragelada(user) || frageladaIsOpen(db) || unseenQuestions > 0, unseen: unseenQuestions }}
         naringsliv={naringsliv}
         newWishes={newWishes}
       />
@@ -55,14 +65,14 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         )}
-        <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">
+        <main id="innehall" className="mx-auto max-w-6xl px-5 pb-24 pt-8 md:px-10 md:pt-12">
           {expiresAt && (
             <Notice tone="warning">
               Din inloggning går ut {formatTimestamp(expiresAt)}. Den förlängs när du sparar något – annars behöver du logga in igen.
             </Notice>
           )}
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );
