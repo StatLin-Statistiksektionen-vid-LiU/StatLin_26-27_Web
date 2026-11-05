@@ -785,7 +785,13 @@ async function openDeleteConfirm(page) {
 
     await step("Utloggning", async () => {
       await page.goto(`${BASE}/admin`);
-      await Promise.all([page.waitForURL(/logga-in\?utloggad=1/), page.getByRole("button", { name: "Logga ut" }).last().click()]);
+      // Utloggningen byter sida två gånger: Nexts omdirigering och sedan en hel omladdning. Nästa goto får inte krocka med den andra.
+      await page.evaluate(() => {
+        window.foreUtloggningen = true;
+      });
+      await page.getByRole("button", { name: "Logga ut" }).last().click();
+      await page.waitForFunction(() => !window.foreUtloggningen && location.search.includes("utloggad=1"));
+      await page.getByText("Du är utloggad.").waitFor();
     });
 
     await step("Utskottskonto (SCB) ser bara sitt utskott", async () => {
