@@ -320,6 +320,12 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 | Vid överlämningen | Gå igenom det här avsnittet, fyll i [Ägarskap](#ägarskap) och kontrollera [Volymen](#volymen). |
 | Juni | Större uppgraderingar (Next.js, Node, beroenden) och den årliga övningen i [återställning](#återställning-och-rollback). |
 
+### Årshjulet och projektplanerna i adminpanelen
+
+Under *Årshjul* och *Projektplaner* i adminpanelen samlas det som kommer tillbaka varje år, så att nästa års post slipper börja från noll. Alla poster läser och lägger till. Den som la in något, den ansvariga posten och admin ändrar. Hjulet börjar om av sig självt varje år: läget (planerad, klar, hoppas över) sparas per år, och själva punkterna står kvar.
+
+Före live: inget behöver installeras eller ställas in, och migreringen körs vid start som vanligt. Tryck sedan en gång på *Fyll med förslag* och gå igenom hjulet tillsammans. Månaderna är en gissning, och ansvarig måste skrivas som postens eller utskottets namn för att uppdragen ska hamna rätt. Exempeldata för lokal provning finns i `scripts/demo-postverktyg.ts`. Mallarna för projektplaner är konstanter i `src/lib/projektplan-mallar.ts`.
+
 ## Guide för poster
 
 1. Logga in på **/logga-in** med postens e-postadress.
@@ -331,6 +337,7 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 7. **Hjälpmedel**: under *Hjälpmedel* lägger du upp en fil eller en länk och väljer program, termin och kategori. Gäller det flera terminer väljer du *Hela programmet*. Allt blir offentligt, så lägg bara upp sådant ni får dela.
 8. **Bilder (grafiskt ansvarig)**: under *Bilder* finns omslagen till alla evenemang och nyheter och utskottens loggor – ladda upp en bild så är den sparad. *Galleri* på ett evenemang leder till dess bildgalleri. Översikten visar kommande evenemang som saknar omslag, och ett uppdrag som är kopplat till ett evenemang har knappen *Ladda upp omslag*. Mallar läggs upp under *Dokument* och visas under *Mallar och material* på sidan Grafisk profil.
 9. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. På evenemang och nyheter byter *Byt bilder* och *Byt omslag* bilderna direkt i sidopanelen. Partners ändras i adminpanelen, och panelen har en länk dit.
+10. **Årshjul och projektplaner**: översikten visar vad som väntar nästa månad och vad som behöver planeras in denna termin. Lägg en punkt på tavlan, eller gör en projektplan av den: välj mall och datum, så räknas stegen ut bakåt och blir uppdrag. Skriv lärdomar på planen efteråt, så ser nästa års post dem när de gör om samma sak.
 
 Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
 
