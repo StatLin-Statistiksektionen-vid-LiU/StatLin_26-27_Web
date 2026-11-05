@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useOptimistic, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { Star } from "@/components/icons";
 import { voteForWish, voteForWishForm } from "./actions";
 
@@ -52,28 +52,26 @@ const SPARK_ANGLES = [0, 60, 120, 180, 240, 300];
  */
 export function WishStar({ id, title, votes, litByServer = false }: { id: number; title: string; votes: number; litByServer?: boolean }) {
   const raw = useSyncExternalStore(subscribe, readRaw, () => NOTHING);
-  const [serverVotes, setServerVotes] = useState(votes);
-  const [optimistic, bump] = useOptimistic(serverVotes, (current: number) => current + 1);
+  const [count, setCount] = useState(votes);
   const [litNow, setLitNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lit = litByServer || litNow || parse(raw).includes(id);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (lit) return;
     setError(null);
     setLitNow(true);
-    startTransition(async () => {
-      bump(0);
-      const result = await voteForWish(id).catch(() => ({ ok: false as const, error: "Det gick inte att nå servern. Försök igen." }));
-      if (result.ok) {
-        remember(id);
-        setServerVotes(result.votes);
-      } else {
-        setLitNow(false);
-        setError(result.error);
-      }
-    });
+    setCount((c) => c + 1);
+    const result = await voteForWish(id).catch(() => ({ ok: false as const, error: "Det gick inte att nå servern. Försök igen." }));
+    if (result.ok) {
+      remember(id);
+      setCount(result.votes);
+    } else {
+      setLitNow(false);
+      setCount((c) => c - 1);
+      setError(result.error);
+    }
   };
 
   return (
@@ -93,8 +91,8 @@ export function WishStar({ id, title, votes, litByServer = false }: { id: number
         ))}
       </button>
       <span className="mono-accent mt-1.5 text-sm font-semibold tabular" aria-live="polite">
-        {optimistic}
-        <span className="sr-only"> {optimistic === 1 ? "stjärna" : "stjärnor"}</span>
+        {count}
+        <span className="sr-only"> {count === 1 ? "stjärna" : "stjärnor"}</span>
       </span>
       {error && (
         <span role="alert" className="mt-1 w-28 text-center text-xs font-semibold text-red-dark">
