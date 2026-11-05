@@ -143,15 +143,15 @@ function WishCard({ wish, tab, events }: { wish: LectureWish; tab: string; event
         <div className="mt-4">
           <ActionForm action={saveWish} stickyFooter={false}>
             <input type="hidden" name="id" value={wish.id} />
-            <Field label="Önskemål" name="title" required>
+            <Field label="Önskemål" name="title" inputId={`titel-${wish.id}`} required>
               <TextInput name="title" defaultValue={wish.title} maxLength={WISH_TITLE_MAX} id={`titel-${wish.id}`} />
             </Field>
-            <Field label="Kommentar" name="comment">
+            <Field label="Kommentar" name="comment" inputId={`kommentar-${wish.id}`}>
               <TextArea name="comment" defaultValue={wish.comment} maxLength={WISH_COMMENT_MAX} rows={2} id={`kommentar-${wish.id}`} />
             </Field>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Status" name="status">
-                <Select name="status" defaultValue={wish.status} id={`status-${wish.id}`} aria-label={`Status för ${wish.title}`}>
+              <Field label="Status" name="status" inputId={`status-${wish.id}`}>
+                <Select name="status" defaultValue={wish.status} id={`status-${wish.id}`}>
                   {WISH_STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {WISH_STATUS_LABELS[s]}
@@ -159,8 +159,8 @@ function WishCard({ wish, tab, events }: { wish: LectureWish; tab: string; event
                   ))}
                 </Select>
               </Field>
-              <Field label="Evenemang" name="event_id">
-                <Select name="event_id" defaultValue={wish.event_id ?? ""} id={`evenemang-${wish.id}`} aria-label={`Evenemang för ${wish.title}`}>
+              <Field label="Evenemang" name="event_id" inputId={`evenemang-${wish.id}`}>
+                <Select name="event_id" defaultValue={wish.event_id ?? ""} id={`evenemang-${wish.id}`}>
                   <option value="">Inget</option>
                   {lunch.length > 0 && (
                     <optgroup label="Lunchföreläsningar">

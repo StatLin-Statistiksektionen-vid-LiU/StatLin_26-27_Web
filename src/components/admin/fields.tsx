@@ -15,9 +15,12 @@ export function Field({
   children,
   className,
   required,
+  inputId,
 }: {
   label: string;
   name: string;
+  /** Fältets id när det inte är samma som namnet, som när samma formulär står flera gånger på en sida. */
+  inputId?: string;
   hint?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -27,7 +30,7 @@ export function Field({
   const hasError = !!state.fieldErrors?.[name];
   return (
     <div className={cn("min-w-0", className)}>
-      <label htmlFor={name} className="mb-1.5 flex items-baseline justify-between gap-3 text-sm font-semibold text-ink">
+      <label htmlFor={inputId ?? name} className="mb-1.5 flex items-baseline justify-between gap-3 text-sm font-semibold text-ink">
         <span>
           {label}
           {required && <span className="text-red-deep"> *</span>}
