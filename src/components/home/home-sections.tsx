@@ -91,7 +91,7 @@ export async function HomeSections() {
             <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {events.slice(0, 6).map((e, i) => (
                 <Reveal key={e.id} delay={(i % 3) * 90}>
-                  <EventCard event={e} priority={i < 3} className="h-full" />
+                  <EventCard event={e} className="h-full" />
                 </Reveal>
               ))}
             </div>
