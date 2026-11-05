@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { DocumentForm } from "@/components/admin/document-form";
-import { AdminHeader, Notice, StatusBadge } from "@/components/admin/ui";
+import { AdminHeader, JumpToForm, Notice, StatusBadge } from "@/components/admin/ui";
 import { Edit, FileText } from "@/components/icons";
 import { canManageDocuments, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -39,6 +39,7 @@ async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dok
             ? "Stadgar, reglemente, protokoll och annat som ska finnas tillgängligt för medlemmarna."
             : "Mallar och material till den grafiska profilen. De visas under Mallar och material på sidan Grafisk profil."
         }
+        actions={docs.length > 0 && <JumpToForm href="#nytt-dokument">Nytt dokument</JumpToForm>}
       />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
@@ -61,7 +62,7 @@ async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dok
             ))}
           </ul>
         </div>
-        <div className="lg:col-span-2">
+        <div id="nytt-dokument" className="scroll-mt-24 lg:col-span-2">
           <DocumentForm category={editor ? undefined : "grafiskt"} />
         </div>
       </div>

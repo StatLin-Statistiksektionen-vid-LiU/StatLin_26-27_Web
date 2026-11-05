@@ -1,7 +1,16 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, Check } from "@/components/icons";
+import { ArrowLeft, Check, Plus } from "@/components/icons";
 import { cn } from "@/lib/utils";
+
+/** På telefon ligger formuläret för något nytt under hela listan. Knappen går dit, och behövs inte när de står bredvid varandra. */
+export function JumpToForm({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} className="btn btn-ghost btn-sm bg-white lg:hidden">
+      <Plus size={15} /> {children}
+    </a>
+  );
+}
 
 export function AdminHeader({
   title,

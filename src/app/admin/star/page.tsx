@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import { setStarLive } from "@/app/admin/_actions/naringsliv";
 import { StarCompanyForm } from "@/components/admin/star-company-form";
 import { StarPageForm } from "@/components/admin/star-page-form";
-import { AdminHeader, EmptyState, Notice, StatusBadge } from "@/components/admin/ui";
-import { ArrowUpRight, Check, ChevronDown, Edit, Plus } from "@/components/icons";
+import { AdminHeader, EmptyState, JumpToForm, Notice, StatusBadge } from "@/components/admin/ui";
+import { ArrowUpRight, Check, ChevronDown, Edit } from "@/components/icons";
 import { requireUser } from "@/lib/auth/session";
 import { getSettings } from "@/lib/data/content";
 import { getStarEvent, listUpcomingEvents } from "@/lib/data/events";
@@ -83,9 +83,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
           Företag och sponsorer
         </h2>
         {/* På telefon ligger formuläret under hela listan. */}
-        <a href="#nytt-foretag" className="btn btn-ghost btn-sm bg-white lg:hidden">
-          <Plus size={15} /> Nytt företag
-        </a>
+        <JumpToForm href="#nytt-foretag">Nytt företag</JumpToForm>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">

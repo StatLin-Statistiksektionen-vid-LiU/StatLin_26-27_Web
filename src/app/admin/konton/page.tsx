@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { UserForm } from "@/components/admin/user-form";
-import { AdminHeader, Notice } from "@/components/admin/ui";
+import { AdminHeader, JumpToForm, Notice } from "@/components/admin/ui";
 import { Edit } from "@/components/icons";
 import { isAdmin } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -29,7 +29,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
   return (
     <>
       {sp.raderad && <Notice>Kontot är borttaget.</Notice>}
-      <AdminHeader title="Konton" description="Ett konto per post. Utskottskonton når bara sitt eget utskott, redaktörer (t.ex. info) allt innehåll och inställningarna, och administratörer (t.ex. ordförande och vice) dessutom konton och granskning." />
+      <AdminHeader title="Konton" description="Ett konto per post." actions={<JumpToForm href="#nytt-konto">Nytt konto</JumpToForm>} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <ul className="divide-y divide-ink/10 self-start overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white lg:col-span-3">
           {users.map((u) => (
@@ -61,7 +61,7 @@ async function Users({ searchParams }: { searchParams: PageProps<"/admin/konton"
             </li>
           ))}
         </ul>
-        <div className="lg:col-span-2">
+        <div id="nytt-konto" className="scroll-mt-24 lg:col-span-2">
           <UserForm committees={committees} />
         </div>
       </div>

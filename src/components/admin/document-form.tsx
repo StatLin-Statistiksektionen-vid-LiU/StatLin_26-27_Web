@@ -10,10 +10,36 @@ export function DocumentForm({ doc, category }: { doc?: DocumentItem | null; cat
     <ActionForm action={saveDocument} submitLabel={doc ? "Spara" : "Lägg till dokument"} stickyFooter={false}>
       {doc && <input type="hidden" name="id" value={doc.id} />}
       <FormSection title={doc ? "Dokument" : "Nytt dokument"}>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Titel" name="title" required>
-            <TextInput name="title" defaultValue={doc?.title} placeholder={category === "grafiskt" ? "Affischmall A3" : "Protokoll sektionsmöte HT26"} maxLength={160} />
-          </Field>
+        <Field label="Titel" name="title" required>
+          <TextInput name="title" defaultValue={doc?.title} placeholder={category === "grafiskt" ? "Affischmall A3" : "Protokoll sektionsmöte HT26"} maxLength={160} />
+        </Field>
+        <Field
+          label={doc?.file ? "Ersätt fil" : "Fil"}
+          name="file"
+          hint={category === "grafiskt" ? "PDF, PowerPoint eller ZIP (t.ex. en mapp med mallar) · max 30 MB" : "PDF, Word, Excel, PowerPoint m.fl. · max 30 MB"}
+        >
+          <input
+            type="file"
+            name="file"
+            id="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,.zip,.svg"
+            className="block w-full rounded-xl border border-dashed border-ink/20 bg-paper/50 px-3 py-2.5 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white"
+          />
+        </Field>
+        {doc?.file && (
+          <div className="flex flex-wrap items-center gap-4 rounded-xl bg-paper px-4 py-3 text-sm">
+            <a href={doc.file.href} target="_blank" className="font-semibold text-red-deep hover:underline">
+              Nuvarande fil ({doc.file.ext.toUpperCase()}, {formatBytes(doc.file.size)})
+            </a>
+            <label className="inline-flex items-center gap-2 text-stone">
+              <input type="checkbox" name="remove_file" /> Ta bort filen
+            </label>
+          </div>
+        )}
+        <Field label="…eller länk" name="url" hint="T.ex. till en delad mapp.">
+          <TextInput name="url" type="url" defaultValue={doc?.url} placeholder="https://" />
+        </Field>
+        <div className="grid gap-5 @sm:grid-cols-2">
           {category ? (
             <div>
               <p className="mb-1.5 text-sm font-semibold">Kategori</p>
@@ -31,43 +57,13 @@ export function DocumentForm({ doc, category }: { doc?: DocumentItem | null; cat
               </Select>
             </Field>
           )}
-        </div>
-        <div className="grid gap-5 sm:grid-cols-[1fr_12rem]">
-          <Field label="Beskrivning" name="description">
-            <TextInput name="description" defaultValue={doc?.description} maxLength={300} />
-          </Field>
           <Field label="Datum" name="doc_date">
             <TextInput name="doc_date" type="date" defaultValue={doc?.doc_date ?? ""} />
           </Field>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field
-            label={doc?.file ? "Ersätt fil" : "Fil"}
-            name="file"
-            hint={category === "grafiskt" ? "PDF, PowerPoint eller ZIP (t.ex. en mapp med mallar) · max 30 MB" : "PDF, Word, Excel, PowerPoint m.fl. · max 30 MB"}
-          >
-            <input
-              type="file"
-              name="file"
-              id="file"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,.zip,.svg"
-              className="block w-full rounded-xl border border-dashed border-ink/20 bg-paper/50 px-3 py-2.5 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white"
-            />
-          </Field>
-          <Field label="…eller länk" name="url" hint="T.ex. till en delad mapp.">
-            <TextInput name="url" type="url" defaultValue={doc?.url} placeholder="https://" />
-          </Field>
-        </div>
-        {doc?.file && (
-          <div className="flex flex-wrap items-center gap-4 rounded-xl bg-paper px-4 py-3 text-sm">
-            <a href={doc.file.href} target="_blank" className="font-semibold text-red-deep hover:underline">
-              Nuvarande fil ({doc.file.ext.toUpperCase()}, {formatBytes(doc.file.size)})
-            </a>
-            <label className="inline-flex items-center gap-2 text-stone">
-              <input type="checkbox" name="remove_file" /> Ta bort filen
-            </label>
-          </div>
-        )}
+        <Field label="Beskrivning" name="description">
+          <TextInput name="description" defaultValue={doc?.description} maxLength={300} />
+        </Field>
         <Toggle name="published" label="Publicerad" defaultChecked={doc ? !!doc.published : true} />
       </FormSection>
     </ActionForm>

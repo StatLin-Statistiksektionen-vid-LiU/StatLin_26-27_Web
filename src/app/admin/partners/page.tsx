@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { PartnerForm } from "@/components/admin/partner-form";
-import { AdminHeader, EmptyState, Notice, StatusBadge } from "@/components/admin/ui";
+import { AdminHeader, EmptyState, JumpToForm, Notice, StatusBadge } from "@/components/admin/ui";
 import { Edit } from "@/components/icons";
 import { isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -26,7 +26,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
     <>
       {sp.sparad && <Notice>Partnern är tillagd.</Notice>}
       {sp.raderad && <Notice>Partnern är borttagen.</Notice>}
-      <AdminHeader title="Partners" description="Företag som visas på sidan För företag." />
+      <AdminHeader title="Partners" description="Företag som visas på sidan För företag." actions={partners.length > 0 && <JumpToForm href="#ny-partner">Ny partner</JumpToForm>} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           {partners.length === 0 ? (
@@ -47,7 +47,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block text-xs text-stone">{p.tier === "huvudpartner" ? "Huvudpartner" : "Partner"}</span>
                   </Link>
-                  <StatusBadge published={!!p.active} label={p.active ? "Synlig" : "Dold"} />
+                  {!p.active && <StatusBadge published={false} label="Dold" />}
                   <Link href={`/admin/partners/${p.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label="Redigera">
                     <Edit size={16} />
                   </Link>
@@ -56,7 +56,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
             </ul>
           )}
         </div>
-        <div className="lg:col-span-2">
+        <div id="ny-partner" className="scroll-mt-24 lg:col-span-2">
           <PartnerForm nextOrder={(partners.length + 1) * 10} />
         </div>
       </div>

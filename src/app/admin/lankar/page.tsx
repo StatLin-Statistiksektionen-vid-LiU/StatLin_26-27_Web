@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LinkForm } from "@/components/admin/link-form";
-import { AdminHeader, EmptyState, Notice, StatusBadge } from "@/components/admin/ui";
+import { AdminHeader, EmptyState, JumpToForm, Notice, StatusBadge } from "@/components/admin/ui";
 import { Edit, Star } from "@/components/icons";
 import { isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -39,6 +39,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/admin/lankar"
             . Genvägarna (stjärna) visas också på startsidan och studentsidorna.
           </>
         }
+        actions={<JumpToForm href="#ny-lank">Ny länk</JumpToForm>}
       />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
@@ -58,7 +59,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/admin/lankar"
                         </span>
                         <span className="block truncate text-xs text-stone">{l.url}</span>
                       </Link>
-                      <StatusBadge published={!!l.active} label={l.active ? "Synlig" : "Dold"} />
+                      {!l.active && <StatusBadge published={false} label="Dold" />}
                       <Link href={`/admin/lankar/${l.id}`} className="grid size-9 shrink-0 place-items-center rounded-full hover:bg-paper" aria-label={`Redigera ${l.label}`}>
                         <Edit size={16} />
                       </Link>
@@ -69,7 +70,7 @@ async function Links({ searchParams }: { searchParams: PageProps<"/admin/lankar"
             ))
           )}
         </div>
-        <div className="lg:col-span-2">
+        <div id="ny-lank" className="scroll-mt-24 lg:col-span-2">
           <LinkForm nextOrder={(links.length + 1) * 10} />
         </div>
       </div>

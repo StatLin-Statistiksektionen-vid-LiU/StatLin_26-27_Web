@@ -335,7 +335,6 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     await page.goto(`${BASE}/admin/partners`);
     await waitForHydration(page, page.locator('input[name="name"]'));
     await page.fill('input[name="name"]', name);
-    await page.fill('input[name="sort_order"]', "7");
     await page.getByRole("button", { name: /Lägg till/ }).click();
     await page.waitForURL((u) => u.search.includes("sparad=1"));
     await page.reload();
@@ -344,6 +343,12 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     const url = page.url();
     await page.goto(url);
     const order = page.locator('input[name="sort_order"]');
+    await waitForHydration(page, order);
+    // Platsen väljs när partnern finns: en ny hamnar sist.
+    await order.fill("7");
+    await page.getByRole("button", { name: /Spara/ }).click();
+    await page.getByText("Partnern är sparad.").waitFor();
+    await page.goto(url);
     await waitForHydration(page, order);
     assert.equal(await order.inputValue(), "7");
     const saveWith = async (change) => {

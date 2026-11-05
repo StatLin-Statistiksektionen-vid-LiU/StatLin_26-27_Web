@@ -82,7 +82,7 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
             {editor && (
               <>
                 <Toggle name="visible" label="Visas på sajten" defaultChecked={!!c.visible} />
-                <Field label="Sortering" name="sort_order" hint="Lägre tal visas först.">
+                <Field label="Plats i listan" name="sort_order" hint="Lägre tal visas först.">
                   <TextInput name="sort_order" type="number" defaultValue={c.sort_order} min={0} />
                 </Field>
               </>

@@ -30,7 +30,8 @@ export function UserForm({ user, committees }: { user?: UserListItem | null; com
         </Field>
         <fieldset>
           <legend className="mb-2 text-sm font-semibold">Roll</legend>
-          <div className="grid gap-2 sm:grid-cols-3">
+          {/* Efter formulärets bredd: bredvid listan är det för smalt för tre kolumner. */}
+          <div className="grid gap-2 @xl:grid-cols-3">
             {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
               <label
                 key={r}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ResourceForm } from "@/components/admin/resource-form";
-import { AdminHeader, Notice } from "@/components/admin/ui";
+import { AdminHeader, JumpToForm, Notice } from "@/components/admin/ui";
 import { ArrowUpRight, Chain, Edit, FileText, Image as ImageIcon } from "@/components/icons";
 import { requireUser } from "@/lib/auth/session";
 import { listResources } from "@/lib/data/resources";
@@ -28,9 +28,12 @@ async function Resources({ searchParams }: { searchParams: PageProps<"/admin/hja
         title="Hjälpmedel"
         description="Fusklappar, GitHub-länkar och annat som hjälper studenterna, per program och termin. Alla i styrelsen kan lägga upp, ändra och ta bort."
         actions={
-          <Link href="/studenter/hjalpmedel" target="_blank" className="btn btn-ghost btn-sm bg-white">
-            Visa sidan <ArrowUpRight size={15} />
-          </Link>
+          <>
+            {resources.length > 0 && <JumpToForm href="#nytt-hjalpmedel">Nytt hjälpmedel</JumpToForm>}
+            <Link href="/studenter/hjalpmedel" target="_blank" className="btn btn-ghost btn-sm bg-white">
+              Visa sidan <ArrowUpRight size={15} />
+            </Link>
+          </>
         }
       />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
@@ -56,7 +59,7 @@ async function Resources({ searchParams }: { searchParams: PageProps<"/admin/hja
             })}
           </ul>
         </div>
-        <div className="lg:col-span-2">
+        <div id="nytt-hjalpmedel" className="scroll-mt-24 lg:col-span-2">
           <ResourceForm />
         </div>
       </div>
