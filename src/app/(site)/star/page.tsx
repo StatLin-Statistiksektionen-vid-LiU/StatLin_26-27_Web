@@ -5,7 +5,9 @@ import { setStarLive } from "@/app/admin/_actions/naringsliv";
 import { SmartImage } from "@/components/content/smart-image";
 import { Editable } from "@/components/edit-mode/editable";
 import { ArrowRight, ArrowUpRight, Calendar, ChevronDown, Edit, Eye, Mail } from "@/components/icons";
+import { StarGnistor } from "@/components/star/star-gnistor";
 import { EmptySky, StarMap } from "@/components/star/star-map";
+import { StarRorelse } from "@/components/star/star-rorelse";
 import "@/components/star/star.css";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
@@ -30,6 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export const instant = false;
 
 const H2 = "star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]";
+/** Ordet STAR och den röda linjen har samma storlek. Telefonens bredd styr, så att ordet aldrig går utanför sidans marginal. */
+const WORD_SIZE = "text-[clamp(4.5rem,min(28vw,35svh),23rem)]";
 
 export default async function StarPage(props: PageProps<"/star">) {
   const [companies, sasu, settings, user, sp] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings(), getSessionUser(), props.searchParams]);
@@ -44,7 +48,8 @@ export default async function StarPage(props: PageProps<"/star">) {
 
   if (!live && !canEdit) {
     return (
-      <div className="star-sky text-white">
+      <div data-star-rot className="star-sky star-sida text-white">
+        <StarRorelse />
         {asVisitor && <OwnerBar live={live} asVisitor />}
         <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={asVisitor}>
           <div className="md:col-span-7">
@@ -83,7 +88,8 @@ export default async function StarPage(props: PageProps<"/star">) {
   ];
 
   return (
-    <div className="star-sky text-white">
+    <div data-star-rot className="star-sky star-sida text-white">
+      <StarRorelse />
       {(canEdit || asVisitor) && <OwnerBar live={live} asVisitor={asVisitor} />}
       {/* Heron är loggan i sidans storlek: bokstäverna, den röda linjen genom dem och grafen uppför himlen. */}
       <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={canEdit || asVisitor}>
@@ -121,7 +127,7 @@ export default async function StarPage(props: PageProps<"/star">) {
 
       <section id="vilka-kommer" className="star-scope star-avsnitt relative isolate py-16 md:py-24">
         <div className="container-site">
-          <h2 className={H2}>Vilka kommer</h2>
+          <h2 data-star-in className={H2}>Vilka kommer</h2>
           {companies.length === 0 ? (
             <div className="relative mt-10">
               <EmptySky />
@@ -145,8 +151,8 @@ export default async function StarPage(props: PageProps<"/star">) {
                 <StarMap companies={companies} />
               </div>
               <ul className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {companies.map((c) => (
-                  <CompanyCard key={c.id} company={c} />
+                {companies.map((c, i) => (
+                  <CompanyCard key={c.id} company={c} delay={(i % 3) * 70} />
                 ))}
               </ul>
             </>
@@ -159,10 +165,10 @@ export default async function StarPage(props: PageProps<"/star">) {
           <div className="container-site">
             {/* Banan klättrar från nedre vänstra hörnet, så att uppgifterna om dagen får plats i himlen ovanför den. */}
             <div className="relative z-10 lg:max-w-[18rem]">
-              <h2 className={H2}>Dagen</h2>
+              <h2 data-star-in className={H2}>Dagen</h2>
               <EventFacts event={event} stacked className="mt-6" />
               <p className="mt-5">
-                <a href={`/evenemang/${event.slug}`} className="link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
+                <a href={`/evenemang/${event.slug}`} className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
                   Mer om dagen <ArrowRight size={15} />
                 </a>
               </p>
@@ -175,7 +181,7 @@ export default async function StarPage(props: PageProps<"/star">) {
       {hasSponsors && (
         <section id="sponsorer" className="star-avsnitt py-16 md:py-24">
           <div className="container-site">
-            <h2 className={H2}>Sponsorer</h2>
+            <h2 data-star-in className={H2}>Sponsorer</h2>
             <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
               {settings.star_sponsors_intro && <p className="text-lg text-white/80">{settings.star_sponsors_intro}</p>}
             </Pen>
@@ -185,7 +191,7 @@ export default async function StarPage(props: PageProps<"/star">) {
             {sponsors.length > 0 && (
               <ul className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                 {sponsors.map((s) => (
-                  <li key={s.id}>
+                  <li key={s.id} data-star-in="stor">
                     <SponsorPlate company={s} className="h-24 md:h-28" imageClass="max-h-14" textClass="text-lg" />
                   </li>
                 ))}
@@ -198,11 +204,11 @@ export default async function StarPage(props: PageProps<"/star">) {
       {tips.length > 0 && (
         <section id="forbered-dig" className="star-avsnitt py-16 md:py-24">
           <div className="container-site grid gap-10 lg:grid-cols-12">
-            <h2 className={cn(H2, "lg:col-span-5")}>Förbered dig</h2>
+            <h2 data-star-in className={cn(H2, "lg:col-span-5")}>Förbered dig</h2>
             <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
               <ol className="star-route star-tips" data-long="">
                 {tips.map((tip, i) => (
-                  <li key={`${i}-${tip}`} className="star-stop">
+                  <li key={`${i}-${tip}`} data-star-in="stor" className="star-stop">
                     <p className="text-lg leading-snug text-white/90">{tip}</p>
                   </li>
                 ))}
@@ -215,7 +221,7 @@ export default async function StarPage(props: PageProps<"/star">) {
       {faq.length > 0 && (
         <section id="fragor" className="star-avsnitt py-16 md:py-24">
           <div className="container-site grid gap-10 lg:grid-cols-12">
-            <h2 className={cn(H2, "lg:col-span-5")}>Frågor</h2>
+            <h2 data-star-in className={cn(H2, "lg:col-span-5")}>Frågor</h2>
             <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
               <div className="star-faq">
                 {faq.map((f, i) => (
@@ -232,7 +238,7 @@ export default async function StarPage(props: PageProps<"/star">) {
 
       {/* Två vägar ut, under den röda linjen som bär hela sidan. */}
       <section id="vara-med" className="star-ankare pb-20 md:pb-28">
-        <div className="h-1 w-full bg-[#8f1d1d]" aria-hidden />
+        <div data-star-in className="star-rod h-1 w-full bg-[#8f1d1d]" aria-hidden />
         <div className="container-site mt-14 grid gap-10 md:mt-20 md:grid-cols-2 md:gap-16">
           <div>
             <p className="kicker text-white/65">För dig som student</p>
@@ -319,8 +325,10 @@ function OwnerBar({ live, asVisitor = false }: { live: boolean; asVisitor?: bool
 
 function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: boolean; children: ReactNode }) {
   return (
-    <section className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
-      <div className="star-twinkle -z-10" aria-hidden />
+    <section data-star-hero className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
+      <div className="star-twinkle -z-10" aria-hidden>
+        <span className="star-fall" />
+      </div>
       <div className="container-site">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -328,11 +336,12 @@ function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: 
           <p className="kicker text-white/75">{subtitle}</p>
         </div>
         <div className="relative mt-6 md:mt-8">
-          <div className="absolute left-1/2 top-[56%] h-[0.065em] w-[200vw] -translate-x-1/2 bg-[#8f1d1d] text-[clamp(6.2rem,min(28vw,35svh),23rem)]" aria-hidden />
+          <div className={cn("star-linje absolute left-1/2 top-[56%] h-[0.065em] w-[200vw] -translate-x-1/2 bg-[#8f1d1d]", WORD_SIZE)} aria-hidden />
           <HeroGraph />
-          <h1 className="star-type relative -mr-[0.2em] text-[clamp(6.2rem,min(28vw,35svh),23rem)] font-light uppercase leading-[1.05] tracking-[0.2em]">{STAR_COPY.title}</h1>
+          <StarGnistor />
+          <h1 className={cn("star-type star-ord relative -mr-[0.2em] font-light uppercase leading-[1.05] tracking-[0.2em]", WORD_SIZE)}>{STAR_COPY.title}</h1>
         </div>
-        <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">{children}</div>
+        <div className="star-upp mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">{children}</div>
       </div>
     </section>
   );
@@ -368,13 +377,17 @@ function HeroGraph() {
     [99, 8],
   ];
   return (
-    <div className="star-draw pointer-events-none absolute inset-0" aria-hidden>
-      <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polyline points={points.map((p) => p.join(",")).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-      </svg>
-      {points.map(([x, y]) => (
-        <span key={x} className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white md:size-2.5" style={{ left: `${x}%`, top: `${y}%` }} />
-      ))}
+    <div className="star-draw" aria-hidden>
+      <div className="star-draw-inre">
+        <div className="star-draw-graf">
+          <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polyline points={points.map((p) => p.join(",")).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          </svg>
+          {points.map(([x, y]) => (
+            <span key={x} className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white md:size-2.5" style={{ left: `${x}%`, top: `${y}%` }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -385,7 +398,7 @@ function CountdownFacts({ event }: { event: EventFactsData }) {
   const countdown = countdownText(event.starts_at);
   return (
     <>
-      <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight first-letter:uppercase">{countdown ?? "Pågår nu"}</p>
+      <p className="star-type star-nedrakning text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight first-letter:uppercase">{countdown ?? "Pågår nu"}</p>
       <EventFacts event={event} className="mt-4" />
     </>
   );
@@ -444,12 +457,13 @@ function SeekFilter({ companies }: { companies: StarCompany[] }) {
   );
 }
 
-function CompanyCard({ company }: { company: StarCompany }) {
+function CompanyCard({ company, delay }: { company: StarCompany; delay: number }) {
   const url = safeExternalUrl(company.url);
   const seeks = parseSeeks(company.seeks);
   return (
-    <li id={`foretag-${company.id}`} data-seeks={company.seeks} className="star-card flex flex-col rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6">
-      <div className="flex items-center gap-4">
+    <li id={`foretag-${company.id}`} data-seeks={company.seeks} data-star-in="stor" style={{ "--d": `${delay}ms` } as React.CSSProperties} className="star-card @container flex flex-col rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6">
+      {/* I ett smalt kort står namnet under loggan, annars bryts långa namn mitt i ordet. */}
+      <div className="flex flex-col items-start gap-3 @xs:flex-row @xs:items-center @xs:gap-4">
         <span className={cn("grid h-20 w-32 shrink-0 place-items-center overflow-hidden rounded-xl p-2.5", company.logo ? "bg-white" : "border border-white/25")}>
           {company.logo ? (
             <SmartImage image={company.logo} sizes="128px" className="h-full w-full !bg-transparent !object-contain" alt="" />
@@ -502,7 +516,7 @@ function Route({ stops }: { stops: ProgramStop[] }) {
         <polyline points={points.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="1" vectorEffect="non-scaling-stroke" />
       </svg>
       {stops.map((s, i) => (
-        <li key={`${s.time}-${i}`} className="star-stop" style={{ "--x": points[i].x, "--y": points[i].y, "--w": `${100 / n}%` } as React.CSSProperties}>
+        <li key={`${s.time}-${i}`} data-star-in="stor" className="star-stop" style={{ "--x": points[i].x, "--y": points[i].y, "--w": `${100 / n}%`, "--d": `${Math.min(i, 5) * 60}ms` } as React.CSSProperties}>
           <p className="star-type text-3xl font-light tabular">{s.time}</p>
           <p className="mt-1 text-white/85">{s.text}</p>
         </li>
@@ -530,7 +544,7 @@ function SponsorPlate({ company, className, imageClass, textClass }: { company: 
 
 function MainSponsor({ company }: { company: StarCompany }) {
   return (
-    <div className="mt-10 grid items-center gap-8 md:grid-cols-12">
+    <div data-star-in="stor" className="mt-10 grid items-center gap-8 md:grid-cols-12">
       <div className="md:col-span-5">
         <SponsorPlate company={company} className="h-40 md:h-48" imageClass="max-h-24 md:max-h-32" textClass="text-3xl md:text-5xl font-light uppercase tracking-[0.08em]" />
       </div>

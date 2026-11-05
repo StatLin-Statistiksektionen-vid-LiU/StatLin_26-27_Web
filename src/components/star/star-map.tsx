@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { parseSeeks, SEEK_LABELS, type StarCompany } from "@/lib/naringsliv";
 import { narrowMap, wideMap, type StarMap as Layout } from "@/lib/star-map";
 import "./star.css";
@@ -16,8 +17,9 @@ function Map({ layout, companies, size, className }: { layout: Layout; companies
   const byId = new globalThis.Map(companies.map((c) => [c.id, c]));
   const fontSize = size === "wide" ? 13.5 : 13;
   return (
+    <div data-star-in className={`star-karta relative ${className}`}>
     <svg
-      className={`star-map block h-auto w-full ${className}`}
+      className="star-map block h-auto w-full"
       viewBox={`0 0 ${layout.width} ${layout.height}`}
       role="group"
       aria-label="Stjärnkarta över företagen. Varje stjärna leder till företagets kort."
@@ -59,6 +61,17 @@ function Map({ layout, companies, size, className }: { layout: Layout; companies
         );
       })}
     </svg>
+    {/* Stjärnorna tänds en efter en när kartan kommer in i bild. Små egna lager ovanpå, så att kartan inte behöver ritas om. */}
+    <div aria-hidden>
+      {layout.stars.map((s, i) => (
+        <span
+          key={s.id}
+          className="star-blixt"
+          style={{ left: `${(s.x / layout.width) * 100}%`, top: `${(s.y / layout.height) * 100}%`, "--i": i, "--s": byId.get(s.id)?.role === "huvudsponsor" ? "2.6rem" : "1.6rem" } as CSSProperties}
+        />
+      ))}
+    </div>
+    </div>
   );
 }
 
