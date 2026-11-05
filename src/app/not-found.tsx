@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "@/components/icons";
+
+export const metadata: Metadata = { title: "Sidan finns inte" };
 
 /** 404 – sidan ligger utanför konfidensintervallet. */
 export default function NotFound() {

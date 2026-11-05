@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * Studentoverallen enligt styrdokumentet (kap. 6.1.1): svart med röda revärer längs
  * ärmar och benens utsida och namnet i röda bokstäver. Ryggen avviker avsiktligt från kapitlet:
@@ -6,15 +8,17 @@
 export function Overall({ side, name = "NAMN" }: { side: "fram" | "bak"; name?: string }) {
   const body =
     "M150 40 C170 30 230 30 250 40 L330 70 C345 76 352 88 356 102 L392 300 C394 310 388 318 378 320 L352 324 C344 325 337 320 335 312 L304 170 L298 230 L306 600 C306 610 299 618 289 618 L232 618 C223 618 216 611 215 602 L200 330 L185 602 C184 611 177 618 168 618 L111 618 C101 618 94 610 94 600 L102 230 L96 170 L65 312 C63 320 56 325 48 324 L22 320 C12 318 6 310 8 300 L44 102 C48 88 55 76 70 70 Z";
+  // Sidan för nya studenter har två kopior, en för dator och en för telefon. Med samma id pekar den synliga på klippningen i den dolda, och då klipps ingenting.
+  const clipId = `ov-${side}-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
     <svg viewBox="0 0 400 640" className="h-auto w-full" role="img" aria-label={side === "fram" ? "Overallen framifrån" : "Overallen bakifrån med sektionsloggan"}>
       <defs>
-        <clipPath id={`ov-${side}`}>
+        <clipPath id={clipId}>
           <path d={body} />
         </clipPath>
       </defs>
       <path d={body} fill="#0e0e0e" />
-      <g clipPath={`url(#ov-${side})`} stroke="#ff0707" strokeWidth="9" fill="none" strokeLinecap="round">
+      <g clipPath={`url(#${clipId})`} stroke="#ff0707" strokeWidth="9" fill="none" strokeLinecap="round">
         {/* Revärer: hals → ärmar → ärmuppslag */}
         <path d="M150 40 L70 70 L44 102 L8 300" />
         <path d="M250 40 L330 70 L356 102 L392 300" />
