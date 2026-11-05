@@ -159,12 +159,16 @@ export async function deleteBox(fd: FormData): Promise<FormState> {
   redirect("/admin/fragelada?raderad=1");
 }
 
-/** De fasta lådorna följer posternas konton när det går. Saknas kontot står lådan utan ägare tills en administratör väljer en. */
+/**
+ * De fasta lådorna följer posternas konton när det går. Saknas kontot står lådan utan ägare tills en administratör väljer en.
+ * En ägarlös låda med frågor kvar byter inte ägare här: det får bara ske i setBoxOwner, som raderar frågorna i samma sats.
+ */
 function adoptFixedOwners() {
   getDb()
     .prepare(
       `UPDATE question_boxes SET owner_id = (SELECT id FROM users WHERE email = question_boxes.slug || '@statlin.se' AND active = 1)
-       WHERE slug IS NOT NULL AND owner_id IS NULL`,
+       WHERE slug IS NOT NULL AND owner_id IS NULL
+         AND NOT EXISTS (SELECT 1 FROM box_questions q WHERE q.box_id = question_boxes.id)`,
     )
     .run();
 }
