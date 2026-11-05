@@ -83,6 +83,13 @@
     scroll-padding-top: calc(var(--header-h) + 1rem);
   }
 
+  /* Den publika sajten börjar och slutar mörkt. Drar man förbi kanten på en iPhone ska det inte synas en ljus rand. */
+  @media screen {
+    html:has(#sidfot) {
+      background: var(--color-ink);
+    }
+  }
+
   body {
     background: var(--color-paper);
     color: var(--color-ink);
