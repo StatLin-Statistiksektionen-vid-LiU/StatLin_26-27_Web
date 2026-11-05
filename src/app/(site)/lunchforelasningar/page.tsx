@@ -60,7 +60,7 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
         </div>
 
         <div className="container-site -mt-14 grid gap-10 pb-20 md:-mt-16 md:pb-28 lg:grid-cols-12 lg:gap-14">
-          <section id="onskelistan" className="scroll-mt-[calc(var(--header-h)+1rem)] lg:col-span-7">
+          <section id="onskelistan" className="lg:col-span-7">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <h2 className="display-tight text-3xl md:text-4xl">Önskelistan</h2>
               <a href="#onska" className="btn btn-ghost btn-sm lg:hidden">
@@ -114,7 +114,7 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
             )}
           </section>
 
-          <aside id="onska" className="scroll-mt-[calc(var(--header-h)+1rem)] lg:col-span-5">
+          <aside id="onska" className="lg:col-span-5">
             <div className="star-sky rounded-[1.75rem] p-7 text-white md:p-9 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
               <h2 className="display-tight text-3xl">Önska</h2>
               {sp.tack ? (
@@ -274,7 +274,7 @@ function WishLeader({ wish, litByServer }: { wish: LectureWish; litByServer: boo
   const random = mulberry32(wish.id);
   const dots = Array.from({ length: Math.min(wish.votes, 90) }, () => `M${Math.round(random() * 800)} ${Math.round(random() * 260)}h0`).join("");
   return (
-    <li id={`onskemal-${wish.id}`} className="wish-leader star-sky relative isolate flex scroll-mt-[calc(var(--header-h)+1rem)] items-start gap-4 p-5 text-white md:gap-6 md:p-7">
+    <li id={`onskemal-${wish.id}`} className="wish-leader star-sky relative isolate flex items-start gap-4 p-5 text-white md:gap-6 md:p-7">
       <svg className="pointer-events-none absolute inset-0 -z-10 h-full w-full" viewBox="0 0 800 260" preserveAspectRatio="xMidYMid slice" aria-hidden>
         <path d={dots} stroke="#fff" strokeOpacity="0.6" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
@@ -313,7 +313,7 @@ function WishComet({ wish, most }: { wish: LectureWish; most: number }) {
 
 function WishRow({ wish, most, litByServer }: { wish: LectureWish; most: number; litByServer: boolean }) {
   return (
-    <li id={`onskemal-${wish.id}`} className="wish-row relative flex scroll-mt-[calc(var(--header-h)+1rem)] items-start gap-4 p-5 md:gap-6 md:p-6">
+    <li id={`onskemal-${wish.id}`} className="wish-row relative flex items-start gap-4 p-5 md:gap-6 md:p-6">
       <WishVote wish={wish} litByServer={litByServer} />
       <div className="min-w-0 flex-1 pt-1">
         <p className="text-lg font-semibold leading-snug [overflow-wrap:anywhere]">{wish.title}</p>

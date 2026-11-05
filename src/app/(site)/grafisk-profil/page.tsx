@@ -134,7 +134,7 @@ export default function BrandPage() {
       </nav>
 
       {/* Logotyp */}
-      <section id="logotyp" className="container-site scroll-mt-32 py-20 md:py-28">
+      <section id="logotyp" className="container-site py-20 md:py-28">
         <BrandHeading index="3" title="Logotyp" />
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <Reveal className="lg:col-span-5">
@@ -187,7 +187,7 @@ export default function BrandPage() {
       </section>
 
       {/* Utskottsloggor */}
-      <section id="utskott" className="noise relative scroll-mt-32 bg-ink py-20 text-white md:py-28">
+      <section id="utskott" className="noise relative bg-ink py-20 text-white md:py-28">
         <div className="container-site relative">
           <BrandHeading index="3.2–3.4" title="Utskottsloggor" dark />
           <p className="mt-5 max-w-2xl text-white/65">
@@ -211,7 +211,7 @@ export default function BrandPage() {
       </section>
 
       {/* Färger */}
-      <section id="farger" className="container-site scroll-mt-32 py-20 md:py-28">
+      <section id="farger" className="container-site py-20 md:py-28">
         <BrandHeading index="4" title="Färgkoder" />
         <p className="mt-5 max-w-2xl text-ink/70">Klicka på ett värde för att kopiera det.</p>
         <div className="mt-12 space-y-14">
@@ -242,7 +242,7 @@ export default function BrandPage() {
       </section>
 
       {/* Typsnitt */}
-      <section id="typsnitt" className="scroll-mt-32 border-y border-ink/10 bg-paper-2/50 py-20 md:py-28">
+      <section id="typsnitt" className="border-y border-ink/10 bg-paper-2/50 py-20 md:py-28">
         <div className="container-site">
           <BrandHeading index="5" title="Typsnitt" />
           <p className="mt-5 max-w-2xl text-ink/70">
@@ -266,7 +266,7 @@ export default function BrandPage() {
       </section>
 
       {/* Namn */}
-      <section id="namn" className="container-site scroll-mt-32 py-20 md:py-28">
+      <section id="namn" className="container-site py-20 md:py-28">
         <BrandHeading index="2" title="Namn & förkortningar" />
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <p className="text-[1.05rem] leading-relaxed text-ink/80 lg:col-span-5">
@@ -285,7 +285,7 @@ export default function BrandPage() {
       </section>
 
       {/* Kläder */}
-      <section id="klader" className="noise relative scroll-mt-32 overflow-hidden bg-ink py-20 text-white md:py-28">
+      <section id="klader" className="noise relative overflow-hidden bg-ink py-20 text-white md:py-28">
         <div className="container-site relative grid items-center gap-14 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <BrandHeading index="6" title="Overallen" dark />
@@ -347,7 +347,7 @@ async function Material() {
   });
   if (docs.length === 0) return null;
   return (
-    <section id="material" aria-labelledby="material-rubrik" className="container-site scroll-mt-32 py-20 md:py-28">
+    <section id="material" aria-labelledby="material-rubrik" className="container-site py-20 md:py-28">
       <p className="kicker text-stone">
         <span className="text-red-deep">Ladda ner</span> · Från grafiskt ansvarig
       </p>
