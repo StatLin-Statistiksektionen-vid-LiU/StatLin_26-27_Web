@@ -49,7 +49,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
       <Editable target={{ type: "committee", id: c.id }} label="Redigera utskottet" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="noise relative overflow-hidden bg-ink text-white">
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_75%)]" aria-hidden />
-        <div aria-hidden className="pointer-events-none absolute right-[-10%] top-[-20%] size-[42rem] rounded-full opacity-50 blur-3xl" style={{ background: `radial-gradient(closest-side, ${c.accent}, transparent)` }} />
+        <div aria-hidden className="pointer-events-none absolute right-[-10%] top-[-20%] size-[42rem] rounded-full opacity-50 blur-3xl pointer-coarse:filter-none" style={{ background: `radial-gradient(closest-side, ${c.accent}, transparent)` }} />
         <div className="container-site relative grid items-center gap-10 pb-16 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-24 md:pt-[calc(var(--header-h)+5rem)]">
           <div className="md:col-span-7">
             <Link href="/utskott" className="kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
@@ -82,7 +82,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
               <img
                 src={c.logo_url}
                 alt={`${c.short_name}-loggan`}
-                className="w-[min(70vw,24rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]"
+                className="w-[min(70vw,24rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)] pointer-coarse:filter-none"
               />
             </div>
           )}

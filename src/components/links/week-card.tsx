@@ -10,7 +10,7 @@ export function WeekCard({ today }: { today: string }) {
   const day = useSyncExternalStore(subscribe, todayLocal, () => today);
   const p = parts(day);
   return (
-    <div className="@container flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 backdrop-blur md:block md:w-full md:max-w-xs md:rotate-2 md:p-7">
+    <div className="@container flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 backdrop-blur pointer-coarse:backdrop-filter-none md:block md:w-full md:max-w-xs md:rotate-2 md:p-7">
       <div>
         <p className="kicker text-white/45">Vecka</p>
         <p className="mt-2 text-white/60 md:hidden">

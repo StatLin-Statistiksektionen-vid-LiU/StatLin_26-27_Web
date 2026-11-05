@@ -75,7 +75,7 @@ async function Companies() {
           </Reveal>
           <Reveal delay={150} className="flex justify-center md:col-span-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/utskott/star.webp" alt="STAR-loggan" className="w-[min(70vw,22rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)]" />
+            <img src="/brand/utskott/star.webp" alt="STAR-loggan" className="w-[min(70vw,22rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)] pointer-coarse:filter-none" />
           </Reveal>
         </div>
       </section>

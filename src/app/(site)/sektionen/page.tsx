@@ -48,7 +48,7 @@ async function AboutContent() {
         lead={page?.lead}
         aside={
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/brand/statlin.svg" alt="" className="logo-kant mx-auto hidden w-64 animate-float drop-shadow-[0_30px_50px_rgba(255,7,7,0.25)] md:block" />
+          <img src="/brand/statlin.svg" alt="" className="logo-kant mx-auto hidden w-64 animate-float drop-shadow-[0_30px_50px_rgba(255,7,7,0.25)] pointer-coarse:filter-none md:block" />
         }
       />
       </Editable>
@@ -132,7 +132,7 @@ async function AboutContent() {
                   )}
                   <span className="min-w-0">
                     <span className="display-tight block text-lg normal-case">{c.short_name}</span>
-                    <span className="mt-0.5 line-clamp-2 block text-sm text-stone">{c.tagline}</span>
+                    <span className="mt-0.5 block text-sm text-stone">{c.tagline}</span>
                   </span>
                 </Link>
               </Reveal>

@@ -9,7 +9,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <SiteHeader />
-      <main id="innehall">{children}</main>
+      {/* Sidan strömmas in. Utan minsta höjd står sidfoten mitt på skärmen tills innehållet kommer och knuffar ner den. */}
+      <main id="innehall" className="min-h-svh">
+        {children}
+      </main>
       <SiteFooter />
       <Suspense fallback={null}>
         <Announcement />

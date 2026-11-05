@@ -44,8 +44,8 @@ async function Committees() {
             >
               <span
                 aria-hidden
-                className="pointer-events-none absolute -left-20 -top-20 size-80 rounded-full opacity-40 blur-3xl transition-opacity duration-700 group-hover:opacity-80"
-                style={{ background: c.accent }}
+                className="pointer-events-none absolute -left-20 -top-20 size-80 rounded-full bg-[var(--glod)] opacity-40 blur-3xl transition-opacity duration-700 group-hover:opacity-80 pointer-coarse:-left-32 pointer-coarse:-top-32 pointer-coarse:size-[28rem] pointer-coarse:bg-transparent pointer-coarse:bg-[radial-gradient(closest-side,var(--glod),transparent)] pointer-coarse:filter-none"
+                style={{ "--glod": c.accent } as React.CSSProperties}
               />
               <div className="grid-paper pointer-events-none absolute inset-0 text-white opacity-60" aria-hidden />
               {c.logo_url && (

@@ -113,7 +113,7 @@ export default function BrandPage() {
         </a>
       </PageHero>
 
-      <nav aria-label="Innehåll" className="sticky top-[var(--header-h)] z-30 border-b border-ink/10 bg-paper/90 backdrop-blur-lg">
+      <nav aria-label="Innehåll" className="sticky top-[var(--header-h)] z-30 border-b border-ink/10 bg-paper/90 backdrop-blur-lg pointer-coarse:bg-paper pointer-coarse:backdrop-filter-none">
         <ul className="container-site flex gap-1 overflow-x-auto py-3 text-sm font-semibold">
           {[
             ["#logotyp", "Logotyp"],
@@ -251,12 +251,12 @@ export default function BrandPage() {
           </p>
           <ul className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
             {FONTS.map((f) => (
-              <li key={f.name} className="grid gap-3 py-7 md:grid-cols-12 md:items-center">
+              <li key={f.name} className="grid grid-cols-1 gap-3 py-7 md:grid-cols-12 md:items-center">
                 <div className="md:col-span-3">
                   <p className="font-bold">{f.name}</p>
                   <p className="text-sm text-stone">{f.use}</p>
                 </div>
-                <p className="truncate text-[clamp(1.6rem,3.6vw,2.8rem)] leading-tight md:col-span-9" style={f.style}>
+                <p className="text-[clamp(1.6rem,3.6vw,2.8rem)] leading-tight [overflow-wrap:anywhere] md:col-span-9" style={f.style}>
                   Statistiksektionen i Linköping
                 </p>
               </li>

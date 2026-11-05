@@ -33,7 +33,7 @@ export function PageHero({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-40 -top-40 size-[38rem] rounded-full opacity-60 blur-3xl"
+        className="pointer-events-none absolute -right-40 -top-40 size-[38rem] rounded-full opacity-60 blur-3xl pointer-coarse:filter-none"
         style={{ background: `radial-gradient(closest-side, ${accent ?? "#ff0707"}33, transparent)` }}
       />
       <div className="container-site relative grid items-end gap-10 pb-14 pt-[calc(var(--header-h)+4rem)] md:grid-cols-12 md:pb-20 md:pt-[calc(var(--header-h)+6rem)]">

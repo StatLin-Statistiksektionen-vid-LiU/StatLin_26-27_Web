@@ -42,7 +42,7 @@ export function DataField({ className }: { className?: string }) {
     let volSmooth = 1;
 
     type Dot = { x: number; y: number; vx: number; vy: number; r: number; a: number; red: boolean };
-    let dots: Dot[] = [];
+    const dots: Dot[] = [];
 
     const gauss = () => {
       let u = 0;
@@ -68,6 +68,8 @@ export function DataField({ className }: { className?: string }) {
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
+      const oldW = w || 1;
+      const oldH = h || 1;
       w = rect.width;
       h = rect.height;
       canvas.width = Math.round(w * dpr);
@@ -81,16 +83,24 @@ export function DataField({ className }: { className?: string }) {
       while (series.length < n) series.push(nextPoint());
       series.length = n;
 
+      // Punkterna som redan finns flyttas med, så att bilden inte lottas om när ytan ändrar storlek.
       const count = Math.round(Math.min(90, (w * h) / 16000));
-      dots = Array.from({ length: count }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.12,
-        vy: (Math.random() - 0.5) * 0.12,
-        r: 0.8 + Math.random() * 1.8,
-        a: 0.12 + Math.random() * 0.35,
-        red: Math.random() < 0.08,
-      }));
+      for (const d of dots) {
+        d.x *= w / oldW;
+        d.y *= h / oldH;
+      }
+      while (dots.length < count) {
+        dots.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.12,
+          vy: (Math.random() - 0.5) * 0.12,
+          r: 0.8 + Math.random() * 1.8,
+          a: 0.12 + Math.random() * 0.35,
+          red: Math.random() < 0.08,
+        });
+      }
+      dots.length = count;
     };
 
     const draw = (dt: number) => {

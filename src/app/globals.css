@@ -372,6 +372,18 @@
       transform 1.1s var(--ease-out-expo);
     transition-delay: var(--reveal-delay, 0ms);
   }
+  /* Telefon: tumscrollen går fort, så blocken ska hinna fram. translate3d skulle också ge varje dolt block ett eget lager. */
+  @media (pointer: coarse) {
+    .reveal[data-hydrated] {
+      transform: translateY(14px);
+    }
+    .reveal[data-hydrated][data-shown="true"] {
+      transition:
+        opacity 0.45s ease-out,
+        transform 0.55s var(--ease-out-expo);
+      transition-delay: 0ms;
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     .reveal[data-hydrated] {
       opacity: 1;
@@ -624,7 +636,7 @@ html:not(.js) .meny-knapp {
 }
 .floating-logo.is-intro .logo-glow {
   animation:
-    logo-fade 2s 0.9s ease-out both,
+    logo-glow-in 2s 0.9s ease-out both,
     glow-breathe 7s 2.9s ease-in-out infinite;
 }
 
@@ -771,6 +783,17 @@ html:not(.js) .meny-knapp {
   }
   to {
     opacity: 1;
+  }
+}
+/* Slutar där andningen börjar, annars tar glöden ett skutt när den ena animationen lämnar över till den andra. */
+@keyframes logo-glow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 0.75;
+    transform: scale(0.96);
   }
 }
 @keyframes glow-breathe {

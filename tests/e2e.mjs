@@ -363,7 +363,7 @@ async function openDeleteConfirm(page) {
       const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
       const draws = (p) => p.evaluate(() => window.__canvas.draws);
       // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
-      const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "sig-wipe", "sig-glow"].includes(a.animationName));
+      const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "logo-glow-in", "sig-wipe", "sig-glow"].includes(a.animationName));
       const scrollHeader = async (p) => {
         await p.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
         await p.locator("header.backdrop-blur-xl").waitFor();

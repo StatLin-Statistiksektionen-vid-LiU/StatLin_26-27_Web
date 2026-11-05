@@ -88,7 +88,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
           role="dialog"
           aria-modal="true"
           aria-label={`${title}, bild ${index + 1} av ${items.length}`}
-          className="fixed inset-0 z-[100] flex flex-col bg-black/95 text-white backdrop-blur-sm [animation:logo-fade_0.25s_ease-out]"
+          className="fixed inset-0 z-[100] flex flex-col bg-black/95 text-white [animation:logo-fade_0.25s_ease-out]"
           onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
           onTouchEnd={(e) => {
             if (!touch.current) return;

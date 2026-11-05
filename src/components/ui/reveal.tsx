@@ -40,7 +40,8 @@ export function Reveal({
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+      // Med tummen kommer blocken fort, så där börjar intoningen strax innan blocket syns i stället för när det redan är en bit inne.
+      window.matchMedia("(pointer: coarse)").matches ? { rootMargin: "0px 0px 6% 0px", threshold: 0 } : { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
     );
     io.observe(el);
     return () => io.disconnect();
