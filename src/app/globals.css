@@ -370,6 +370,36 @@ html:not(.js) header.fixed {
   background-color: var(--color-ink);
 }
 
+/* Sidhuvudet vet inte vilken sida det står på förrän JavaScript har kommit. Till dess står båda språklänkarna i koden. */
+.sprak-sv,
+html:has([data-engelsk-sida]) .sprak-en {
+  display: none;
+}
+html:has([data-engelsk-sida]) .sprak-sv {
+  display: inline-flex;
+}
+
+/* Menyerna öppnas med JavaScript. Utan det öppnas grupperna i huvudmenyn av muspekaren och fokus, och mobilmenyn blir en länk till sidfoten. */
+html:not(.js) .meny-grupp:is(:hover, :focus-within) > .meny-lista {
+  visibility: visible;
+  opacity: 1;
+  translate: -50% 0;
+}
+.meny-utan-js {
+  display: none;
+}
+html:not(.js) .meny-utan-js {
+  display: grid;
+}
+html:not(.js) .meny-knapp {
+  display: none;
+}
+@media (min-width: 64rem) {
+  html:not(.js) .meny-utan-js {
+    display: none;
+  }
+}
+
 /* ---------- Markdown-innehåll ---------- */
 
 .prose-statlin {

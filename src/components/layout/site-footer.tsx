@@ -82,7 +82,7 @@ function FooterContactView({ s }: { s: SiteSettings }) {
 export function SiteFooter() {
   const links = NAV.flatMap((g) => (g.children ? g.children : [g]));
   return (
-    <footer className="relative overflow-hidden bg-ink text-white">
+    <footer id="sidfot" className="relative overflow-hidden bg-ink text-white">
       <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" aria-hidden />
       <div className="container-site relative pt-24">
         <div className="grid gap-14 md:grid-cols-12">

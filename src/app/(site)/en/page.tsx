@@ -24,7 +24,7 @@ const LINKS = [
 
 export default function EnglishPage() {
   return (
-    <div lang="en">
+    <div lang="en" data-engelsk-sida>
       <Suspense fallback={<HeroSkeleton english />}>
         <English />
       </Suspense>
