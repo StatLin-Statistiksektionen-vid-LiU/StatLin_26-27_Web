@@ -307,7 +307,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
   await step("SB-25: ett album med en bild visar 1 bild, och bildvisaren förinläser samma bild som den sedan visar", async () => {
     const image = (background) => sharp({ create: { width: 2400, height: 1600, channels: 3, background } }).jpeg({ quality: 80 }).toBuffer();
     const upload = async (buffers, total) => {
-      await page.locator('input[type="file"][multiple]').setInputFiles(buffers.map((buffer, i) => ({ name: `e2e-${total}-${i}.jpg`, mimeType: "image/jpeg", buffer })));
+      await page.locator('input[aria-label="Välj bilder till galleriet"]').setInputFiles(buffers.map((buffer, i) => ({ name: `e2e-${total}-${i}.jpg`, mimeType: "image/jpeg", buffer })));
       await page.waitForFunction((n) => document.querySelectorAll('input[aria-label="Bildtext"]').length === n, total, { timeout: 30000 });
     };
     const album = await createEvent({ title: `E2E-album ${uniqueId()}`, startsAt: `${dayOffset(-30)}T18:00` });

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { deleteEvent, setEventChecked } from "@/app/admin/_actions/events";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { EventEditor } from "@/components/admin/event-editor";
+import { InlineActionForm } from "@/components/admin/inline-action-form";
 import { AdminHeader, Notice, ReviewBadge, StatusBadge } from "@/components/admin/ui";
 import { ArrowUpRight, Check, Trash } from "@/components/icons";
 import { canEditOwned, canReviewEvents } from "@/lib/auth/permissions";
@@ -86,7 +87,7 @@ async function ReviewPanel({ event }: { event: EventItem }) {
         </span>
         Granskningen syns bara här i adminpanelen och påverkar inte om evenemanget visas på sajten.
       </p>
-      <form action={setEventChecked} className="shrink-0">
+      <InlineActionForm action={setEventChecked} className="shrink-0">
         <input type="hidden" name="id" value={event.id} />
         <input type="hidden" name="checked" value={event.checked_at ? "0" : "1"} />
         {event.checked_at ? (
@@ -98,7 +99,7 @@ async function ReviewPanel({ event }: { event: EventItem }) {
             <Check size={15} /> Markera som granskad
           </button>
         )}
-      </form>
+      </InlineActionForm>
     </div>
   );
 }

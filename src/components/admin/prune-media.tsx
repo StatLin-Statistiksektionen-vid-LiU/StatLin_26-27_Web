@@ -3,14 +3,16 @@
 import { unstable_rethrow } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { FormState } from "@/lib/admin/form";
+import { useConfirm } from "./confirm-dialog";
 
 /** Gallringen under Bilder (ST-17): frågar först och visar sedan vad som togs bort. */
 export function PruneMedia({ action }: { action: () => Promise<FormState> }) {
   const [state, setState] = useState<FormState>({});
   const [pending, startTransition] = useTransition();
-  const run = () => {
+  const [confirm, confirmDialog] = useConfirm();
+  const run = async () => {
     // Gallringen väljer på uppladdningsdatum och på om något använder filen just nu – inte på hur länge den varit oanvänd.
-    if (!confirm("Ta bort uppladdningar som är äldre än en vecka och inte används någonstans just nu? Det går inte att ångra.")) return;
+    if (!(await confirm("Ta bort uppladdningar som är äldre än en vecka och inte används någonstans just nu? Det går inte att ångra.", "Rensa"))) return;
     startTransition(async () => {
       try {
         setState(await action());
@@ -23,6 +25,7 @@ export function PruneMedia({ action }: { action: () => Promise<FormState> }) {
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
+      {confirmDialog}
       <button type="button" onClick={run} disabled={pending} className="btn btn-ghost bg-white disabled:opacity-70">
         {pending ? "Rensar…" : "Rensa oanvända filer"}
       </button>

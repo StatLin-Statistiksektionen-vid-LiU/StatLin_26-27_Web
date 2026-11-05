@@ -52,7 +52,5 @@ export const canManageImages = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocuments = (u: Designer) => isEditor(u) || hasDesign(u);
 export const canManageDocument = (u: Designer, category: DocumentCategory) => isEditor(u) || (hasDesign(u) && category === "grafiskt");
 
-export const canManageUsers = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;
-export const canManageSiteContent = isEditor;

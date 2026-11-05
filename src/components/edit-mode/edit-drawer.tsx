@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { setNewsCover } from "@/app/admin/_actions/news";
 import { FormWatchCtx } from "@/components/admin/action-form";
 import { BoardMemberForm, CommitteeForm, FooterSettingsForm, HomeTextsForm, PageForm } from "@/components/admin/content-forms";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { CoverSlot } from "@/components/admin/cover-slot";
 import { EventForm } from "@/components/admin/event-form";
 import { EventImagesEditor } from "@/components/admin/event-images-editor";
@@ -13,7 +14,7 @@ import { NewsForm } from "@/components/admin/news-form";
 import { ArrowUpRight, Close } from "@/components/icons";
 import type { BoardMember, Committee, EventItem, ImageRef, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
 import { useFocusLayer } from "@/lib/use-focus-layer";
-import { editStore, targetQuery, useEditState, type EditTarget } from "./store";
+import { editStore, targetQuery, UNSAVED, useEditState, type EditTarget } from "./store";
 
 const TITLES: Record<EditTarget["type"], string> = {
   page: "Sidans text",
@@ -57,7 +58,7 @@ const WATCH = { dirty: editStore.setDirty, uploading: editStore.setUploading };
 
 /** Sidopanelen som pennorna öppnar. Formulären är desamma som i adminpanelen. */
 export function EditDrawer() {
-  const { open } = useEditState();
+  const { open, asking } = useEditState();
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +67,13 @@ export function EditDrawer() {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && editStore.requestClose();
+    const onKey = (e: KeyboardEvent) => {
+      // Escape i en dialog ovanpå panelen stänger bara dialogen.
+      if (e.key !== "Escape" || document.querySelector("dialog[open]")) return;
+      // Annars stänger samma tryck dialogen som frågar om osparade ändringar, i samma ögonblick som den öppnats.
+      e.preventDefault();
+      editStore.requestClose();
+    };
     const overflow = document.body.style.overflow;
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -81,6 +88,7 @@ export function EditDrawer() {
   if (!open) return null;
   return (
     <div ref={layerRef} className="fixed inset-0 z-[90]">
+      {asking && <ConfirmDialog message={UNSAVED} confirmLabel="Stäng utan att spara" onAnswer={editStore.answerClose} />}
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={() => editStore.requestClose()} aria-hidden />
       <div
         role="dialog"
@@ -99,7 +107,7 @@ export function EditDrawer() {
             <Link
               href={adminHref(open)}
               onClick={(e) => {
-                if (!editStore.requestClose()) e.preventDefault();
+                if (!editStore.requestClose(() => router.push(adminHref(open)))) e.preventDefault();
               }}
               className="btn btn-ghost btn-sm hidden bg-white sm:inline-flex"
             >

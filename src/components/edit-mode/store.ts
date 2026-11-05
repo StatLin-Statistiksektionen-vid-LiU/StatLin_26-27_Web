@@ -27,13 +27,22 @@ export type EditTarget =
 /**
  * dirty: formuläret i panelen har osparade ändringar – panelen frågar innan den stängs.
  * uploading: ett formulär i panelen laddar upp en bild – panelen stängs inte då.
+ * asking: panelen väntar på svar om de osparade ändringarna, i en dialog på sidan (se ConfirmDialog).
  */
-type State = { user: EditUser | null; editing: boolean; open: EditTarget | null; flash: string | null; dirty: boolean; uploading: boolean };
+type State = {
+  user: EditUser | null;
+  editing: boolean;
+  open: EditTarget | null;
+  flash: string | null;
+  dirty: boolean;
+  uploading: boolean;
+  asking: { after?: () => void } | null;
+};
 
 const KEY = "statlin-redigeringslage";
-const SERVER: State = { user: null, editing: false, open: null, flash: null, dirty: false, uploading: false };
+const SERVER: State = { user: null, editing: false, open: null, flash: null, dirty: false, uploading: false, asking: null };
 const UPLOADING = "En bild laddas fortfarande upp – vänta tills den är klar innan du stänger panelen.";
-const UNSAVED = "Du har osparade ändringar – stäng ändå?";
+export const UNSAVED = "Du har osparade ändringar – stäng ändå?";
 let state: State = SERVER;
 const listeners = new Set<() => void>();
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
@@ -58,7 +67,7 @@ export const editStore = {
   },
   get: () => state,
   setUser(user: EditUser | null) {
-    set({ user, editing: user ? readPreference() : false, open: null, dirty: false, uploading: false });
+    set({ user, editing: user ? readPreference() : false, open: null, dirty: false, uploading: false, asking: null });
   },
   setEditing(editing: boolean) {
     try {
@@ -66,30 +75,41 @@ export const editStore = {
     } catch {
       /* privat läge – valet gäller bara den här sidvisningen */
     }
-    set(editing ? { editing } : { editing, open: null, dirty: false, uploading: false });
+    set(editing ? { editing } : { editing, open: null, dirty: false, uploading: false, asking: null });
   },
   open(target: EditTarget) {
-    set({ open: target, dirty: false, uploading: false });
+    set({ open: target, dirty: false, uploading: false, asking: null });
   },
   close(flash?: string) {
     clearTimeout(flashTimer);
-    set({ open: null, flash: flash ?? null, dirty: false, uploading: false });
+    set({ open: null, flash: flash ?? null, dirty: false, uploading: false, asking: null });
     if (flash) flashTimer = setTimeout(() => set({ flash: null }), 3500);
   },
   /**
    * Stängning som användaren bett om – Escape, klick utanför, stängknappen, länken till adminpanelen eller ett
    * adressbyte. Under en uppladdning står panelen kvar, och med osparade ändringar frågar den först.
-   * Returnerar false om panelen inte stängdes.
+   * Returnerar false om panelen inte stängdes just nu. Blir svaret ja på frågan körs `after`.
    */
-  requestClose(): boolean {
+  requestClose(after?: () => void): boolean {
     if (!state.open) return true;
     if (state.uploading) {
       window.alert(UPLOADING);
       return false;
     }
-    if (state.dirty && !window.confirm(UNSAVED)) return false;
+    if (state.dirty) {
+      set({ asking: { after } });
+      return false;
+    }
     editStore.close();
     return true;
+  },
+  /** Svaret på frågan om osparade ändringar. `after` är det som skulle ha hänt om panelen fått stängas direkt. */
+  answerClose(yes: boolean) {
+    const after = state.asking?.after;
+    set({ asking: null });
+    if (!yes) return;
+    editStore.close();
+    after?.();
   },
   setDirty(dirty: boolean) {
     if (state.dirty !== dirty) set({ dirty });

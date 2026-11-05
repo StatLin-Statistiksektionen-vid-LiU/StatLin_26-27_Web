@@ -12,11 +12,13 @@ import {
   zCheckbox,
   zOptionalEmail,
   zOptionalId,
+  zOrder,
   zRequired,
   zText,
   zUrl,
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite } from "@/lib/admin/helpers";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -25,7 +27,7 @@ import { DEFAULT_SETTINGS } from "@/lib/data/content";
 import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
-import type { DocumentCategory, Media } from "@/lib/types";
+import { DOCUMENT_CATEGORY_VALUES, type DocumentCategory, type Media } from "@/lib/types";
 
 const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
@@ -34,7 +36,7 @@ const forbidden: FormState = { error: "Du har inte behörighet att göra det hä
 export async function previewMarkdown(md: string): Promise<string> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return `<p>${user.error}</p>`;
-  return renderMarkdown(md.slice(0, 50000));
+  return renderMarkdown(md.slice(0, TEXT_LIMITS.page));
 }
 
 /* ---------- Styrelsen ---------- */
@@ -46,7 +48,7 @@ const boardSchema = z.object({
   bio: zText(400, "Beskrivningen"),
   photo_media_id: zOptionalId,
   committee_id: zOptionalId,
-  sort_order: z.coerce.number().int().min(0).max(9999).default(0),
+  sort_order: zOrder,
 });
 
 export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -58,12 +60,12 @@ export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<F
   if (!parsed.success) return invalid(parsed.error);
   const db = getDb();
   if (id) {
-    const old = db.prepare("SELECT photo_media_id FROM board_members WHERE id = ?").get(id) as { photo_media_id: number | null } | undefined;
+    const old = db.prepare("SELECT photo_media_id, sort_order FROM board_members WHERE id = ?").get(id) as { photo_media_id: number | null; sort_order: number } | undefined;
     if (!old) return { error: "Posten finns inte längre." };
     db.prepare(
       `UPDATE board_members SET post=@post, name=@name, email=@email, bio=@bio, photo_media_id=@photo_media_id,
         committee_id=@committee_id, sort_order=@sort_order WHERE id=@id`,
-    ).run({ ...parsed.data, id });
+    ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? old.sort_order, id });
     if (old.photo_media_id !== parsed.data.photo_media_id) await deleteMediaIfUnused(old.photo_media_id);
     audit(user.id, "update", "board", id, parsed.data.post);
     revalidateSite();
@@ -74,16 +76,17 @@ export async function saveBoardMember(_prev: FormState, fd: FormData): Promise<F
       `INSERT INTO board_members (post, name, email, bio, photo_media_id, committee_id, sort_order)
        VALUES (@post, @name, @email, @bio, @photo_media_id, @committee_id, @sort_order)`,
     )
-    .run(parsed.data);
+    .run({ ...parsed.data, sort_order: parsed.data.sort_order ?? 0 });
   audit(user.id, "create", "board", Number(res.lastInsertRowid), parsed.data.post);
   revalidateSite();
   redirect("/admin/styrelsen?sparad=1");
 }
 
-export async function deleteBoardMember(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
-  if (!isEditor(user)) redirect("/admin");
+export async function deleteBoardMember(fd: FormData): Promise<FormState> {
+  // Felsvaren visas i bekräftelsen, så sessionen förlängs först när raderingen gått igenom (se deleteTask).
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
+  if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT post, photo_media_id FROM board_members WHERE id = ?").get(id) as { post: string; photo_media_id: number | null } | undefined;
@@ -93,6 +96,7 @@ export async function deleteBoardMember(fd: FormData) {
     markSeeded(db, "board_members");
     await deleteMediaIfUnused(row.photo_media_id);
     audit(user.id, "delete", "board", id, row.post);
+    await renewSessionIfDue();
     revalidateSite();
   }
   redirect("/admin/styrelsen?raderad=1");
@@ -100,7 +104,7 @@ export async function deleteBoardMember(fd: FormData) {
 
 export async function moveBoardMember(id: number, direction: -1 | 1) {
   const user = await actionUser();
-  if ("error" in user) return;
+  if ("error" in user) return user;
   if (!isEditor(user)) throw new Error("Saknar behörighet.");
   const db = getDb();
   const rows = db.prepare("SELECT id FROM board_members ORDER BY sort_order, id").all() as { id: number }[];
@@ -128,7 +132,7 @@ const committeeSchema = z.object({
   name: zRequired(120, "Namnet"),
   short_name: zRequired(30, "Förkortningen"),
   tagline: zText(200, "Slogan"),
-  description_md: zText(20000, "Beskrivningen"),
+  description_md: zText(TEXT_LIMITS.committee, "Beskrivningen"),
   logo_media_id: zOptionalId,
   // Finns inte i formuläret (SD-10). Skickas den ändå godtas bara en av sajtens egna loggor, eller adressen som redan står.
   logo_url: zText(300),
@@ -136,7 +140,7 @@ const committeeSchema = z.object({
   email: zOptionalEmail,
   instagram: zUrl,
   visible: zCheckbox,
-  sort_order: z.coerce.number().int().min(0).max(9999).default(0),
+  sort_order: zOrder,
 });
 
 export async function saveCommittee(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -167,7 +171,7 @@ export async function saveCommittee(_prev: FormState, fd: FormData): Promise<For
     logoUrl = src;
   }
   // Utskottskonton får inte dölja sitt utskott eller ändra sorteringen.
-  const extra = isEditor(user) ? { visible: d.visible, sort_order: d.sort_order } : { visible: current.visible, sort_order: current.sort_order };
+  const extra = isEditor(user) ? { visible: d.visible, sort_order: d.sort_order ?? current.sort_order } : { visible: current.visible, sort_order: current.sort_order };
   // Bara om utskottet inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
   const updatedAt = nowIso();
   const res = db.prepare(
@@ -213,7 +217,7 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
   if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const parsed = z
-    .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(60000, "Texten") })
+    .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(TEXT_LIMITS.page, "Texten") })
     .safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   // Bara om sidan inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.
@@ -232,7 +236,7 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
 
 const docSchema = z.object({
   title: zRequired(160, "Titeln"),
-  category: z.enum(["styrdokument", "protokoll", "grafiskt", "ovrigt"]),
+  category: z.enum(DOCUMENT_CATEGORY_VALUES),
   description: zText(300, "Beskrivningen"),
   url: zUrl,
   doc_date: z
@@ -266,6 +270,9 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
   // sparningen. Med "Ta bort filen" betyder den då "ta bort"; bara en ny fil och rutan säger emot varandra.
   const upload = file instanceof File && file.size > 0 && !(current && isSameUpload(current, file)) ? file : null;
   if (upload && remove) return FILE_AND_REMOVE;
+  const kept = old && !remove ? old.media_id : null;
+  // Varje rad på sidan ska leda någonstans, även efter en ändring.
+  if (!upload && !kept && !d.url) return { error: "Ladda upp en fil eller ange en länk.", fieldErrors: { file: "Välj en fil eller ange en länk." } };
   if (upload) {
     try {
       // En ny version med samma filändelse behåller adressen (SD-35).
@@ -276,7 +283,7 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
   }
 
   if (id && old) {
-    const nextMedia = mediaId ?? (remove ? null : old.media_id);
+    const nextMedia = mediaId ?? kept;
     db.prepare(
       "UPDATE documents SET title=@title, category=@category, description=@description, url=@url, doc_date=@doc_date, published=@published, media_id=@media_id WHERE id=@id",
     ).run({ ...d, media_id: nextMedia, id });
@@ -286,7 +293,6 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
     return { ok: true, message: "Dokumentet är sparat." };
   }
 
-  if (!mediaId && !d.url) return { error: "Ladda upp en fil eller ange en länk.", fieldErrors: { file: "Välj en fil eller ange en länk." } };
   db.prepare(
     "INSERT INTO documents (title, category, description, url, doc_date, published, media_id) VALUES (@title, @category, @description, @url, @doc_date, @published, @media_id)",
   ).run({ ...d, media_id: mediaId });
@@ -295,20 +301,22 @@ export async function saveDocument(_prev: FormState, fd: FormData): Promise<Form
   redirect("/admin/dokument?sparad=1");
 }
 
-export async function deleteDocument(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
-  if (!canManageDocuments(user)) redirect("/admin");
+export async function deleteDocument(fd: FormData): Promise<FormState> {
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
+  if (!canManageDocuments(user)) return forbidden;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT title, media_id, category FROM documents WHERE id = ?").get(id) as
     | { title: string; media_id: number | null; category: DocumentCategory }
     | undefined;
-  if (row && canManageDocument(user, row.category)) {
+  if (row && !canManageDocument(user, row.category)) return forbidden;
+  if (row) {
     db.prepare("DELETE FROM documents WHERE id = ?").run(id);
     markSeeded(db, "documents"); // SD-17: tömda dokument fylls inte på igen vid nästa start
     await deleteMediaIfUnused(row.media_id);
     audit(user.id, "delete", "document", id, row.title);
+    await renewSessionIfDue();
     revalidateSite();
   }
   redirect("/admin/dokument?raderad=1");
@@ -322,7 +330,7 @@ const partnerSchema = z.object({
   description: zText(300),
   logo_media_id: zOptionalId,
   tier: z.enum(["huvudpartner", "partner"]).default("partner"),
-  sort_order: z.coerce.number().int().min(0).max(9999).default(0),
+  sort_order: zOrder,
   active: zCheckbox,
 });
 
@@ -335,11 +343,11 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
   if (!parsed.success) return invalid(parsed.error);
   const db = getDb();
   if (id) {
-    const old = db.prepare("SELECT logo_media_id FROM partners WHERE id = ?").get(id) as { logo_media_id: number | null } | undefined;
+    const old = db.prepare("SELECT logo_media_id, sort_order FROM partners WHERE id = ?").get(id) as { logo_media_id: number | null; sort_order: number } | undefined;
     if (!old) return { error: "Partnern finns inte längre." };
     db.prepare(
       "UPDATE partners SET name=@name, url=@url, description=@description, logo_media_id=@logo_media_id, tier=@tier, sort_order=@sort_order, active=@active WHERE id=@id",
-    ).run({ ...parsed.data, id });
+    ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? old.sort_order, id });
     if (old.logo_media_id !== parsed.data.logo_media_id) await deleteMediaIfUnused(old.logo_media_id);
     audit(user.id, "update", "partner", id, parsed.data.name);
     revalidateSite();
@@ -347,16 +355,16 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
   }
   db.prepare(
     "INSERT INTO partners (name, url, description, logo_media_id, tier, sort_order, active) VALUES (@name, @url, @description, @logo_media_id, @tier, @sort_order, @active)",
-  ).run(parsed.data);
+  ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? 0 });
   audit(user.id, "create", "partner", null, parsed.data.name);
   revalidateSite();
   redirect("/admin/partners?sparad=1");
 }
 
-export async function deletePartner(fd: FormData) {
-  const user = await actionUser();
-  if ("error" in user) return;
-  if (!isEditor(user)) redirect("/admin");
+export async function deletePartner(fd: FormData): Promise<FormState> {
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
+  if (!isEditor(user)) return forbidden;
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT name, logo_media_id FROM partners WHERE id = ?").get(id) as { name: string; logo_media_id: number | null } | undefined;
@@ -364,6 +372,7 @@ export async function deletePartner(fd: FormData) {
     db.prepare("DELETE FROM partners WHERE id = ?").run(id);
     await deleteMediaIfUnused(row.logo_media_id);
     audit(user.id, "delete", "partner", id, row.name);
+    await renewSessionIfDue();
     revalidateSite();
   }
   redirect("/admin/partners?raderad=1");

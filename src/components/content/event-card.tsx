@@ -6,7 +6,7 @@ import { type DateLocale, formatTimeRange, parts, relativeDay } from "@/lib/date
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function DateBlock({ date, className, dark, locale }: { date: string; className?: string; dark?: boolean; locale?: DateLocale }) {
+function DateBlock({ date, className, dark, locale }: { date: string; className?: string; dark?: boolean; locale?: DateLocale }) {
   const p = parts(date, locale);
   return (
     <div

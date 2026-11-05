@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Check } from "@/components/icons";
 import type { ImageRef } from "@/lib/types";
 import { ImageField } from "./image-field";
+import { useConfirm } from "./confirm-dialog";
 
 /**
  * En bild som sparas så fort den laddats upp eller tagits bort – omslag och loggor på sidan Bilder
@@ -36,10 +37,12 @@ export function CoverSlot({
   // Ökas för att ladda om fältet med den bild som faktiskt är sparad (efter ett fel eller en ångrad borttagning).
   const [attempt, setAttempt] = useState(0);
 
-  const onChange = (next: ImageRef | null) => {
+  const [confirm, confirmDialog] = useConfirm();
+
+  const onChange = async (next: ImageRef | null) => {
     setStatus(null);
     // Bilden raderas när den inte används längre, så en borttagning får bekräftas.
-    if (!next && !confirm("Ta bort bilden? Den raderas från sajten.")) {
+    if (!next && !(await confirm("Ta bort bilden? Den raderas från sajten."))) {
       setAttempt((n) => n + 1);
       return;
     }
@@ -65,6 +68,7 @@ export function CoverSlot({
 
   return (
     <div>
+      {confirmDialog}
       {/* Nyckeln följer den sparade bilden, så att ett omslag som byts någon annanstans (stjärnan i galleriet) syns här. */}
       <ImageField
         key={`${image?.src ?? "ingen"}-${attempt}`}

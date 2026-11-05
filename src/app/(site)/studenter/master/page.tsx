@@ -62,7 +62,7 @@ async function Master() {
               Hela kalendern <ArrowRight size={18} />
             </Link>
           </div>
-          {ubu && <UbuCard ubu={ubu} />}
+          {!!ubu?.visible && <UbuCard ubu={ubu} />}
           <QuickLinksCard links={shortcuts} extra={LINKS} />
         </div>
       }

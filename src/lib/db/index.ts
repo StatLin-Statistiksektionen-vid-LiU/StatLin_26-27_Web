@@ -9,7 +9,7 @@ import { pruneAuditLog } from "./prune-audit-log";
  * All data (databas + uppladdade filer) ligger i DATA_DIR så att en enda volym
  * räcker vid drift (Docker, VPS, volym hos Fly m.fl.).
  */
-export const DATA_DIR = path.resolve(process.env.DATA_DIR ?? path.join(/* turbopackIgnore: true */ process.cwd(), "data"));
+const DATA_DIR = path.resolve(process.env.DATA_DIR ?? path.join(/* turbopackIgnore: true */ process.cwd(), "data"));
 export const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
 /** Originalen till uppladdade bilder (SD-30). Ligger utanför UPLOADS_DIR, så /media/ kan aldrig servera dem. */
 export const ORIGINALS_DIR = path.join(DATA_DIR, "originals");

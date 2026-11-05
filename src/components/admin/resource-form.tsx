@@ -6,7 +6,7 @@ import { Field, FormSection, Select, TextInput } from "./fields";
 
 export function ResourceForm({ resource }: { resource?: ResourceItem | null }) {
   return (
-    <ActionForm action={saveResource} submitLabel={resource ? "Spara" : "Lägg till hjälpmedel"} resetOnSuccess={!resource} stickyFooter={false}>
+    <ActionForm action={saveResource} submitLabel={resource ? "Spara" : "Lägg till hjälpmedel"} stickyFooter={false}>
       {resource && <input type="hidden" name="id" value={resource.id} />}
       <FormSection title={resource ? "Hjälpmedel" : "Nytt hjälpmedel"} description="Filerna blir offentliga. Lägg bara upp sådant ni får dela.">
         <div className="grid gap-5 @md:grid-cols-2">

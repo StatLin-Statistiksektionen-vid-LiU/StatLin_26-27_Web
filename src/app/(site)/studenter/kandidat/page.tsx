@@ -39,7 +39,7 @@ async function Bachelor() {
       }
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-          {ubu && <UbuCard ubu={ubu} />}
+          {!!ubu?.visible && <UbuCard ubu={ubu} />}
           <QuickLinksCard links={shortcuts} extra={LINKS} />
         </div>
       }

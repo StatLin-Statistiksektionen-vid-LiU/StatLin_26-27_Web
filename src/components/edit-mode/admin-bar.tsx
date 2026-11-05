@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type PointerEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { LogoutForm } from "@/components/admin/logout-form";
 import { Check, ChevronDown, Edit, Grip, Logout, Settings } from "@/components/icons";
@@ -20,10 +20,17 @@ export function AdminBar({ user }: { user: EditUser }) {
   const { editing, flash } = useEditState();
   const pathname = usePathname();
 
+  // Objektet är nytt varje gång servern renderar om sidan (en sparning, en förnyad kaka). Effekten nollar panelen, så den ska
+  // bara köras när uppgifterna faktiskt ändrats: annars stängdes panelen mitt i arbetet (SB-30).
+  const { id, name, post, role, committee_id: committeeId, committee_name: committeeName, design } = user;
+  const stable = useMemo(
+    () => ({ id, name, post, role, committee_id: committeeId, committee_name: committeeName, design }),
+    [id, name, post, role, committeeId, committeeName, design],
+  );
   useEffect(() => {
-    editStore.setUser(user);
+    editStore.setUser(stable);
     return () => editStore.setUser(null);
-  }, [user]);
+  }, [stable]);
 
   // Panelen hör till sidan den öppnades på – men den stängs inte mitt i en uppladdning, och frågar om osparade ändringar.
   useEffect(() => {

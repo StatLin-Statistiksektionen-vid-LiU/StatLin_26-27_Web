@@ -44,7 +44,7 @@ async function Masters() {
               Full calendar <ArrowRight size={18} />
             </Link>
           </div>
-          {ubu && (
+          {!!ubu?.visible && (
             <div className="overflow-hidden rounded-[1.75rem] bg-ink p-7 text-white">
               <div className="flex items-center gap-4">
                 {ubu.logo_url && (
