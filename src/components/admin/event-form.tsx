@@ -5,6 +5,7 @@ import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
 import type { Committee, EventItem, ImageRef, SessionUser } from "@/lib/types";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 export function EventForm({
   event,
@@ -44,7 +45,7 @@ export function EventForm({
             <Field label="Kort sammanfattning" name="summary" hint="Visas på evenemangskort och i delningar. 1–2 meningar.">
               <TextArea name="summary" defaultValue={event?.summary} rows={2} maxLength={300} />
             </Field>
-            <MarkdownEditor name="body_md" label="Beskrivning" defaultValue={event?.body_md} />
+            <MarkdownEditor name="body_md" label="Beskrivning" defaultValue={event?.body_md} max={TEXT_LIMITS.event} />
           </FormSection>
 
           <MoreDetails

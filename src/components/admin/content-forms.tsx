@@ -5,6 +5,7 @@ import { ActionForm } from "./action-form";
 import { Field, FormSection, Select, TextArea, TextInput, Toggle } from "./fields";
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 /*
  * Formulären används både på adminsidorna och i redigeringspanelen på sajten. onSaved anges bara
@@ -24,7 +25,7 @@ export function PageForm({ page, onSaved }: { page: Page; onSaved?: () => void }
         </Field>
       </FormSection>
       <FormSection title="Innehåll" description="Tips: använd ▸-knappen för utfällbara frågor och svar.">
-        <MarkdownEditor name="body_md" label="Text" defaultValue={page.body_md} rows={24} />
+        <MarkdownEditor name="body_md" label="Text" defaultValue={page.body_md} rows={24} max={TEXT_LIMITS.page} />
       </FormSection>
     </ActionForm>
   );
@@ -49,7 +50,7 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
             <Field label="Slogan" name="tagline" hint="En mening som visas på utskottskortet.">
               <TextArea name="tagline" defaultValue={c.tagline} rows={2} maxLength={200} />
             </Field>
-            <MarkdownEditor name="description_md" label="Beskrivning" defaultValue={c.description_md} />
+            <MarkdownEditor name="description_md" label="Beskrivning" defaultValue={c.description_md} max={TEXT_LIMITS.committee} />
           </FormSection>
           <FormSection title="Kontakt">
             <div className="grid gap-5 @md:grid-cols-2">

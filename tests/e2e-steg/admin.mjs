@@ -4,7 +4,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { newVisitor, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
+import { uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 
 const ADMIN = "admin@statlin.se";
 
@@ -42,7 +42,7 @@ async function submitNewUser(page, name) {
   return email;
 }
 
-export default async function adminSteg({ BASE, browser, page, step, switchAccount }) {
+export default async function adminSteg({ BASE, page, step, switchAccount }) {
   await step("Nästa konto får rollen som visas efter att ett konto skapats (SB-31)", async () => {
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/konton`);
@@ -146,6 +146,193 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     await save("Spara ändringar");
     await open(url);
     assert.ok((await field.inputValue()).startsWith(today), "Tömt schema ska ge dagens datum");
+  });
+
+  await step("Textfältet visar taket, markeras när det är fullt och säger till när en text klipps (SB-35)", async () => {
+    await page.goto(`${BASE}/admin/nyheter/ny`);
+    const body = page.locator('textarea[name="body_md"]');
+    await waitForHydration(page, body);
+    const counter = page.getByText(/^0 \/ 40\s000$/);
+    await counter.waitFor();
+
+    // Klistrar in på riktigt: webbläsaren klipper vid maxLength, och det är det beskedet ska berätta.
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+    await body.focus();
+    await page.evaluate(() => {
+      const data = new DataTransfer();
+      data.setData("text", "x".repeat(41000));
+      const ta = document.querySelector('textarea[name="body_md"]');
+      if (ta.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }))) document.execCommand("insertText", false, "x".repeat(41000));
+    });
+    await page.getByText(/^40\s000 \/ 40\s000$/).waitFor();
+    assert.equal(await body.inputValue().then((v) => v.length), 40000);
+    assert.equal(await body.getAttribute("aria-invalid"), "true");
+    await page.getByText("De sista 1 000 tecknen klistrades inte in.", { exact: false }).waitFor();
+  });
+
+  await step("Textfältets serverfel står vid fältet (SB-35)", async () => {
+    await page.goto(`${BASE}/admin/nyheter/ny`);
+    const body = page.locator('textarea[name="body_md"]');
+    await waitForHydration(page, body);
+    await page.fill('input[name="title"]', `E2E-tak ${uniqueId()}`);
+    // En handskriven begäran bryr sig inte om maxLength, så värdet skickas i ett eget fält sist i formuläret (formObject).
+    await page.locator('form:has(textarea[name="body_md"])').first().evaluate((form) => {
+      const input = Object.assign(document.createElement("input"), { type: "hidden", name: "body_md", value: "y".repeat(40001) });
+      form.append(input);
+    });
+    await page.getByRole("button", { name: "Spara som utkast", exact: true }).click();
+    await page.locator("#body_md-error", { hasText: "högst 40000 tecken" }).waitFor();
+  });
+
+  await step("Radbrytningar räknas lika i webbläsaren och på servern (SB-35)", async () => {
+    await page.goto(`${BASE}/admin/nyheter/ny`);
+    const body = page.locator('textarea[name="body_md"]');
+    await waitForHydration(page, body);
+    await page.fill('input[name="title"]', `E2E-rader ${uniqueId()}`);
+    // 36 000 tecken med räknarens mått. Skickas radbrytningarna som CRLF är de 45 000 på servern.
+    await body.evaluate((ta) => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(ta, "rad\n".repeat(9000));
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await Promise.all([page.waitForURL((u) => u.search === "?skapad=1"), page.getByRole("button", { name: "Spara som utkast", exact: true }).click()]);
+    await page.getByText(/^35\s999 \/ 40\s000$/).waitFor();
+    await page.getByRole("button", { name: "Ta bort" }).click();
+    await Promise.all([page.waitForURL((u) => u.pathname === "/admin/nyheter"), page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click()]);
+  });
+
+  await step("Galleriet: kö, borttagning under uppladdning, släpp på en bild och felrutor (SB-36)", async () => {
+    const { url } = await createEvent(page, BASE, `E2E-galleri ${uniqueId()}`);
+    const eventId = url.split("/").pop();
+    const galleryUrl = `${BASE}/admin/bilder/evenemang/${eventId}`;
+    await page.goto(galleryUrl);
+    const input = page.locator('input[type="file"][multiple]');
+    await waitForHydration(page, page.getByRole("button", { name: "Välj bilder" }));
+
+    // Första batchen, utan fördröjning: två bilder.
+    const files = await testImages(4);
+    await input.setInputFiles(files.slice(0, 2));
+    const captions = page.getByLabel("Bildtext");
+    await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 2);
+    await captions.nth(0).fill("Första");
+    await captions.nth(0).press("Enter");
+    await page.locator(".text-emerald-600").first().waitFor();
+    await captions.nth(1).fill("Andra");
+    await captions.nth(1).press("Enter");
+    await page.waitForFunction(() => document.querySelectorAll(".text-emerald-600").length >= 1);
+
+    // Högst två samtidigt, och en bild kan tas bort medan andra laddas upp.
+    let running = 0;
+    let most = 0;
+    await page.route("**/api/admin/upload", async (route) => {
+      most = Math.max(most, ++running);
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      running--;
+      await route.continue();
+    });
+    await input.setInputFiles(files.slice(0, 4));
+    await page.getByText(/Laddar upp bild-4|Optimerar/).first().waitFor();
+    await page.getByRole("button", { name: "Ta bort" }).and(page.locator('[title="Ta bort"]')).first().click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Ta bort" }).click();
+    await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 5);
+    await page.unroute("**/api/admin/upload");
+    assert.ok(most <= 2, `Högst två uppladdningar samtidigt, var ${most}`);
+
+    // Listan och det som sparats ska vara samma, med Andra först och den borttagna borta.
+    await page.waitForTimeout(800);
+    const order = () => page.locator('input[aria-label="Bildtext"]').evaluateAll((list) => list.map((x) => x.defaultValue));
+    const shown = await order();
+    assert.equal(shown[0], "Andra", `Andra ska ligga först: ${shown}`);
+    assert.ok(!shown.includes("Första"), "Den borttagna bilden ska vara borta");
+    const srcs = () => page.locator('li[draggable="true"] img').evaluateAll((list) => list.map((x) => x.getAttribute("src")));
+    const before = await srcs();
+    await page.reload();
+    await waitForHydration(page, page.getByRole("button", { name: "Välj bilder" }));
+    await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 5);
+    assert.deepEqual(await srcs(), before, "Ordningen ska ligga kvar efter omladdning");
+
+    // En fil som släpps på en befintlig bild lämnar inte sidan.
+    const prevented = await page.locator('li[draggable="true"]').first().evaluate((li) => {
+      const data = new DataTransfer();
+      data.items.add(new File(["hej"], "fel.txt", { type: "text/plain" }));
+      const send = (type) => !li.dispatchEvent(new DragEvent(type, { dataTransfer: data, bubbles: true, cancelable: true }));
+      return [send("dragover"), send("drop")];
+    });
+    assert.deepEqual(prevented, [true, true], "Webbläsaren ska inte få öppna filen");
+    await page.getByText("Bara bilder kan läggas i galleriet").waitFor();
+
+    // En misslyckad uppladdning går att försöka igen eller ta bort.
+    await page.route("**/api/admin/upload", (route) => route.abort());
+    await input.setInputFiles(files.slice(0, 2));
+    await page.getByRole("button", { name: "Försök igen" }).nth(1).waitFor();
+    await page.unroute("**/api/admin/upload");
+    await page.getByRole("button", { name: "Försök igen" }).first().click();
+    await page.waitForFunction(() => document.querySelectorAll('input[aria-label="Bildtext"]').length === 6);
+    await page.locator("ul li", { hasText: "bild-2" }).getByRole("button", { name: "Ta bort" }).click();
+    await page.locator("ul li", { hasText: "bild-2" }).waitFor({ state: "detached" });
+    assert.equal(await page.getByRole("button", { name: "Försök igen" }).count(), 0);
+  });
+
+  await step("Redigeraren tar flera bilder i en följd, och bildfältet säger till om de andra (SB-36)", async () => {
+    await page.goto(`${BASE}/admin/nyheter/ny`);
+    const body = page.locator('textarea[name="body_md"]');
+    await waitForHydration(page, body);
+    await page.locator('input[type="file"][multiple]').setInputFiles(await testImages(2));
+    await page.waitForFunction(() => (document.querySelector('textarea[name="body_md"]').value.match(/!\[/g) ?? []).length === 2);
+    const text = await body.inputValue();
+    assert.ok(text.indexOf("![bild-1]") < text.indexOf("![bild-2]"), "Bilderna ska stå i ordning");
+
+    const paths = await testImages(2);
+    const dropped = await page.evaluateHandle(() => new DataTransfer());
+    for (const [i] of paths.entries()) {
+      await page.evaluate(([data, n]) => data.items.add(new File(["x"], `${n}.jpg`, { type: "image/jpeg" })), [dropped, i]);
+    }
+    const zone = page.locator('input[name="cover_media_id"]').locator("xpath=following-sibling::div[1]");
+    await zone.dispatchEvent("drop", { dataTransfer: dropped });
+    await page.getByText("Här används bara en bild: 0.jpg").waitFor();
+  });
+
+  await step("Frågorna som var confirm() ställs i en dialog på sidan och går att svara på", async () => {
+    const { slug, url } = await createEvent(page, BASE, `E2E-frågor ${uniqueId()}`);
+    const dialog = page.getByRole("alertdialog");
+
+    // Osparade ändringar i redigeringspanelen.
+    await page.goto(`${BASE}/evenemang/${slug}`);
+    const toggle = page.locator('#admin-bar [role="switch"]');
+    await waitForHydration(page, toggle);
+    if ((await toggle.getAttribute("aria-checked")) !== "true") await toggle.click();
+    await page.locator("button:visible", { hasText: "Redigera evenemanget" }).click();
+    const panel = page.getByRole("dialog");
+    const summary = panel.locator('textarea[name="summary"]');
+    await waitForHydration(page, summary);
+    await summary.fill("Ändrad men inte sparad.");
+    await page.keyboard.press("Escape");
+    await dialog.getByRole("button", { name: "Avbryt" }).click();
+    await dialog.waitFor({ state: "detached" });
+    assert.equal(await summary.inputValue(), "Ändrad men inte sparad.", "Avbryt ska lämna panelen orörd");
+    await panel.getByRole("button", { name: "Stäng" }).click();
+    await dialog.getByRole("button", { name: "Stäng utan att spara" }).click();
+    await panel.waitFor({ state: "detached" });
+
+    // Omslaget.
+    await page.goto(`${BASE}/admin/bilder/evenemang/${url.split("/").pop()}`);
+    await waitForHydration(page, page.getByRole("button", { name: "Välj bilder" }));
+    await page.locator('input[type="file"]:not([multiple])').first().setInputFiles((await testImages(1))[0]);
+    const removeCover = page.getByRole("button", { name: "Ta bort bild" });
+    await page.getByText("Sparat", { exact: true }).waitFor();
+    await removeCover.click();
+    await dialog.getByRole("button", { name: "Avbryt" }).click();
+    await removeCover.waitFor();
+    await removeCover.click();
+    await dialog.getByRole("button", { name: "Ta bort" }).click();
+    await page.getByText("Välj bild eller dra hit").waitFor();
+
+    // Gallringen.
+    await page.goto(`${BASE}/admin/bilder`);
+    const prune = page.getByRole("button", { name: "Rensa oanvända filer" });
+    await waitForHydration(page, prune);
+    await prune.click();
+    await dialog.getByRole("button", { name: "Rensa" }).click();
+    await prune.locator("xpath=following-sibling::p").waitFor();
   });
 
   await step("Rollfältet visar sitt eget fel (SB-35)", async () => {

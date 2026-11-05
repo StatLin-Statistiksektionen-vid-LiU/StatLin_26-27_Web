@@ -6,6 +6,7 @@ import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
 import { isoToLocalInput } from "@/lib/dates";
 import type { Committee, NewsItem, SessionUser } from "@/lib/types";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 export function NewsForm({
   item,
@@ -31,7 +32,7 @@ export function NewsForm({
             <Field label="Ingress" name="excerpt" hint="Kort sammanfattning som visas i listor och delningar.">
               <TextArea name="excerpt" defaultValue={item?.excerpt} rows={2} maxLength={320} />
             </Field>
-            <MarkdownEditor name="body_md" label="Text" defaultValue={item?.body_md} rows={18} />
+            <MarkdownEditor name="body_md" label="Text" defaultValue={item?.body_md} rows={18} max={TEXT_LIMITS.news} />
           </FormSection>
 
           <MoreDetails summary="Schemalägg publiceringen till en senare tidpunkt." fields={["published_at"]} defaultOpen={scheduled}>

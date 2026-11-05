@@ -26,6 +26,7 @@ import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile }
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
 import type { DocumentCategory, Media } from "@/lib/types";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 const forbidden: FormState = { error: "Du har inte behörighet att göra det här." };
 
@@ -128,7 +129,7 @@ const committeeSchema = z.object({
   name: zRequired(120, "Namnet"),
   short_name: zRequired(30, "Förkortningen"),
   tagline: zText(200, "Slogan"),
-  description_md: zText(20000, "Beskrivningen"),
+  description_md: zText(TEXT_LIMITS.committee, "Beskrivningen"),
   logo_media_id: zOptionalId,
   // Finns inte i formuläret (SD-10). Skickas den ändå godtas bara en av sajtens egna loggor, eller adressen som redan står.
   logo_url: zText(300),
@@ -213,7 +214,7 @@ export async function savePage(_prev: FormState, fd: FormData): Promise<FormStat
   if ("error" in user) return user;
   if (!isEditor(user)) return forbidden;
   const parsed = z
-    .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(60000, "Texten") })
+    .object({ slug: z.string(), title: zRequired(120, "Titeln"), lead: zText(500, "Ingressen"), body_md: zText(TEXT_LIMITS.page, "Texten") })
     .safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   // Bara om sidan inte sparats sedan formuläret laddades – annars skrev en gammal flik över en nyare version.

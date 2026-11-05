@@ -60,8 +60,14 @@ export function formObject(fd: FormData): Record<string, string> {
 }
 
 /* Återanvändbara zod-delar med svenska felmeddelanden */
+// Formulär skickar radbrytningar som CRLF. Webbläsaren räknar dem som ett tecken, och det ska servern också göra.
 export const zText = (max: number, label = "Fältet") =>
-  z.string().trim().max(max, `${label} får vara högst ${max} tecken.`).default("");
+  z
+    .string()
+    .overwrite((text) => text.replace(/\r\n?/g, "\n"))
+    .trim()
+    .max(max, `${label} får vara högst ${max} tecken.`)
+    .default("");
 export const zRequired = (max: number, label = "Fältet") =>
   z.string().trim().min(1, `${label} måste fyllas i.`).max(max, `${label} får vara högst ${max} tecken.`);
 export const zCheckbox = z

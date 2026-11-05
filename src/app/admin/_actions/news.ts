@@ -16,6 +16,7 @@ import {
   zText,
 } from "@/lib/admin/form";
 import { audit, canUseImage, nowIso, revalidateSite, uniqueSlug } from "@/lib/admin/helpers";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 import { canEditImages, canEditOwned, isEditor } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { isoToLocal, localToIso } from "@/lib/dates";
@@ -26,7 +27,7 @@ const schema = z.object({
   title: zRequired(160, "Rubriken"),
   slug: zText(90),
   excerpt: zText(320, "Ingressen"),
-  body_md: zText(40000, "Texten"),
+  body_md: zText(TEXT_LIMITS.news, "Texten"),
   committee_id: zOptionalId,
   cover_media_id: zOptionalId,
   published: zCheckbox,
@@ -41,7 +42,7 @@ const badCover: FormState = { error: "Omslagsbilden kan inte användas. Ladda up
  * jämförs i fältets form. En vanlig sparning av en publicerad nyhet ändrar inte datumet, och den flyttar den inte heller
  * upp i listan. Ett utkast som publiceras får dagens datum, om det inte är schemalagt eller om ett annat datum valts.
  */
-function nextPublishedAt(existing: { published: number; published_at: string }, d: { published: number; published_at: string }): string {
+function nextPublishedAt(existing: { published: number; published_at: string }, d: { published: number; published_at: string | null }): string {
   const stored = existing.published_at;
   const scheduled = Date.parse(stored) > Date.now();
   if (d.published_at && d.published_at !== isoToLocal(stored)) return localToIso(d.published_at);

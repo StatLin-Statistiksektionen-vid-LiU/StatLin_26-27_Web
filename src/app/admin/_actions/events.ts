@@ -24,13 +24,14 @@ import { eventEnd } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { deleteMediaIfUnused } from "@/lib/media-store";
 import type { SessionUser } from "@/lib/types";
+import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 const schema = z
   .object({
     title: zRequired(140, "Titeln"),
     slug: zText(90),
     summary: zText(300, "Sammanfattningen"),
-    body_md: zText(20000, "Beskrivningen"),
+    body_md: zText(TEXT_LIMITS.event, "Beskrivningen"),
     starts_at: zLocalDateTime("Starttiden"),
     ends_at: zOptionalLocalDateTime("Sluttiden"),
     all_day: zCheckbox,
@@ -196,7 +197,7 @@ export async function deleteEventImage(imageId: number) {
 
 export async function reorderEventImages(eventId: number, imageIds: number[]) {
   const user = await actionUser();
-  if ("error" in user) return;
+  if ("error" in user) return user;
   const event = loadEvent(eventId);
   if (!event || !canEditImages(user, event)) throw new Error("Saknar behörighet.");
   const db = getDb();

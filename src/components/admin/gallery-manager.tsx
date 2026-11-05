@@ -1,20 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { unstable_rethrow } from "next/navigation";
+import { useRef, useState, useTransition, type DragEvent } from "react";
 import { deleteEventImage, reorderEventImages, setEventCover, updateImageCaption } from "@/app/admin/_actions/events";
 import { Check, Grip, Image as ImageIcon, Star, Trash, Upload } from "@/components/icons";
-import { uploadFile } from "./upload";
+import { useConfirm } from "./confirm-dialog";
+import { isImageFile, uploadFile } from "./upload";
 import type { ImageRef } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Item = { id: number; caption: string; image: ImageRef };
-type Pending = { key: string; name: string; preview: string; progress: number; error?: string };
+type Pending = { key: string; file: File; name: string; preview: string; progress: number; error?: string };
+type Job = { key: string; file: File; order: number };
 
-const PARALLEL = 3;
+/** Servern kör sharp på en liten maskin (SD-22), så uppladdningarna köas i stället för att skickas samtidigt. */
+const PARALLEL = 2;
+
+/** En fil från datorn, inte en galleribild som flyttas. Webbläsaren öppnar filen och lämnar sidan om ingen tar emot den. */
+const carriesFiles = (e: DragEvent) => e.dataTransfer.types.includes("Files");
 
 /**
- * Bildgalleri för ett evenemang. Flera bilder kan dras in samtidigt; de laddas upp
- * parallellt med förlopp, optimeras på servern och dyker upp direkt på evenemangssidan.
+ * Bildgalleri för ett evenemang. Flera bilder kan dras in samtidigt; de laddas upp i en kö
+ * med förlopp, optimeras på servern och dyker upp direkt på evenemangssidan.
  */
 export function GalleryManager({
   eventId,
@@ -40,85 +47,148 @@ export function GalleryManager({
   const [over, setOver] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [confirm, confirmDialog] = useConfirm();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Listan läses när uppladdningarna är klara, så den måste alltid vara aktuell – inte som vid en tidigare rendering.
   const itemsRef = useRef(items);
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
+  const updateItems = (update: (list: Item[]) => Item[]) => {
+    itemsRef.current = update(itemsRef.current);
+    setItems(itemsRef.current);
+  };
 
-  const addFiles = async (files: File[]) => {
-    const images = files.filter((f) => f.type.startsWith("image/") || /\.(heic|heif|avif)$/i.test(f.name));
-    if (images.length === 0) return;
-    const queue = images.map((f) => ({ file: f, key: `${f.name}-${f.size}-${Math.random().toString(36).slice(2)}` }));
-    setPending((p) => [...p, ...queue.map((q) => ({ key: q.key, name: q.file.name, preview: URL.createObjectURL(q.file), progress: 0 }))]);
+  // En enda kö, också när nya bilder dras in medan andra laddas upp. Rangen är ordningen de valdes i.
+  const queue = useRef<Job[]>([]);
+  const active = useRef(0);
+  const nextOrder = useRef(0);
+  const rank = useRef(new Map<number, number>());
 
-    // Bilderna blir klara i olika takt – rangordna efteråt så att galleriet får urvalsordningen.
-    const before = itemsRef.current.map((x) => x.id);
-    const rank = new Map<number, number>();
-    let cursor = 0;
-    const worker = async () => {
-      while (cursor < queue.length) {
-        const index = cursor++;
-        const { file, key } = queue[index];
-        try {
-          const res = await uploadFile(file, { purpose: "gallery", eventId: String(eventId) }, (progress) =>
-            setPending((p) => p.map((x) => (x.key === key ? { ...x, progress } : x))),
-          );
-          rank.set(res.id, index);
-          if (res.image) {
-            setItems((list) => {
-              const next = [...list, { id: res.id, caption: "", image: res.image! }];
-              const fresh = next.filter((x) => rank.has(x.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
-              return [...next.filter((x) => !rank.has(x.id)), ...fresh];
-            });
-          }
-          setPending((p) => {
-            const done = p.find((x) => x.key === key);
-            if (done) URL.revokeObjectURL(done.preview);
-            return p.filter((x) => x.key !== key);
-          });
-        } catch (e) {
-          setPending((p) => p.map((x) => (x.key === key ? { ...x, error: (e as Error).message } : x)));
-        }
+  /** Kör en sparning och visar felet i galleriet. Svarar med om den gick igenom. */
+  const attempt = async (save: () => Promise<{ error: string } | void>) => {
+    try {
+      const res = await save();
+      if (res && "error" in res) {
+        setNotice(res.error);
+        return false;
       }
-    };
-    await Promise.all(Array.from({ length: Math.min(PARALLEL, queue.length) }, worker));
-    if (rank.size > 1) {
-      const fresh = [...rank.keys()].sort((a, b) => rank.get(a)! - rank.get(b)!);
-      const ids = [...before, ...fresh];
-      startTransition(() => reorderEventImages(eventId, ids));
+      return true;
+    } catch (err) {
+      unstable_rethrow(err);
+      setNotice("Det gick inte att spara – ladda om sidan och försök igen.");
+      return false;
     }
   };
 
-  const remove = (item: Item) => {
-    if (!confirm("Ta bort bilden från galleriet?")) return;
-    setItems((list) => list.filter((x) => x.id !== item.id));
-    if (cover === item.image.id) {
+  const saveOrder = () => startTransition(async () => void (await attempt(() => reorderEventImages(eventId, itemsRef.current.map((x) => x.id)))));
+
+  const upload = async ({ file, key, order }: Job) => {
+    try {
+      const res = await uploadFile(file, { purpose: "gallery", eventId: String(eventId) }, (progress) =>
+        setPending((p) => p.map((x) => (x.key === key ? { ...x, progress } : x))),
+      );
+      rank.current.set(res.id, order);
+      if (res.image) {
+        const added = { id: res.id, caption: "", image: res.image };
+        // Bilderna blir klara i olika takt – de nya läggs i urvalsordningen.
+        updateItems((list) => {
+          const next = [...list, added];
+          const fresh = next.filter((x) => rank.current.has(x.id)).sort((a, b) => rank.current.get(a.id)! - rank.current.get(b.id)!);
+          return [...next.filter((x) => !rank.current.has(x.id)), ...fresh];
+        });
+      }
+      setPending((p) => {
+        const done = p.find((x) => x.key === key);
+        if (done) URL.revokeObjectURL(done.preview);
+        return p.filter((x) => x.key !== key);
+      });
+    } catch (e) {
+      setPending((p) => p.map((x) => (x.key === key ? { ...x, error: (e as Error).message } : x)));
+    }
+  };
+
+  const runQueue = () => {
+    while (active.current < PARALLEL && queue.current.length > 0) {
+      active.current++;
+      upload(queue.current.shift()!).finally(() => {
+        active.current--;
+        runQueue();
+        if (active.current > 0 || queue.current.length > 0) return;
+        // Ordningen räknas från listan som den ser ut nu, så att en borttagen bild inte kommer tillbaka och en ny inte tappas.
+        const moved = rank.current.size > 1;
+        rank.current.clear();
+        if (moved) saveOrder();
+      });
+    }
+  };
+
+  const addFiles = (files: File[]) => {
+    const images = files.filter(isImageFile);
+    setNotice(images.length < files.length ? "Bara bilder kan läggas i galleriet – de andra filerna hoppades över." : null);
+    if (images.length === 0) return;
+    const jobs = images.map((file) => ({ file, key: `${file.name}-${file.size}-${Math.random().toString(36).slice(2)}`, order: nextOrder.current++ }));
+    setPending((p) => [...p, ...jobs.map((j) => ({ key: j.key, file: j.file, name: j.file.name, preview: URL.createObjectURL(j.file), progress: 0 }))]);
+    queue.current.push(...jobs);
+    runQueue();
+  };
+
+  const retry = (p: Pending) => {
+    setPending((list) => list.map((x) => (x.key === p.key ? { ...x, error: undefined, progress: 0 } : x)));
+    queue.current.push({ file: p.file, key: p.key, order: nextOrder.current++ });
+    runQueue();
+  };
+
+  const dismiss = (p: Pending) => {
+    URL.revokeObjectURL(p.preview);
+    setPending((list) => list.filter((x) => x.key !== p.key));
+  };
+
+  const remove = async (item: Item) => {
+    if (!(await confirm("Ta bort bilden från galleriet?"))) return;
+    const index = itemsRef.current.findIndex((x) => x.id === item.id);
+    const wasCover = cover === item.image.id;
+    setNotice(null);
+    updateItems((list) => list.filter((x) => x.id !== item.id));
+    if (wasCover) {
       setCover(null);
       onCoverChange?.(null);
     }
     startTransition(async () => {
-      await deleteEventImage(item.id);
+      if (await attempt(() => deleteEventImage(item.id))) return;
+      // Bilden finns kvar på servern, så den ska också synas kvar.
+      updateItems((list) => [...list.slice(0, index), item, ...list.slice(index)]);
+      if (wasCover) {
+        setCover(item.image.id);
+        onCoverChange?.(item.image);
+      }
     });
   };
 
   const makeCover = (item: Item) => {
+    const before = cover;
     const next = cover === item.image.id ? null : item.image.id;
+    setNotice(null);
     setCover(next);
     onCoverChange?.(next === null ? null : item.image);
     startTransition(async () => {
-      await setEventCover(eventId, next);
+      if (await attempt(() => setEventCover(eventId, next))) return;
+      setCover(before);
+      onCoverChange?.(itemsRef.current.find((x) => x.image.id === before)?.image ?? null);
     });
   };
 
   const saveCaption = (item: Item, caption: string) => {
     if (caption === item.caption) return;
-    setItems((list) => list.map((x) => (x.id === item.id ? { ...x, caption } : x)));
+    setNotice(null);
+    updateItems((list) => list.map((x) => (x.id === item.id ? { ...x, caption } : x)));
     startTransition(async () => {
-      const res = await updateImageCaption(item.id, caption);
       // Bocken bara när bildtexten faktiskt sparats (inte t.ex. med en utgången session).
-      if (res && "error" in res) return;
+      if (!(await attempt(() => updateImageCaption(item.id, caption)))) {
+        // Texten står kvar i rutan, och nästa gång man lämnar rutan försöker den igen.
+        updateItems((list) => list.map((x) => (x.id === item.id ? { ...x, caption: item.caption } : x)));
+        return;
+      }
       setSaved(item.id);
       setTimeout(() => setSaved((s) => (s === item.id ? null : s)), 1500);
     });
@@ -126,31 +196,39 @@ export function GalleryManager({
 
   const onDropReorder = (targetId: number) => {
     if (dragId === null || dragId === targetId) return;
-    const list = [...items];
-    const from = list.findIndex((x) => x.id === dragId);
-    const to = list.findIndex((x) => x.id === targetId);
-    const [moved] = list.splice(from, 1);
-    list.splice(to, 0, moved);
-    setItems(list);
+    setNotice(null);
+    updateItems((current) => {
+      const list = [...current];
+      const from = list.findIndex((x) => x.id === dragId);
+      const to = list.findIndex((x) => x.id === targetId);
+      const [moved] = list.splice(from, 1);
+      list.splice(to, 0, moved);
+      return list;
+    });
     setDragId(null);
-    startTransition(() => reorderEventImages(eventId, list.map((x) => x.id)));
+    // Handen går före urvalsordningen: bilder som blir klara senare läggs efter de som redan flyttats.
+    rank.current.clear();
+    saveOrder();
   };
 
   return (
-    <div>
+    <div
+      onDragOver={(e) => {
+        if (carriesFiles(e)) e.preventDefault();
+      }}
+      onDrop={(e) => {
+        if (!carriesFiles(e)) return;
+        e.preventDefault();
+        setOver(false);
+        addFiles([...e.dataTransfer.files]);
+      }}
+    >
+      {confirmDialog}
       <div
-        onDragOver={(e) => {
-          if (dragId !== null) return;
-          e.preventDefault();
-          setOver(true);
+        onDragOver={() => {
+          if (dragId === null) setOver(true);
         }}
         onDragLeave={() => setOver(false)}
-        onDrop={(e) => {
-          if (dragId !== null) return;
-          e.preventDefault();
-          setOver(false);
-          addFiles([...e.dataTransfer.files]);
-        }}
         className={cn(
           "flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors",
           over ? "border-red bg-red/5" : "border-ink/15 bg-paper/50",
@@ -179,6 +257,12 @@ export function GalleryManager({
         />
       </div>
 
+      {notice && (
+        <p role="alert" className="mt-3 text-sm font-medium text-red-deep">
+          {notice}
+        </p>
+      )}
+
       {(items.length > 0 || pending.length > 0) && (
         <>
           <p className="mt-6 text-sm text-stone">
@@ -193,6 +277,7 @@ export function GalleryManager({
                 onDragEnd={() => setDragId(null)}
                 onDragOver={(e) => dragId !== null && e.preventDefault()}
                 onDrop={(e) => {
+                  if (dragId === null) return;
                   e.preventDefault();
                   onDropReorder(item.id);
                 }}
@@ -251,9 +336,21 @@ export function GalleryManager({
                     )}
                   </div>
                 </div>
-                <p className="truncate border-t border-ink/10 px-3 py-2 text-xs text-stone">
-                  {p.error ? p.name : p.progress < 1 ? `Laddar upp ${p.name}` : "Optimerar…"}
-                </p>
+                {p.error ? (
+                  <div className="border-t border-ink/10 px-3 py-2">
+                    <p className="truncate text-xs text-stone">{p.name}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <button type="button" onClick={() => retry(p)} className="btn btn-sm btn-ink">
+                        Försök igen
+                      </button>
+                      <button type="button" onClick={() => dismiss(p)} className="btn btn-sm btn-ghost bg-white">
+                        Ta bort
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="truncate border-t border-ink/10 px-3 py-2 text-xs text-stone">{p.progress < 1 ? `Laddar upp ${p.name}` : "Optimerar…"}</p>
+                )}
               </li>
             ))}
           </ul>
