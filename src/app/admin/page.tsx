@@ -193,11 +193,7 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
     <>
       <AdminHeader
         kicker={ROLE_LABELS[user.role]}
-        title={
-          <>
-            Hej {first} <span className="inline-block origin-[70%_70%] animate-[wave_2.4s_ease-in-out_1]">👋</span>
-          </>
-        }
+        title={`Hej ${first}`}
         actions={
           <>
             <Link href="/admin/nyheter/ny" className="btn btn-ghost bg-white">

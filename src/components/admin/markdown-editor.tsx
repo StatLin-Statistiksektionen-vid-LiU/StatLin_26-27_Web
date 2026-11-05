@@ -1,23 +1,23 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
 import { previewMarkdown } from "@/app/admin/_actions/content";
-import { Image as ImageIcon } from "@/components/icons";
+import { Chain, ChevronRight, Image as ImageIcon, ListBullets, Quote } from "@/components/icons";
 import { FieldError, useFormCtx } from "./action-form";
 import { isImageFile, uploadFile } from "./upload";
 import { cn } from "@/lib/utils";
 
-type Tool = { label: string; title: string; apply: (sel: string) => { text: string; cursorOffset?: number }; block?: boolean };
+type Tool = { label?: string; icon?: ReactNode; title: string; apply: (sel: string) => { text: string; cursorOffset?: number }; block?: boolean };
 
 const TOOLS: Tool[] = [
   { label: "H2", title: "Rubrik", apply: (s) => ({ text: `## ${s || "Rubrik"}` }), block: true },
   { label: "B", title: "Fetstil", apply: (s) => ({ text: `**${s || "fet text"}**` }) },
   { label: "I", title: "Kursiv", apply: (s) => ({ text: `*${s || "kursiv text"}*` }) },
-  { label: "🔗", title: "Länk", apply: (s) => ({ text: `[${s || "länktext"}](https://)` }) },
-  { label: "•", title: "Punktlista", apply: (s) => ({ text: (s || "Punkt").split("\n").map((l) => `- ${l}`).join("\n") }), block: true },
+  { icon: <Chain size={15} />, title: "Länk", apply: (s) => ({ text: `[${s || "länktext"}](https://)` }) },
+  { icon: <ListBullets size={15} />, title: "Punktlista", apply: (s) => ({ text: (s || "Punkt").split("\n").map((l) => `- ${l}`).join("\n") }), block: true },
   { label: "1.", title: "Numrerad lista", apply: (s) => ({ text: (s || "Punkt").split("\n").map((l, i) => `${i + 1}. ${l}`).join("\n") }), block: true },
-  { label: "❝", title: "Citat", apply: (s) => ({ text: `> ${s || "Citat"}` }), block: true },
-  { label: "▸", title: "Fråga/svar (utfällbar)", apply: (s) => ({ text: `<details><summary>${s || "Fråga"}</summary>\n\nSvar\n</details>` }), block: true },
+  { icon: <Quote size={14} />, title: "Citat", apply: (s) => ({ text: `> ${s || "Citat"}` }), block: true },
+  { icon: <ChevronRight size={15} />, title: "Fråga/svar (utfällbar)", apply: (s) => ({ text: `<details><summary>${s || "Fråga"}</summary>\n\nSvar\n</details>` }), block: true },
 ];
 
 export function MarkdownEditor({
@@ -131,11 +131,11 @@ export function MarkdownEditor({
                 key={t.title}
                 type="button"
                 title={t.title}
-                aria-label={/^[\p{L}\p{N}]/u.test(t.label) ? `${t.label} ${t.title}` : t.title}
+                aria-label={t.label ? `${t.label} ${t.title}` : t.title}
                 onClick={() => insert(t)}
                 className={cn("grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-sm text-ink/75 hover:bg-white hover:text-ink pointer-coarse:h-10", t.label === "B" && "font-bold", t.label === "I" && "italic")}
               >
-                {t.label}
+                {t.icon ?? t.label}
               </button>
             ))}
           {tab === "write" && (

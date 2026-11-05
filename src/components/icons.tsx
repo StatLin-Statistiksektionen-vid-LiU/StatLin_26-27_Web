@@ -267,6 +267,18 @@ export const BarChart = (p: IconProps) => (
     <path d="M4 20h16M7.5 16.5v-5M12 16.5V6M16.5 16.5v-8" />
   </svg>
 );
+export const ListBullets = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M9 6h11M9 12h11M9 18h11" />
+    <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth={2.5} />
+  </svg>
+);
+export const Quote = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" />
+    <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" />
+  </svg>
+);
 export const Chain = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" />
