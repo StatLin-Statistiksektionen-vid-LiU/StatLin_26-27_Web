@@ -320,6 +320,20 @@ Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabell
 | Vid överlämningen | Gå igenom det här avsnittet, fyll i [Ägarskap](#ägarskap) och kontrollera [Volymen](#volymen). |
 | Juni | Större uppgraderingar (Next.js, Node, beroenden) och den årliga övningen i [återställning](#återställning-och-rollback). |
 
+### Frågelådan
+
+Frågelådan låter besökare ställa en anonym fråga utan att logga in. En post skapar en låda under **Frågelådan** i adminpanelen och visar sexteckenskoden, till exempel i en föreläsningssal med **Visa på skärm**. Besökaren skriver koden på `/fragelada` och lämnar sin fråga. UBU och AMO har fasta lådor utan kod, `/fragelada/ubu` och `/fragelada/amo`. Bara kontot som äger en låda kan läsa frågorna. Administratörer ser titlar och antal och kan ta bort lådor med kod, men kan inte läsa frågorna i adminpanelen. Lådan är envägs: det går inte att svara.
+
+Frågorna sparas med månad, inte med namn, IP-adress eller klockslag, och raderas efter ungefär ett år. Det gäller det sajten själv sparar. Fly-snapshots behåller raderade frågor i upp till fem dygn, och den som kommer åt servern kan läsa databasen.
+
+Funktionen är avstängd tills en administratör slår på den under **Frågelådan**. Före det:
+
+1. Bekräfta vem som är AMO och att UBU och AMO läser sina lådor (U-04). En fast låda utan aktiv ägare tar inte emot frågor. När funktionen slås på får lådorna kontona `ubu@statlin.se` och `amo@statlin.se` om de finns, annars väljer administratören ägare.
+2. Ändra texterna i produktionsdatabasen så att de stämmer: seed-texterna gäller bara nya databaser. Listan finns i rapporten för frågelådan.
+3. Besluta om säkerhetskopiorna (B-16), om vad som loggas på vägen till servern (B-17) och om B-18.
+
+Att prova lokalt: `DATA_DIR=<samma som servern> npx tsx scripts/demo-fragelada.ts` slår på funktionen och skapar en påhittad låda med koden `STAT26`. Skriptet vägrar köra i produktion.
+
 ## Guide för poster
 
 1. Logga in på **/logga-in** med postens e-postadress.

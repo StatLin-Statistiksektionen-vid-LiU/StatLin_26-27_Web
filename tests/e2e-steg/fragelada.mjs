@@ -60,8 +60,11 @@ export default async function frageladaSteg({ BASE, browser, page, step, switchA
     await visitor.goto(`${BASE}/fragelada/ubu`);
     await visitor.getByText(CLOSED_PAGE).waitFor();
     assert.equal(await visitor.locator("#fraga").count(), 0, "lappen ska inte finnas");
-    await visitor.goto(`${BASE}/studenter/kandidat`);
-    assert.equal(await visitor.locator('a[href^="/fragelada"]').count(), 0, "inga länkar till lådan när den är av");
+    for (const path of ["/studenter/kandidat", "/studenter/master", "/utskott/ubu", "/utskott/amo", "/en/masters", "/integritet"]) {
+      await visitor.goto(`${BASE}${path}`);
+      assert.equal(await visitor.locator('a[href^="/fragelada"]').count(), 0, `${path} ska inte länka till lådan när den är av`);
+    }
+    assert.equal(await visitor.getByText("Frågelådan").count(), 0, "integritetssidan ska inte nämna lådan när den är av");
   });
 
   await step("Frågelådan: en post får inte slå på funktionen, och ser inget reglage", async () => {
