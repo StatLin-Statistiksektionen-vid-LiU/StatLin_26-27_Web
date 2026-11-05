@@ -1051,7 +1051,7 @@ async function openDeleteConfirm(page) {
     // Granskning: styrelsens bock påverkar aldrig om evenemanget är publicerat.
     let reviewId;
     const reviewRow = (title) => page.locator("tbody tr", { hasText: title });
-    const toReview = () => page.getByRole("region", { name: "Att granska" });
+    const toReview = () => page.getByRole("region", { name: "Att göra nu" });
 
     await step("Utskottets nya evenemang är ogranskat", async () => {
       await page.goto(`${BASE}/admin/evenemang/ny`);

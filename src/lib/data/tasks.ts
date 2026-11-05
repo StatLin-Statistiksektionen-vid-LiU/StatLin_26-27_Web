@@ -90,6 +90,20 @@ export async function listOpenTasksTo(userId: number, limit = 5): Promise<Task[]
   return rows.map(toTask);
 }
 
+/** Öppna uppdrag utan mottagare som användaren ser på tavlan, och alltså kan ta. */
+export async function countUnclaimedTasks(user: SessionUser): Promise<number> {
+  const db = await readDb();
+  const visible = seesAllTasks(user) ? "" : "AND (shared = 1 OR from_user_id = @id)";
+  return (db.prepare(`SELECT COUNT(*) AS n FROM tasks WHERE to_user_id IS NULL AND status != 'klar' ${visible}`).get({ id: user.id }) as { n: number }).n;
+}
+
+/** Uppdrag användaren har gett någon annan, där mottagaren har bett om hjälp. */
+export async function listTasksAskingForHelp(userId: number, limit = 3): Promise<Task[]> {
+  const db = await readDb();
+  const rows = db.prepare(`${TASK_SELECT} WHERE t.from_user_id = ? AND t.status = 'hjalp' AND t.to_user_id IS NOT NULL AND t.to_user_id != ? ORDER BY t.updated_at DESC LIMIT ?`).all(userId, userId, limit) as Row[];
+  return rows.map(toTask);
+}
+
 export async function getTask(id: number): Promise<Task | null> {
   const db = await readDb();
   const row = db.prepare(`${TASK_SELECT} WHERE t.id = ?`).get(id) as Row | undefined;

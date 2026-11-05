@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -112,6 +113,12 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
   getDb().prepare("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?").run(await hashPassword(next), user.id);
   destroyAllSessionsForUser(user.id, await currentToken());
   audit(user.id, "update", "user", user.id, "Bytte lösenord");
+  // Första inloggningen: nu är allt öppet, så personen ska inte stå kvar på kontosidan. Bannern om lösenordet står i layouten, som
+  // annars inte renderas om av en omdirigering.
+  if (user.must_change_password) {
+    revalidatePath("/admin", "layout");
+    redirect("/admin?valkommen=1");
+  }
   return { ok: true, message: "Lösenordet är bytt. Andra inloggade enheter har loggats ut." };
 }
 
@@ -126,6 +133,8 @@ export async function updateProfile(_prev: FormState, fd: FormData): Promise<For
     .safeParse({ name: fd.get("name"), post: fd.get("post") ?? "" });
   if (!parsed.success) return invalid(parsed.error);
   getDb().prepare("UPDATE users SET name = ?, post = ? WHERE id = ?").run(parsed.data.name, parsed.data.post, user.id);
+  // Namnet och posten står också i sidomenyn.
+  revalidatePath("/admin", "layout");
   return { ok: true, message: "Profilen är sparad." };
 }
 

@@ -194,6 +194,28 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     assert.equal(await menu.inputValue(), "pagar");
   });
 
+  await step("Översikten: ett försenat uppdrag till mig står under Att göra nu, och Klart tar bort raden", async () => {
+    const late = `E2E tavla sent till mig ${uniqueId()}`;
+    await page.goto(`${BASE}/admin/uppdrag`);
+    const title = page.locator('main input[name="title"]');
+    await waitForHydration(page, title);
+    await title.fill(late);
+    await page.locator('main input[name="due_date"]').fill(addDays(today, -5));
+    await title.press("Enter");
+    await page.getByText("Uppdraget ligger öppet på tavlan.").waitFor();
+    await Promise.all([saving(), taskItem(late).getByRole("button", { name: "Jag tar den" }).click()]);
+
+    await page.goto(`${BASE}/admin`);
+    const row = page.getByRole("region", { name: "Att göra nu" }).getByRole("listitem").filter({ hasText: late });
+    await row.getByText("Försenat ·").waitFor();
+    const finish = row.getByRole("button", { name: /^Klart/ });
+    await waitForHydration(page, finish);
+    await finish.click();
+    await row.waitFor({ state: "detached" });
+    await page.goto(`${BASE}/admin/uppdrag`);
+    await column("Klart").getByRole("link", { name: late }).waitFor();
+  });
+
   await step("Uppdragstavlan: inget sticker ut på en smal telefon, och tomma kolumner syns inte", async () => {
     const size = page.viewportSize();
     await page.setViewportSize({ width: 320, height: 640 });

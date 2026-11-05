@@ -4,11 +4,12 @@ import { fillWheelSuggestions } from "@/app/admin/_actions/arshjul";
 import { FillSuggestionsButton } from "@/components/admin/wheel-buttons";
 import { WheelItemRow } from "@/components/admin/wheel-item";
 import { Wheel } from "@/components/icons";
-import { MONTHS, TERM_NAMES, wheelCards, type WheelCardItem } from "@/lib/arshjul";
+import { matchesResponsible, MONTHS, TERM_NAMES, wheelCards, type WheelCardItem } from "@/lib/arshjul";
 import { canChangeWheelItem } from "@/lib/auth/permissions";
 import { listWheelItems, wheelStates } from "@/lib/data/arshjul";
 import { todayLocal } from "@/lib/dates";
 import type { SessionUser } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /** Så många punkter står på ett kort. Resten finns i hjulet. */
 const CARD_LIMIT = 3;
@@ -90,11 +91,21 @@ export async function WheelCards({ user }: { user: SessionUser }) {
     );
   }
 
-  const { next, current, nextMonth, toPlan } = wheelCards(items, stateOf, today);
+  const cards = wheelCards(items, stateOf, today);
+  const { next, current } = cards;
+  // Det som är ens eget står först. Ett utskott ser bara det, och det ingen är ansvarig för: resten finns i hjulet.
+  const mine = (r: WheelCardItem) => r.item.owner_user_id === user.id || matchesResponsible(user, r.item.responsible);
+  const forUser = (rows: WheelCardItem[]) =>
+    user.role === "committee" ? rows.filter((r) => mine(r) || !r.item.responsible.trim()) : [...rows.filter(mine), ...rows.filter((r) => !mine(r))];
+  const nextMonth = forUser(cards.nextMonth);
+  const toPlan = forUser(cards.toPlan);
+  // Ett tomt kort säger inget till ett utskott, som ändå bara ser sitt eget. Redaktörerna ser hela sektionens läge, också när inget väntar.
+  const hideEmpty = user.role === "committee";
+  if (hideEmpty && nextMonth.length === 0 && toPlan.length === 0) return null;
   const nextName = MONTHS[next.month - 1];
   return (
-    <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <WheelCard
+    <div className={cn("mt-6 grid grid-cols-1 gap-4", (!hideEmpty || (nextMonth.length > 0 && toPlan.length > 0)) && "lg:grid-cols-2")}>
+      {(!hideEmpty || nextMonth.length > 0) && <WheelCard
         id="kort-nasta-manad"
         kicker={next.year === thisYear ? nextName : `${nextName} ${next.year}`}
         title="Uppkommande nästa månad"
@@ -110,8 +121,8 @@ export async function WheelCards({ user }: { user: SessionUser }) {
             om något saknas.
           </>
         }
-      />
-      <WheelCard
+      />}
+      {(!hideEmpty || toPlan.length > 0) && <WheelCard
         id="kort-att-planera"
         kicker={`${TERM_NAMES[current.term]} ${current.year}`}
         title="Att planera in denna termin"
@@ -128,7 +139,7 @@ export async function WheelCards({ user }: { user: SessionUser }) {
             finns ett klick bort.
           </>
         }
-      />
+      />}
     </div>
   );
 }
