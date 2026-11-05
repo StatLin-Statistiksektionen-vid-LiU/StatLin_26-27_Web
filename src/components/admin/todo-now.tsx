@@ -127,7 +127,7 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
     todos.push({ key: "fragor", rank: 2, Icon: MessageCircle, title: questions === 1 ? "1 ny fråga i frågelådan" : `${questions} nya frågor i frågelådan`, href: "/admin/fragelada" });
   }
   if (wishes > 0) {
-    todos.push({ key: "onskemal", rank: 2, Icon: Mail, title: wishes === 1 ? "1 nytt lunchönskemål" : `${wishes} nya lunchönskemål`, detail: "Inskickade från STAR-sidan.", href: "/admin/lunchonskemal" });
+    todos.push({ key: "onskemal", rank: 2, Icon: Mail, title: wishes === 1 ? "1 nytt lunchönskemål" : `${wishes} nya lunchönskemål`, detail: "Syns på sajten först efter godkännande.", href: "/admin/lunchonskemal" });
   }
 
   // Egna utkast. Utskottet ser hela utskottets, en redaktör bara det hen själv har börjat på: resten är någon annans arbete.
