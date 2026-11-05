@@ -16,6 +16,7 @@ import { formatDate } from "@/lib/dates";
 import { mailIsConfigured } from "@/lib/mail";
 import { COMPANY_ROLE_LABELS, parseProgram, parseSeeks, SEEK_LABELS, starIsLive } from "@/lib/naringsliv";
 import { siteUrl } from "@/lib/site-url";
+import { ScrollToAnchor } from "@/components/ui/scroll-to-anchor";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "STAR" };
@@ -94,6 +95,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
         </ul>
       </section>
 
+      <ScrollToAnchor id="inbjudan" />
       <section id="inbjudan" aria-labelledby="star-inbjudan" className="mt-6 scroll-mt-24 rounded-[1.6rem] border border-ink/10 bg-white p-5 md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
           <div className="min-w-0">

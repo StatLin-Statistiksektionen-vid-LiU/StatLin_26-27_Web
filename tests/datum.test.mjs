@@ -74,6 +74,13 @@ test("SB-01: tidsraden visar heldagens slutdatum, men bara när det är en annan
   assert.equal(formatTimeRange("2026-08-17T18:00", "2026-08-17T21:00", false), "18:00–21:00");
 });
 
+test("Tidsraden: en kväll som går över midnatt är en kväll, och först längre evenemang får ett slutdatum", () => {
+  assert.equal(formatTimeRange("2026-11-05T18:00", "2026-11-06T01:00", false), "18:00–01:00");
+  assert.equal(formatTimeRange("2026-11-30T18:00", "2026-12-01T02:00", false), "18:00–02:00");
+  assert.equal(formatTimeRange("2026-11-05T18:00", "2026-11-06T09:00", false), "18:00 till 6 november 09:00");
+  assert.equal(formatTimeRange("2026-11-05T10:00", "2026-11-07T16:00", false), "10:00 till 7 november 16:00");
+});
+
 test("SB-07: ett evenemang som startade i går och slutar i morgon pågår", () => {
   assert.equal(at("2026-11-04T12:00", () => relativeDay("2026-11-03T18:00", "2026-11-05T15:00", false)), "Pågår");
 });
@@ -262,7 +269,8 @@ test("SB-29: tiden på engelska", () => {
   assert.equal(formatTimeRange("2026-08-19T00:00", "2026-08-21T00:00", true, "en-GB"), "All day until 21 August");
   assert.equal(formatTimeRange("2026-12-30T00:00", "2027-01-02T00:00", true, "en-GB"), "All day until 2 January 2027");
   assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-19T21:00", false, "en-GB"), "18:00–21:00");
-  assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-21T02:00", false, "en-GB"), "18:00 – 21 August 02:00");
+  assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-20T01:00", false, "en-GB"), "18:00–01:00");
+  assert.equal(formatTimeRange("2026-08-19T18:00", "2026-08-21T02:00", false, "en-GB"), "18:00 until 21 August 02:00");
 });
 
 test("SB-29: veckodag och månad på engelska", () => {

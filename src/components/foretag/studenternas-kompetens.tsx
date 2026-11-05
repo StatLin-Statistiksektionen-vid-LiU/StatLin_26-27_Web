@@ -114,7 +114,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
   const nya = ALLA.filter((r) => arNy(r.lagen, niva)).length;
 
   return (
-    <section id="kompetens" className={cn("scroll-mt-[var(--header-h)] overflow-x-clip text-white", natt ? "star-avsnitt relative py-16 md:py-24" : "bg-ink pb-20 pt-4 md:pb-28 md:pt-6")}>
+    <section id="kompetens" className={cn("overflow-x-clip text-white", natt ? "star-avsnitt relative py-16 md:py-24" : "bg-ink pb-20 pt-4 md:pb-28 md:pt-6")}>
       <div className="container-site">
         <Reveal>
           <p className="kicker text-white/70">Två program vid Linköpings universitet</p>
@@ -147,7 +147,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
           ))}
         </ul>
 
-        <div ref={ankare} className="mt-14 scroll-mt-[calc(var(--header-h)+1rem)] md:mt-20">
+        <div ref={ankare} className="mt-14 md:mt-20">
           <h2 className={natt ? "star-type text-3xl font-light md:text-4xl" : "display-tight text-2xl md:text-4xl"}>Vad våra studenter kan</h2>
           <p className="mt-3 max-w-2xl text-lg leading-relaxed text-white/85">Kurserna ändras över åren, men färdigheterna består. Bläddra genom utbildningen och se vad studenten kan efter varje steg.</p>
         </div>

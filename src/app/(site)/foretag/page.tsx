@@ -7,6 +7,7 @@ import { StudenternasKompetens } from "@/components/foretag/studenternas-kompete
 import { StarField } from "@/components/home/home-sections";
 import { ArrowRight, ArrowUpRight, Mail } from "@/components/icons";
 import { Reveal } from "@/components/ui/reveal";
+import { ScrollToAnchor } from "@/components/ui/scroll-to-anchor";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
@@ -41,6 +42,7 @@ async function Companies() {
       beforeBody={
         <>
           <StudenternasKompetens />
+          <ScrollToAnchor id="kompetens" />
           <Branscher
             cta={{
               href: `mailto:${contact}?subject=${encodeURIComponent("Vi söker studenter")}`,

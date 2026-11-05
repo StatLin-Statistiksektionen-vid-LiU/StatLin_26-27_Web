@@ -133,6 +133,51 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     await context.close();
   });
 
+  await step("Menyvalet Vad studenterna kan landar vid kunskaperna, också när sidan strömmas in efter att den öppnats", async () => {
+    // Lokalt svarar servern så fort att innehållet hinner med. Den riktiga sajten gör inte det, och där blev man kvar högst upp.
+    const landed = async (p) => {
+      await p.waitForFunction(() => {
+        const section = document.querySelector("#kompetens")?.getBoundingClientRect();
+        const header = document.querySelector("header").getBoundingClientRect();
+        return section && section.top >= header.bottom - 8 && section.top < window.innerHeight / 2;
+      });
+    };
+    for (const options of [{}, PHONE]) {
+      const { page: p, context } = await newVisitor(browser, options);
+      await p.route("**/foretag*", async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        await route.continue();
+      });
+      await p.goto(`${BASE}/`);
+      await waitForHydration(p, p.locator("footer a").first());
+      if (options.isMobile) {
+        await p.getByRole("button", { name: "Öppna meny" }).click();
+        await p.getByRole("button", { name: /Företag/ }).first().click();
+      } else {
+        await p.locator("header nav").getByRole("button", { name: /Företag/ }).hover();
+      }
+      const menuLink = p.locator('a[href="/foretag#kompetens"]:visible').first();
+      await menuLink.waitFor();
+      // Länken förhämtar sidans skal. Klicket visar då skalet direkt, och innehållet kommer efter, precis som på den riktiga sajten.
+      await p.waitForTimeout(1500);
+      await menuLink.click();
+      await p.waitForURL(/\/foretag#kompetens$/);
+      await landed(p);
+
+      // Bakåt från en annan sida ska lämna besökaren där den var, och inte dra tillbaka den till ankaret.
+      await p.evaluate(() => window.scrollBy(0, 1500));
+      const before = await p.evaluate(() => window.scrollY);
+      await p.locator('a[href="/lunchforelasningar"]:visible').first().evaluate((a) => a.click());
+      await p.waitForURL(/\/lunchforelasningar/);
+      await p.goBack();
+      await p.waitForURL(/\/foretag#kompetens$/);
+      await p.waitForTimeout(800);
+      const after = await p.evaluate(() => window.scrollY);
+      assert.ok(Math.abs(after - before) < 120, `bakåt hoppade från ${before} till ${after}`);
+      await context.close();
+    }
+  });
+
   await step("Inbjudningslänken: kommer från admin, sökmotorer ser den inte, och fel kod visar ingenting", async () => {
     await switchAccount(page, ADMIN);
     await page.goto(`${BASE}/admin/star`);

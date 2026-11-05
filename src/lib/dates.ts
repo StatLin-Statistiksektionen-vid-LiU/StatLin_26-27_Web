@@ -186,8 +186,9 @@ export function formatTimeRange(start: string, end: string | null, allDay: boole
   }
   const s = start.slice(11, 16);
   if (!end) return s;
-  if (end.slice(0, 10) === start.slice(0, 10)) return `${s}–${end.slice(11, 16)}`;
-  return `${s} – ${formatDate(end, false, locale)} ${end.slice(11, 16)}`;
+  // En sittning till 01:00 hör till kvällen den började, så den behöver inget datum. Se eventLastDay.
+  if (eventLastDay(start, end, false) === start.slice(0, 10)) return `${s}–${end.slice(11, 16)}`;
+  return `${s} ${locale === "en-GB" ? "until" : "till"} ${formatDate(end, false, locale)} ${end.slice(11, 16)}`;
 }
 
 export function capitalize(s: string) {

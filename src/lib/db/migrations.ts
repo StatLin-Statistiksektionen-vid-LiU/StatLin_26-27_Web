@@ -469,6 +469,19 @@ Våra medlemmar läser statistik, programmering och maskininlärning och möter 
 
 Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg som passar er.';
   `,
+  /* 16: demodatan som redan ligger i en databas får samma text som scripts/seed.ts, utan tankstreck. replace rör bara meningar som ingen har skrivit om. */ `
+  UPDATE events SET title = replace(title, 'STAR – StatLins Arbetsmarknadsdag', 'STAR, StatLins arbetsmarknadsdag');
+  UPDATE events SET summary = replace(summary, 'Ta med datorn – eSTIG fixar nätverk, el och turneringsschema.', 'Ta med datorn, eSTIG fixar nätverk, el och turneringsschema.');
+  UPDATE events SET summary = replace(summary, 'Tyck till om höstens kurser – UBU bjuder på fika.', 'Tyck till om höstens kurser. UBU bjuder på fika.');
+  UPDATE events SET summary = replace(summary, 'Terminens sista sittning – med julbord, tomtar och snapsvisor.', 'Terminens sista sittning, med julbord, tomtar och snapsvisor.');
+  UPDATE events SET summary = replace(summary, 'Mottagningens höjdpunkt – bilder från kvällen finns i galleriet.', 'Mottagningens höjdpunkt. Bilder från kvällen finns i galleriet.');
+  UPDATE events SET body_md = replace(body_md, 'från notebook till produktion – och vad de letar efter', 'från notebook till produktion, och vad de letar efter');
+  UPDATE events SET body_md = replace(body_md, 'Kom tidigt – de bästa borden går fort.', 'Kom tidigt, de bästa borden går fort.');
+  UPDATE news SET excerpt = replace(excerpt, 'Höstsittning och julsittning – boka in datumen redan nu.', 'Höstsittning och julsittning: boka in datumen redan nu.');
+  UPDATE news SET body_md = replace(body_md, 'styrelsen och utskotten – och du kan prenumerera', 'styrelsen och utskotten, och du kan prenumerera');
+  UPDATE news SET body_md = replace(body_md, 'Det du skriver läses – och leder till förändring.', 'Det du skriver läses och leder till förändring.');
+  UPDATE committees SET tagline = replace(tagline, 'Trädet i loggan – fem grenar som förgrenar sig i många små – står för', 'Trädet i loggan, fem grenar som förgrenar sig i många små, står för'), description_md = replace(description_md, 'Trädet i loggan – fem grenar som förgrenar sig i många små – står för', 'Trädet i loggan, fem grenar som förgrenar sig i många små, står för');
+  `,
 ];
 
 export function migrate(db: Database.Database) {

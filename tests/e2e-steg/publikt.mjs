@@ -188,6 +188,16 @@ export default async function publiktSteg({ BASE, browser, step }) {
     await desktop.close();
   });
 
+  await step("Adresserna man gissar leder rätt: /nytt och /kalender", async () => {
+    const { context, page } = await newVisitor(browser);
+    await page.goto(`${BASE}/nytt`);
+    assert.equal(new URL(page.url()).pathname, "/nyheter");
+    await page.goto(`${BASE}/kalender`);
+    const { pathname, search } = new URL(page.url());
+    assert.equal(pathname + search, "/evenemang?vy=kalender");
+    await context.close();
+  });
+
   await step("Sidan som inte finns svarar 404 och har en egen titel", async () => {
     const { context, page } = await newVisitor(browser);
     const response = await page.goto(`${BASE}/finns-inte-${uniqueId()}`);
