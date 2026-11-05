@@ -36,6 +36,17 @@ export async function waitForHydration(page, locator, timeout = 30_000) {
   throw new Error(`Elementet hydrerades inte på ${timeout} ms: ${locator} på ${page.url()}`);
 }
 
+/**
+ * Öppnar en sida med redigeringsläget på. Läget läses in en stund efter hydreringen, och reglaget visar av fram till dess. Att läsa
+ * reglaget och klicka stänger då av ett läge som var på, och knapparna på sidan försvinner: SB-30 föll på det 1 gång av 10 mot next dev.
+ * Sidan måste redan vara på sajten, så att webbläsaren kommer åt det sparade läget.
+ */
+export async function gotoEditing(page, url) {
+  await page.evaluate(() => localStorage.removeItem("statlin-redigeringslage"));
+  await page.goto(url);
+  await page.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
+}
+
 export async function openLogin(page, BASE) {
   await page.goto(`${BASE}/logga-in`);
   await waitForHydration(page, page.locator("#email"));
