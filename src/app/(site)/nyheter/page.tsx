@@ -18,7 +18,7 @@ const PER_PAGE = 9;
 export default function NewsPage(props: PageProps<"/nyheter">) {
   return (
     <>
-      <PageHero kicker="Från sektionen" title={<>Senaste <span className="mono-accent text-red">nytt</span></>} lead="Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet." />
+      <PageHero kicker="Från sektionen" title={<>Senaste <span className="mono-accent text-red max-md:block">nytt</span></>} lead="Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet." />
       <Suspense fallback={<PageSkeleton />}>
         <NewsList searchParams={props.searchParams} />
       </Suspense>
