@@ -279,7 +279,7 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     const listed = async (manad, { slug }) => {
       await phone.page.goto(`${BASE}/evenemang?vy=kalender&manad=${manad}`);
       // Innehållet strömmas och visas strax efter load, så vänta på det innan något räknas.
-      await phone.page.getByRole("tablist", { name: "Vy" }).waitFor();
+      await phone.page.getByRole("navigation", { name: "Vy" }).waitFor();
       return phone.page.locator(`main a[href="/evenemang/${slug}"]:visible`).count();
     };
     assert.equal(await listed(before, trip), 1, "resan ska listas under månaden den börjar i");
@@ -290,13 +290,13 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
 
     // Rutnätet ska säga samma sak: resan ligger på månadens tre första dagar.
     await site.goto(`${BASE}/evenemang?vy=kalender&manad=${after}`);
-    await site.getByRole("tablist", { name: "Vy" }).waitFor();
+    await site.getByRole("navigation", { name: "Vy" }).waitFor();
     const cells = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).count();
     assert.ok(cells >= 3, `resan ska synas på sina dagar i rutnätet, syns på ${cells}`);
 
     // Klockslaget hör till startdagen. De andra dagarna pågår resan redan.
     await site.goto(`${BASE}/evenemang?vy=kalender&manad=${before}`);
-    await site.getByRole("tablist", { name: "Vy" }).waitFor();
+    await site.getByRole("navigation", { name: "Vy" }).waitFor();
     const times = await site.locator(`main .grid-cols-7 a[href="/evenemang/${trip.slug}"]`).evaluateAll((links) => links.flatMap((a) => a.textContent.match(/\d\d:\d\d/) ?? []));
     assert.deepEqual(times, ["10:00"], `klockslaget ska bara stå på startdagen, i rutnätet står: ${times}`);
 
