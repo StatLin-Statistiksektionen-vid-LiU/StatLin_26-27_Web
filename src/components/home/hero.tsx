@@ -23,9 +23,9 @@ async function HeroKicker() {
 /** Längre rubriker får mindre text och bredare kolumn, så att de inte trycker in i loggan. */
 function titleSize(title: string) {
   const n = stripAccent(title).length;
-  if (n <= 48) return { text: "text-[clamp(1.7rem,3.1vw,2.7rem)]", col: "md:col-span-7" };
-  if (n <= 80) return { text: "text-[clamp(1.55rem,2.6vw,2.3rem)]", col: "md:col-span-7 lg:col-span-8" };
-  return { text: "text-[clamp(1.35rem,2.1vw,1.9rem)]", col: "md:col-span-7 lg:col-span-8" };
+  if (n <= 48) return { text: "text-[clamp(1.4rem,2.5vw,2.15rem)]", col: "md:col-span-7" };
+  if (n <= 80) return { text: "text-[clamp(1.15rem,1.9vw,1.7rem)]", col: "md:col-span-7 lg:col-span-8" };
+  return { text: "text-[clamp(1.05rem,1.6vw,1.45rem)]", col: "md:col-span-7 lg:col-span-8" };
 }
 
 function HeroBottom({ title, text }: { title: string | null; text: string | null }) {
@@ -39,12 +39,12 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
       >
         {title === null ? (
           // På telefon håller en osynlig kopia av standardtexten platsen, så att höjden stämmer vid varje skärmbredd.
-          <div className="min-h-[9rem] pointer-coarse:min-h-0" aria-hidden>
+          <div className="min-h-[7rem] pointer-coarse:min-h-0" aria-hidden>
             <div className="invisible hidden pointer-coarse:block">
               <p className={cn("display-tight leading-[1.02]", size.text)}>
                 <AccentText text={DEFAULT_SETTINGS.hero_title} />
               </p>
-              <p className="mt-4 max-w-lg text-[1rem] leading-relaxed">{DEFAULT_SETTINGS.hero_text}</p>
+              <p className="mt-3 max-w-md text-[0.875rem] leading-relaxed">{DEFAULT_SETTINGS.hero_text}</p>
             </div>
           </div>
         ) : (
@@ -52,7 +52,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
             <h1 className={cn("display-tight leading-[1.02]", size.text)}>
               <AccentText text={title} />
             </h1>
-            {text && <p className="mt-4 max-w-lg text-[1rem] leading-relaxed text-white/60">{text}</p>}
+            {text && <p className="mt-3 max-w-md text-[0.875rem] leading-relaxed text-white/60">{text}</p>}
           </>
         )}
       </Editable>
