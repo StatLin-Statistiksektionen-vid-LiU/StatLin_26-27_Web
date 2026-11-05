@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Notice } from "@/components/admin/ui";
-import { getSessionUser, sessionExpiresSoon } from "@/lib/auth/session";
+import { getSessionUser, loginPath, sessionExpiresSoon } from "@/lib/auth/session";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
 
@@ -26,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
-  if (!user) redirect("/logga-in?next=/admin");
+  if (!user) redirect(await loginPath());
   const [unseenTasks, expiresAt] = await Promise.all([countUnseenTasks(user.id), sessionExpiresSoon()]);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">

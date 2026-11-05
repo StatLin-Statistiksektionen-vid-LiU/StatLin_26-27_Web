@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
-import type { Role, SessionUser } from "@/lib/types";
+import type { SessionUser } from "@/lib/types";
 
 const COOKIE = "statlin_session";
 const SESSION_DAYS = 30;
@@ -16,7 +16,7 @@ const RENEW_BELOW_MS = SESSION_MS / 2;
 const WARN_BELOW_MS = 86_400_000;
 
 /** Det actions svarar när sessionen saknas eller gått ut. */
-const LOGGED_OUT = "Du har loggats ut – logga in i en ny flik och spara igen.";
+const LOGGED_OUT = "Du har loggats ut – logga in i en ny flik och försök igen.";
 
 const hashToken = (token: string) => crypto.createHash("sha256").update(token).digest("hex");
 
@@ -148,19 +148,20 @@ export async function actionUser(opts: { allowTemporaryPassword?: boolean; renew
   return session.user;
 }
 
+/** Inloggningen, med vägen tillbaka till adminsidan som efterfrågades. Proxyn lägger adressen i x-pathname (SB-38). */
+export async function loginPath(): Promise<string> {
+  const path = (await headers()).get("x-pathname");
+  return path ? `/logga-in?next=${encodeURIComponent(path)}` : "/logga-in";
+}
+
 /**
  * Kräver inloggning. Den som loggat in med ett tillfälligt lösenord skickas till kontosidan
  * tills lösenordet är bytt – utom där bytet görs (allowTemporaryPassword).
  */
 export async function requireUser(opts: { allowTemporaryPassword?: boolean } = {}): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/logga-in");
+  if (!user) redirect(await loginPath());
   if (user.must_change_password && !opts.allowTemporaryPassword) redirect("/admin/konto?byt=1");
   return user;
 }
 
-export async function requireRole(...roles: Role[]): Promise<SessionUser> {
-  const user = await requireUser();
-  if (!roles.includes(user.role)) redirect("/admin?nekad=1");
-  return user;
-}
