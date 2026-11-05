@@ -98,9 +98,11 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
                 <span className="chip border border-white/20 text-white/85">{event.committee.short_name}</span>
               ))}
           </div>
-          <h1 className="display mt-6 max-w-5xl [overflow-wrap:break-word]" style={fitHeading(event.title, { maxRem: 5.6, maxVw: 6.5 })}>
-            {event.title}
-          </h1>
+          <div className="@container mt-6 max-w-5xl">
+            <h1 className="display [overflow-wrap:break-word]" style={fitHeading(event.title, { maxRem: 5.6, maxVw: 6.5 })}>
+              {event.title}
+            </h1>
+          </div>
           {event.summary && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75 md:text-xl">{event.summary}</p>}
         </div>
         <EditModeButton target={{ type: "event-images", id: event.id, committeeId: event.committee_id }} className="absolute bottom-5 right-5 z-30">

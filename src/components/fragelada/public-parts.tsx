@@ -7,7 +7,7 @@ export function FrageladaHeader() {
     <header className="noise relative overflow-hidden bg-ink text-white">
       <div className="container-site relative pb-7 pt-[calc(var(--header-h)+1.5rem)] md:pb-10 md:pt-[calc(var(--header-h)+3rem)]">
         <p className="kicker text-white/60">Anonym</p>
-        <h1 className="display-tight mt-2 text-[clamp(2.4rem,7vw,4.5rem)]">Frågelådan</h1>
+        <h1 className="display-tight mt-2 text-[min(11vw,clamp(2.4rem,7vw,4.5rem))]">Frågelådan</h1>
       </div>
     </header>
   );

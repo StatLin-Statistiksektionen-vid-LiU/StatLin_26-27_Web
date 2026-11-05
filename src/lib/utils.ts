@@ -78,11 +78,25 @@ export function safeExternalUrl(url: string): string | null {
 
 /**
  * Teckenstorlek för stora rubriker som anpassas efter längsta ordet, så att
- * långa svenska sammansättningar ("Mottagningsgasque") inte bryts mitt i ordet.
- * charWidth = ungefärlig teckenbredd i em för typsnittet (Archivo Expanded ≈ 0.86).
+ * långa svenska sammansättningar ("Mottagningsgasque") inte bryts mitt i ordet. Rubriken ska ligga i en behållare med
+ * klassen @container: storleken följer då spaltens bredd, som till skillnad från skärmen slutar växa vid sidans maxbredd.
+ * charWidth = teckenbredd i em för rubriker i andra stilar än "display". Utan den räknas ordet bokstav för bokstav.
  */
-export function fitHeading(text: string, opts: { maxRem: number; maxVw: number; charWidth?: number; usableVw?: number }) {
-  const longest = Math.max(4, ...text.split(/\s+/).map((w) => w.length));
-  const vw = Math.min(opts.maxVw, (opts.usableVw ?? 88) / (longest * (opts.charWidth ?? 0.86)));
-  return { fontSize: `clamp(1.4rem, ${vw.toFixed(2)}vw, ${opts.maxRem}rem)` };
+export function fitHeading(text: string, opts: { maxRem: number; maxVw: number; charWidth?: number }) {
+  const widest = Math.max(4 * DISPLAY_AVERAGE, ...text.split(/[\s\u00ad-]+/).map((word) => wordWidth(word, opts.charWidth)));
+  // 3 % marginal för reservfonten och för att webbläsaren avrundar. cqi är spaltens bredd, så det gäller på alla skärmar.
+  const cqi = 100 / (widest * 1.03);
+  return { fontSize: `clamp(1.1rem, min(${opts.maxVw}vw, ${cqi.toFixed(2)}cqi), ${opts.maxRem}rem)` };
+}
+
+/** Bokstävernas bredd i em i rubrikstilen "display" (Archivo 125 %, vikt 800, versaler), uppmätt. */
+const DISPLAY_WIDTHS: Record<string, number> = {
+  A: 0.91, B: 0.89, C: 0.92, D: 0.91, E: 0.84, F: 0.78, G: 0.99, H: 0.97, I: 0.35, J: 0.71, K: 0.93, L: 0.73, M: 1.13, N: 0.97, O: 0.99,
+  P: 0.84, Q: 0.99, R: 0.91, S: 0.85, T: 0.83, U: 0.95, V: 0.88, W: 1.19, X: 0.92, Y: 0.9, Z: 0.84, Å: 0.91, Ä: 0.91, Ö: 0.99,
+};
+const DISPLAY_AVERAGE = 0.9;
+
+function wordWidth(word: string, charWidth?: number) {
+  if (charWidth) return word.length * charWidth;
+  return [...word.toUpperCase()].reduce((sum, ch) => sum + (DISPLAY_WIDTHS[ch] ?? (/[0-9]/.test(ch) ? 0.78 : DISPLAY_AVERAGE)), 0);
 }

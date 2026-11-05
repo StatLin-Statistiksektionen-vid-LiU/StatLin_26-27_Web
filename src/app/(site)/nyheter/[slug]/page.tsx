@@ -46,7 +46,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
         <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" aria-hidden />
         <div className="container-prose relative pb-14 pt-[calc(var(--header-h)+3rem)] md:pt-[calc(var(--header-h)+5rem)]">
           <Link href="/nyheter" className="kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
-            <ArrowLeft size={14} /> Alla nyheter
+            <ArrowLeft size={14} /> Allt nytt
           </Link>
           <p className="kicker mt-8 flex flex-wrap items-center gap-3 text-white/60">
             <time dateTime={item.published_at}>{newsDate(item)}</time>
@@ -63,9 +63,11 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
               </>
             )}
           </p>
-          <h1 className="mt-5 font-extrabold leading-[1.02] tracking-tight [font-stretch:112%] [overflow-wrap:break-word]" style={fitHeading(item.title, { maxRem: 4, maxVw: 5.2, charWidth: 0.68 })}>
-            {item.title}
-          </h1>
+          <div className="@container mt-5">
+            <h1 className="font-extrabold leading-[1.02] tracking-tight [font-stretch:112%] [overflow-wrap:break-word]" style={fitHeading(item.title, { maxRem: 4, maxVw: 5.2, charWidth: 0.68 })}>
+              {item.title}
+            </h1>
+          </div>
           {item.excerpt && <p className="mt-6 text-xl leading-relaxed text-white/70">{item.excerpt}</p>}
           {item.author_name && (
             <p className="mt-8 text-sm text-white/50">
@@ -90,7 +92,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
       {more.length > 0 && (
         <section className="border-t border-ink/10 bg-paper-2/50 py-16 md:py-20">
           <div className="container-site">
-            <h2 className="kicker text-stone">Fler nyheter</h2>
+            <h2 className="kicker text-stone">Mer nytt</h2>
             <div className="mt-8 grid gap-10 md:grid-cols-3">
               {more.map((n) => (
                 <NewsCard key={n.id} item={n} />

@@ -258,7 +258,7 @@ function WishMeta({ wish, onSky = false }: { wish: LectureWish; onSky?: boolean 
     <>
       <span className={cn("chip", CHIP_CLASS[wish.status])}>{WISH_STATUS_LABELS[wish.status]}</span>
       {wish.event_slug && (
-        <Link href={`/evenemang/${wish.event_slug}`} className={cn("inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline", onSky ? "text-white" : "text-red-deep")}>
+        <Link href={`/evenemang/${wish.event_slug}`} className={cn("tryck inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline", onSky ? "text-white" : "text-red-deep")}>
           Till föreläsningen <ArrowUpRight size={14} />
         </Link>
       )}
@@ -336,7 +336,7 @@ function CompanyBand({ contact }: { contact: string }) {
       <div className="container-site grid gap-10 py-16 md:grid-cols-12 md:py-20">
         <div className="md:col-span-5">
           <p className="kicker text-white/70">För företag</p>
-          <h2 className="display-tight mt-4 text-3xl md:text-4xl">Vill ni hålla en lunch&shy;föreläsning?</h2>
+          <h2 className="display-tight mt-4 text-3xl lg:text-4xl">Vill ni hålla en lunch&shy;föreläsning?</h2>
           <a href={mailtoWithSubject(contact, "Vi vill hålla en lunchföreläsning")} className="btn btn-red mt-7">
             <Mail size={18} /> {contact}
           </a>
