@@ -7,6 +7,32 @@ const noSubscribe = () => () => {};
 const whenRenderedInBrowser = () => false;
 const whenHydrating = () => true;
 
+type Watch = (entry: IntersectionObserverEntry, viewportHeight: number) => void;
+const watchers = new Map<Element, Watch>();
+let shared: IntersectionObserver | null = null;
+
+/**
+ * Alla block delar en observer, och den svarar efter nästa layout. Att mäta varje block när sidan startar tvingade fram en ny layout av hela
+ * sidan per block, eftersom blocket före just hade ändrats.
+ */
+function observe(el: Element, watch: Watch) {
+  shared ??= new IntersectionObserver(
+    (entries) => {
+      // Läses före ändringarna nedan, annars räknar webbläsaren om layouten för att svara.
+      const viewportHeight = window.innerHeight;
+      for (const entry of entries) watchers.get(entry.target)?.(entry, viewportHeight);
+    },
+    // Med tummen kommer blocken fort, så där börjar intoningen strax innan blocket syns i stället för när det redan är en bit inne.
+    window.matchMedia("(pointer: coarse)").matches ? { rootMargin: "0px 0px 6% 0px", threshold: 0 } : { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+  );
+  watchers.set(el, watch);
+  shared.observe(el);
+  return () => {
+    watchers.delete(el);
+    shared?.unobserve(el);
+  };
+}
+
 /**
  * Tonar in innehåll när det scrollas in i bild. Innehållet är synligt i HTML:en och göms först här, när observern är på plats, så att det
  * syns utan JavaScript och medan det laddas (SB-03).
@@ -30,21 +56,23 @@ export function Reveal({
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // HTML som redan har synts ska inte försvinna och tonas in igen. Elementet kan ha gömts tidigare: effekten körs om när Next visar en dold sida igen.
-    if (fromHtml && !el.dataset.hydrated && el.getBoundingClientRect().top < window.innerHeight) return;
-    el.dataset.hydrated = "true";
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      // Med tummen kommer blocken fort, så där börjar intoningen strax innan blocket syns i stället för när det redan är en bit inne.
-      window.matchMedia("(pointer: coarse)").matches ? { rootMargin: "0px 0px 6% 0px", threshold: 0 } : { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    const hide = () => {
+      el.dataset.hydrated = "true";
+    };
+    // Renderat här, eller gömt tidigare: göms innan det hinner synas. Effekten körs om när Next visar en dold sida igen.
+    if (!fromHtml || el.dataset.hydrated) hide();
+    const stop = observe(el, (entry, viewportHeight) => {
+      if (!el.dataset.hydrated) {
+        // HTML som redan har synts, eller som man redan har scrollat förbi, ska inte försvinna och tonas in igen.
+        if (entry.boundingClientRect.top < viewportHeight) return stop();
+        hide();
+      }
+      if (entry.isIntersecting) {
+        setShown(true);
+        stop();
+      }
+    });
+    return stop;
   }, [fromHtml]);
 
   return (

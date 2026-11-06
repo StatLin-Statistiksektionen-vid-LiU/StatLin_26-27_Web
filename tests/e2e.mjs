@@ -248,7 +248,7 @@ async function openDeleteConfirm(page) {
       await moveOverLogo(still);
       await still.waitForTimeout(3500);
       assert.equal(await ringRadius(still), "0", "gradienten ska inte animeras");
-      const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
+      const fill = await still.locator(".logo-formler text:not(.formler-glod)").evaluate((el) => getComputedStyle(el).fill);
       assert.match(fill, /^(rgba\(255, 255, 255, 0\.7\)|rgb\(255 255 255 \/ 0\.7\))$/, "musen över loggan ska visa hela ringen");
       await stillCtx.close();
     });
@@ -380,21 +380,28 @@ async function openDeleteConfirm(page) {
         grain: "none",
         title: "0.3s 0.8s",
         buttons: "none 0s",
-        canvasWidth: 585,
+        canvasWidth: 780,
         shadowBlur: 0,
         sections: "auto",
         titleFont: true,
       });
       assert.equal(await inlineTilt(phone), "", "ingen loop i JS ska vrida loggan på telefon");
+      // Telefonen får en stillbild: den ritas en gång, och igen bara om ytan byter storlek.
+      await phone.locator("canvas.data-field[data-drawn]").waitFor({ state: "attached" });
       const drawsBefore = await draws(phone);
       await phone.waitForTimeout(2000);
-      assert.ok((await draws(phone)) - drawsBefore <= 68, "ritytan ska rita högst ungefär 30 bilder per sekund på telefon");
+      assert.ok((await draws(phone)) - drawsBefore <= 2, "ritytan ska stå still på telefon");
       await phone.waitForFunction(introIsOver, null, { timeout: 15000 });
-      // Ett tryck på loggan visar hela ringen, som blir bredare än ett svep någonsin är.
+      // Ringen tonas in som helhet efter introt och göms igen. Den ritas aldrig om, och glöden är en färdig suddig kopia i stället för ett filter.
+      const ringShown = () => document.querySelector(".logo-formler").hasAttribute("data-shown");
+      await phone.waitForFunction(() => !document.querySelector(".logo-formler").hasAttribute("data-shown"), null, { timeout: 10000 });
       const logo = await phone.locator(".floating-logo").boundingBox();
       await phone.touchscreen.tap(logo.x + logo.width / 2, logo.y + logo.height / 2);
-      await phone.waitForFunction(() => Number(document.querySelector(".logo-formler radialGradient").getAttribute("r")) > 500, null, { timeout: 5000 });
-      assert.match(await ringFilter(phone), /drop-shadow/);
+      await phone.waitForFunction(ringShown, null, { timeout: 5000 });
+      await phone.waitForFunction(() => getComputedStyle(document.querySelector(".logo-formler")).opacity === "1", null, { timeout: 5000 });
+      assert.equal(await ringFilter(phone), "none", "telefonen ska inte rita ringens glöd med filter");
+      assert.notEqual(await phone.locator(".logo-formler .formler-glod").evaluate((el) => getComputedStyle(el).display), "none", "telefonen ska visa den färdiga glöden");
+      assert.equal(await phone.locator(".logo-formler radialGradient").getAttribute("r"), "0", "gradienten ska inte animeras på telefon");
       await scrollHeader(phone);
       assert.equal(await phone.locator("header").first().evaluate((el) => getComputedStyle(el).backdropFilter), "none");
       await phone.waitForFunction(() => getComputedStyle(document.querySelector("header")).backgroundColor === "rgb(10, 10, 10)", null, { timeout: 5000 });

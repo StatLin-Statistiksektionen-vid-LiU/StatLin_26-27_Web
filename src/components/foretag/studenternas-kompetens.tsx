@@ -262,7 +262,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                     <span
                       key={rad.namn}
                       style={{ transitionDelay: `${i * 14}ms` }}
-                      className={cn("h-1.5 min-w-0 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none", i < ingarForAlla ? "bg-red" : i < kan ? "bg-red/50" : "bg-white/15")}
+                      className={cn("h-1.5 min-w-0 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none pointer-coarse:transition-none", i < ingarForAlla ? "bg-red" : i < kan ? "bg-red/50" : "bg-white/15")}
                     />
                   ))}
                 </div>
@@ -283,7 +283,8 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                             data-ny={ny || undefined}
                             style={{ transitionDelay: `${FORDROJNING.get(rad.namn) ?? 0}ms` }}
                             className={cn(
-                              "inline-flex min-h-9 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-300 motion-reduce:transition-none",
+                              // Färger kan inte tonas av grafikkortet. På telefonen byter bubblorna läge direkt, så att huvudtråden inte räknar om dem i varje bildruta.
+                              "inline-flex min-h-9 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-300 motion-reduce:transition-none pointer-coarse:transition-none",
                               CHIP[lage],
                               ny && "shadow-[0_0_0_2px_var(--color-red)]",
                             )}

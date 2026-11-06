@@ -157,6 +157,7 @@ export function StarHimmel() {
         ljus.style.setProperty("--s", `${Math.round(8 + s.styrka * 6)}px`);
         ljus.style.setProperty("--d", toning === "lang" ? `${0.15 + (i * 1.7) / ljusa.length}s` : "0s");
         ljus.style.setProperty("--t", `${5 + ((i * 7) % 8)}s`);
+        ljus.append(document.createElement("span"));
         yta.append(ljus);
       });
       // När himlen är tänd behövs inte lagren längre: de blir en enda bild, så att scrollningen inte har fler ytor än nödvändigt att lägga ihop.

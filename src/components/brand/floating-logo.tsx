@@ -78,15 +78,16 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
 
   return (
     <div className={cn("floating-logo relative aspect-square select-none", intro && "is-intro", className)}>
-      {/* Röd glöd bakom loggan */}
-      <div
-        aria-hidden
-        className="logo-glow pointer-events-none absolute inset-[6%] rounded-full"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgb(255 7 7 / 0.38), rgb(255 7 7 / 0.12) 55%, transparent 75%)",
-        }}
-      />
+      {/* Röd glöd bakom loggan. Intoningen och andningen ligger på var sitt element: två animationer av samma egenskaper på ett element kan inte gå på grafikkortet, och då räknar huvudtråden om sidan i varje bildruta. */}
+      <div aria-hidden className="logo-glow-in pointer-events-none absolute inset-[6%]">
+        <div
+          className="logo-glow h-full w-full rounded-full"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgb(255 7 7 / 0.38), rgb(255 7 7 / 0.12) 55%, transparent 75%)",
+          }}
+        />
+      </div>
       <div className="relative h-full w-full animate-float [perspective:1400px]">
         <div
           ref={tiltRef}

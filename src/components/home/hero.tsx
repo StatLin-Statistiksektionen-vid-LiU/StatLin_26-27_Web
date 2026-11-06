@@ -107,7 +107,7 @@ export function Hero() {
         aria-hidden
         className="grid-paper pointer-events-none absolute inset-0 -z-10 text-white [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]"
       />
-      <DataField className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-90" />
+      <DataField className="pointer-events-none absolute inset-0 -z-10 h-full w-full" />
       {/* data-hero-botten: meddelandet från Inställningar väntar tills det här har lämnat skärmens nederkant, se AnnouncementPill. */}
       <div
         aria-hidden

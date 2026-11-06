@@ -22,6 +22,9 @@ const SWEEP_PERIOD_MS = 240000;
 const STILL_MS = 1000;
 const TAP_MS = 5000;
 const DRAW_MS = 30;
+// Telefon: ringen tonas in som helhet efter introt och står kvar så här länge.
+const TOUCH_FIRST_MS = 2000;
+const TOUCH_SHOW_MS = 3200;
 
 const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
@@ -55,10 +58,82 @@ function Superscript({ children }: { children: string }) {
   );
 }
 
+function Formulas() {
+  return (
+    <>
+      f(x) = 1/(σ√2π) · e<Superscript>−(x−μ)²/(2σ²)</Superscript>
+      {SEPARATOR}
+      P(A|B) = P(B|A) P(A) / P(B)
+      {SEPARATOR}
+      β̂ = (XᵀX)⁻¹Xᵀy
+      {SEPARATOR}
+      √n (X̄ − μ) →ᵈ N(0, σ²)
+      {SEPARATOR}
+      s² = Σ(xᵢ − x̄)² / (n − 1)
+      {SEPARATOR}
+      θ ← θ − η∇J(θ)
+      {SEPARATOR}
+      E[X] = Σ x p(x)
+      {SEPARATOR}
+      L(θ) = Π f(xᵢ | θ)
+      {SEPARATOR}
+      ∫ℝ e<Superscript>−x²</Superscript>dx = √π
+      {SEPARATOR}
+      e<Superscript>iπ</Superscript>+ 1 = 0
+      {SEPARATOR}
+    </>
+  );
+}
+
+/**
+ * Telefon och surfplatta: ingen mus att följa. Ringen tonas in och ut som helhet med CSS (data-shown), efter introt, var fjärde minut och när man trycker på loggan.
+ * Inget ritas om medan den syns: bara genomskinligheten ändras, och den sköter grafikkortet.
+ */
+function touchRing(layer: SVGSVGElement, root: HTMLElement, reduced: boolean) {
+  let hideTimer = 0;
+  let sweepTimer = 0;
+  let visible = true;
+
+  const show = (ms: number) => {
+    window.clearTimeout(hideTimer);
+    layer.dataset.shown = "true";
+    hideTimer = window.setTimeout(() => delete layer.dataset.shown, ms);
+  };
+  const schedule = (ms: number) => {
+    window.clearTimeout(sweepTimer);
+    sweepTimer = window.setTimeout(sweep, ms);
+  };
+  const sweep = () => {
+    schedule(SWEEP_PERIOD_MS);
+    sweptOnce = true;
+    if (visible && !document.hidden) show(TOUCH_SHOW_MS);
+  };
+  const onTap = () => {
+    show(TAP_MS);
+    if (!reduced) schedule(SWEEP_PERIOD_MS);
+  };
+
+  const io = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+  });
+  io.observe(root);
+  root.addEventListener("click", onTap);
+  // Utan rörelse kommer ringen bara fram när man trycker.
+  if (!reduced) schedule(sweptOnce ? SWEEP_PERIOD_MS : TOUCH_FIRST_MS);
+  return () => {
+    window.clearTimeout(hideTimer);
+    window.clearTimeout(sweepTimer);
+    delete layer.dataset.shown;
+    io.disconnect();
+    root.removeEventListener("click", onTap);
+  };
+}
+
 /**
  * Formler som kommer fram runt loggan när musen rör sig nära den, och i ett svep med jämna mellanrum.
  * Texten ligger still på sin bana och fylls med en gradient, så bara gradienten och en rotation ändras när ringen rör sig.
  * Servern ritar gradienten med radie 0, vilket gör texten helt genomskinlig.
+ * På telefon fylls texten i stället med CSS och hela ringen tonas in och ut, se touchRing.
  */
 export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_color"] }) {
   const rawId = useId();
@@ -71,8 +146,10 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     const gradient = gradientRef.current;
     const root = layer?.closest<HTMLElement>(".floating-logo");
     if (!layer || !gradient || !root) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (window.matchMedia("(hover: none)").matches) return touchRing(layer, root, reduced);
     // Utan rörelse visas hela ringen stilla med CSS när musen är över loggan.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduced) return;
 
     let angle = -Math.PI / 2;
     let target = angle;
@@ -191,12 +268,6 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       targetWidth = 0;
       start();
     };
-    // En telefon har ingen mus: ett tryck på loggan visar hela ringen en stund.
-    const onTap = (e: MouseEvent) => {
-      if (!window.matchMedia("(hover: none)").matches) return;
-      const { dx, dy } = offsetFromCenter(e);
-      showAround(dx, dy, WHOLE_RING, TAP_MS);
-    };
 
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
@@ -211,7 +282,6 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
 
     window.addEventListener("pointermove", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
-    root.addEventListener("click", onTap);
     schedule(sweptOnce ? SWEEP_PERIOD_MS : FIRST_SWEEP_MS);
     return () => {
       running = false;
@@ -223,7 +293,6 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       io.disconnect();
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
-      root.removeEventListener("click", onTap);
     };
   }, []);
 
@@ -241,29 +310,19 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
           ))}
         </radialGradient>
         <path id={`${id}-path`} d={PATH} />
+        <filter id={`${id}-glod`}>
+          <feGaussianBlur stdDeviation="4.5" />
+        </filter>
       </defs>
+      {/* Telefonens glöd: en suddig kopia under texten. Den ritas en gång, medan ett CSS-filter skulle räknas om i varje bildruta som loggan gungar. Döljs på datorn, se .formler-glod. */}
+      <text className="formler-glod" filter={`url(#${id}-glod)`}>
+        <textPath href={`#${id}-path`} lengthAdjust="spacing" textLength={3100}>
+          <Formulas />
+        </textPath>
+      </text>
       <text fill={`url(#${id}-fade)`}>
         <textPath href={`#${id}-path`} lengthAdjust="spacing" textLength={3100}>
-          f(x) = 1/(σ√2π) · e<Superscript>−(x−μ)²/(2σ²)</Superscript>
-          {SEPARATOR}
-          P(A|B) = P(B|A) P(A) / P(B)
-          {SEPARATOR}
-          β̂ = (XᵀX)⁻¹Xᵀy
-          {SEPARATOR}
-          √n (X̄ − μ) →ᵈ N(0, σ²)
-          {SEPARATOR}
-          s² = Σ(xᵢ − x̄)² / (n − 1)
-          {SEPARATOR}
-          θ ← θ − η∇J(θ)
-          {SEPARATOR}
-          E[X] = Σ x p(x)
-          {SEPARATOR}
-          L(θ) = Π f(xᵢ | θ)
-          {SEPARATOR}
-          ∫ℝ e<Superscript>−x²</Superscript>dx = √π
-          {SEPARATOR}
-          e<Superscript>iπ</Superscript>+ 1 = 0
-          {SEPARATOR}
+          <Formulas />
         </textPath>
       </text>
     </svg>

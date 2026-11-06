@@ -670,6 +670,17 @@ html:not(.js) .meny-knapp {
   background: var(--color-ink-3);
 }
 
+/* ---------- Heron ---------- */
+
+/* Bakgrundsgrafen (DataField) tonas in när den första bilden är ritad. */
+.data-field {
+  opacity: 0;
+  transition: opacity 1.2s ease-out;
+}
+.data-field[data-drawn] {
+  opacity: 0.9;
+}
+
 /* ---------- Svävande logga: intro ---------- */
 
 .floating-logo .sig-wipe {
@@ -699,10 +710,13 @@ html:not(.js) .meny-knapp {
 .floating-logo.is-intro .logo-signature {
   animation: sig-glow 2.8s 0.85s ease-out both;
 }
+/* Ytterelementet tonar in glöden medan det inre väntar i andningens startläge, så glöden tar inget skutt när andningen börjar. */
+.floating-logo.is-intro .logo-glow-in {
+  animation: logo-glow-in 2s 0.9s ease-out both;
+}
 .floating-logo.is-intro .logo-glow {
-  animation:
-    logo-glow-in 2s 0.9s ease-out both,
-    glow-breathe 7s 2.9s ease-in-out infinite;
+  animation-delay: 2.9s;
+  animation-fill-mode: backwards;
 }
 
 /* Reflexen under loggan. */
@@ -731,8 +745,8 @@ html:not(.js) .meny-knapp {
   .floating-logo.is-intro .logo-mark {
     animation: logo-ring-in 1.2s var(--ease-out-expo) backwards;
   }
-  .floating-logo.is-intro .logo-glow {
-    animation-fill-mode: backwards, none;
+  .floating-logo.is-intro .logo-glow-in {
+    animation-fill-mode: backwards;
   }
   /* En högre och svagare gradient i stället för oskärpa, som kostar ett eget ritpass. */
   .logo-reflex {
@@ -780,7 +794,31 @@ html:not(.js) .meny-knapp {
     font-size: 30px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
+/* Den suddiga kopian är telefonens glöd. Datorn har filtret ovan. */
+.logo-formler .formler-glod {
+  display: none;
+}
+/* Telefon och surfplatta: hela ringen tonas in och ut (se touchRing i formula-ring.tsx). Texten och glöden ritas en gång; sedan ändras bara genomskinligheten, som grafikkortet sköter utan att något ritas om. */
+@media (hover: none) {
+  .logo-formler {
+    opacity: 0;
+    transition: opacity 1.4s ease-in-out;
+    will-change: opacity;
+  }
+  .logo-formler[data-shown] {
+    opacity: 1;
+    filter: none;
+    transition-duration: 0.9s;
+  }
+  .logo-formler text {
+    fill: rgb(255 255 255 / 0.85);
+  }
+  .logo-formler .formler-glod {
+    display: inline;
+    fill: var(--glow-near);
+  }
+}
+@media (prefers-reduced-motion: reduce) and (hover: hover) {
   .floating-logo:hover .logo-formler {
     filter: var(--glow);
   }
@@ -850,15 +888,12 @@ html:not(.js) .meny-knapp {
     opacity: 1;
   }
 }
-/* Slutar där andningen börjar, annars tar glöden ett skutt när den ena animationen lämnar över till den andra. */
 @keyframes logo-glow-in {
   from {
     opacity: 0;
-    transform: scale(0.96);
   }
   to {
-    opacity: 0.75;
-    transform: scale(0.96);
+    opacity: 1;
   }
 }
 @keyframes glow-breathe {

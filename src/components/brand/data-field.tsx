@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * Bakgrund för heron: en tidsserie som ritas fram och scrollar med ett
  * konfidensband, samt ett glest spridningsdiagram som reagerar på pekaren.
+ * På telefon ritas en stillbild: varje ny bildruta kostar huvudtråden och grafiken, och utan mus finns inget för punkterna att reagera på.
  */
 export function DataField({ className }: { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -15,8 +17,9 @@ export function DataField({ className }: { className?: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Telefon: lägre upplösning, färre bilder och en glöd utan skuggoskärpa.
+    // Telefon: en glöd utan skuggoskärpa, och bara en bild.
     const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const still = reduced || coarse;
 
     let w = 0;
     let h = 0;
@@ -65,9 +68,12 @@ export function DataField({ className }: { className?: string }) {
       return { dev: LIMIT * Math.tanh((level + shock + 3.6 * vol * gauss()) / LIMIT), vol: volSmooth };
     };
 
+    /** Svarar false när storleken är densamma. Att sätta om canvasens mått tömmer den, så då görs ingenting. */
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
+      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (w > 0 && rect.width === w && rect.height === h && nextDpr === dpr) return false;
+      dpr = nextDpr;
       const oldW = w || 1;
       const oldH = h || 1;
       w = rect.width;
@@ -101,6 +107,7 @@ export function DataField({ className }: { className?: string }) {
         });
       }
       dots.length = count;
+      return true;
     };
 
     const draw = (dt: number) => {
@@ -200,7 +207,7 @@ export function DataField({ className }: { className?: string }) {
         ctx.fill();
       }
 
-      if (!reduced) {
+      if (!still) {
         offset += SPEED * dt;
         while (offset >= STEP) {
           offset -= STEP;
@@ -212,21 +219,28 @@ export function DataField({ className }: { className?: string }) {
 
     // Rörelsen följer klockan, inte antalet bildrutor: samma fart på 60 och 144 Hz.
     const loop = (now: number) => {
-      // Telefonen ritar ungefär var 33:e ms. Gränsen ligger strax under, så att ingen bild hoppas över i onödan.
-      if (coarse && now - last < 30) {
-        raf = requestAnimationFrame(loop);
-        return;
-      }
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
       last = now;
       draw(dt);
-      if (running && !reduced) raf = requestAnimationFrame(loop);
+      if (running) raf = requestAnimationFrame(loop);
     };
 
     const onMove = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       pointer = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
+
+    resize();
+    if (still) {
+      draw(0);
+      // Tonas in med CSS (.data-field), så att bilden inte dyker upp med ett ryck när skriptet har hunnit köra.
+      canvas.dataset.drawn = "";
+      const ro = new ResizeObserver(() => {
+        if (resize()) draw(0);
+      });
+      ro.observe(canvas);
+      return () => ro.disconnect();
+    }
 
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !running) {
@@ -238,14 +252,11 @@ export function DataField({ className }: { className?: string }) {
         cancelAnimationFrame(raf);
       }
     });
-
-    resize();
     loop(performance.now());
+    canvas.dataset.drawn = "";
     io.observe(canvas);
-    const ro = new ResizeObserver(() => {
-      resize();
-      if (reduced) draw(0);
-    });
+    // Ny storlek tömmer canvasen. Nästa bildruta ritar den igen.
+    const ro = new ResizeObserver(() => resize());
     ro.observe(canvas);
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => {
@@ -257,5 +268,5 @@ export function DataField({ className }: { className?: string }) {
     };
   }, []);
 
-  return <canvas ref={ref} aria-hidden className={className} />;
+  return <canvas ref={ref} aria-hidden className={cn("data-field", className)} />;
 }
