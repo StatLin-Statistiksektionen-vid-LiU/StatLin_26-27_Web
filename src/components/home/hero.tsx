@@ -30,6 +30,8 @@ function titleSize(title: string) {
   return { text: "text-[clamp(1.05rem,1.6vw,1.45rem)]", col: "md:col-span-7 lg:col-span-8" };
 }
 
+// Introts animationer fyller bara bakåt: slutbilden är elementens vanliga utseende. Med both ligger varje element kvar som ett eget lager på grafikkortet när introt är slut.
+
 // Meningen bryts olika med reservtypsnittet och Archivo. Tre rader håller platsen på telefon, så att loggan står still när typsnittet laddas.
 const SENTENCE = "mt-3 max-w-md text-[0.875rem] leading-relaxed pointer-coarse:min-h-[3lh]";
 
@@ -40,7 +42,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
       <Editable
         target={{ type: "home" }}
         label="Redigera texten"
-        className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_both] pointer-coarse:[animation-delay:.3s] pointer-coarse:[animation-duration:.8s]")}
+        className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_backwards] pointer-coarse:[animation-delay:.3s] pointer-coarse:[animation-duration:.8s]")}
       >
         {title === null ? (
           // På telefon håller en osynlig kopia av standardtexten platsen, så att höjden stämmer vid varje skärmbredd.
@@ -68,7 +70,7 @@ function HeroBottom({ title, text }: { title: string | null; text: string | null
       {/* Knapparna finns både i skalet och i det som kommer senare. På telefon, där det dröjer längre, syns de direkt så att intoningen inte börjar om. */}
       <div
         className={cn(
-          "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_both] pointer-coarse:animate-none",
+          "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_backwards] pointer-coarse:animate-none",
           size.col.includes("lg:col-span-8") && "lg:col-span-4",
         )}
       >
@@ -118,14 +120,14 @@ export function Hero() {
       {/* Jättetypografi bakom loggan */}
       <div
         aria-hidden
-        className="display pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 select-none whitespace-nowrap text-center text-[26vw] leading-none text-transparent opacity-0 [-webkit-text-stroke:1.5px_rgb(255_255_255/0.09)] [animation:fade-up_1.6s_0.2s_var(--ease-out-expo)_both] md:text-[22vw]"
+        className="display pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 select-none whitespace-nowrap text-center text-[26vw] leading-none text-transparent [-webkit-text-stroke:1.5px_rgb(255_255_255/0.09)] [animation:fade-up_1.6s_0.2s_var(--ease-out-expo)_backwards] md:text-[22vw]"
       >
         StatLin
       </div>
 
       <div className="hero-inre container-site relative flex flex-1 flex-col pt-[calc(var(--header-h)+1.5rem)]">
         <div className="hero-topp flex items-start justify-between gap-6">
-          <p className="kicker flex items-center gap-3 text-white/60 [animation:fade-up_1s_0.1s_var(--ease-out-expo)_both]">
+          <p className="kicker flex items-center gap-3 text-white/60 [animation:fade-up_1s_0.1s_var(--ease-out-expo)_backwards]">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red opacity-60" />
               <span className="relative inline-flex size-2 rounded-full bg-red" />

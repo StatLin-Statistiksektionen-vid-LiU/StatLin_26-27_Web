@@ -129,7 +129,7 @@
     *::before,
     *::after {
       animation-duration: 0.001ms !important;
-      /* Utan den här står hjälten osynlig under sin fördröjning, eftersom `both` håller starttillståndet (SB-13). */
+      /* Utan den här står hjälten osynlig under sin fördröjning, eftersom `both` och `backwards` håller starttillståndet (SB-13). */
       animation-delay: 0s !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;

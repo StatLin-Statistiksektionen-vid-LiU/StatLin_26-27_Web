@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
  * Bakgrund för heron: en tidsserie som ritas fram och scrollar med ett
  * konfidensband, samt ett glest spridningsdiagram som reagerar på pekaren.
  * På telefon ritas en stillbild: varje ny bildruta kostar huvudtråden och grafiken, och utan mus finns inget för punkterna att reagera på.
+ * Stillbilden ritas i mjukvara. Då blir canvasen inget eget lager på grafikkortet, och inte heller texten och knapparna som ligger ovanpå den.
  */
 export function DataField({ className }: { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -14,12 +15,13 @@ export function DataField({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Telefon: en glöd utan skuggoskärpa, och bara en bild.
     const coarse = window.matchMedia("(pointer: coarse)").matches;
-    const still = reduced || coarse;
+    const ctx = canvas.getContext("2d", { willReadFrequently: reduced || coarse });
+    if (!ctx) return;
+    // En canvas behåller sin första kontext, också när sidan visas igen efter att ha legat dold. En kontext i mjukvara ritar bara stillbilden.
+    const still = reduced || coarse || ctx.getContextAttributes?.().willReadFrequently === true;
 
     let w = 0;
     let h = 0;

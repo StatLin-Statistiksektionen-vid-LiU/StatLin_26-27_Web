@@ -336,6 +336,8 @@ async function openDeleteConfirm(page) {
         await p.locator(".logo-formler").waitFor({ state: "attached" });
         await p.locator("h1").waitFor();
         await p.waitForFunction(() => Object.keys(document.querySelector(".floating-logo")).some((k) => k.startsWith("__react")));
+        // Ritytans kontext ska finnas innan testet frågar efter den. Annars skapar frågan en egen kontext med andra inställningar.
+        await p.locator("canvas.data-field[data-drawn]").waitFor({ state: "attached" });
         return p;
       };
       const effects = (p) =>
@@ -354,6 +356,8 @@ async function openDeleteConfirm(page) {
             title: `${title.animationDelay} ${title.animationDuration}`,
             buttons: `${buttons.animationName} ${buttons.animationDelay}`,
             canvasWidth: document.querySelector("canvas").width,
+            // Stillbilden ritas i mjukvara, så att canvasen inte blir ett eget lager på grafikkortet.
+            field: document.querySelector("canvas.data-field").getContext("2d").getContextAttributes().willReadFrequently ? "mjukvara" : "grafikkort",
             shadowBlur: window.__canvas.blur,
             sections: css(".below-fold").contentVisibility,
             titleFont: css("h1").fontFamily.includes("Archivo Reserv"),
@@ -381,6 +385,7 @@ async function openDeleteConfirm(page) {
         title: "0.3s 0.8s",
         buttons: "none 0s",
         canvasWidth: 780,
+        field: "mjukvara",
         shadowBlur: 0,
         sections: "auto",
         titleFont: true,
@@ -427,7 +432,9 @@ async function openDeleteConfirm(page) {
 
       // Telefon med minskad rörelse: ingen ny gungning och ingen loop.
       const stillPhone = await open({ ...mobile, reducedMotion: "reduce" });
-      assert.equal((await effects(stillPhone)).sway, "none");
+      const stillEffects = await effects(stillPhone);
+      assert.equal(stillEffects.sway, "none");
+      assert.equal(stillEffects.field, "mjukvara");
       assert.equal(await inlineTilt(stillPhone), "");
       await stillPhone.waitForTimeout(500);
       const stillDraws = await draws(stillPhone);
@@ -451,6 +458,7 @@ async function openDeleteConfirm(page) {
         title: "1.6s 1.2s",
         buttons: "fade-up 1.85s",
         canvasWidth: 2880,
+        field: "grafikkort",
         shadowBlur: 18,
         sections: "visible",
         titleFont: false,
