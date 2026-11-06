@@ -304,14 +304,14 @@ Hela sajten är en Node-process på en enda Fly-maskin, med SQLite-databasen på
 
 Databasen och uppladdningarna ligger på volymen `statlin_data` i `arn`. Fly väljer volym efter namnet i `fly.toml` (`source = "statlin_data"`), inte efter id. Finns det två volymer med samma namn kan en ny maskin – efter `fly machine destroy`, `fly scale count` eller en flytt – få fel volym: sajten startar då som ny med bara grunddata, och nya ändringar hamnar på fel volym.
 
-Läget enligt en anteckning från 2026-10-31, inte kontrollerat sedan dess:
+Läget 2026-11-06 04:45, efter att Fly flyttade maskinen till en annan värd klockan 04:28 (`migrated=true` i `fly machine status`):
 
 | Volym | Läge |
 | --- | --- |
-| `vol_v3g8q8wewx6q3jx4` | Kopplad till maskinen – den levande volymen |
-| `vol_491j0dldgmng2x5r` | Okopplad, samma namn |
+| `vol_r7ynjzedo1j521nr` | Kopplad till maskinen, den levande volymen. Fly kopierade hit databasen vid flytten och tog bort `vol_v3g8q8wewx6q3jx4`. |
+| `vol_vdepjkme076p6314` | Okopplad, samma namn. Skapad 04:23, när `vol_491j0dldgmng2x5r` försvann, så troligen Flys kopia av den. |
 
-Bekräfta läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy vol_491j0dldgmng2x5r`. Det går inte att ångra, så kontrollera först att den är tom eller äldre: CREATED AT i listan, eller innehållet med en maskin utan publik trafik som i övningen ovan.
+Fly byter volymens id vid en flytt. Bekräfta därför läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Ögonblicksbilderna från före flytten ligger kvar under det gamla id:t: `fly volumes snapshots list vol_v3g8q8wewx6q3jx4`. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy <id>`. Det går inte att ångra, så kontrollera först att den är tom eller gammal, med en maskin utan publik trafik som i övningen ovan. CREATED AT säger inget efter en flytt.
 
 ### STAR-sidan och lunchföreläsningarna
 
