@@ -13,7 +13,8 @@ function BellCurve() {
   for (let i = 0; i <= 120; i++) {
     const x = (i / 120) * 8 - 4;
     const y = Math.exp(-(x * x) / 2);
-    pts.push(`${(i / 120) * 1000},${(220 - y * 200).toFixed(1)}`);
+    // En decimal även på x: kurvan står två gånger i varje sidas HTML och två gånger i dess RSC-data.
+    pts.push(`${((i / 120) * 1000).toFixed(1)},${(220 - y * 200).toFixed(1)}`);
   }
   return (
     <svg viewBox="0 0 1000 230" className="h-auto w-full" aria-hidden preserveAspectRatio="none">

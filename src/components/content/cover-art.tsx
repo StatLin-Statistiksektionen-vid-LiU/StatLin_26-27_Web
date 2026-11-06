@@ -1,5 +1,12 @@
 import { hashString, mulberry32, cn } from "@/lib/utils";
 
+/** Rutnätet som en enda bana i stället för 18 linjer. Omslaget står i både HTML och sidans RSC-data, ibland nio gånger på en sida. */
+const GRID =
+  Array.from({ length: 11 }, (_, i) => `M${i * 40} 0V250`).join("") + Array.from({ length: 7 }, (_, i) => `M0 ${i * 40}H400`).join("");
+
+/** En decimal räcker på en yta som är 400 enheter bred, och halverar längden på varje koordinat. */
+const r1 = (n: number) => Math.round(n * 10) / 10;
+
 /**
  * Generativt omslag för evenemang och nyheter som saknar bild.
  * Deterministiskt utifrån en nyckel (slug) – samma evenemang får alltid samma grafik.
@@ -35,7 +42,8 @@ export function CoverArt({
   const bars = Array.from({ length: 12 }, (_, i) => {
     const mu = 5.5;
     const h = Math.exp(-((i - mu) ** 2) / 8) * (120 + rnd() * 40) + rnd() * 18;
-    return { x: 40 + i * 27, h };
+    // Avrundad här, så att staplarnas fot hamnar exakt på 235 nedan.
+    return { x: 40 + i * 27, h: r1(h) };
   });
 
   return (
@@ -50,19 +58,14 @@ export function CoverArt({
         </defs>
         <rect width="400" height="250" fill="#0d0d0d" />
         <rect width="400" height="250" fill={`url(#g-${seed})`} />
-        {Array.from({ length: 11 }, (_, i) => (
-          <line key={`v${i}`} x1={i * 40} y1="0" x2={i * 40} y2="250" stroke="#fff" strokeOpacity="0.06" />
-        ))}
-        {Array.from({ length: 7 }, (_, i) => (
-          <line key={`h${i}`} x1="0" y1={i * 40} x2="400" y2={i * 40} stroke="#fff" strokeOpacity="0.06" />
-        ))}
+        <path d={GRID} fill="none" stroke="#fff" strokeOpacity="0.06" />
         {variant === 0 &&
           points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={p.red ? "#ff0707" : "#fff"} fillOpacity={p.red ? 0.9 : 0.35} />
+            <circle key={i} cx={r1(p.x)} cy={r1(p.y)} r={r1(p.r)} fill={p.red ? "#ff0707" : "#fff"} fillOpacity={p.red ? 0.9 : 0.35} />
           ))}
         {variant === 1 &&
           bars.map((b, i) => (
-            <rect key={i} x={b.x} y={235 - b.h} width="20" height={b.h} fill={i === 5 || i === 6 ? "#ff0707" : "#fff"} fillOpacity={i === 5 || i === 6 ? 0.85 : 0.18} />
+            <rect key={i} x={b.x} y={r1(235 - b.h)} width="20" height={b.h} fill={i === 5 || i === 6 ? "#ff0707" : "#fff"} fillOpacity={i === 5 || i === 6 ? 0.85 : 0.18} />
           ))}
         {variant !== 1 && <path d={line} fill="none" stroke="#ff0707" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
         {variant === 2 && (
