@@ -108,8 +108,10 @@ export function EditDrawer() {
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {/* Med osparade ändringar frågar rutan först och kan stanna kvar, så laddningsraden ska inte starta på klicket. */}
             <Link
               href={adminHref(open)}
+              data-utan-laddningsrad
               onClick={(e) => {
                 if (!editStore.requestClose(() => router.push(adminHref(open)))) e.preventDefault();
               }}

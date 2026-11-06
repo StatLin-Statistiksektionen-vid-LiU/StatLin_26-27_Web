@@ -4,6 +4,7 @@ import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
 import { SITE_ALTERNATES, SITE_OG } from "@/lib/site-metadata";
 import { SCROLL_RESTORE_SCRIPT } from "@/lib/scroll-restore";
+import { NavProgress } from "@/components/layout/nav-progress";
 import { ARCHIVO_FONT_FACES, ARCHIVO_LATIN } from "./fonts";
 
 // Läses vid bygget för förrenderade sidor – se Dockerfile (ARG SITE_URL).
@@ -41,7 +42,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
         <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORE_SCRIPT }} />
       </head>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <NavProgress />
+      </body>
     </html>
   );
 }

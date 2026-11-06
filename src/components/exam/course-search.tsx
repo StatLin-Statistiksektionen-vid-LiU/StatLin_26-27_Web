@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { ArrowRight, Search } from "@/components/icons";
+import { startNavProgress } from "@/components/layout/nav-progress";
 import { normalizeCourseCode } from "@/lib/exam-stats";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,8 @@ export function CourseSearch({
       return;
     }
     setOpen(false);
+    // Kursens sida förhämtas inte, så här väntar man alltid på servern.
+    startNavProgress(`/tentastatistik/${code}`);
     router.push(`/tentastatistik/${code}`);
   }
 

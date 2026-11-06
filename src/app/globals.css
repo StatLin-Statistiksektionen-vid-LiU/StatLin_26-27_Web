@@ -457,6 +457,40 @@
   }
 }
 
+/* Raden överst medan ett sidbyte väntar på servern (nav-progress.tsx). Den rör sig fort i början och allt långsammare, och fylls ut när sidan kommer.
+   Bara transform och opacity ändras, så grafikkortet sköter rörelsen. */
+.nav-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 70;
+  height: 3px;
+  background: var(--color-red);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.nav-progress[data-state="loading"] {
+  opacity: 1;
+  transform: scaleX(0.9);
+  transition:
+    transform 20s cubic-bezier(0.05, 0.7, 0.1, 1),
+    opacity 0.15s;
+}
+.nav-progress[data-state="done"] {
+  transform: scaleX(1);
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.25s 0.15s ease-out;
+}
+/* Utan rörelse står raden still över hela bredden tills sidan kommer. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-state="loading"] {
+    transform: scaleX(1);
+    transition: opacity 0.15s;
+  }
+}
+
 /* Den mörka toppen kan ligga i det som aldrig kommer utan JavaScript, och då syns inte sidhuvudets vita text mot den ljusa sidan.
    Regeln står utanför lagren, eftersom sidhuvudets bg-transparent annars vinner oavsett specificitet. */
 html:not(.js) header.fixed {
