@@ -3,7 +3,12 @@
  *
  * Sidorna strömmas in: först kommer ett kort skal, sedan innehållet. Webbläsaren lägger tillbaka platsen medan skalet är allt som finns, fastnar
  * i dess botten och följer sedan med sidfoten ner när innehållet kommer, så besökaren hamnar någon helt annanstans. Här sparar sajten platsen
- * själv och lägger tillbaka den när sidan är lång nog, och igen när sidan har blivit längre. Däremellan får sidan scrolla själv.
+ * själv och lägger tillbaka den när sidan är lång nog, och igen när sidan har blivit längre.
+ *
+ * React visar en strömmad del en stund efter att den kommit, ibland först efter att dokumentet är färdigläst (upp till 2,3 s in). Därför är
+ * platsen inte klar förrän ingen del väntar längre, det vill säga när mallarna B:n är borta. Så länge platsen läggs tillbaka är
+ * scrollförankringen avstängd. Annars flyttar webbläsaren platsen när innehåll ovanför växer: WebKit håller fast vid sidfoten och hamnar lika
+ * långt ner som delen är hög.
  *
  * Bakåt inom sajten sköter webbläsaren bra själv, utom till en adress med #ankare: då hoppar Chrome till ankaret när innehållet kommer, i stället
  * för till platsen man lämnade. Bara det fallet tas om hand här, och där hålls platsen fast tills sidan är klar.
@@ -37,6 +42,13 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
       var target = Number(saved);
       var start = performance.now();
       var height = -1, changed = start, parsed = 0, applied = -1, over = false;
+      // Ett eget stilark i stället för style på html, så att React inte hittar något oväntat när sidan hydreras.
+      var anchoring = null;
+      try {
+        anchoring = new CSSStyleSheet();
+        anchoring.replaceSync("html{overflow-anchor:none}");
+        document.adoptedStyleSheets = Array.prototype.slice.call(document.adoptedStyleSheets).concat([anchoring]);
+      } catch (e) { anchoring = null; }
       var finish = function () {
         if (over) return;
         over = true;
@@ -44,6 +56,9 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
         restoring = false;
         history.scrollRestoration = "auto";
         takeover.forEach(function (e) { removeEventListener(e, finish, true); });
+        if (anchoring) {
+          try { document.adoptedStyleSheets = Array.prototype.filter.call(document.adoptedStyleSheets, function (s) { return s !== anchoring; }); } catch (e) {}
+        }
       };
       cancel = finish;
       restoring = true;
@@ -55,8 +70,10 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
         var h = root.scrollHeight;
         if (h !== height) { height = h; changed = now; }
         if (!parsed && document.readyState !== "loading") parsed = now;
+        // En del som har kommit men inte visats än har kvar sin mall.
+        var waiting = parsed && document.querySelector('template[id^="B:"]');
         var max = h - innerHeight;
-        var settled = (parsed && now - parsed > (hold ? 800 : 500) && now - changed > 300 && (!hold || max >= target)) || now - start > 8000;
+        var settled = (parsed && !waiting && now - parsed > (hold ? 800 : 500) && now - changed > 300 && (!hold || max >= target)) || now - start > 8000;
         if ((max >= target || settled) && (hold || applied !== h)) {
           applied = h;
           var y = Math.min(target, max);
