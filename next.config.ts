@@ -74,6 +74,9 @@ const nextConfig: NextConfig = {
       // Sitemapen läser tre tabeller per anrop; Nexts standard för en dynamisk metadatarutt är max-age=0 (ST-22). Rubriken härifrån
       // vinner: Next lägger inte på ruttens egen Cache-Control när rubriken redan är satt (next/dist/server/send-response.js).
       { source: "/sitemap.xml", headers: [{ key: "Cache-Control", value: "public, max-age=3600" }] },
+      // Typsnitten har paketets version i filnamnet (src/app/fonts.ts), så en ny version får en ny adress. Annars frågar webbläsaren servern
+      // om filen vid varje sidladdning, eftersom Next som standard ger filerna i public max-age=0.
+      { source: "/fonts/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     ];
   },
   // Utbildning och Ny student flyttade under Studenter – gamla länkar ska fortsätta fungera.

@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/archivo/standard.css";
+import { preload } from "react-dom";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
 import { SITE_ALTERNATES, SITE_OG } from "@/lib/site-metadata";
 import { SCROLL_RESTORE_SCRIPT } from "@/lib/scroll-restore";
+import { ARCHIVO_FONT_FACES, ARCHIVO_LATIN } from "./fonts";
 
 // Läses vid bygget för förrenderade sidor – se Dockerfile (ARG SITE_URL).
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
@@ -30,9 +31,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // Typsnitt hämtas alltid med CORS, så utan crossOrigin skulle webbläsaren inte använda filen och hämta den en gång till. Se fonts.ts.
+  preload(ARCHIVO_LATIN, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   return (
     <html lang="sv" suppressHydrationWarning>
       <head>
+        <style dangerouslySetInnerHTML={{ __html: ARCHIVO_FONT_FACES }} />
         {/* Markerar att JS körs. Utan klassen döljs skeletten i globals.css, eftersom innehållet aldrig kommer i deras ställe. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
         <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORE_SCRIPT }} />
